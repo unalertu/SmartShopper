@@ -297,42 +297,39 @@ export default function ListDetailScreen() {
                 )}
               </View>
 
-              {/* Flex Spacer — absorbs empty space, pushes bottom section down */}
+              {/* Divider */}
+              <View className="h-[1px] bg-slate-100 w-full mt-6 mb-5 z-10" />
+
+              {/* Frequently Added — sits naturally after Note */}
+              <View className="z-10">
+                <Text className="text-sm font-semibold text-slate-400 mb-3">Frequently Added</Text>
+                <View className="flex-row flex-wrap gap-2">
+                  {suggestedItems.map((suggestion, idx) => (
+                    <TouchableOpacity 
+                      key={idx}
+                      onPress={() => setNewItemText(suggestion)}
+                      className="bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl"
+                    >
+                      <Text className="text-slate-600 font-medium">{suggestion}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Flex Spacer — absorbs empty space, pushes button down */}
               <View className="flex-1" />
 
-              {/* ====== BOTTOM SECTION (pinned) ====== */}
-              <View className="mt-auto z-10">
-                {/* Divider */}
-                <View className="h-[1px] bg-slate-100 w-full mb-6" />
-
-                {/* Smart Suggestions */}
-                <View className="mb-4">
-                  <Text className="text-sm font-semibold text-slate-400 mb-3">Frequently Added</Text>
-                  <View className="flex-row flex-wrap gap-2">
-                    {suggestedItems.map((suggestion, idx) => (
-                      <TouchableOpacity 
-                        key={idx}
-                        onPress={() => setNewItemText(suggestion)}
-                        className="bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl"
-                      >
-                        <Text className="text-slate-600 font-medium">{suggestion}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-
-                {/* Action Button — Dynamic State */}
-                <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-                  <TouchableOpacity 
-                    disabled={!isButtonActive}
-                    className={`h-16 rounded-[32px] flex-row items-center justify-center shadow-xl ${isButtonActive ? 'bg-slate-900' : 'bg-slate-900 opacity-30'}`}
-                    onPress={handleAddItem}
-                  >
-                    <Plus size={24} color="#ffffff" strokeWidth={2.5} className="mr-2" />
-                    <Text className="text-white font-bold text-lg tracking-wide">Add to List</Text>
-                  </TouchableOpacity>
-                </Animated.View>
-              </View>
+              {/* Action Button — pinned at bottom */}
+              <Animated.View style={{ transform: [{ scale: buttonScale }] }} className="z-10">
+                <TouchableOpacity 
+                  disabled={!isButtonActive}
+                  className={`h-16 rounded-[32px] flex-row items-center justify-center shadow-xl ${isButtonActive ? 'bg-slate-900' : 'bg-slate-900 opacity-30'}`}
+                  onPress={handleAddItem}
+                >
+                  <Plus size={24} color="#ffffff" strokeWidth={2.5} className="mr-2" />
+                  <Text className="text-white font-bold text-lg tracking-wide">Add to List</Text>
+                </TouchableOpacity>
+              </Animated.View>
               </View>
               </TouchableWithoutFeedback>
             </View>
