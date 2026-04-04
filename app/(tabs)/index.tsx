@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Apple, Flame, ShoppingBag, Crown, Plus, Home, BarChart2, Users, User, List, ChevronRight, Radar, BellRing, MapPin } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
@@ -37,7 +37,7 @@ export default function HomeScreen() {
 
           {/* Smart Status Card */}
           <View 
-            className="mx-6 mt-4 mb-6 rounded-[32px] p-6 bg-white border border-slate-50"
+            className="mx-6 mt-4 mb-6 rounded-[32px] bg-white border border-slate-50 overflow-hidden"
             style={{
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 6 },
@@ -49,34 +49,33 @@ export default function HomeScreen() {
             {isNearStore ? (
               // State B: Active / Store Nearby
               <View className="flex-col">
-                <View className="flex-row justify-between items-center">
-                  <View className="flex-row items-center gap-3 flex-1 pr-2">
-                    <View className="bg-slate-100 w-[52px] h-[52px] rounded-full items-center justify-center">
-                      <BellRing size={22} color="#64748b" />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-base font-semibold text-slate-900" numberOfLines={1}>Migros is nearby (200m)</Text>
-                      <Text className="text-sm text-slate-500 mt-0.5">You have 4 items to buy.</Text>
-                    </View>
-                  </View>
+                {/* Upper Tier: Static Map Image */}
+                <Image 
+                  source={require('../../assets/images/stockmap.png')} 
+                  className="w-full h-48 rounded-t-[32px]" 
+                  resizeMode="cover" 
+                />
+
+                {/* Divider */}
+                <View className="h-[1px] w-full bg-slate-100" />
+
+                {/* Lower Tier: Info & Action */}
+                <View className="flex-row justify-between items-center py-4 px-6">
                   <View className="flex-row items-center gap-3">
-                    <TouchableOpacity className="bg-slate-100 px-3 py-1.5 rounded-full">
-                      <Text className="text-slate-700 font-bold text-xs">Open List</Text>
-                    </TouchableOpacity>
-                    <View className="bg-green-400 w-2.5 h-2.5 rounded-full" />
+                    <View className="relative">
+                      <BellRing size={24} color="#64748b" />
+                      <View className="absolute -top-0.5 -right-0.5 bg-green-400 w-2.5 h-2.5 rounded-full border-[1.5px] border-white" />
+                    </View>
+                    <Text className="text-[16px] font-bold text-slate-900 tracking-tight">Migros is nearby</Text>
                   </View>
-                </View>
-                
-                {/* Map Mock Section */}
-                <View className="w-full h-[120px] rounded-2xl bg-slate-100 mt-5 overflow-hidden items-center justify-center">
-                  <MapPin size={24} color="#475569" />
-                  <Text className="text-xs font-semibold text-slate-500 mt-2">Migros Meydan Branch</Text>
-                  <Text className="text-[10px] text-slate-400 mt-0.5">Meydan Cad. No:12, 150m away.</Text>
+                  <TouchableOpacity className="bg-slate-100 px-4 py-2 rounded-full">
+                    <Text className="text-slate-800 font-bold text-[11px] uppercase tracking-widest">open list</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             ) : (
               // State A: Idle / Searching
-              <View className="flex-row items-center gap-4">
+              <View className="flex-row items-center gap-4 p-6">
                 <View className="bg-slate-100 p-3 rounded-full">
                   <Radar size={24} color="#94a3b8" />
                 </View>
