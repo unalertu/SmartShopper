@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, TouchableWithoutFeedback, Platform } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, MoreHorizontal, ShoppingBag, CheckCircle, Clock, Trash2 } from 'lucide-react-native';
@@ -9,6 +9,9 @@ export default function ListDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
+  
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [newItemText, setNewItemText] = useState('');
 
   const dummyItems = [
     { id: 1, name: 'Süt', isCompleted: true },
@@ -130,12 +133,58 @@ export default function ListDetailScreen() {
         style={{ bottom: insets.bottom > 0 ? insets.bottom + 16 : 40 }}
       >
         <TouchableOpacity 
+          onPress={() => setIsAddModalVisible(true)}
           className="bg-slate-900 py-[18px] rounded-full flex-row justify-center items-center shadow-lg"
           style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 16, elevation: 10 }}
         >
           <Text className="text-white font-extrabold text-[17px] tracking-wide">Add New Item</Text>
         </TouchableOpacity>
       </View>
+
+      {/* 6. Add Item Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isAddModalVisible}
+        onRequestClose={() => setIsAddModalVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setIsAddModalVisible(false)}>
+          <View className="flex-1 bg-black/40 justify-end">
+            <TouchableWithoutFeedback>
+              <KeyboardAvoidingView 
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              >
+                <View className="bg-white w-full rounded-t-3xl p-6" style={{ paddingBottom: insets.bottom > 0 ? insets.bottom + 24 : 32 }}>
+                  {/* Drag Handle */}
+                  <View className="w-12 h-1 bg-slate-200 rounded-full self-center mb-6" />
+                  
+                  <Text className="text-lg font-bold text-slate-900 mb-4">Add New Item</Text>
+                  
+                  <TextInput
+                    className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-base text-slate-900 mb-4"
+                    placeholder="E.g., Milk, Bread, Eggs..."
+                    placeholderTextColor="#94a3b8"
+                    value={newItemText}
+                    onChangeText={setNewItemText}
+                    autoFocus={true}
+                  />
+                  
+                  <TouchableOpacity 
+                    className="bg-slate-900 py-4 rounded-full items-center"
+                    onPress={() => {
+                      console.log("Adding item:", newItemText);
+                      setNewItemText('');
+                      setIsAddModalVisible(false);
+                    }}
+                  >
+                    <Text className="text-white font-bold text-lg">Add to List</Text>
+                  </TouchableOpacity>
+                </View>
+              </KeyboardAvoidingView>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
       
     </View>
   );
