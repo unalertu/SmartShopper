@@ -1,33 +1,72 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Tabs } from "expo-router";
+import { Platform, View } from "react-native";
+import {
+  ShoppingCart,
+  MapPin,
+  Settings,
+} from "lucide-react-native";
+import { Colors } from "@/constants/Theme";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: Colors.primary[500],
+        tabBarInactiveTintColor: Colors.surface[400],
         headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        tabBarStyle: {
+          display: 'none',
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: "600",
+          marginTop: 2,
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "Shopping List",
+          tabBarIcon: ({ color, focused }) => (
+            <View>
+              <ShoppingCart
+                size={focused ? 26 : 24}
+                color={color}
+                strokeWidth={focused ? 2.5 : 2}
+              />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="locations"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "Stores",
+          tabBarIcon: ({ color, focused }) => (
+            <View>
+              <MapPin
+                size={focused ? 26 : 24}
+                color={color}
+                strokeWidth={focused ? 2.5 : 2}
+              />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "Settings",
+          tabBarIcon: ({ color, focused }) => (
+            <View>
+              <Settings
+                size={focused ? 26 : 24}
+                color={color}
+                strokeWidth={focused ? 2.5 : 2}
+              />
+            </View>
+          ),
         }}
       />
     </Tabs>
