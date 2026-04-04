@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Apple, Flame, ShoppingBag, Crown, Plus, Home, BarChart2, Users, User, List, ChevronRight, Radar, BellRing, MapPin } from 'lucide-react-native';
+import { Apple, Flame, ShoppingBag, Crown, Plus, Home, BarChart2, Users, User, List, ChevronRight, Radar, BellRing, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [isNearStore, setIsNearStore] = useState(true); // Toggle this to test both states
+  const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
 
   const shoppingLists = [
     { id: 1, name: "Ahmet için alınacaklar", count: 4 }, 
@@ -195,11 +196,94 @@ export default function HomeScreen() {
         </ScrollView>
       </SafeAreaView>
 
+      {/* Full-Screen Actions Menu Overlay */}
+      {isActionsMenuOpen && (
+        <View className="absolute top-0 left-0 right-0 bottom-0 z-40 justify-center items-center">
+          {/* Blur Backdrop with Tap-to-Dismiss */}
+          <BlurView 
+            intensity={80} 
+            tint="light" 
+            className="absolute inset-0"
+          >
+            <TouchableOpacity 
+              activeOpacity={1} 
+              onPress={() => setIsActionsMenuOpen(false)} 
+              className="flex-1" 
+            />
+          </BlurView>
+          
+          {/* 2x2 Grid container */}
+          <View className="flex-row flex-wrap justify-between w-full px-8 gap-y-5">
+            
+            {/* Card 1: New Shopping List */}
+            <TouchableOpacity 
+              className="bg-white rounded-[32px] w-[47%] aspect-square p-5 justify-center items-center"
+              style={{
+                shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: 0.08, shadowRadius: 20, elevation: 5
+              }}
+              onPress={() => console.log('New Shopping List')}
+            >
+              <View className="w-14 h-14 rounded-full bg-slate-50 items-center justify-center mb-3">
+                <PlusCircle size={28} color="#0f172a" strokeWidth={2} />
+              </View>
+              <Text className="text-sm font-semibold text-slate-900 text-center leading-tight">New{"\n"}Shopping List</Text>
+            </TouchableOpacity>
+
+            {/* Card 2: Add Location */}
+            <TouchableOpacity 
+              className="bg-white rounded-[32px] w-[47%] aspect-square p-5 justify-center items-center"
+              style={{
+                shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: 0.08, shadowRadius: 20, elevation: 5
+              }}
+              onPress={() => console.log('Add Location')}
+            >
+              <View className="w-14 h-14 rounded-full bg-slate-50 items-center justify-center mb-3">
+                <MapPinPlus size={28} color="#0f172a" strokeWidth={2} />
+              </View>
+              <Text className="text-sm font-semibold text-slate-900 text-center leading-tight">Add{"\n"}Store Location</Text>
+            </TouchableOpacity>
+
+            {/* Card 3: Quick Item Add */}
+            <TouchableOpacity 
+              className="bg-white rounded-[32px] w-[47%] aspect-square p-5 justify-center items-center"
+              style={{
+                shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: 0.08, shadowRadius: 20, elevation: 5
+              }}
+              onPress={() => console.log('Quick Item Add')}
+            >
+              <View className="w-14 h-14 rounded-full bg-slate-50 items-center justify-center mb-3">
+                <CheckCircle size={28} color="#0f172a" strokeWidth={2} />
+              </View>
+              <Text className="text-sm font-semibold text-slate-900 text-center leading-tight">Quick{"\n"}Item Add</Text>
+            </TouchableOpacity>
+
+            {/* Card 4: Location Permissions */}
+            <TouchableOpacity 
+              className="bg-white rounded-[32px] w-[47%] aspect-square p-5 justify-center items-center"
+              style={{
+                shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: 0.08, shadowRadius: 20, elevation: 5
+              }}
+              onPress={() => console.log('Location Permissions')}
+            >
+              <View className="w-14 h-14 rounded-full bg-slate-50 items-center justify-center mb-3">
+                <Settings size={28} color="#0f172a" strokeWidth={2} />
+              </View>
+              <Text className="text-sm font-semibold text-slate-900 text-center leading-tight">Location{"\n"}Permissions</Text>
+            </TouchableOpacity>
+
+          </View>
+        </View>
+      )}
+
       {/* 7. Custom Bottom Floating Navigation */}
       <BlurView 
         tint="light"
         intensity={80}
-        className="absolute left-6 right-6 rounded-full overflow-hidden" 
+        className="absolute left-6 right-6 rounded-full overflow-hidden z-50" 
         style={{ 
           bottom: insets.bottom > 0 ? insets.bottom + 8 : 24,
           shadowColor: "#000", 
@@ -241,6 +325,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity 
+            onPress={() => setIsActionsMenuOpen(!isActionsMenuOpen)}
             className="bg-slate-900 rounded-full h-[52px] w-[52px] items-center justify-center ml-2"
             style={{
               shadowColor: '#000',
@@ -250,7 +335,11 @@ export default function HomeScreen() {
               elevation: 8,
             }}
           >
-            <Plus size={28} color="#fff" strokeWidth={2.5} />
+            {isActionsMenuOpen ? (
+              <X size={28} color="#fff" strokeWidth={2.5} />
+            ) : (
+              <Plus size={28} color="#fff" strokeWidth={2.5} />
+            )}
           </TouchableOpacity>
         </View>
       </BlurView>
