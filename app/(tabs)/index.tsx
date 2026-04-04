@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, StatusBar } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Apple, Flame, ShoppingBag, Crown, Plus, Home, BarChart2, Users, User, List, ChevronRight, Radar, BellRing, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings } from 'lucide-react-native';
+import { Apple, Flame, ShoppingBag, Crown, Plus, Home, BarChart2, Users, User, List, ChevronRight, Radar, BellRing, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings, ScanBarcode } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 
 export default function HomeScreen() {
@@ -16,26 +16,31 @@ export default function HomeScreen() {
   ];
 
   return (
-    <View className="flex-1 bg-slate-50 relative">
-      <SafeAreaView className="flex-1" edges={['top']}>
-        <ScrollView 
-          className="flex-1" 
-          contentContainerStyle={{ paddingBottom: 140 }} 
-          showsVerticalScrollIndicator={false}
+    // 1. ROOT MUST BE A STANDARD VIEW, NOT SafeAreaView!
+    <View className="flex-1 bg-slate-50"> 
+      
+      {/* 2. THE SCROLLING CONTENT (SIBLING 1) */}
+      <ScrollView 
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 150 }} // Only need bottom padding now for the nav bar
+        showsVerticalScrollIndicator={false}
+      >
+        {/* 1. THE NORMAL SCROLLING HEADER */}
+        <View 
+          className="px-6 pb-6 flex-row justify-between items-center" 
+          style={{ paddingTop: insets.top + 16 }}
         >
-          
-          {/* 2. Header Section */}
-          <View className="flex-row justify-between items-center px-6 pt-4">
-            <View className="flex-row items-center gap-2">
-              <Apple size={30} color="#0f172a" fill="#0f172a" />
-              <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight">Smart Shopper</Text>
-            </View>
-            <View className="bg-white rounded-full px-3 py-1 flex-row items-center gap-1.5 shadow-sm border border-slate-100" style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3 }}>
-              <Flame size={16} color="#f97316" fill="#f97316" />
-              <Text className="text-slate-800 font-bold text-sm">0</Text>
-            </View>
+          <View className="flex-row items-center gap-2">
+            <Apple size={30} color="#0f172a" fill="#0f172a" />
+            <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight">Smart Shopper</Text>
           </View>
+          <View className="bg-white rounded-full px-3 py-1 flex-row items-center gap-1.5 shadow-sm border border-slate-100" style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3 }}>
+            <Flame size={16} color="#f97316" fill="#f97316" />
+            <Text className="text-slate-800 font-bold text-sm">0</Text>
+          </View>
+        </View>
 
+        {/* 2. THE MAP WIDGET */}
           {/* Smart Status Card */}
           <View 
             className="mx-6 mt-4 mb-6 rounded-[32px] bg-white border border-slate-50 overflow-hidden"
@@ -193,15 +198,14 @@ export default function HomeScreen() {
             <Text className="text-slate-400 text-sm font-medium tracking-wide mt-6">Tap + to add your first shopping list</Text>
           </View>
 
-        </ScrollView>
-      </SafeAreaView>
+      </ScrollView>
 
       {/* Full-Screen Actions Menu Overlay */}
       {isActionsMenuOpen && (
-        <View className="absolute top-0 left-0 right-0 bottom-0 z-40 justify-center items-center">
+        <View className="absolute top-0 left-0 right-0 bottom-0 z-40 justify-end items-center pb-[110px]">
           {/* Blur Backdrop with Tap-to-Dismiss */}
           <BlurView 
-            intensity={80} 
+            intensity={15} 
             tint="light" 
             className="absolute inset-0"
           >
@@ -213,66 +217,66 @@ export default function HomeScreen() {
           </BlurView>
           
           {/* 2x2 Grid container */}
-          <View className="flex-row flex-wrap justify-between w-full px-8 gap-y-5">
+          <View className="flex-row flex-wrap justify-center w-full px-10 gap-x-5 gap-y-5">
             
-            {/* Card 1: New Shopping List */}
+            {/* Card 1: New List */}
             <TouchableOpacity 
-              className="bg-white rounded-[32px] w-[47%] aspect-square p-5 justify-center items-center"
+              className="bg-white rounded-[28px] w-[105px] h-[105px] p-4 justify-center items-center"
               style={{
-                shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
-                shadowOpacity: 0.08, shadowRadius: 20, elevation: 5
+                shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.08, shadowRadius: 16, elevation: 5
               }}
               onPress={() => console.log('New Shopping List')}
             >
-              <View className="w-14 h-14 rounded-full bg-slate-50 items-center justify-center mb-3">
-                <PlusCircle size={28} color="#0f172a" strokeWidth={2} />
+              <View className="w-12 h-12 rounded-full bg-slate-50 items-center justify-center mb-2">
+                <PlusCircle size={24} color="#0f172a" strokeWidth={2.5} />
               </View>
-              <Text className="text-sm font-semibold text-slate-900 text-center leading-tight">New{"\n"}Shopping List</Text>
+              <Text className="text-xs font-semibold text-slate-800 text-center leading-tight">New List</Text>
             </TouchableOpacity>
 
             {/* Card 2: Add Location */}
             <TouchableOpacity 
-              className="bg-white rounded-[32px] w-[47%] aspect-square p-5 justify-center items-center"
+              className="bg-white rounded-[28px] w-[105px] h-[105px] p-4 justify-center items-center"
               style={{
-                shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
-                shadowOpacity: 0.08, shadowRadius: 20, elevation: 5
+                shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.08, shadowRadius: 16, elevation: 5
               }}
               onPress={() => console.log('Add Location')}
             >
-              <View className="w-14 h-14 rounded-full bg-slate-50 items-center justify-center mb-3">
-                <MapPinPlus size={28} color="#0f172a" strokeWidth={2} />
+              <View className="w-12 h-12 rounded-full bg-slate-50 items-center justify-center mb-2">
+                <MapPin size={24} color="#0f172a" strokeWidth={2.5} />
               </View>
-              <Text className="text-sm font-semibold text-slate-900 text-center leading-tight">Add{"\n"}Store Location</Text>
+              <Text className="text-xs font-semibold text-slate-800 text-center leading-tight">Add{"\n"}Location</Text>
             </TouchableOpacity>
 
-            {/* Card 3: Quick Item Add */}
+            {/* Card 3: Quick Add */}
             <TouchableOpacity 
-              className="bg-white rounded-[32px] w-[47%] aspect-square p-5 justify-center items-center"
+              className="bg-white rounded-[28px] w-[105px] h-[105px] p-4 justify-center items-center"
               style={{
-                shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
-                shadowOpacity: 0.08, shadowRadius: 20, elevation: 5
+                shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.08, shadowRadius: 16, elevation: 5
               }}
               onPress={() => console.log('Quick Item Add')}
             >
-              <View className="w-14 h-14 rounded-full bg-slate-50 items-center justify-center mb-3">
-                <CheckCircle size={28} color="#0f172a" strokeWidth={2} />
+              <View className="w-12 h-12 rounded-full bg-slate-50 items-center justify-center mb-2">
+                <CheckCircle size={24} color="#0f172a" strokeWidth={2.5} />
               </View>
-              <Text className="text-sm font-semibold text-slate-900 text-center leading-tight">Quick{"\n"}Item Add</Text>
+              <Text className="text-xs font-semibold text-slate-800 text-center leading-tight">Quick Add</Text>
             </TouchableOpacity>
 
-            {/* Card 4: Location Permissions */}
+            {/* Card 4: Scan Item */}
             <TouchableOpacity 
-              className="bg-white rounded-[32px] w-[47%] aspect-square p-5 justify-center items-center"
+              className="bg-white rounded-[28px] w-[105px] h-[105px] p-4 justify-center items-center"
               style={{
-                shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
-                shadowOpacity: 0.08, shadowRadius: 20, elevation: 5
+                shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.08, shadowRadius: 16, elevation: 5
               }}
-              onPress={() => console.log('Location Permissions')}
+              onPress={() => console.log('Scan Item')}
             >
-              <View className="w-14 h-14 rounded-full bg-slate-50 items-center justify-center mb-3">
-                <Settings size={28} color="#0f172a" strokeWidth={2} />
+              <View className="w-12 h-12 rounded-full bg-slate-50 items-center justify-center mb-2">
+                <ScanBarcode size={24} color="#0f172a" strokeWidth={2.5} />
               </View>
-              <Text className="text-sm font-semibold text-slate-900 text-center leading-tight">Location{"\n"}Permissions</Text>
+              <Text className="text-xs font-semibold text-slate-800 text-center leading-tight">Scan Item</Text>
             </TouchableOpacity>
 
           </View>
