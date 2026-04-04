@@ -4,8 +4,10 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Apple, Flame, ShoppingBag, Crown, Plus, Home, BarChart2, Users, User, List, ChevronRight, Radar, BellRing, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings, ScanBarcode } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import { StatusBar } from 'expo-status-bar';
+import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [isNearStore, setIsNearStore] = useState(true); // Toggle this to test both states
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
@@ -100,7 +102,7 @@ export default function HomeScreen() {
           {shoppingLists.map((list) => (
             <TouchableOpacity 
               key={list.id} 
-              onPress={() => console.log("Will navigate to list details")}
+              onPress={() => router.push(`/list/${list.id}`)}
               className="mx-6 mb-3 bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-50"
               style={{
                 shadowColor: '#000',
