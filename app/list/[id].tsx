@@ -192,7 +192,6 @@ export default function ListDetailScreen() {
                   placeholderTextColor="#cbd5e1"
                   value={newItemText}
                   onChangeText={setNewItemText}
-                  autoFocus={true}
                 />
               </View>
 
