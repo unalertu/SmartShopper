@@ -1,22 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Apple, Flame, ShoppingBag, Crown, Plus, Home, BarChart2, Users, User, List, ChevronRight } from 'lucide-react-native';
+import { Apple, Flame, ShoppingBag, Crown, Plus, Home, BarChart2, Users, User, List, ChevronRight, Radar, BellRing } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const [selectedDay, setSelectedDay] = useState(4); // Default to Sat 4
-
-  const days = [
-    { day: 'Mon', date: 30 },
-    { day: 'Tue', date: 31 },
-    { day: 'Wed', date: 1 },
-    { day: 'Thu', date: 2 },
-    { day: 'Fri', date: 3 },
-    { day: 'Sat', date: 4 },
-    { day: 'Sun', date: 5 },
-  ];
+  const [isNearStore, setIsNearStore] = useState(true); // Toggle this to test both states
 
   const shoppingLists = [
     { id: 1, name: "Ahmet için alınacaklar", count: 4 }, 
@@ -45,53 +35,50 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* 3. Weekly Calendar Strip */}
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            className="mt-8 pl-6"
-            contentContainerStyle={{ paddingRight: 48 }}
+          {/* Smart Status Card */}
+          <View 
+            className={`mx-6 mt-4 mb-6 rounded-[32px] p-6 border ${isNearStore ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-50'}`}
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.05,
+              shadowRadius: 16,
+              elevation: 4,
+            }}
           >
-            {days.map((item, index) => {
-              const isSelected = item.date === selectedDay;
-              return (
-                <TouchableOpacity 
-                  key={index}
-                  onPress={() => setSelectedDay(item.date)}
-                  className={`mr-3 items-center justify-center w-[52px] h-[72px] ${
-                    isSelected 
-                      ? 'bg-white rounded-full' 
-                      : ''
-                  }`}
-                  style={[
-                    isSelected && {
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.08,
-                      shadowRadius: 8,
-                      elevation: 4,
-                    },
-                    !isSelected && {
-                      borderStyle: 'dashed',
-                      borderWidth: 1.5,
-                      borderColor: '#cbd5e1',
-                      borderRadius: 9999,
-                    }
-                  ]}
-                >
-                  <Text className={`text-[11px] mb-1.5 ${isSelected ? 'text-slate-500 font-semibold' : 'text-slate-400 font-medium'}`}>
-                    {item.day}
-                  </Text>
-                  <Text className={`text-xl ${isSelected ? 'text-slate-900 font-bold' : 'text-slate-400 font-semibold'}`}>
-                    {item.date}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+            {isNearStore ? (
+              // State B: Active / Store Nearby
+              <View className="flex-col">
+                <View className="flex-row justify-between items-center">
+                  <View className="flex-row items-center gap-3">
+                    <BellRing size={24} color="#fff" />
+                    <Text className="text-base font-semibold text-white">Migros is nearby (200m)</Text>
+                  </View>
+                  <View className="bg-green-400 w-3 h-3 rounded-full" />
+                </View>
+                <View className="mt-4 flex-row justify-between items-center">
+                  <Text className="text-slate-300 text-sm">You have 4 items to buy.</Text>
+                  <TouchableOpacity className="bg-white px-4 py-2 rounded-full">
+                    <Text className="text-slate-900 font-bold text-xs">Open List</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              // State A: Idle / Searching
+              <View className="flex-row items-center gap-4">
+                <View className="bg-slate-100 p-3 rounded-full">
+                  <Radar size={24} color="#94a3b8" />
+                </View>
+                <View>
+                  <Text className="text-[15px] font-bold text-slate-800">Background Tracking Active</Text>
+                  <Text className="text-[13px] font-medium text-slate-400 mt-0.5">No saved stores nearby.</Text>
+                </View>
+              </View>
+            )}
+          </View>
 
-          {/* 4. My Lists Section */}
-          <Text className="text-[22px] font-extrabold tracking-tight mx-6 mt-10 mb-4 text-slate-900">My Lists</Text>
+          {/* 3. My Lists Section */}
+          <Text className="text-[22px] font-extrabold tracking-tight mx-6 mb-4 text-slate-900">My Lists</Text>
           {shoppingLists.map((list) => (
             <TouchableOpacity 
               key={list.id} 
