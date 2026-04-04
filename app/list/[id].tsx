@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, TouchableWithoutFeedback, Platform, Animated, Keyboard } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, MoreHorizontal, ShoppingBag, CheckCircle, Clock, Trash2, Plus, Mic, ScanBarcode, Minus } from 'lucide-react-native';
+import { ArrowLeft, MoreHorizontal, ShoppingBag, CheckCircle, Clock, Trash2, Plus, Mic, ScanBarcode, Minus, AlignLeft } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
 
 export default function ListDetailScreen() {
@@ -278,21 +278,23 @@ export default function ListDetailScreen() {
               {/* Expandable Notes Area */}
               <View className="mb-2 z-10">
                 {!isNoteVisible ? (
-                  <TouchableOpacity onPress={() => setIsNoteVisible(true)}>
-                    <Text className="text-xs font-semibold text-blue-500">+ Add a note</Text>
+                  <TouchableOpacity onPress={() => setIsNoteVisible(true)} className="flex-row items-center mt-2">
+                    <AlignLeft size={16} color="#64748b" />
+                    <Text className="text-sm font-medium text-slate-500 ml-1.5">Add a note</Text>
                   </TouchableOpacity>
                 ) : (
-                  <View>
-                    <Text className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Note</Text>
-                    <TextInput
-                      className="bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-medium text-slate-700"
-                      placeholder="e.g. Organic only, 2% fat..."
-                      placeholderTextColor="#94a3b8"
-                      value={note}
-                      onChangeText={setNote}
-                      multiline
-                      autoFocus
-                    />
+                  <View className="mt-2">
+                    <View className="bg-slate-50 rounded-xl px-4 py-3 border border-slate-100">
+                      <TextInput
+                        className="text-sm font-medium text-slate-700"
+                        placeholder="e.g. Organic only, 2% fat..."
+                        placeholderTextColor="#94a3b8"
+                        value={note}
+                        onChangeText={setNote}
+                        multiline={true}
+                        autoFocus
+                      />
+                    </View>
                   </View>
                 )}
               </View>
