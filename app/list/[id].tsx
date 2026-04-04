@@ -48,42 +48,38 @@ export default function ListDetailScreen() {
         contentContainerStyle={{ paddingBottom: 120 }} // Space for floating button
         showsVerticalScrollIndicator={false}
       >
-        {/* 2. List Typography & Date */}
-        <View className="bg-slate-100 self-start px-3 py-1 rounded-lg mx-6 mt-6">
-          <Text className="text-sm font-semibold text-slate-500">5:46 PM</Text>
-        </View>
-
-        <Text className="text-3xl font-extrabold text-slate-900 tracking-tight mx-6 mt-4 mb-6 leading-tight">
+        {/* 2. List Title */}
+        <Text className="text-3xl font-extrabold text-slate-900 tracking-tight mx-6 mt-6 mb-6 leading-tight">
           Ahmet için alınacaklar
         </Text>
 
         {/* 3. Bento Grid Stats */}
         <View className="flex-row mx-6 gap-3 mb-8">
           {/* Card 1 */}
-          <View className="flex-1 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm" style={{ elevation: 2 }}>
-            <View className="flex-row items-center gap-2 mb-3">
-              <ShoppingBag size={14} color="#64748b" />
-              <Text className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Items</Text>
+          <View className="flex-1 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm items-center justify-center" style={{ elevation: 2 }}>
+            <View className="bg-slate-100 p-3 rounded-full mb-3">
+              <ShoppingBag size={20} color="#64748b" />
             </View>
-            <Text className="text-2xl font-black text-slate-900">12</Text>
+            <Text className="text-xs text-slate-500 font-medium">Total Items</Text>
+            <Text className="text-2xl font-bold text-slate-900 mt-1">12</Text>
           </View>
 
           {/* Card 2 */}
-          <View className="flex-1 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm" style={{ elevation: 2 }}>
-            <View className="flex-row items-center gap-2 mb-3">
-              <CheckCircle size={14} color="#10b981" />
-              <Text className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Completed</Text>
+          <View className="flex-1 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm items-center justify-center" style={{ elevation: 2 }}>
+            <View className="bg-slate-100 p-3 rounded-full mb-3">
+              <CheckCircle size={20} color="#10b981" />
             </View>
-            <Text className="text-2xl font-black text-slate-900">4</Text>
+            <Text className="text-xs text-slate-500 font-medium">Completed</Text>
+            <Text className="text-2xl font-bold text-slate-900 mt-1">4</Text>
           </View>
 
           {/* Card 3 */}
-          <View className="flex-1 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm" style={{ elevation: 2 }}>
-            <View className="flex-row items-center gap-2 mb-3">
-              <Clock size={14} color="#f59e0b" />
-              <Text className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Remaining</Text>
+          <View className="flex-1 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm items-center justify-center" style={{ elevation: 2 }}>
+            <View className="bg-slate-100 p-3 rounded-full mb-3">
+              <Clock size={20} color="#f59e0b" />
             </View>
-            <Text className="text-2xl font-black text-slate-900">8</Text>
+            <Text className="text-xs text-slate-500 font-medium">Remaining</Text>
+            <Text className="text-2xl font-bold text-slate-900 mt-1">8</Text>
           </View>
         </View>
 
