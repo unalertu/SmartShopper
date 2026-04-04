@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, StatusBar } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Apple, Flame, ShoppingBag, Crown, Plus, Home, BarChart2, Users, User, List, ChevronRight, Radar, BellRing, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings, ScanBarcode } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
+import { StatusBar } from 'expo-status-bar';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -18,6 +19,7 @@ export default function HomeScreen() {
   return (
     // 1. ROOT MUST BE A STANDARD VIEW, NOT SafeAreaView!
     <View className="flex-1 bg-slate-50"> 
+      <StatusBar style="dark" />
       
       {/* 2. THE SCROLLING CONTENT (SIBLING 1) */}
       <ScrollView 
