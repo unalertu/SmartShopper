@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, TouchableWithoutFeedback, Platform } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, MoreHorizontal, ShoppingBag, CheckCircle, Clock, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, MoreHorizontal, ShoppingBag, CheckCircle, Clock, Trash2, Plus } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
 
 export default function ListDetailScreen() {
@@ -12,6 +12,10 @@ export default function ListDetailScreen() {
   
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [newItemText, setNewItemText] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('General');
+
+  const categories = ['General', '🍎 Fruits', '🥛 Dairy', '🍞 Bakery', '🥩 Meat', '🧼 Cleaning'];
+  const suggestedItems = ['Milk', 'Eggs', 'Bread', 'Water', 'Cheese', 'Chicken'];
 
   const dummyItems = [
     { id: 1, name: 'Süt', isCompleted: true },
@@ -142,48 +146,87 @@ export default function ListDetailScreen() {
       </View>
 
       {/* 6. Add Item Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isAddModalVisible}
-        onRequestClose={() => setIsAddModalVisible(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setIsAddModalVisible(false)}>
-          <View className="flex-1 bg-black/40 justify-end">
-            <TouchableWithoutFeedback>
-              <KeyboardAvoidingView 
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              >
-                <View className="bg-white w-full rounded-t-3xl p-6" style={{ paddingBottom: insets.bottom > 0 ? insets.bottom + 24 : 32 }}>
-                  {/* Drag Handle */}
-                  <View className="w-12 h-1 bg-slate-200 rounded-full self-center mb-6" />
-                  
-                  <Text className="text-lg font-bold text-slate-900 mb-4">Add New Item</Text>
-                  
-                  <TextInput
-                    className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-base text-slate-900 mb-4"
-                    placeholder="E.g., Milk, Bread, Eggs..."
-                    placeholderTextColor="#94a3b8"
-                    value={newItemText}
-                    onChangeText={setNewItemText}
-                    autoFocus={true}
-                  />
-                  
-                  <TouchableOpacity 
-                    className="bg-slate-900 py-4 rounded-full items-center"
-                    onPress={() => {
-                      console.log("Adding item:", newItemText);
-                      setNewItemText('');
-                      setIsAddModalVisible(false);
-                    }}
-                  >
-                    <Text className="text-white font-bold text-lg">Add to List</Text>
-                  </TouchableOpacity>
-                </View>
-              </KeyboardAvoidingView>
+      <Modal animationType="slide" transparent={true} visible={isAddModalVisible} onRequestClose={() => setIsAddModalVisible(false)}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          {/* Background Dimmer */}
+          <View className="flex-1 justify-end bg-black/40">
+            <TouchableWithoutFeedback onPress={() => setIsAddModalVisible(false)}>
+              <View className="absolute top-0 left-0 right-0 bottom-0" />
             </TouchableWithoutFeedback>
+
+            {/* The White Bottom Sheet */}
+            <View className="bg-white w-full h-[75%] rounded-t-[40px] px-6 pt-6 flex-col" style={{ paddingBottom: insets.bottom > 0 ? insets.bottom + 24 : 32 }}>
+              {/* Drag Handle & Title */}
+              <View className="items-center mb-6 z-10">
+                <View className="w-12 h-1.5 bg-slate-200 rounded-full mb-5" />
+                <Text className="text-xl font-extrabold text-slate-900 tracking-tight">Add New Item</Text>
+              </View>
+              
+              {/* Categories */}
+              <View className="mb-6 -mx-6 z-10">
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-6" contentContainerStyle={{ paddingRight: 48 }}>
+                  {categories.map((cat, index) => {
+                    const isSelected = selectedCategory === cat;
+                    return (
+                      <TouchableOpacity 
+                        key={index}
+                        onPress={() => setSelectedCategory(cat)}
+                        className={`px-5 py-2.5 rounded-full mr-3 ${isSelected ? 'bg-slate-900' : 'bg-slate-100'}`}
+                      >
+                        <Text className={`font-semibold ${isSelected ? 'text-white' : 'text-slate-600'}`}>{cat}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+              
+              {/* Input */}
+              <View className="mb-6 z-10">
+                <Text className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Product Name</Text>
+                <TextInput
+                  className="bg-white border-b-2 border-slate-100 py-3 text-2xl font-bold text-slate-900"
+                  placeholder="e.g. Avocado"
+                  placeholderTextColor="#cbd5e1"
+                  value={newItemText}
+                  onChangeText={setNewItemText}
+                  autoFocus={true}
+                />
+              </View>
+
+              {/* Smart Suggestions */}
+              <View className="flex-1 z-10">
+                <Text className="text-sm font-semibold text-slate-400 mb-3">Frequently Added</Text>
+                <View className="flex-row flex-wrap gap-2">
+                  {suggestedItems.map((suggestion, idx) => (
+                    <TouchableOpacity 
+                      key={idx}
+                      onPress={() => setNewItemText(suggestion)}
+                      className="bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl"
+                    >
+                      <Text className="text-slate-600 font-medium">{suggestion}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Action Button */}
+              <TouchableOpacity 
+                className="bg-slate-900 h-16 rounded-[32px] flex-row items-center justify-center shadow-xl mt-4 z-10"
+                onPress={() => {
+                  console.log("Adding item:", newItemText, "to category:", selectedCategory);
+                  setNewItemText('');
+                  setIsAddModalVisible(false);
+                }}
+              >
+                <Plus size={24} color="#ffffff" strokeWidth={2.5} className="mr-2" />
+                <Text className="text-white font-bold text-lg tracking-wide">Add to List</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
       
     </View>
