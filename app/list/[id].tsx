@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, TouchableWithoutFeedback, Platform, Animated } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, TouchableWithoutFeedback, Platform, Animated, Keyboard } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, MoreHorizontal, ShoppingBag, CheckCircle, Clock, Trash2, Plus, Mic, ScanBarcode, Minus } from 'lucide-react-native';
@@ -196,7 +196,9 @@ export default function ListDetailScreen() {
             </TouchableWithoutFeedback>
 
             {/* The White Bottom Sheet */}
-            <View className="bg-white w-full h-[80%] rounded-t-[40px] px-6 pt-6 flex-col" style={{ paddingBottom: insets.bottom > 0 ? insets.bottom + 24 : 32 }}>
+            <View className="bg-white w-full h-[85%] rounded-t-[40px] px-6 pt-6 flex-col" style={{ paddingBottom: insets.bottom > 0 ? insets.bottom + 24 : 32 }}>
+              <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+              <View className="flex-1">
               {/* Drag Handle & Title */}
               <View className="items-center mb-6 z-10">
                 <View className="w-12 h-1.5 bg-slate-200 rounded-full mb-5" />
@@ -205,7 +207,7 @@ export default function ListDetailScreen() {
               
               {/* Categories */}
               <View className="mb-6 -mx-6 z-10">
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-6" contentContainerStyle={{ paddingRight: 48 }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" className="px-6" contentContainerStyle={{ paddingRight: 48 }}>
                   {categories.map((cat, index) => {
                     const isSelected = selectedCategory === cat;
                     return (
@@ -295,36 +297,44 @@ export default function ListDetailScreen() {
                 )}
               </View>
 
-              {/* ====== DIVIDER ====== */}
-              <View className="h-[1px] bg-slate-100 w-full mb-6 mt-8 z-10" />
+              {/* Flex Spacer — absorbs empty space, pushes bottom section down */}
+              <View className="flex-1" />
 
-              {/* Smart Suggestions */}
-              <View className="flex-1 z-10">
-                <Text className="text-sm font-semibold text-slate-400 mb-3">Frequently Added</Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {suggestedItems.map((suggestion, idx) => (
-                    <TouchableOpacity 
-                      key={idx}
-                      onPress={() => setNewItemText(suggestion)}
-                      className="bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl"
-                    >
-                      <Text className="text-slate-600 font-medium">{suggestion}</Text>
-                    </TouchableOpacity>
-                  ))}
+              {/* ====== BOTTOM SECTION (pinned) ====== */}
+              <View className="mt-auto z-10">
+                {/* Divider */}
+                <View className="h-[1px] bg-slate-100 w-full mb-6" />
+
+                {/* Smart Suggestions */}
+                <View className="mb-4">
+                  <Text className="text-sm font-semibold text-slate-400 mb-3">Frequently Added</Text>
+                  <View className="flex-row flex-wrap gap-2">
+                    {suggestedItems.map((suggestion, idx) => (
+                      <TouchableOpacity 
+                        key={idx}
+                        onPress={() => setNewItemText(suggestion)}
+                        className="bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl"
+                      >
+                        <Text className="text-slate-600 font-medium">{suggestion}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
-              </View>
 
-              {/* Action Button — Dynamic State */}
-              <Animated.View style={{ transform: [{ scale: buttonScale }] }} className="z-10">
-                <TouchableOpacity 
-                  disabled={!isButtonActive}
-                  className={`h-16 rounded-[32px] flex-row items-center justify-center shadow-xl mt-4 ${isButtonActive ? 'bg-slate-900' : 'bg-slate-900 opacity-30'}`}
-                  onPress={handleAddItem}
-                >
-                  <Plus size={24} color="#ffffff" strokeWidth={2.5} className="mr-2" />
-                  <Text className="text-white font-bold text-lg tracking-wide">Add to List</Text>
-                </TouchableOpacity>
-              </Animated.View>
+                {/* Action Button — Dynamic State */}
+                <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+                  <TouchableOpacity 
+                    disabled={!isButtonActive}
+                    className={`h-16 rounded-[32px] flex-row items-center justify-center shadow-xl ${isButtonActive ? 'bg-slate-900' : 'bg-slate-900 opacity-30'}`}
+                    onPress={handleAddItem}
+                  >
+                    <Plus size={24} color="#ffffff" strokeWidth={2.5} className="mr-2" />
+                    <Text className="text-white font-bold text-lg tracking-wide">Add to List</Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              </View>
+              </View>
+              </TouchableWithoutFeedback>
             </View>
           </View>
         </KeyboardAvoidingView>
