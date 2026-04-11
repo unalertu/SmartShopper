@@ -126,7 +126,7 @@ function renderCustomTabBar({
           borderRadius: 9999,
           overflow: 'hidden',
           zIndex: 50,
-          bottom: insets.bottom > 0 ? insets.bottom + 8 : 24,
+          bottom: insets.bottom > 0 ? insets.bottom : 16,
           shadowColor: "#000",
           shadowOffset: { width: 0, height: 16 },
           shadowOpacity: 0.1,
