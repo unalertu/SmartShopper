@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Apple, Flame, ShoppingBag, Crown, Plus, Home, Users, User, List, ChevronRight, Radar, BellRing, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings, ScanBarcode } from 'lucide-react-native';
+import { Flame, ShoppingBag, Crown, Plus, Home, Users, User, List, ChevronRight, Radar, BellRing, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings, ScanBarcode } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
@@ -31,11 +31,11 @@ export default function HomeScreen() {
       >
         {/* 1. THE NORMAL SCROLLING HEADER */}
         <View 
-          className="px-6 pb-6 flex-row justify-between items-center" 
-          style={{ paddingTop: insets.top + 16 }}
+          className="px-6 flex-row justify-between items-center" 
+          style={{ paddingTop: insets.top }}
         >
           <View className="flex-row items-center gap-2">
-            <Apple size={30} color="#0f172a" fill="#0f172a" />
+            <Image source={require('../../assets/images/app-logo.png')} style={{ width: 56, height: 56, marginLeft: -6, marginTop: -4 }} resizeMode="contain" />
             <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight">Smart Shopper</Text>
           </View>
           <View className="bg-white rounded-full px-3 py-1 flex-row items-center gap-1.5 shadow-sm border border-slate-100" style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3 }}>
@@ -47,7 +47,7 @@ export default function HomeScreen() {
         {/* 2. THE MAP WIDGET */}
           {/* Smart Status Card */}
           <View 
-            className="mx-6 mt-4 mb-6 rounded-[32px] bg-white border border-slate-50 overflow-hidden"
+            className="mx-6 mt-1 mb-6 rounded-[32px] bg-white border border-slate-50 overflow-hidden"
             style={{
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 6 },
