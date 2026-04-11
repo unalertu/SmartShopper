@@ -41,3 +41,7 @@ app-example
 # generated native folders
 /ios
 /android
+
+# non-project files
+*.pdf
+Gemini_Generated_Image_*.png
