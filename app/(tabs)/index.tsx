@@ -60,11 +60,13 @@ export default function HomeScreen() {
               // State B: Active / Store Nearby
               <View className="flex-col">
                 {/* Upper Tier: Static Map Image */}
-                <Image 
-                  source={require('../../assets/images/stockmap.png')} 
-                  className="w-full h-48 rounded-t-[32px]" 
-                  resizeMode="cover" 
-                />
+                <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/store-geofence')}>
+                  <Image 
+                    source={require('../../assets/images/stockmap.png')} 
+                    className="w-full h-48 rounded-t-[32px]" 
+                    resizeMode="cover" 
+                  />
+                </TouchableOpacity>
 
                 {/* Divider */}
                 <View className="h-[1px] w-full bg-slate-100" />

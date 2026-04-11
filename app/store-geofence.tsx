@@ -1,0 +1,331 @@
+import React, { useState } from 'react';
+import { View, Text, Switch, TextInput, TouchableOpacity, ScrollView, Alert, KeyboardAvoidingView, Platform, StyleSheet, ActivityIndicator } from 'react-native';
+import MapView, { Marker, Circle } from 'react-native-maps';
+import Slider from '@react-native-community/slider';
+import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
+import { ChevronDown, MapPin, Save, ShieldAlert, Clock, ArrowRightLeft, ShoppingBasket } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+
+// Mock store data for testing
+const MOCK_STORE = {
+  id: 'store_123',
+  name: 'Migros Jet',
+  latitude: 41.0082,
+  longitude: 28.9784,
+};
+
+export default function GeofenceConfigurationScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  
+  // States
+  const [radius, setRadius] = useState<number>(200);
+  const [isTracking, setIsTracking] = useState<boolean>(false);
+  const [triggerType, setTriggerType] = useState<'entry' | 'dwell'>('entry');
+  const [note, setNote] = useState<string>('');
+
+  const [markets, setMarkets] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const fetchTimeout = React.useRef<any>(null);
+
+  const fetchMarketsFromOverpass = async (region: any) => {
+    try {
+      setIsLoading(true);
+      const south = region.latitude - region.latitudeDelta / 2;
+      const west = region.longitude - region.longitudeDelta / 2;
+      const north = region.latitude + region.latitudeDelta / 2;
+      const east = region.longitude + region.longitudeDelta / 2;
+
+      const query = `[out:json][timeout:25];
+node["shop"~"supermarket|convenience"](${south},${west},${north},${east});
+out body;`;
+      
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'text/plain',
+        },
+        body: query,
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Overpass API error:", response.status, errText);
+        throw new Error(`Overpass API returning status ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data && data.elements) {
+        const fetchedMarkets = data.elements.map((el: any) => ({
+          id: el.id.toString(),
+          name: el.tags?.name || 'Local Store',
+          latitude: el.lat,
+          longitude: el.lon,
+        }));
+        setMarkets(fetchedMarkets);
+      }
+    } catch (error) {
+      console.error('Error fetching from Overpass:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegionChangeComplete = (region: any) => {
+    // Debounce the pan event so we don't spam the "API"
+    if (fetchTimeout.current) {
+      clearTimeout(fetchTimeout.current);
+    }
+    fetchTimeout.current = setTimeout(() => {
+      fetchMarketsFromOverpass(region);
+    }, 1000); // 1000ms debounce
+  };
+
+  // Map Region
+  const mapRegion = {
+    latitude: MOCK_STORE.latitude,
+    longitude: MOCK_STORE.longitude,
+    latitudeDelta: 0.01 + (radius / 50000), // Slightly zoom out based on radius
+    longitudeDelta: 0.01 + (radius / 50000),
+  };
+
+  const requestBackgroundLocationPermission = async () => {
+    try {
+      // First, need foreground permissions
+      const fgStatus = await Location.requestForegroundPermissionsAsync();
+      if (fgStatus.status !== 'granted') {
+        Alert.alert('Permission Denied', 'Foreground location permission is required for background tracking.');
+        setIsTracking(false);
+        return;
+      }
+
+      // Check/Request Background permissions
+      const bgStatus = await Location.requestBackgroundPermissionsAsync();
+      if (bgStatus.status !== 'granted') {
+        Alert.alert(
+          'Background Location Needed',
+          'To be notified when you are near this store even when the app is closed, please open Settings and select "Allow all the time".',
+          [{ text: 'OK' }]
+        );
+        setIsTracking(false);
+      }
+    } catch (error) {
+      console.warn(error);
+      setIsTracking(false);
+    }
+  };
+
+  const handleTrackingToggle = (value: boolean) => {
+    setIsTracking(value);
+    if (value) {
+      requestBackgroundLocationPermission();
+    }
+  };
+
+  const handleSave = () => {
+    const configPayload = {
+      storeId: MOCK_STORE.id,
+      storeName: MOCK_STORE.name,
+      alertRadius: radius,
+      isActive: isTracking,
+      triggerType: triggerType,
+      customNote: note,
+    };
+    
+    console.log('✅ SAVED GEOFENCE CONFIGURATION:\n', JSON.stringify(configPayload, null, 2));
+    
+    Alert.alert('Configuration Saved', 'Your location tracking settings have been updated.', [
+      { text: 'Done', onPress: () => router.back() }
+    ]);
+  };
+
+  return (
+    <View className="flex-1 bg-white">
+      <StatusBar style="dark" />
+      
+      {/* MAP SECTION (Top 55-60%) */}
+      <View className="flex-[0.55] relative">
+        <MapView
+          style={StyleSheet.absoluteFillObject}
+          initialRegion={mapRegion}
+          showsUserLocation={true}
+          showsPointsOfInterest={false}
+          onRegionChangeComplete={handleRegionChangeComplete}
+          customMapStyle={[
+            {
+              featureType: "poi",
+              elementType: "labels",
+              stylers: [{ visibility: "off" }]
+            }
+          ]}
+        >
+          {/* Dynamically Fetched Supermarkets */}
+          {markets.map(market => (
+            <Marker
+              key={market.id}
+              coordinate={{ latitude: market.latitude, longitude: market.longitude }}
+              title={market.name}
+            >
+              <View className="bg-white p-1.5 rounded-full border border-slate-200 shadow-sm">
+                <ShoppingBasket size={18} color="#0f172a" />
+              </View>
+            </Marker>
+          ))}
+
+          {/* Store Pin (Selected / Base Geofence Center) */}
+          <Marker 
+            coordinate={{ latitude: MOCK_STORE.latitude, longitude: MOCK_STORE.longitude }}
+            title={MOCK_STORE.name}
+          >
+            <View className="bg-slate-900 p-2 rounded-full border-2 border-white shadow-sm">
+               <MapPin size={24} color="#ffffff" />
+            </View>
+          </Marker>
+
+          {/* Dynamic Radius Circle */}
+          <Circle
+            center={{ latitude: MOCK_STORE.latitude, longitude: MOCK_STORE.longitude }}
+            radius={radius}
+            strokeWidth={2}
+            strokeColor="rgba(14, 165, 233, 0.6)" // Sky blue outline
+            fillColor="rgba(56, 189, 248, 0.2)"  // Transparent sky blue fill
+          />
+        </MapView>
+        
+        {/* Loading Spinner Overlay */}
+        {isLoading && (
+          <View 
+            className="absolute top-12 right-5 bg-white/90 p-2.5 rounded-full shadow-sm"
+            style={{ marginTop: Platform.OS === 'android' ? insets.top + 8 : undefined }}
+          >
+            <ActivityIndicator size="small" color="#0f172a" />
+          </View>
+        )}
+
+        {/* Back / Close Button */}
+        <TouchableOpacity 
+          onPress={() => router.back()}
+          className="absolute top-12 left-5 bg-white/90 p-2 rounded-full shadow-sm"
+          style={{ paddingTop: Platform.OS === 'android' ? insets.top + 8 : undefined }}
+        >
+          <ChevronDown size={28} color="#0f172a" />
+        </TouchableOpacity>
+      </View>
+
+      {/* BOTTOM SHEET / CONTROL PANEL (Bottom 40-45%) */}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+        className="flex-[0.45] bg-white rounded-t-[32px] -mt-8 shadow-lg"
+        style={{
+          shadowColor: '#000', shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 10
+        }}
+      >
+        {/* Grabber handle layout */}
+        <View className="w-full items-center pt-4 pb-2">
+            <View className="w-12 h-1.5 bg-slate-200 rounded-full" />
+        </View>
+
+        <ScrollView 
+          className="flex-1 px-6 pb-8" 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+        >
+          {/* Header */}
+          <Text className="text-[24px] font-extrabold text-slate-900 tracking-tight mb-6">
+            {MOCK_STORE.name} Config
+          </Text>
+
+          {/* 1. Radius Slider Section */}
+          <View className="mb-6 bg-slate-50 p-4 rounded-[20px] border border-slate-100">
+            <View className="flex-row justify-between items-center mb-2">
+              <Text className="text-[16px] font-bold text-slate-800">Notification Distance</Text>
+              <Text className="text-[16px] font-extrabold text-blue-500">{radius}m</Text>
+            </View>
+            <Slider
+              style={{ width: '100%', height: 40 }}
+              minimumValue={100}
+              maximumValue={2000}
+              step={100}
+              value={radius}
+              onValueChange={setRadius}
+              minimumTrackTintColor="#3b82f6"
+              maximumTrackTintColor="#cbd5e1"
+              thumbTintColor="#ffffff"
+            />
+            <View className="flex-row justify-between">
+              <Text className="text-[12px] font-medium text-slate-400">100m</Text>
+              <Text className="text-[12px] font-medium text-slate-400">2km</Text>
+            </View>
+          </View>
+
+          {/* 2. Tracking Toggle Section */}
+          <View className="mb-6 bg-white border border-slate-100 p-4 rounded-[20px] flex-row items-center justify-between shadow-sm">
+             <View className="flex-row items-center gap-3 max-w-[80%]">
+               <View className={`p-2.5 rounded-full ${isTracking ? 'bg-green-100' : 'bg-slate-100'}`}>
+                 <ShieldAlert size={20} color={isTracking ? '#16a34a' : '#94a3b8'} />
+               </View>
+               <View>
+                 <Text className="text-[16px] font-bold text-slate-900">Enable Tracking</Text>
+                 <Text className="text-[12px] text-slate-500 mt-0.5 max-w-[95%]">Get notified when you are near this store.</Text>
+               </View>
+             </View>
+             <Switch
+                value={isTracking}
+                onValueChange={handleTrackingToggle}
+                trackColor={{ false: '#e2e8f0', true: '#22c55e' }}
+                thumbColor="#ffffff"
+             />
+          </View>
+
+          {/* 3. Trigger Event Selector */}
+          <Text className="text-[14px] font-bold text-slate-500 uppercase tracking-widest mb-3 ml-1">Notify Me</Text>
+          <View className="flex-row gap-3 mb-6">
+            <TouchableOpacity 
+              onPress={() => setTriggerType('entry')}
+              className={`flex-1 flex-row items-center justify-center gap-2 py-3 rounded-xl border ${triggerType === 'entry' ? 'border-amber-400 bg-amber-50' : 'border-slate-200 bg-white'}`}
+            >
+              <ArrowRightLeft size={18} color={triggerType === 'entry' ? '#d97706' : '#64748b'} />
+              <Text className={`font-bold ${triggerType === 'entry' ? 'text-amber-700' : 'text-slate-600'}`}>On Entry</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              onPress={() => setTriggerType('dwell')}
+              className={`flex-1 flex-row items-center justify-center gap-2 py-3 rounded-xl border ${triggerType === 'dwell' ? 'border-amber-400 bg-amber-50' : 'border-slate-200 bg-white'}`}
+            >
+              <Clock size={18} color={triggerType === 'dwell' ? '#d97706' : '#64748b'} />
+               <Text className={`font-bold ${triggerType === 'dwell' ? 'text-amber-700' : 'text-slate-600'}`}>On Dwell >5m</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* 4. Notes Input */}
+          <Text className="text-[14px] font-bold text-slate-500 uppercase tracking-widest mb-3 ml-1">Shopping Note / Reminder</Text>
+          <View className="bg-slate-50 rounded-[20px] mb-6 p-1 border border-slate-100">
+            <TextInput
+              className="px-4 py-4 text-[16px] text-slate-900 min-h-[100px] font-medium"
+              placeholder="e.g., Don't forget the milk!"
+              placeholderTextColor="#94a3b8"
+              multiline
+              textAlignVertical="top"
+              value={note}
+              onChangeText={setNote}
+            />
+          </View>
+
+          {/* 5. Save Button */}
+          <TouchableOpacity 
+            onPress={handleSave}
+            className="bg-slate-900 py-4 rounded-[20px] flex-row items-center justify-center gap-2 shadow-md shadow-slate-900/20 mt-2 mb-8"
+          >
+            <Save size={20} color="#ffffff" />
+            <Text className="text-white text-[17px] font-extrabold tracking-wide">Save Configuration</Text>
+          </TouchableOpacity>
+
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
+  );
+}
