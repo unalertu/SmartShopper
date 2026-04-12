@@ -126,7 +126,7 @@ function renderCustomTabBar({
           borderRadius: 9999,
           overflow: 'hidden',
           zIndex: 50,
-          bottom: insets.bottom > 0 ? insets.bottom : 16,
+          bottom: insets.bottom > 0 ? insets.bottom - 4 : 12,
           shadowColor: "#000",
           shadowOffset: { width: 0, height: 16 },
           shadowOpacity: 0.1,
@@ -135,7 +135,7 @@ function renderCustomTabBar({
         }}
       >
         <View
-          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(248, 250, 252, 0.8)', paddingLeft: 24, paddingRight: 8, paddingVertical: 8, borderRadius: 9999, borderTopWidth: 0.5, borderTopColor: "#f1f5f9" }}
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(248, 250, 252, 0.8)', paddingLeft: 20, paddingRight: 6, paddingVertical: 6, borderRadius: 9999, borderTopWidth: 0.5, borderTopColor: "#f1f5f9" }}
         >
           {/* Map over actual Expo Router state.routes */}
           {state.routes.map((route, index) => {
@@ -164,16 +164,16 @@ function renderCustomTabBar({
                 style={{ alignItems: 'center', justifyContent: 'center' }}
               >
                 {isFocused ? (
-                  <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)', width: 48, height: 40, borderRadius: 16, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 1 }}>
-                    <Icon size={22} color="#0f172a" strokeWidth={2.5} />
+                  <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)', width: 44, height: 34, borderRadius: 14, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 1 }}>
+                    <Icon size={20} color="#0f172a" strokeWidth={2.5} />
                   </View>
                 ) : (
-                  <View style={{ width: 48, height: 40, alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon size={22} color="#94a3b8" strokeWidth={2} />
+                  <View style={{ width: 44, height: 34, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon size={20} color="#94a3b8" strokeWidth={2} />
                   </View>
                 )}
                 <Text
-                  style={{ fontSize: 10, marginTop: 4, fontWeight: isFocused ? 'bold' : '600', color: isFocused ? '#0f172a' : '#94a3b8' }}
+                  style={{ fontSize: 9, marginTop: 2, fontWeight: isFocused ? 'bold' : '600', color: isFocused ? '#0f172a' : '#94a3b8' }}
                 >
                   {label}
                 </Text>
@@ -184,12 +184,12 @@ function renderCustomTabBar({
           {/* Floating Action Button */}
           <TouchableOpacity
             onPress={() => setIsActionsMenuOpen(!isActionsMenuOpen)}
-            style={{ backgroundColor: '#0f172a', borderRadius: 26, width: 52, height: 52, alignItems: 'center', justifyContent: 'center', marginLeft: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 8 }}
+            style={{ backgroundColor: '#0f172a', borderRadius: 24, width: 48, height: 48, alignItems: 'center', justifyContent: 'center', marginLeft: 6, shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 8 }}
           >
             {isActionsMenuOpen ? (
-              <X size={28} color="#fff" strokeWidth={2.5} />
+              <X size={24} color="#fff" strokeWidth={2.5} />
             ) : (
-              <Plus size={28} color="#fff" strokeWidth={2.5} />
+              <Plus size={24} color="#fff" strokeWidth={2.5} />
             )}
           </TouchableOpacity>
         </View>

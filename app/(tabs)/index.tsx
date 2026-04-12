@@ -35,8 +35,8 @@ export default function HomeScreen() {
           style={{ paddingTop: insets.top }}
         >
           <View className="flex-row items-center gap-2">
-            <Image source={require('../../assets/images/app-logo.png')} style={{ width: 56, height: 56, marginLeft: -6, marginTop: -4 }} resizeMode="contain" />
-            <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight">Smart Shopper</Text>
+            <Image source={require('../../assets/images/app-logo.png')} style={{ width: 56, height: 56, marginLeft: -24, marginTop: -4 }} resizeMode="contain" />
+            <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight" style={{ marginTop: 6 }}>Smart Shopper</Text>
           </View>
           <View className="bg-white rounded-full px-3 py-1 flex-row items-center gap-1.5 shadow-sm border border-slate-100" style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3 }}>
             <Flame size={16} color="#f97316" fill="#f97316" />
@@ -47,7 +47,7 @@ export default function HomeScreen() {
         {/* 2. THE MAP WIDGET */}
           {/* Smart Status Card */}
           <View 
-            className="mx-6 mt-1 mb-6 rounded-[32px] bg-white border border-slate-50 overflow-hidden"
+            className="mx-6 mt-6 mb-6 rounded-[32px] bg-white border border-slate-50 overflow-hidden"
             style={{
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 6 },
