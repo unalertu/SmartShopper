@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { Plus, MapPin, Navigation, Trash2 } from "lucide-react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useLocationStore } from "@/store";
-import { Colors } from "@/constants/Theme";
+import { Colors } from "@/constants/theme";
 
 export default function LocationsScreen() {
   const router = useRouter();

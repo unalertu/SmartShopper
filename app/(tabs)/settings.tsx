@@ -9,7 +9,7 @@ import {
 } from "lucide-react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useShoppingListStore, useLocationStore } from "@/store";
-import { Colors } from "@/constants/Theme";
+import { Colors } from "@/constants/theme";
 
 export default function SettingsScreen() {
   const { items, clearPurchased, clearAll } = useShoppingListStore();

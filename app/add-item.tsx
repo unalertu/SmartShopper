@@ -13,7 +13,7 @@ import { useRouter } from "expo-router";
 import { X, Minus, Plus, Check } from "lucide-react-native";
 import { useShoppingListStore } from "@/store";
 import { CATEGORIES, UNITS } from "@/constants";
-import { Colors } from "@/constants/Theme";
+import { Colors } from "@/constants/theme";
 
 export default function AddItemScreen() {
   const router = useRouter();

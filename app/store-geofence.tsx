@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Switch, TextInput, TouchableOpacity, ScrollView, Alert, KeyboardAvoidingView, Platform, StyleSheet, ActivityIndicator } from 'react-native';
 import MapView, { Marker, Circle } from 'react-native-maps';
 import Slider from '@react-native-community/slider';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import { ChevronDown, MapPin, Save, ShieldAlert, Clock, ArrowRightLeft, ShoppingBasket } from 'lucide-react-native';
+import { ChevronDown, MapPin, Save, ShieldAlert, Clock, ArrowRightLeft, ShoppingBasket, Search, AlertCircle } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { fetchMarkets } from '../services/overpassService';
 
 // Mock store data for testing
 const MOCK_STORE = {
@@ -28,61 +30,74 @@ export default function GeofenceConfigurationScreen() {
 
   const [markets, setMarkets] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const fetchTimeout = React.useRef<any>(null);
+  const [errorStatus, setErrorStatus] = useState<string | null>(null);
+  const [currentRegion, setCurrentRegion] = useState<any>(null);
+  const mapRef = useRef<MapView>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.warn('Foreground location permission denied.');
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({});
+        const newRegion = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          latitudeDelta: 0.01 + (radius / 50000),
+          longitudeDelta: 0.01 + (radius / 50000),
+        };
+        
+        mapRef.current?.animateToRegion(newRegion, 1000);
+        fetchMarketsFromOverpass(newRegion);
+      } catch (error) {
+        console.error('Error fetching live location:', error);
+      }
+    })();
+  }, []);
 
   const fetchMarketsFromOverpass = async (region: any) => {
+    if (region.latitudeDelta > 0.05) {
+      console.log("Zoomed out too far, skipping fetch to avoid 504.");
+      return;
+    }
+
     try {
       setIsLoading(true);
+      setErrorStatus(null);
       const south = region.latitude - region.latitudeDelta / 2;
       const west = region.longitude - region.longitudeDelta / 2;
       const north = region.latitude + region.latitudeDelta / 2;
       const east = region.longitude + region.longitudeDelta / 2;
 
-      const query = `[out:json][timeout:25];
-node["shop"~"supermarket|convenience"](${south},${west},${north},${east});
-out body;`;
+      const fetchedMarkets = await fetchMarkets(south, west, north, east);
+      setMarkets(fetchedMarkets);
       
-      const response = await fetch('https://overpass-api.de/api/interpreter', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'text/plain',
-        },
-        body: query,
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        console.error("Overpass API error:", response.status, errText);
-        throw new Error(`Overpass API returning status ${response.status}`);
+      if (fetchedMarkets.length === 0) {
+        setErrorStatus("No stores found in this area.");
       }
-
-      const data = await response.json();
-      
-      if (data && data.elements) {
-        const fetchedMarkets = data.elements.map((el: any) => ({
-          id: el.id.toString(),
-          name: el.tags?.name || 'Local Store',
-          latitude: el.lat,
-          longitude: el.lon,
-        }));
-        setMarkets(fetchedMarkets);
-      }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching from Overpass:', error);
+      const msg = error.message.includes('429') 
+        ? "API limit reached. Waiting for mirror..." 
+        : "Servers are busy. Please try again in 30s.";
+      setErrorStatus(msg);
+      
+      Alert.alert(
+        "Service Busy",
+        "OpenStreetMap servers are currently rate-limiting this area. We've tried several mirrors but they are also busy. Please wait a moment.",
+        [{ text: "OK" }]
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleRegionChangeComplete = (region: any) => {
-    // Debounce the pan event so we don't spam the "API"
-    if (fetchTimeout.current) {
-      clearTimeout(fetchTimeout.current);
-    }
-    fetchTimeout.current = setTimeout(() => {
-      fetchMarketsFromOverpass(region);
-    }, 1000); // 1000ms debounce
+    setCurrentRegion(region);
   };
 
   // Map Region
@@ -150,9 +165,11 @@ out body;`;
       {/* MAP SECTION (Top 55-60%) */}
       <View className="flex-[0.55] relative">
         <MapView
+          ref={mapRef}
           style={StyleSheet.absoluteFillObject}
           initialRegion={mapRegion}
           showsUserLocation={true}
+          followsUserLocation={false}
           showsPointsOfInterest={false}
           onRegionChangeComplete={handleRegionChangeComplete}
           customMapStyle={[
@@ -196,21 +213,44 @@ out body;`;
           />
         </MapView>
         
-        {/* Loading Spinner Overlay */}
-        {isLoading && (
-          <View 
-            className="absolute top-12 right-5 bg-white/90 p-2.5 rounded-full shadow-sm"
-            style={{ marginTop: Platform.OS === 'android' ? insets.top + 8 : undefined }}
-          >
-            <ActivityIndicator size="small" color="#0f172a" />
+        <View 
+           className="absolute top-14 left-0 right-0 items-center pointer-events-box-none"
+           style={{ marginTop: Platform.OS === 'android' ? insets.top : undefined, zIndex: 10 }}
+        >
+          <View className="items-center">
+            <TouchableOpacity
+              onPress={() => currentRegion && fetchMarketsFromOverpass(currentRegion)}
+              disabled={isLoading || !currentRegion}
+              className="bg-white/95 flex-row items-center gap-2 px-5 py-3 rounded-full shadow-md"
+              style={{ shadowColor: '#0f172a', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 5 }}
+            >
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#0ea5e9" />
+              ) : (
+                <Search size={18} color="#0ea5e9" strokeWidth={2.5} />
+              )}
+              <Text className="text-[15px] font-bold text-slate-800">
+                {isLoading ? 'Searching...' : 'Search this area'}
+              </Text>
+            </TouchableOpacity>
+            
+            {errorStatus && (
+              <Animated.View 
+                entering={FadeInDown.duration(300)}
+                className="bg-slate-900/90 flex-row items-center gap-2 px-3 py-1.5 rounded-full mt-3 shadow-lg border border-slate-700"
+              >
+                <AlertCircle size={14} color="#fca5a5" />
+                <Text className="text-[12px] font-bold text-white uppercase tracking-tight">{errorStatus}</Text>
+              </Animated.View>
+            )}
           </View>
-        )}
+        </View>
 
         {/* Back / Close Button */}
         <TouchableOpacity 
           onPress={() => router.back()}
-          className="absolute top-12 left-5 bg-white/90 p-2 rounded-full shadow-sm"
-          style={{ paddingTop: Platform.OS === 'android' ? insets.top + 8 : undefined }}
+          className="absolute top-14 left-5 bg-white/90 p-2 rounded-full shadow-sm"
+          style={{ paddingTop: Platform.OS === 'android' ? insets.top : undefined, zIndex: 10 }}
         >
           <ChevronDown size={28} color="#0f172a" />
         </TouchableOpacity>
@@ -297,7 +337,7 @@ out body;`;
               className={`flex-1 flex-row items-center justify-center gap-2 py-3 rounded-xl border ${triggerType === 'dwell' ? 'border-amber-400 bg-amber-50' : 'border-slate-200 bg-white'}`}
             >
               <Clock size={18} color={triggerType === 'dwell' ? '#d97706' : '#64748b'} />
-               <Text className={`font-bold ${triggerType === 'dwell' ? 'text-amber-700' : 'text-slate-600'}`}>On Dwell >5m</Text>
+               <Text className={`font-bold ${triggerType === 'dwell' ? 'text-amber-700' : 'text-slate-600'}`}>On Dwell {'>'}5m</Text>
             </TouchableOpacity>
           </View>
 

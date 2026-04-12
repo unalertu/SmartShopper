@@ -21,7 +21,7 @@ import {
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useLocationStore } from "@/store";
 import { getCurrentLocation } from "@/services/locationService";
-import { Colors, GEOFENCE_DEFAULT_RADIUS } from "@/constants/Theme";
+import { Colors, GEOFENCE_DEFAULT_RADIUS } from "@/constants/theme";
 
 export default function AddLocationScreen() {
   const router = useRouter();
