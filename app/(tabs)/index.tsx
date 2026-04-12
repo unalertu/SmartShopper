@@ -5,6 +5,7 @@ import { Flame, ShoppingBag, Crown, Plus, Home, Users, User, List, ChevronRight,
 import { BlurView } from 'expo-blur';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import ProgressiveBlur from '../../components/ProgressiveBlur';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -23,27 +24,33 @@ export default function HomeScreen() {
     <View className="flex-1 bg-slate-50"> 
       <StatusBar style="dark" />
       
-      {/* 2. THE SCROLLING CONTENT (SIBLING 1) */}
+      {/* 2. PROGRESSIVE BLUR HEADER BACKGROUND */}
+      <View className="absolute top-0 left-0 right-0 z-10 pointer-events-none">
+        <ProgressiveBlur height={insets.top + 80} />
+      </View>
+
+      {/* 3. STICKY HEADER CONTENT */}
+      <View 
+        className="absolute top-0 left-0 right-0 px-6 flex-row justify-between items-center z-20" 
+        style={{ paddingTop: insets.top }}
+        pointerEvents="box-none"
+      >
+        <View className="flex-row items-center gap-2" pointerEvents="none">
+          <Image source={require('../../assets/images/app-logo.png')} style={{ width: 56, height: 56, marginLeft: -24, marginTop: -4 }} resizeMode="contain" />
+          <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight" style={{ marginTop: 6 }}>Smart Shopper</Text>
+        </View>
+        <TouchableOpacity className="bg-white/90 rounded-full px-3 py-1 flex-row items-center gap-1.5 shadow-sm border border-slate-100" style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3 }}>
+          <Flame size={16} color="#f97316" fill="#f97316" />
+          <Text className="text-slate-800 font-bold text-sm">0</Text>
+        </TouchableOpacity>
+      </View>
+      
+      {/* 4. THE SCROLLING CONTENT */}
       <ScrollView 
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 150 }} // Only need bottom padding now for the nav bar
+        contentContainerStyle={{ paddingTop: insets.top + 70, paddingBottom: 150 }} 
         showsVerticalScrollIndicator={false}
       >
-        {/* 1. THE NORMAL SCROLLING HEADER */}
-        <View 
-          className="px-6 flex-row justify-between items-center" 
-          style={{ paddingTop: insets.top }}
-        >
-          <View className="flex-row items-center gap-2">
-            <Image source={require('../../assets/images/app-logo.png')} style={{ width: 56, height: 56, marginLeft: -24, marginTop: -4 }} resizeMode="contain" />
-            <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight" style={{ marginTop: 6 }}>Smart Shopper</Text>
-          </View>
-          <View className="bg-white rounded-full px-3 py-1 flex-row items-center gap-1.5 shadow-sm border border-slate-100" style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3 }}>
-            <Flame size={16} color="#f97316" fill="#f97316" />
-            <Text className="text-slate-800 font-bold text-sm">0</Text>
-          </View>
-        </View>
-
         {/* 2. THE MAP WIDGET */}
           {/* Smart Status Card */}
           <View 
