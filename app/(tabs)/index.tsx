@@ -26,7 +26,7 @@ export default function HomeScreen() {
       
       {/* 2. PROGRESSIVE BLUR HEADER BACKGROUND */}
       <View className="absolute top-0 left-0 right-0 z-10 pointer-events-none">
-        <ProgressiveBlur height={insets.top + 80} />
+        <ProgressiveBlur height={insets.top + 55} />
       </View>
 
       {/* 3. STICKY HEADER CONTENT */}
@@ -48,7 +48,7 @@ export default function HomeScreen() {
       {/* 4. THE SCROLLING CONTENT */}
       <ScrollView 
         className="flex-1"
-        contentContainerStyle={{ paddingTop: insets.top + 70, paddingBottom: 150 }} 
+        contentContainerStyle={{ paddingTop: insets.top + 55, paddingBottom: 150 }} 
         showsVerticalScrollIndicator={false}
       >
         {/* 2. THE MAP WIDGET */}
