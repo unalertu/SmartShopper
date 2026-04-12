@@ -23,12 +23,6 @@ export default function ProgressiveBlur({
   // block and achieve a cleaner gradient blur.
   return (
     <View style={[StyleSheet.absoluteFill, { height, overflow: 'hidden' }]} pointerEvents="none">
-      {/* Base layer that covers the entire specified height */}
-      <BlurView
-        intensity={maxIntensity * 0.3}
-        tint={tint}
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, height }}
-      />
       {/* Mid layer that covers the core section */}
       <BlurView
         intensity={maxIntensity * 0.4}
