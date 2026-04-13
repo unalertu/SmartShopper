@@ -102,18 +102,9 @@ export default function GeofenceConfigurationScreen() {
     }
   };
 
-  // Auto-fetch stores when user pans/zooms the map (debounced)
+  // Update region when user pans/zooms the map
   const handleRegionChangeComplete = (region: any) => {
     setCurrentRegion(region);
-    
-    // Skip the auto-fetch for the initial MOCK_STORE region before we have user location
-    if (!hasInitialFetch.current) return;
-
-    // Debounce: wait 1.5 seconds after the user stops moving the map
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      fetchMarketsFromOverpass(region);
-    }, 1500);
   };
 
   // Map Region — use user location if available, otherwise fallback to mock
