@@ -16,6 +16,26 @@ export default function HomeScreen() {
   const [isNearStore, setIsNearStore] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
 
+  // Haversine formula — returns distance in meters between two lat/lng points
+  const haversineDistance = (
+    lat1: number, lon1: number,
+    lat2: number, lon2: number
+  ): number => {
+    const R = 6371000; // Earth radius in meters
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
+  const formatDistance = (meters: number): string => {
+    if (meters < 1000) return `${Math.round(meters)}m away`;
+    return `${(meters / 1000).toFixed(1)}km away`;
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -27,25 +47,39 @@ export default function HomeScreen() {
         }
 
         const location = await Location.getCurrentPositionAsync({});
-        const s = location.coords.latitude - 0.01;
-        const n = location.coords.latitude + 0.01;
-        const w = location.coords.longitude - 0.01;
-        const e = location.coords.longitude + 0.01;
+        const userLat = location.coords.latitude;
+        const userLon = location.coords.longitude;
+
+        // Search within ~1 km radius
+        const s = userLat - 0.01;
+        const n = userLat + 0.01;
+        const w = userLon - 0.01;
+        const e = userLon + 0.01;
 
         const markets = await fetchMarkets(s, w, n, e);
         if (markets && markets.length > 0) {
-          setNearbyStore(`${markets[0].name || 'Store'} is nearby`);
+          // Find the nearest store by Haversine distance
+          let nearest = markets[0];
+          let minDist = haversineDistance(userLat, userLon, nearest.latitude, nearest.longitude);
+
+          for (let i = 1; i < markets.length; i++) {
+            const dist = haversineDistance(userLat, userLon, markets[i].latitude, markets[i].longitude);
+            if (dist < minDist) {
+              minDist = dist;
+              nearest = markets[i];
+            }
+          }
+
+          setNearbyStore(`${nearest.name} is ${formatDistance(minDist)}`);
           setIsNearStore(true);
         } else {
-          // Fallback to a mock store if Overpass finds nothing (e.g. rate limit or rural area)
-          setNearbyStore('Migros Jet is nearby');
-          setIsNearStore(true);
+          setNearbyStore('No stores nearby');
+          setIsNearStore(false);
         }
       } catch (error) {
         console.error('Error fetching nearby store:', error);
-        // Fallback to a mock store if network fails
-        setNearbyStore('Migros Jet is nearby');
-        setIsNearStore(true);
+        setNearbyStore('Could not find stores');
+        setIsNearStore(false);
       }
     })();
   }, []);
