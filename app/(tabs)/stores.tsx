@@ -20,103 +20,94 @@ export default function StoresScreen() {
     <View className="flex-1 bg-slate-50">
       <StatusBar style="dark" />
       
-      {/* 1. TOP FULL-WIDTH MAP AREA */}
-      <View className="h-[40%] relative">
-        <MapView
-          style={StyleSheet.absoluteFillObject}
-          initialRegion={{
-            latitude: 41.0082,
-            longitude: 28.9784,
-            latitudeDelta: 0.1,
-            longitudeDelta: 0.1,
-          }}
-          showsCompass={false}
-          showsUserLocation={true}
-          customMapStyle={[
-            {
-              featureType: "poi",
-              elementType: "labels",
-              stylers: [{ visibility: "off" }]
-            }
-          ]}
-        />
-
-        {/* Back Button Overlay */}
-        <TouchableOpacity 
-          onPress={() => router.back()}
-          className="absolute left-5 bg-white/90 p-2.5 rounded-full shadow-sm"
-          style={{ top: Math.max(45, insets.top + 10), zIndex: 10 }}
-        >
-          <ChevronLeft size={24} color="#0f172a" />
-        </TouchableOpacity>
-      </View>
-
-      {/* 2. OVERLAPPING WHITE CONTENT CARD */}
-      <View 
-        className="flex-1 bg-slate-50 rounded-t-[32px] -mt-8 pt-8 shadow-lg"
-        style={{
-          shadowColor: '#000', shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 10
+      <ScrollView 
+        className="flex-1" 
+        contentContainerStyle={{ 
+          paddingBottom: 150 // Space for tab bar
         }}
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView 
-          className="flex-1" 
-          contentContainerStyle={{ 
-            paddingHorizontal: 24,
-            paddingBottom: 100 // Space for tab bar
-          }}
-          showsVerticalScrollIndicator={false}
+        {/* Header / Title */}
+        <View 
+          className="px-6 flex-row justify-between items-center mb-6" 
+          style={{ paddingTop: Math.max(20, insets.top + 10) }}
         >
-          {/* Title */}
-          <Text className="text-3xl font-bold text-slate-900 mb-6">Stores</Text>
-
-          {/* Widget 2: My Locations */}
-          <View 
-            className="bg-white border border-slate-100 rounded-[32px] p-6 mb-6 shadow-sm"
-            style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }}
-          >
-            <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-lg font-semibold text-slate-900">My Locations</Text>
-              <TouchableOpacity className="bg-slate-100 px-3 py-1.5 rounded-full flex-row items-center gap-1">
-                <Plus size={14} color="#475569" strokeWidth={2.5} />
-                <Text className="text-slate-600 font-bold text-[11px] uppercase tracking-wider">Add New</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View className="gap-y-4">
-              {locations.map((loc, index) => (
-                <React.Fragment key={loc.id}>
-                  <View className="flex-row items-center justify-between">
-                    <View className="flex-row items-center gap-4">
-                      <View className="bg-slate-50 w-10 h-10 rounded-full items-center justify-center">
-                        <Store size={18} color="#64748b" />
-                      </View>
-                      <View>
-                        <Text className="text-slate-900 font-bold text-[15px]">{loc.name}</Text>
-                        <Text className="text-slate-400 text-[12px] mt-0.5">{loc.address}</Text>
-                      </View>
-                    </View>
-                    <View className="flex-row items-center gap-2">
-                      <Text className="text-slate-400 font-bold text-[11px]">{loc.distance}</Text>
-                      <ChevronRight size={18} color="#cbd5e1" />
-                    </View>
-                  </View>
-                  {index < locations.length - 1 && (
-                    <View className="h-[1px] bg-slate-50 w-full" />
-                  )}
-                </React.Fragment>
-              ))}
-            </View>
+          <View className="flex-row items-center gap-4">
+            <Text className="text-[28px] font-extrabold text-slate-900 tracking-tight">Stores</Text>
           </View>
+        </View>
 
-          {/* Primary Action Button */}
-          <TouchableOpacity 
-            className="bg-slate-900 h-16 rounded-[24px] justify-center items-center shadow-lg mt-2 mb-10"
-            style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 15, elevation: 8 }}
-          >
-            <Text className="text-white font-bold text-lg">Create New Geofence Area</Text>
+        {/* Map Preview Widget */}
+        <View 
+          className="mx-6 mb-8 bg-white border border-slate-50 rounded-[32px] overflow-hidden"
+          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.04, shadowRadius: 16, elevation: 3, height: 220 }}
+        >
+          <MapView
+            style={StyleSheet.absoluteFillObject}
+            initialRegion={{
+              latitude: 41.0082,
+              longitude: 28.9784,
+              latitudeDelta: 0.1,
+              longitudeDelta: 0.1,
+            }}
+            showsCompass={false}
+            showsUserLocation={true}
+            customMapStyle={[
+              {
+                featureType: "poi",
+                elementType: "labels",
+                stylers: [{ visibility: "off" }]
+              }
+            ]}
+          />
+        </View>
+
+        {/* My Locations Header */}
+        <View className="flex-row justify-between items-center mx-6 mb-4">
+          <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">My Locations</Text>
+          <TouchableOpacity className="bg-white px-3 py-1.5 rounded-full border border-slate-100 flex-row items-center gap-1.5 shadow-sm" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.03, shadowRadius: 3, elevation: 1 }}>
+            <Plus size={14} color="#475569" strokeWidth={2.5} />
+            <Text className="text-slate-600 font-bold text-[11px] uppercase tracking-wider">Add New</Text>
           </TouchableOpacity>
-        </ScrollView>
-      </View>
+        </View>
+
+        {/* Individual Store Cards */}
+        {locations.map((loc) => (
+          <TouchableOpacity 
+            key={loc.id} 
+            className="mx-6 mb-3 bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-50"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.04,
+              shadowRadius: 16,
+              elevation: 3,
+            }}
+          >
+            <View className="flex-row items-center gap-4">
+              <View className="bg-slate-100 w-[52px] h-[52px] rounded-full items-center justify-center">
+                <Store size={22} color="#334155" />
+              </View>
+              <View>
+                <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{loc.name}</Text>
+                <Text className="text-[13px] font-medium text-slate-400 mt-1">{loc.address}</Text>
+              </View>
+            </View>
+            <View className="flex-row items-center gap-2">
+              <Text className="text-slate-400 font-bold text-[12px]">{loc.distance}</Text>
+              <ChevronRight size={18} color="#cbd5e1" />
+            </View>
+          </TouchableOpacity>
+        ))}
+
+        {/* Primary Action Button */}
+        <TouchableOpacity 
+          className="mx-6 bg-slate-900 h-16 rounded-[24px] justify-center items-center shadow-lg mt-6 mb-10"
+          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 15, elevation: 8 }}
+        >
+          <Text className="text-white font-bold text-lg">Create New Geofence Area</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </View>
   );
 }

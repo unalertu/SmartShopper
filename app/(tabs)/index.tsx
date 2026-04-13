@@ -60,10 +60,6 @@ export default function HomeScreen() {
     // 1. ROOT MUST BE A STANDARD VIEW, NOT SafeAreaView!
     <View className="flex-1 bg-slate-50"> 
       <StatusBar style="dark" />
-      {/* 1. PERMANENT STICKY BLUR FOR STATUS BAR AREA */}
-      <View className="absolute top-0 left-0 right-0 z-10 pointer-events-none">
-        <ProgressiveBlur height={insets.top + 50} />
-      </View>
 
       {/* 2. THE SCROLLING CONTENT */}
       <ScrollView 
