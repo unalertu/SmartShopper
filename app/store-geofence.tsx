@@ -172,13 +172,6 @@ export default function GeofenceConfigurationScreen() {
           followsUserLocation={false}
           showsPointsOfInterest={false}
           onRegionChangeComplete={handleRegionChangeComplete}
-          customMapStyle={[
-            {
-              featureType: "poi",
-              elementType: "labels",
-              stylers: [{ visibility: "off" }]
-            }
-          ]}
         >
           {/* Dynamically Fetched Supermarkets */}
           {markets.map(market => (
@@ -193,15 +186,7 @@ export default function GeofenceConfigurationScreen() {
             </Marker>
           ))}
 
-          {/* Store Pin (Selected / Base Geofence Center) */}
-          <Marker 
-            coordinate={{ latitude: MOCK_STORE.latitude, longitude: MOCK_STORE.longitude }}
-            title={MOCK_STORE.name}
-          >
-            <View className="bg-slate-900 p-2 rounded-full border-2 border-white shadow-sm">
-               <MapPin size={24} color="#ffffff" />
-            </View>
-          </Marker>
+
 
           {/* Dynamic Radius Circle */}
           <Circle
@@ -246,14 +231,7 @@ export default function GeofenceConfigurationScreen() {
           </View>
         </View>
 
-        {/* Back / Close Button */}
-        <TouchableOpacity 
-          onPress={() => router.back()}
-          className="absolute top-14 left-5 bg-white/90 p-2 rounded-full shadow-sm"
-          style={{ paddingTop: Platform.OS === 'android' ? insets.top : undefined, zIndex: 10 }}
-        >
-          <ChevronDown size={28} color="#0f172a" />
-        </TouchableOpacity>
+
       </View>
 
       {/* BOTTOM SHEET / CONTROL PANEL (Bottom 40-45%) */}

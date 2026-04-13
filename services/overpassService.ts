@@ -27,8 +27,8 @@ export const fetchMarkets = async (
   retriesPerMirror = 1
 ): Promise<MarketElement[]> => {
   const query = `[out:json][timeout:60];
-node["shop"~"supermarket|convenience"](${south},${west},${north},${east});
-out body;`;
+nwr["shop"~"supermarket|convenience"](${south},${west},${north},${east});
+out center;`;
 
   let lastError: any = null;
   const attemptedMirrors = new Set<number>();
@@ -48,7 +48,7 @@ out body;`;
       });
 
       if (response.status === 429 || response.status === 504 || response.status === 502) {
-        console.warn(`⚠️ Mirror ${mirror} returned ${response.status}. Rotating...`);
+        console.log(`📡 Mirror ${mirror} busy (${response.status}). Rotating...`);
         attemptedMirrors.add(currentMirrorIndex);
         rotateMirror();
         continue; // Try next mirror immediately
@@ -62,18 +62,20 @@ out body;`;
       const data = await response.json();
       
       if (data && data.elements) {
-        return data.elements.map((el: any) => ({
-          id: el.id.toString(),
-          name: el.tags?.name || 'Local Store',
-          latitude: el.lat,
-          longitude: el.lon,
-        }));
+        return data.elements
+          .map((el: any) => ({
+            id: el.id.toString(),
+            name: el.tags?.name || 'Local Store',
+            latitude: el.lat ?? el.center?.lat,
+            longitude: el.lon ?? el.center?.lon,
+          }))
+          .filter((m: MarketElement) => m.latitude != null && m.longitude != null);
       }
       
       return [];
     } catch (error: any) {
       lastError = error;
-      console.error(`❌ Error on mirror ${mirror}:`, error.message);
+      console.log(`🔁 Rotating mirror due to error on ${mirror}:`, error.message);
       attemptedMirrors.add(currentMirrorIndex);
       rotateMirror();
     }

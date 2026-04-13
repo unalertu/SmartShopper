@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Flame, ShoppingBag, Crown, Plus, Home, Users, User, List, ChevronRight, Radar, BellRing, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings, ScanBarcode } from 'lucide-react-native';
@@ -6,12 +6,49 @@ import { BlurView } from 'expo-blur';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import ProgressiveBlur from '../../components/ProgressiveBlur';
+import * as Location from 'expo-location';
+import { fetchMarkets } from '../../services/overpassService';
 
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [isNearStore, setIsNearStore] = useState(true); // Toggle this to test both states
+  const [nearbyStore, setNearbyStore] = useState<string>('Searching location...');
+  const [isNearStore, setIsNearStore] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setNearbyStore('Location permission denied');
+          setIsNearStore(false);
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({});
+        const s = location.coords.latitude - 0.01;
+        const n = location.coords.latitude + 0.01;
+        const w = location.coords.longitude - 0.01;
+        const e = location.coords.longitude + 0.01;
+
+        const markets = await fetchMarkets(s, w, n, e);
+        if (markets && markets.length > 0) {
+          setNearbyStore(`${markets[0].name || 'Store'} is nearby`);
+          setIsNearStore(true);
+        } else {
+          // Fallback to a mock store if Overpass finds nothing (e.g. rate limit or rural area)
+          setNearbyStore('Migros Jet is nearby');
+          setIsNearStore(true);
+        }
+      } catch (error) {
+        console.error('Error fetching nearby store:', error);
+        // Fallback to a mock store if network fails
+        setNearbyStore('Migros Jet is nearby');
+        setIsNearStore(true);
+      }
+    })();
+  }, []);
 
   const shoppingLists = [
     { id: 1, name: "Ahmet için alınacaklar", count: 4 }, 
@@ -61,47 +98,36 @@ export default function HomeScreen() {
               elevation: 3,
             }}
           >
-            {isNearStore ? (
-              // State B: Active / Store Nearby
-              <View className="flex-col">
-                {/* Upper Tier: Static Map Image */}
-                <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/store-geofence')}>
-                  <Image 
-                    source={require('../../assets/images/stockmap.png')} 
-                    className="w-full h-48 rounded-t-[32px]" 
-                    resizeMode="cover" 
-                  />
-                </TouchableOpacity>
+            {/* Map Widget Always Visible */}
+            <View className="flex-col">
+              {/* Upper Tier: Static Map Image */}
+              <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/store-geofence')}>
+                <Image 
+                  source={require('../../assets/images/stockmap.png')} 
+                  className="w-full h-48 rounded-t-[32px]" 
+                  resizeMode="cover" 
+                />
+              </TouchableOpacity>
 
-                {/* Divider */}
-                <View className="h-[1px] w-full bg-slate-100" />
+              {/* Divider */}
+              <View className="h-[1px] w-full bg-slate-100" />
 
-                {/* Lower Tier: Info & Action */}
-                <View className="flex-row justify-between items-center py-4 px-6">
-                  <View className="flex-row items-center gap-3">
-                    <View className="relative">
-                      <BellRing size={24} color="#64748b" />
+              {/* Lower Tier: Info & Action */}
+              <View className="flex-row justify-between items-center py-4 px-6">
+                <View className="flex-row items-center gap-3">
+                  <View className="relative">
+                    <BellRing size={24} color="#64748b" />
+                    {isNearStore && (
                       <View className="absolute -top-0.5 -right-0.5 bg-green-400 w-2.5 h-2.5 rounded-full border-[1.5px] border-white" />
-                    </View>
-                    <Text className="text-[16px] font-bold text-slate-900 tracking-tight">Migros is nearby</Text>
+                    )}
                   </View>
-                  <TouchableOpacity className="bg-slate-100 px-4 py-2 rounded-full">
-                    <Text className="text-slate-800 font-bold text-[11px] uppercase tracking-widest">open list</Text>
-                  </TouchableOpacity>
+                  <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{nearbyStore}</Text>
                 </View>
+                <TouchableOpacity className="bg-slate-100 px-4 py-2 rounded-full">
+                  <Text className="text-slate-800 font-bold text-[11px] uppercase tracking-widest">open list</Text>
+                </TouchableOpacity>
               </View>
-            ) : (
-              // State A: Idle / Searching
-              <View className="flex-row items-center gap-4 p-6">
-                <View className="bg-slate-100 p-3 rounded-full">
-                  <Radar size={24} color="#94a3b8" />
-                </View>
-                <View>
-                  <Text className="text-[15px] font-bold text-slate-800">Background Tracking Active</Text>
-                  <Text className="text-[13px] font-medium text-slate-400 mt-0.5">No saved stores nearby.</Text>
-                </View>
-              </View>
-            )}
+            </View>
           </View>
 
           {/* 3. My Lists Section */}

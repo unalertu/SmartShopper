@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { MapPin, Store, Plus, ChevronLeft } from 'lucide-react-native';
+import { MapPin, Store, Plus, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import MapView from 'react-native-maps';
 import { useRouter } from 'expo-router';
 
@@ -95,7 +95,10 @@ export default function StoresScreen() {
                         <Text className="text-slate-400 text-[12px] mt-0.5">{loc.address}</Text>
                       </View>
                     </View>
-                    <Text className="text-slate-400 font-bold text-[11px]">{loc.distance}</Text>
+                    <View className="flex-row items-center gap-2">
+                      <Text className="text-slate-400 font-bold text-[11px]">{loc.distance}</Text>
+                      <ChevronRight size={18} color="#cbd5e1" />
+                    </View>
                   </View>
                   {index < locations.length - 1 && (
                     <View className="h-[1px] bg-slate-50 w-full" />
