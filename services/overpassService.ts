@@ -1,13 +1,14 @@
 /**
  * Overpass API Service
  * Handles mirror rotation and rate-limiting (429) / timeout (504) recovery.
+ * When a mirror returns valid JSON but 0 results, we treat it as potentially
+ * stale and try the next mirror before accepting the empty result.
  */
 
 const MIRROR_POOL = [
+  "https://overpass.kumi.systems/api/interpreter",
   "https://overpass-api.de/api/interpreter",
-  "https://overpass.osm.ch/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
-  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ];
 
 let currentMirrorIndex = 0;
@@ -27,8 +28,14 @@ export const fetchMarkets = async (
   retriesPerMirror = 1
 ): Promise<MarketElement[]> => {
   const query = `[out:json][timeout:60];
-nwr["shop"~"supermarket|convenience"](${south},${west},${north},${east});
+(
+  node["shop"~"supermarket|convenience|grocery|greengrocer|mall|department_store|general"](${south},${west},${north},${east});
+  way["shop"~"supermarket|convenience|grocery|greengrocer|mall|department_store|general"](${south},${west},${north},${east});
+  relation["shop"~"supermarket|convenience|grocery|greengrocer|mall|department_store|general"](${south},${west},${north},${east});
+);
 out center;`;
+
+  console.log(`🔍 Overpass query bbox: S=${south.toFixed(4)} W=${west.toFixed(4)} N=${north.toFixed(4)} E=${east.toFixed(4)}`);
 
   let lastError: any = null;
   const attemptedMirrors = new Set<number>();
@@ -38,31 +45,71 @@ out center;`;
     console.log(`📡 Fetching from Overpass mirror: ${mirror}`);
 
     try {
+      // Use AbortController for timeout (25s)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+      // Use standard urlencoded format — most reliable across all mirrors
       const response = await fetch(mirror, {
         method: 'POST',
         headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'text/plain',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: query,
+        body: `data=${encodeURIComponent(query)}`,
+        signal: controller.signal,
       });
 
-      if (response.status === 429 || response.status === 504 || response.status === 502) {
-        console.log(`📡 Mirror ${mirror} busy (${response.status}). Rotating...`);
+      clearTimeout(timeoutId);
+
+      if (response.status === 429 || response.status === 504 || response.status === 502 || response.status === 403) {
+        console.log(`📡 Mirror ${mirror} unavailable (${response.status}). Rotating...`);
         attemptedMirrors.add(currentMirrorIndex);
         rotateMirror();
-        continue; // Try next mirror immediately
+        continue;
       }
 
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errText.substring(0, 100)}`);
+        // Check if the response is HTML (error page) instead of JSON
+        if (errText.includes('<html') || errText.includes('<!DOCTYPE') || errText.includes('runtime error')) {
+          console.log(`📡 Mirror ${mirror} returned error page. Rotating...`);
+          attemptedMirrors.add(currentMirrorIndex);
+          rotateMirror();
+          continue;
+        }
+        throw new Error(`HTTP ${response.status}: ${errText.substring(0, 200)}`);
       }
 
-      const data = await response.json();
+      // Check content-type to ensure we got JSON, not an HTML error page
+      const contentType = response.headers.get('content-type') || '';
+      const responseText = await response.text();
+
+      if (!contentType.includes('json') && (responseText.includes('<html') || responseText.includes('runtime error'))) {
+        console.log(`📡 Mirror ${mirror} returned HTML error instead of JSON. Rotating...`);
+        attemptedMirrors.add(currentMirrorIndex);
+        rotateMirror();
+        continue;
+      }
+
+      const data = JSON.parse(responseText);
+      console.log(`✅ Overpass returned ${data?.elements?.length ?? 0} elements from ${mirror}`);
+
+      // Detect stale/broken mirrors: valid JSON but suspiciously empty results
+      // AND the timestamp looks invalid (not a proper ISO date)
+      if (data && data.elements && data.elements.length === 0) {
+        const timestamp = data?.osm3s?.timestamp_osm_base || '';
+        const isValidTimestamp = timestamp.includes('-') && timestamp.length > 10; // e.g. "2026-04-13T12:43:14Z"
+        
+        if (!isValidTimestamp && attemptedMirrors.size < MIRROR_POOL.length - 1) {
+          console.log(`⚠️ Mirror ${mirror} returned 0 results with suspicious timestamp "${timestamp}". Trying next mirror...`);
+          attemptedMirrors.add(currentMirrorIndex);
+          rotateMirror();
+          continue;
+        }
+      }
       
       if (data && data.elements) {
-        return data.elements
+        const results = data.elements
           .map((el: any) => ({
             id: el.id.toString(),
             name: el.tags?.name || 'Local Store',
@@ -70,12 +117,16 @@ out center;`;
             longitude: el.lon ?? el.center?.lon,
           }))
           .filter((m: MarketElement) => m.latitude != null && m.longitude != null);
+        
+        console.log(`📍 ${results.length} stores with valid coordinates`);
+        return results;
       }
       
       return [];
     } catch (error: any) {
       lastError = error;
-      console.log(`🔁 Rotating mirror due to error on ${mirror}:`, error.message);
+      const reason = error.name === 'AbortError' ? 'timeout (25s)' : error.message;
+      console.log(`🔁 Rotating mirror due to ${reason} on ${mirror}`);
       attemptedMirrors.add(currentMirrorIndex);
       rotateMirror();
     }

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Switch, TextInput, TouchableOpacity, ScrollView, Alert, KeyboardAvoidingView, Platform, StyleSheet, ActivityIndicator } from 'react-native';
-import MapView, { Marker, Circle } from 'react-native-maps';
-import Slider from '@react-native-community/slider';
+import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { ChevronDown, MapPin, Save, ShieldAlert, Clock, ArrowRightLeft, ShoppingBasket, Search, AlertCircle } from 'lucide-react-native';
@@ -23,7 +22,6 @@ export default function GeofenceConfigurationScreen() {
   const insets = useSafeAreaInsets();
   
   // States
-  const [radius, setRadius] = useState<number>(200);
   const [isTracking, setIsTracking] = useState<boolean>(false);
   const [triggerType, setTriggerType] = useState<'entry' | 'dwell'>('entry');
   const [note, setNote] = useState<string>('');
@@ -32,7 +30,10 @@ export default function GeofenceConfigurationScreen() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
   const [currentRegion, setCurrentRegion] = useState<any>(null);
+  const [userRegion, setUserRegion] = useState<any>(null);
   const mapRef = useRef<MapView>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasInitialFetch = useRef(false);
 
   useEffect(() => {
     (async () => {
@@ -47,12 +48,18 @@ export default function GeofenceConfigurationScreen() {
         const newRegion = {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
-          latitudeDelta: 0.01 + (radius / 50000),
-          longitudeDelta: 0.01 + (radius / 50000),
+          latitudeDelta: 0.04,
+          longitudeDelta: 0.04,
         };
         
+        setUserRegion(newRegion);
+        setCurrentRegion(newRegion);
         mapRef.current?.animateToRegion(newRegion, 1000);
-        fetchMarketsFromOverpass(newRegion);
+
+        // Fetch with a wider area for initial load
+        const wideRegion = { ...newRegion, latitudeDelta: 0.06, longitudeDelta: 0.06 };
+        hasInitialFetch.current = true;
+        fetchMarketsFromOverpass(wideRegion);
       } catch (error) {
         console.error('Error fetching live location:', error);
       }
@@ -60,52 +67,61 @@ export default function GeofenceConfigurationScreen() {
   }, []);
 
   const fetchMarketsFromOverpass = async (region: any) => {
-    if (region.latitudeDelta > 0.05) {
-      console.log("Zoomed out too far, skipping fetch to avoid 504.");
+    if (region.latitudeDelta > 0.15) {
+      console.log("Zoomed out too far, skipping fetch.");
       return;
     }
 
     try {
       setIsLoading(true);
       setErrorStatus(null);
-      const south = region.latitude - region.latitudeDelta / 2;
-      const west = region.longitude - region.longitudeDelta / 2;
-      const north = region.latitude + region.latitudeDelta / 2;
-      const east = region.longitude + region.longitudeDelta / 2;
 
+      // Use a minimum search area so we always search at least ~4km
+      const minDelta = 0.04;
+      const latDelta = Math.max(region.latitudeDelta, minDelta);
+      const lonDelta = Math.max(region.longitudeDelta, minDelta);
+
+      const south = region.latitude - latDelta / 2;
+      const west = region.longitude - lonDelta / 2;
+      const north = region.latitude + latDelta / 2;
+      const east = region.longitude + lonDelta / 2;
+
+      console.log(`🗺️ Searching area: ${latDelta.toFixed(4)} x ${lonDelta.toFixed(4)}`);
       const fetchedMarkets = await fetchMarkets(south, west, north, east);
       setMarkets(fetchedMarkets);
+      console.log(`📍 Found ${fetchedMarkets.length} stores`);
       
       if (fetchedMarkets.length === 0) {
-        setErrorStatus("No stores found in this area.");
+        setErrorStatus(null); // Don't show error — empty is fine
       }
     } catch (error: any) {
       console.error('Error fetching from Overpass:', error);
-      const msg = error.message.includes('429') 
-        ? "API limit reached. Waiting for mirror..." 
-        : "Servers are busy. Please try again in 30s.";
-      setErrorStatus(msg);
-      
-      Alert.alert(
-        "Service Busy",
-        "OpenStreetMap servers are currently rate-limiting this area. We've tried several mirrors but they are also busy. Please wait a moment.",
-        [{ text: "OK" }]
-      );
+      setErrorStatus("Servers busy. Tap to retry.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Auto-fetch stores when user pans/zooms the map (debounced)
   const handleRegionChangeComplete = (region: any) => {
     setCurrentRegion(region);
+    
+    // Skip the auto-fetch for the initial MOCK_STORE region before we have user location
+    if (!hasInitialFetch.current) return;
+
+    // Debounce: wait 1.5 seconds after the user stops moving the map
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchMarketsFromOverpass(region);
+    }, 1500);
   };
 
-  // Map Region
-  const mapRegion = {
+  // Map Region — use user location if available, otherwise fallback to mock
+  const mapRegion = userRegion || {
     latitude: MOCK_STORE.latitude,
     longitude: MOCK_STORE.longitude,
-    latitudeDelta: 0.01 + (radius / 50000), // Slightly zoom out based on radius
-    longitudeDelta: 0.01 + (radius / 50000),
+    latitudeDelta: 0.04,
+    longitudeDelta: 0.04,
   };
 
   const requestBackgroundLocationPermission = async () => {
@@ -145,7 +161,6 @@ export default function GeofenceConfigurationScreen() {
     const configPayload = {
       storeId: MOCK_STORE.id,
       storeName: MOCK_STORE.name,
-      alertRadius: radius,
       isActive: isTracking,
       triggerType: triggerType,
       customNote: note,
@@ -187,15 +202,6 @@ export default function GeofenceConfigurationScreen() {
           ))}
 
 
-
-          {/* Dynamic Radius Circle */}
-          <Circle
-            center={{ latitude: MOCK_STORE.latitude, longitude: MOCK_STORE.longitude }}
-            radius={radius}
-            strokeWidth={2}
-            strokeColor="rgba(14, 165, 233, 0.6)" // Sky blue outline
-            fillColor="rgba(56, 189, 248, 0.2)"  // Transparent sky blue fill
-          />
         </MapView>
         
         <View 
@@ -257,30 +263,7 @@ export default function GeofenceConfigurationScreen() {
             {MOCK_STORE.name} Config
           </Text>
 
-          {/* 1. Radius Slider Section */}
-          <View className="mb-6 bg-slate-50 p-4 rounded-[20px] border border-slate-100">
-            <View className="flex-row justify-between items-center mb-2">
-              <Text className="text-[16px] font-bold text-slate-800">Notification Distance</Text>
-              <Text className="text-[16px] font-extrabold text-blue-500">{radius}m</Text>
-            </View>
-            <Slider
-              style={{ width: '100%', height: 40 }}
-              minimumValue={100}
-              maximumValue={2000}
-              step={100}
-              value={radius}
-              onValueChange={setRadius}
-              minimumTrackTintColor="#3b82f6"
-              maximumTrackTintColor="#cbd5e1"
-              thumbTintColor="#ffffff"
-            />
-            <View className="flex-row justify-between">
-              <Text className="text-[12px] font-medium text-slate-400">100m</Text>
-              <Text className="text-[12px] font-medium text-slate-400">2km</Text>
-            </View>
-          </View>
-
-          {/* 2. Tracking Toggle Section */}
+          {/* 1. Tracking Toggle Section */}
           <View className="mb-6 bg-white border border-slate-100 p-4 rounded-[20px] flex-row items-center justify-between shadow-sm">
              <View className="flex-row items-center gap-3 max-w-[80%]">
                <View className={`p-2.5 rounded-full ${isTracking ? 'bg-green-100' : 'bg-slate-100'}`}>

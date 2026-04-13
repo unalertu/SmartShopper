@@ -50,13 +50,24 @@ export default function HomeScreen() {
         const userLat = location.coords.latitude;
         const userLon = location.coords.longitude;
 
-        // Search within ~1 km radius
-        const s = userLat - 0.01;
-        const n = userLat + 0.01;
-        const w = userLon - 0.01;
-        const e = userLon + 0.01;
+        // Search within ~3.3 km radius
+        let offset = 0.03;
+        let s = userLat - offset;
+        let n = userLat + offset;
+        let w = userLon - offset;
+        let e = userLon + offset;
 
-        const markets = await fetchMarkets(s, w, n, e);
+        let markets = await fetchMarkets(s, w, n, e);
+
+        // Fallback: widen to ~5.5 km if nothing found
+        if (!markets || markets.length === 0) {
+          offset = 0.05;
+          s = userLat - offset;
+          n = userLat + offset;
+          w = userLon - offset;
+          e = userLon + offset;
+          markets = await fetchMarkets(s, w, n, e);
+        }
         if (markets && markets.length > 0) {
           // Find the nearest store by Haversine distance
           let nearest = markets[0];
