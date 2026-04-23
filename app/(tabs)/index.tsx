@@ -164,9 +164,7 @@ export default function HomeScreen() {
                   </View>
                   <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{nearbyStore}</Text>
                 </View>
-                <TouchableOpacity className="bg-slate-100 px-4 py-2 rounded-full">
-                  <Text className="text-slate-800 font-bold text-[11px] uppercase tracking-widest">open list</Text>
-                </TouchableOpacity>
+
               </View>
             </View>
           </View>
