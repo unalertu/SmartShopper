@@ -1,12 +1,13 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Store, Plus, ChevronRight, Search, SlidersHorizontal } from 'lucide-react-native';
+import { Store, Plus, ChevronRight, Search, SlidersHorizontal, ShoppingBasket } from 'lucide-react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
+import { fetchMarkets } from '../../services/overpassService';
 
 export default function StoresScreen() {
   const insets = useSafeAreaInsets();
@@ -16,6 +17,37 @@ export default function StoresScreen() {
 
   const snapPoints = useMemo(() => ['30%', '50%', '90%'], []);
 
+  const [markets, setMarkets] = useState<any[]>([]);
+  const [currentRegion, setCurrentRegion] = useState<any>(null);
+
+  const fetchMarketsFromOverpass = async (region: any) => {
+    if (region.latitudeDelta > 0.15) {
+      console.log("Zoomed out too far, skipping fetch.");
+      return;
+    }
+
+    try {
+      const minDelta = 0.04;
+      const latDelta = Math.max(region.latitudeDelta, minDelta);
+      const lonDelta = Math.max(region.longitudeDelta, minDelta);
+
+      const south = region.latitude - latDelta / 2;
+      const west = region.longitude - lonDelta / 2;
+      const north = region.latitude + latDelta / 2;
+      const east = region.longitude + lonDelta / 2;
+
+      const fetchedMarkets = await fetchMarkets(south, west, north, east);
+      setMarkets(fetchedMarkets);
+    } catch (error: any) {
+      console.log('Error fetching from Overpass:', error);
+    }
+  };
+
+  const handleRegionChangeComplete = (region: any) => {
+    setCurrentRegion(region);
+    fetchMarketsFromOverpass(region);
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -23,12 +55,14 @@ export default function StoresScreen() {
         if (status !== 'granted') return;
         
         const location = await Location.getCurrentPositionAsync({});
-        mapRef.current?.animateToRegion({
+        const newRegion = {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        }, 1000);
+          latitudeDelta: 0.04,
+          longitudeDelta: 0.04,
+        };
+        mapRef.current?.animateToRegion(newRegion, 1000);
+        fetchMarketsFromOverpass(newRegion);
       } catch (error) {
         console.warn('Error fetching location', error);
       }
@@ -53,23 +87,22 @@ export default function StoresScreen() {
         initialRegion={{
           latitude: 41.0082,
           longitude: 28.9784,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
+          latitudeDelta: 0.04,
+          longitudeDelta: 0.04,
         }}
         showsUserLocation={true}
-        showsCompass={false}
-        customMapStyle={[{ featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }]}
+        followsUserLocation={false}
+        showsPointsOfInterest={false}
+        onRegionChangeComplete={handleRegionChangeComplete}
       >
-        {locations.map(loc => (
+        {markets.map(market => (
           <Marker 
-            key={loc.id} 
-            coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
+            key={market.id} 
+            coordinate={{ latitude: market.latitude, longitude: market.longitude }}
+            title={market.name}
           >
-            <View style={styles.markerContainer}>
-              <View style={styles.markerBubble}>
-                <Store size={16} color="#fff" />
-              </View>
-              <View style={styles.markerTriangle} />
+            <View className="bg-white p-1.5 rounded-full border border-slate-200 shadow-sm">
+              <ShoppingBasket size={18} color="#0f172a" />
             </View>
           </Marker>
         ))}

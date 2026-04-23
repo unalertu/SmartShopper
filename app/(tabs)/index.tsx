@@ -121,10 +121,7 @@ export default function HomeScreen() {
             <Image source={require('../../assets/images/app-logo.png')} style={{ width: 56, height: 56, marginLeft: -24, marginTop: -4 }} resizeMode="contain" />
             <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight" style={{ marginTop: 6 }}>Smart Shopper</Text>
           </View>
-          <TouchableOpacity className="bg-white rounded-full px-3 py-1 flex-row items-center gap-1.5 shadow-sm border border-slate-100" style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3 }}>
-            <Flame size={16} color="#f97316" fill="#f97316" />
-            <Text className="text-slate-800 font-bold text-sm">0</Text>
-          </TouchableOpacity>
+
         </View>
 
         {/* 2. THE MAP WIDGET */}

@@ -95,7 +95,7 @@ export default function GeofenceConfigurationScreen() {
         setErrorStatus(null); // Don't show error — empty is fine
       }
     } catch (error: any) {
-      console.error('Error fetching from Overpass:', error);
+      console.log('Error fetching from Overpass:', error);
       setErrorStatus("Servers busy. Tap to retry.");
     } finally {
       setIsLoading(false);
