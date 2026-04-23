@@ -1,16 +1,20 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import React, { useEffect, useRef, useMemo } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { MapPin, Store, Plus, ChevronLeft, ChevronRight } from 'lucide-react-native';
-import MapView from 'react-native-maps';
+import { Store, Plus, ChevronRight, Search, SlidersHorizontal } from 'lucide-react-native';
+import MapView, { Marker } from 'react-native-maps';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
+import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 
 export default function StoresScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  const snapPoints = useMemo(() => ['30%', '50%', '90%'], []);
 
   useEffect(() => {
     (async () => {
@@ -32,99 +36,166 @@ export default function StoresScreen() {
   }, []);
 
   const locations = [
-    { id: 1, name: "Migros Jet", address: "Atatürk Cad. No: 45", distance: "450m" },
-    { id: 2, name: "Macrocenter", address: "Sokak Sk. No: 12", distance: "1.2km" },
-    { id: 3, name: "BİM", address: "Mahalle Yolu No: 8", distance: "2.1km" },
+    { id: 1, name: "Migros Jet", address: "Atatürk Cad. No: 45", distance: "450m", latitude: 41.0082, longitude: 28.9784 },
+    { id: 2, name: "Macrocenter", address: "Sokak Sk. No: 12", distance: "1.2km", latitude: 41.0112, longitude: 28.9804 },
+    { id: 3, name: "BİM", address: "Mahalle Yolu No: 8", distance: "2.1km", latitude: 41.0052, longitude: 28.9754 },
   ];
 
   return (
-    <View className="flex-1 bg-slate-50">
+    <View style={styles.container}>
       <StatusBar style="dark" />
       
-      <ScrollView 
-        className="flex-1" 
-        contentContainerStyle={{ 
-          paddingBottom: 150 // Space for tab bar
+      {/* Full Screen Background Map */}
+      <MapView
+        ref={mapRef}
+        userInterfaceStyle="light"
+        style={StyleSheet.absoluteFillObject}
+        initialRegion={{
+          latitude: 41.0082,
+          longitude: 28.9784,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
         }}
-        showsVerticalScrollIndicator={false}
+        showsUserLocation={true}
+        showsCompass={false}
+        customMapStyle={[{ featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }]}
       >
-        {/* Header / Title */}
-        <View 
-          className="px-6 flex-row justify-between items-center mb-6" 
-          style={{ paddingTop: Math.max(20, insets.top + 10) }}
-        >
-          <View className="flex-row items-center gap-4">
-            <Text className="text-[28px] font-extrabold text-slate-900 tracking-tight">Stores</Text>
-          </View>
-        </View>
+        {locations.map(loc => (
+          <Marker 
+            key={loc.id} 
+            coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
+          >
+            <View style={styles.markerContainer}>
+              <View style={styles.markerBubble}>
+                <Store size={16} color="#fff" />
+              </View>
+              <View style={styles.markerTriangle} />
+            </View>
+          </Marker>
+        ))}
+      </MapView>
 
-        <View 
-          className="mx-6 mb-8 bg-white border border-slate-50 rounded-[32px] overflow-hidden"
-          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.04, shadowRadius: 16, elevation: 3, height: 220 }}
-        >
-          <MapView
-            ref={mapRef}
-            style={StyleSheet.absoluteFillObject}
-            initialRegion={{
-              latitude: 41.0082,
-              longitude: 28.9784,
-              latitudeDelta: 0.1,
-              longitudeDelta: 0.1,
-            }}
-            showsCompass={false}
-            showsUserLocation={true}
-            customMapStyle={[
-              {
-                featureType: "poi",
-                elementType: "labels",
-                stylers: [{ visibility: "off" }]
-              }
-            ]}
+      {/* Floating Top Bar */}
+      <View 
+        style={[styles.floatingHeader, { top: Math.max(20, insets.top) }]}
+        className="flex-row items-center px-4"
+      >
+        <View className="flex-1 bg-white/95 rounded-full h-14 flex-row items-center px-4 shadow-lg border border-slate-100 mr-3 shadow-black/10">
+          <Search size={22} color="#94a3b8" />
+          <TextInput 
+            className="flex-1 ml-3 text-[16px] text-slate-900 font-medium h-full"
+            placeholder="Search stores nearby..."
+            placeholderTextColor="#94a3b8"
           />
         </View>
-
-        {/* My Locations Header */}
-        <View className="mx-6 mb-4">
-          <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">My Locations</Text>
-        </View>
-
-        {/* Individual Store Cards */}
-        {locations.map((loc) => (
-          <TouchableOpacity 
-            key={loc.id} 
-            className="mx-6 mb-3 bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-50"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: 0.04,
-              shadowRadius: 16,
-              elevation: 3,
-            }}
-          >
-            <View className="flex-row items-center gap-4">
-              <View className="bg-slate-100 w-[52px] h-[52px] rounded-full items-center justify-center">
-                <Store size={22} color="#334155" />
-              </View>
-              <View>
-                <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{loc.name}</Text>
-                <Text className="text-[13px] font-medium text-slate-400 mt-1">{loc.address}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center gap-2">
-              <Text className="text-slate-400 font-bold text-[12px]">{loc.distance}</Text>
-              <ChevronRight size={18} color="#cbd5e1" />
-            </View>
-          </TouchableOpacity>
-        ))}
-
-        {/* Primary Action Button */}
-        <TouchableOpacity 
-          className="mx-6 bg-slate-900 h-16 rounded-[24px] justify-center items-center shadow-lg mt-6 mb-10"
-          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 15, elevation: 8 }}
-        >
-          <Text className="text-white font-bold text-lg">Add New Store</Text>
+        <TouchableOpacity className="bg-white/95 w-14 h-14 rounded-full items-center justify-center shadow-lg border border-slate-100 shadow-black/10">
+          <SlidersHorizontal size={22} color="#0f172a" />
         </TouchableOpacity>
-      </ScrollView>
+      </View>
+
+      {/* Draggable Bottom Sheet */}
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={1}
+        snapPoints={snapPoints}
+        handleIndicatorStyle={{ backgroundColor: '#cbd5e1', width: 44, height: 5 }}
+        backgroundStyle={{ 
+          borderRadius: 32, 
+          shadowColor: '#000', 
+          shadowOffset: { width: 0, height: -10 }, 
+          shadowOpacity: 0.08, 
+          shadowRadius: 20, 
+          elevation: 15,
+          backgroundColor: '#f8fafc' 
+        }}
+      >
+        <BottomSheetView style={styles.sheetHeader}>
+          <Text className="text-[24px] font-extrabold text-slate-900 tracking-tight">My Locations</Text>
+        </BottomSheetView>
+        
+        <BottomSheetScrollView 
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 150 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {locations.map((loc) => (
+            <TouchableOpacity 
+              key={loc.id} 
+              className="mb-3.5 bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-100 shadow-sm"
+              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 }}
+            >
+              <View className="flex-row items-center gap-4 flex-1">
+                <View className="bg-slate-50 w-[54px] h-[54px] rounded-full items-center justify-center border border-slate-100">
+                  <Store size={22} color="#0f172a" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-[16px] font-bold text-slate-900 tracking-tight mb-0.5">{loc.name}</Text>
+                  <Text className="text-[13px] font-medium text-slate-500" numberOfLines={1}>{loc.address}</Text>
+                </View>
+              </View>
+              <View className="flex-row items-center gap-2 pl-2">
+                <Text className="text-slate-500 font-bold text-[13px]">{loc.distance}</Text>
+                <ChevronRight size={18} color="#cbd5e1" />
+              </View>
+            </TouchableOpacity>
+          ))}
+          
+          <TouchableOpacity 
+            className="bg-slate-900 h-[64px] rounded-[24px] justify-center items-center shadow-lg mt-4 flex-row gap-2"
+            style={{ shadowColor: '#0f172a', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 8 }}
+          >
+            <Plus size={22} color="#fff" />
+            <Text className="text-white font-bold text-[16px]">Add New Store</Text>
+          </TouchableOpacity>
+        </BottomSheetScrollView>
+      </BottomSheet>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  floatingHeader: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  markerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  markerBubble: {
+    backgroundColor: '#0f172a',
+    padding: 8,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  markerTriangle: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderBottomWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: '#0f172a',
+    transform: [{ rotate: '180deg' }],
+    marginTop: -1,
+  },
+  sheetHeader: {
+    paddingHorizontal: 24,
+    paddingTop: 10,
+    paddingBottom: 20,
+  }
+});

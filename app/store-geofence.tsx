@@ -172,6 +172,7 @@ export default function GeofenceConfigurationScreen() {
       <View className="flex-[0.55] relative">
         <MapView
           ref={mapRef}
+          userInterfaceStyle="light"
           style={StyleSheet.absoluteFillObject}
           initialRegion={mapRegion}
           showsUserLocation={true}

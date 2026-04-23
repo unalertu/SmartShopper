@@ -6,6 +6,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import * as SplashScreen from "expo-splash-screen";
 import "react-native-reanimated";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { setupNotifications } from "@/services/notificationService";
@@ -31,35 +32,37 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="add-item"
-          options={{
-            presentation: "modal",
-            title: "Add Item",
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="add-location"
-          options={{
-            presentation: "modal",
-            title: "Add Location",
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="store-geofence"
-          options={{
-            presentation: "modal",
-            title: "Store Configuration",
-            headerShown: false,
-          }}
-        />
-      </Stack>
-      <StatusBar style="dark" />
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="add-item"
+            options={{
+              presentation: "modal",
+              title: "Add Item",
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="add-location"
+            options={{
+              presentation: "modal",
+              title: "Add Location",
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="store-geofence"
+            options={{
+              presentation: "modal",
+              title: "Store Configuration",
+              headerShown: false,
+            }}
+          />
+        </Stack>
+        <StatusBar style="dark" />
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
