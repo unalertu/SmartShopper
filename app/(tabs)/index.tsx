@@ -139,7 +139,7 @@ export default function HomeScreen() {
             {/* Map Widget Always Visible */}
             <View className="flex-col">
               {/* Upper Tier: Static Map Image */}
-              <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/store-geofence')}>
+              <TouchableOpacity activeOpacity={0.8} onPress={() => router.navigate('/stores')}>
                 <Image 
                   source={require('../../assets/images/stockmap.png')} 
                   className="w-full h-48 rounded-t-[32px]" 

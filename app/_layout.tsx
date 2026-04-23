@@ -52,14 +52,6 @@ export default function RootLayout() {
               headerShown: false,
             }}
           />
-          <Stack.Screen
-            name="store-geofence"
-            options={{
-              presentation: "modal",
-              title: "Store Configuration",
-              headerShown: false,
-            }}
-          />
         </Stack>
         <StatusBar style="dark" />
       </ThemeProvider>
