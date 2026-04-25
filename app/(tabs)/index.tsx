@@ -7,6 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import ProgressiveBlur from '../../components/ProgressiveBlur';
 import * as Location from 'expo-location';
+import MapView, { Marker } from 'react-native-maps';
 import { fetchMarkets } from '../../services/overpassService';
 
 export default function HomeScreen() {
@@ -15,6 +16,7 @@ export default function HomeScreen() {
   const [nearbyStore, setNearbyStore] = useState<string>('Searching location...');
   const [isNearStore, setIsNearStore] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
+  const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
 
   // Haversine formula — returns distance in meters between two lat/lng points
   const haversineDistance = (
@@ -49,6 +51,7 @@ export default function HomeScreen() {
         const location = await Location.getCurrentPositionAsync({});
         const userLat = location.coords.latitude;
         const userLon = location.coords.longitude;
+        setUserLocation({ latitude: userLat, longitude: userLon });
 
         // Search within ~3.3 km radius
         let offset = 0.03;
@@ -138,20 +141,42 @@ export default function HomeScreen() {
           >
             {/* Map Widget Always Visible */}
             <View className="flex-col">
-              {/* Upper Tier: Static Map Image */}
+              {/* Upper Tier: Dynamic Map Preview */}
               <TouchableOpacity activeOpacity={0.8} onPress={() => router.navigate('/stores')}>
-                <Image 
-                  source={require('../../assets/images/stockmap.png')} 
-                  className="w-full h-48 rounded-t-[32px]" 
-                  resizeMode="cover" 
-                />
+                <View className="w-full h-48 rounded-t-[32px] overflow-hidden" pointerEvents="none">
+                  {userLocation ? (
+                    <MapView
+                      style={{ width: '100%', height: '100%' }}
+                      userInterfaceStyle="light"
+                      showsUserLocation={true}
+                      initialRegion={{
+                        latitude: userLocation.latitude,
+                        longitude: userLocation.longitude,
+                        latitudeDelta: 0.05,
+                        longitudeDelta: 0.05,
+                      }}
+                      scrollEnabled={false}
+                      zoomEnabled={false}
+                      pitchEnabled={false}
+                      rotateEnabled={false}
+                    />
+                  ) : (
+                    <View className="w-full h-full bg-slate-200 items-center justify-center">
+                      <Text className="text-slate-500 font-medium">Loading map...</Text>
+                    </View>
+                  )}
+                </View>
               </TouchableOpacity>
 
               {/* Divider */}
               <View className="h-[1px] w-full bg-slate-100" />
 
               {/* Lower Tier: Info & Action */}
-              <View className="flex-row justify-between items-center py-4 px-6">
+              <TouchableOpacity 
+                activeOpacity={0.8} 
+                onPress={() => router.navigate('/stores')}
+                className="flex-row justify-between items-center py-4 px-6"
+              >
                 <View className="flex-row items-center gap-3">
                   <View className="relative">
                     <BellRing size={24} color="#64748b" />
@@ -162,7 +187,7 @@ export default function HomeScreen() {
                   <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{nearbyStore}</Text>
                 </View>
 
-              </View>
+              </TouchableOpacity>
             </View>
           </View>
 
