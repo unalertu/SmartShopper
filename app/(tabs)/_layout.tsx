@@ -206,7 +206,7 @@ export default function TabLayout() {
   return (
     <Tabs
       tabBar={(props) => renderCustomTabBar({ ...props, insets, isActionsMenuOpen, setIsActionsMenuOpen })}
-      screenOptions={{ headerShown: false, animation: 'shift', sceneStyle: { backgroundColor: '#f8fafc' } }}
+      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: '#f8fafc' } }}
     >
       <Tabs.Screen name="index" options={{ title: "Home" }} />
       <Tabs.Screen name="stores" options={{ title: "Stores" }} />

@@ -131,7 +131,11 @@ export default function StoresScreen() {
         ref={bottomSheetRef}
         index={1}
         snapPoints={snapPoints}
-        handleIndicatorStyle={{ backgroundColor: '#cbd5e1', width: 44, height: 5 }}
+        handleComponent={() => (
+          <View className="w-full pt-5 pb-2 px-6">
+            <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">Saved Shops</Text>
+          </View>
+        )}
         backgroundStyle={{ 
           borderRadius: 32, 
           shadowColor: '#000', 
@@ -142,9 +146,6 @@ export default function StoresScreen() {
           backgroundColor: '#f8fafc' 
         }}
       >
-        <BottomSheetView style={styles.sheetHeader}>
-          <Text className="text-[24px] font-extrabold text-slate-900 tracking-tight">My Locations</Text>
-        </BottomSheetView>
         
         <BottomSheetScrollView 
           contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 150 }}
