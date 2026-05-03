@@ -29,6 +29,7 @@ export default function StoresScreen() {
   const [markets, setMarkets] = useState<any[]>([]);
   const [currentRegion, setCurrentRegion] = useState<any>(null);
   const [deleteMode, setDeleteMode] = useState(false);
+  const [selectedShopToSave, setSelectedShopToSave] = useState<any>(null);
 
   // Zustand persisted store
   const { locations: savedShops, addLocation, removeLocation } = useLocationStore();
@@ -129,6 +130,12 @@ export default function StoresScreen() {
         followsUserLocation={false}
         showsPointsOfInterest={false}
         onRegionChangeComplete={handleRegionChangeComplete}
+        onPanDrag={() => setSelectedShopToSave(null)}
+        onPress={(e) => {
+          if (e.nativeEvent.action !== 'marker-press') {
+            setSelectedShopToSave(null);
+          }
+        }}
       >
         {markets.map(market => {
           const saved = isShopSaved(market);
@@ -137,6 +144,15 @@ export default function StoresScreen() {
               key={market.id}
               coordinate={{ latitude: market.latitude, longitude: market.longitude }}
               title={market.name}
+              onPress={(e) => {
+                e.stopPropagation();
+                if (!saved) {
+                  setSelectedShopToSave(market);
+                  bottomSheetRef.current?.snapToIndex(1);
+                } else {
+                  setSelectedShopToSave(null);
+                }
+              }}
             >
               <View style={[styles.markerPill, saved && styles.markerPillSaved]}>
                 <ShoppingBasket size={18} color={saved ? '#fff' : '#0f172a'} />
@@ -181,11 +197,32 @@ export default function StoresScreen() {
         index={1}
         animatedPosition={animatedPosition}
         snapPoints={snapPoints}
-        handleComponent={() => (
+        handleComponent={useCallback(() => (
           <View className="w-full pt-5 pb-2 px-6">
+            {selectedShopToSave && (
+              <TouchableOpacity
+                style={styles.contextSaveBtn}
+                activeOpacity={0.8}
+                onPress={() => {
+                  addLocation({
+                    name: selectedShopToSave.name || 'Unknown Store',
+                    address: selectedShopToSave.address || 'Unknown Address',
+                    latitude: selectedShopToSave.latitude,
+                    longitude: selectedShopToSave.longitude,
+                    radius: 500,
+                  });
+                  setSelectedShopToSave(null);
+                }}
+              >
+                <Plus size={20} color="#fff" />
+                <Text style={styles.contextSaveBtnText}>
+                  Save {selectedShopToSave.name}
+                </Text>
+              </TouchableOpacity>
+            )}
             <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">Saved Shops</Text>
           </View>
-        )}
+        ), [selectedShopToSave, addLocation])}
         backgroundStyle={{
           borderRadius: 32,
           shadowColor: '#000',
@@ -396,6 +433,27 @@ const styles = StyleSheet.create({
   },
 
   /* ── Split action buttons ──────────────── */
+  contextSaveBtn: {
+    backgroundColor: '#0f172a',
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    gap: 8,
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  contextSaveBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
   btnRow: {
     flexDirection: 'row',
     gap: 12,
