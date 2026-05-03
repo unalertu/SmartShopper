@@ -160,16 +160,14 @@ export default function StoresScreen() {
   const renderRightActions = (locId: string) => {
     return (
       <TouchableOpacity
-        style={styles.swipeDeleteAction}
         activeOpacity={0.7}
         onPress={() => {
           removeLocation(locId);
           swipeableRefs.current.delete(locId);
         }}
       >
-        <View style={styles.swipeDeleteInner}>
-          <Trash2 size={22} color="#fff" />
-          <Text style={styles.swipeDeleteText}>Delete</Text>
+        <View style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'flex-end', width: 80, height: '100%', borderRadius: 16 }}>
+          <Text style={{ color: 'white', fontWeight: 'bold', paddingRight: 16 }}>Delete</Text>
         </View>
       </TouchableOpacity>
     );
@@ -334,6 +332,7 @@ export default function StoresScreen() {
           {savedShops.map((loc) => (
             <Swipeable
               key={loc.id}
+              containerStyle={{ marginBottom: 14 }}
               ref={(ref) => {
                 if (ref) {
                   swipeableRefs.current.set(loc.id, ref);
@@ -348,8 +347,8 @@ export default function StoresScreen() {
               onSwipeableWillOpen={() => closeAllSwipeables(loc.id)}
             >
               <TouchableOpacity
-                className="mb-3.5 bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-100 shadow-sm"
-                style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 }}
+                className="bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-100 shadow-sm"
+                style={{ backgroundColor: 'white', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 }}
                 activeOpacity={0.7}
                 onPress={() => {
                   const latitudeDelta = 0.01;
