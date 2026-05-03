@@ -5,7 +5,7 @@ import { BlurView } from 'expo-blur';
 interface ProgressiveBlurProps {
   height: number;
   maxIntensity?: number;
-  tint?: 'light' | 'dark' | 'default' | 'transparent';
+  tint?: 'light' | 'dark' | 'default';
   layers?: number;
 }
 

@@ -1,13 +1,16 @@
 import React, { useEffect, useRef, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Store, Plus, ChevronRight, Search, SlidersHorizontal, ShoppingBasket } from 'lucide-react-native';
+import { Store, Plus, ChevronRight, Search, SlidersHorizontal, ShoppingBasket, LocateFixed } from 'lucide-react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
+import Animated, { useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { fetchMarkets } from '../../services/overpassService';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function StoresScreen() {
   const insets = useSafeAreaInsets();
@@ -16,6 +19,17 @@ export default function StoresScreen() {
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   const snapPoints = useMemo(() => ['30%', '50%', '90%'], []);
+
+  const animatedPosition = useSharedValue(SCREEN_HEIGHT);
+  const animatedLocateStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          translateY: animatedPosition.value - 66,
+        },
+      ],
+    };
+  });
 
   const [markets, setMarkets] = useState<any[]>([]);
   const [currentRegion, setCurrentRegion] = useState<any>(null);
@@ -48,25 +62,27 @@ export default function StoresScreen() {
     fetchMarketsFromOverpass(region);
   };
 
+  const handleLocateMe = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return;
+      
+      const location = await Location.getCurrentPositionAsync({});
+      const newRegion = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.04,
+        longitudeDelta: 0.04,
+      };
+      mapRef.current?.animateToRegion(newRegion, 1000);
+      fetchMarketsFromOverpass(newRegion);
+    } catch (error) {
+      console.warn('Error fetching location', error);
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') return;
-        
-        const location = await Location.getCurrentPositionAsync({});
-        const newRegion = {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          latitudeDelta: 0.04,
-          longitudeDelta: 0.04,
-        };
-        mapRef.current?.animateToRegion(newRegion, 1000);
-        fetchMarketsFromOverpass(newRegion);
-      } catch (error) {
-        console.warn('Error fetching location', error);
-      }
-    })();
+    handleLocateMe();
   }, []);
 
   const locations = [
@@ -90,6 +106,7 @@ export default function StoresScreen() {
           latitudeDelta: 0.04,
           longitudeDelta: 0.04,
         }}
+        mapPadding={{ top: 0, right: 0, bottom: SCREEN_HEIGHT * 0.3, left: 0 }}
         showsUserLocation={true}
         followsUserLocation={false}
         showsPointsOfInterest={false}
@@ -126,10 +143,22 @@ export default function StoresScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Locate Me Button */}
+      <Animated.View style={[styles.locateButtonContainer, animatedLocateStyle]}>
+        <TouchableOpacity 
+          style={styles.locateButton}
+          onPress={handleLocateMe}
+          activeOpacity={0.8}
+        >
+          <LocateFixed size={24} color="#0f172a" />
+        </TouchableOpacity>
+      </Animated.View>
+
       {/* Draggable Bottom Sheet */}
       <BottomSheet
         ref={bottomSheetRef}
         index={1}
+        animatedPosition={animatedPosition}
         snapPoints={snapPoints}
         handleComponent={() => (
           <View className="w-full pt-5 pb-2 px-6">
@@ -156,6 +185,16 @@ export default function StoresScreen() {
               key={loc.id} 
               className="mb-3.5 bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-100 shadow-sm"
               style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 }}
+              onPress={() => {
+                const region = {
+                  latitude: loc.latitude,
+                  longitude: loc.longitude,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                };
+                mapRef.current?.animateToRegion(region, 800);
+                bottomSheetRef.current?.snapToIndex(0);
+              }}
             >
               <View className="flex-row items-center gap-4 flex-1">
                 <View className="bg-slate-50 w-[54px] h-[54px] rounded-full items-center justify-center border border-slate-100">
@@ -226,6 +265,25 @@ const styles = StyleSheet.create({
     borderBottomColor: '#0f172a',
     transform: [{ rotate: '180deg' }],
     marginTop: -1,
+  },
+  locateButtonContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 16,
+    zIndex: 10,
+  },
+  locateButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
   sheetHeader: {
     paddingHorizontal: 24,
