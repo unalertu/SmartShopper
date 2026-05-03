@@ -308,7 +308,7 @@ export default function StoresScreen() {
       >
 
         <BottomSheetScrollView
-          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
         >
           {/* Empty state */}
