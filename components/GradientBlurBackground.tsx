@@ -11,7 +11,7 @@ export default function GradientBlurBackground() {
       maskElement={
         <LinearGradient
           colors={["rgba(0,0,0,1)", "rgba(0,0,0,1)", "rgba(0,0,0,0)"]}
-          locations={[0, 0.7, 1]}
+          locations={[0, 0.04, 0.8]}
           style={StyleSheet.absoluteFill}
         />
       }
