@@ -20,6 +20,7 @@ export default function StoresScreen() {
   const mapRef = useRef<MapView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
+  const lastTap = useRef(0);
 
   // Zustand persisted store
   const { locations, addLocation, removeLocation } = useLocationStore();
@@ -200,7 +201,11 @@ export default function StoresScreen() {
           }
         }}
       >
-        {markets.map(market => {
+        {markets
+          .filter((market, index, self) => 
+            index === self.findIndex((m) => m.latitude === market.latitude && m.longitude === market.longitude)
+          )
+          .map(market => {
           const saved = isShopSaved(market);
           return (
             <Marker
@@ -209,6 +214,9 @@ export default function StoresScreen() {
               title={market.name}
               onPress={(e) => {
                 e.stopPropagation();
+                const now = Date.now();
+                if (now - lastTap.current < 300) return;
+                lastTap.current = now;
                 if (!saved) {
                   setSelectedShopToSave(market);
                   bottomSheetRef.current?.snapToIndex(snapPoints.length - 1);
