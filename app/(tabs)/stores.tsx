@@ -1,14 +1,15 @@
-import React, { useEffect, useRef, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Store, Plus, ChevronRight, Search, SlidersHorizontal, ShoppingBasket, LocateFixed } from 'lucide-react-native';
+import { Store, Plus, ChevronRight, Search, SlidersHorizontal, ShoppingBasket, LocateFixed, Trash2, X } from 'lucide-react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
-import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import Animated, { useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { fetchMarkets } from '../../services/overpassService';
+import { useLocationStore } from '../../store';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -21,18 +22,25 @@ export default function StoresScreen() {
   const snapPoints = useMemo(() => ['30%', '50%', '90%'], []);
 
   const animatedPosition = useSharedValue(SCREEN_HEIGHT);
-  const animatedLocateStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          translateY: animatedPosition.value - 66,
-        },
-      ],
-    };
-  });
+  const animatedLocateStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: animatedPosition.value - 66 }],
+  }));
 
   const [markets, setMarkets] = useState<any[]>([]);
   const [currentRegion, setCurrentRegion] = useState<any>(null);
+  const [deleteMode, setDeleteMode] = useState(false);
+
+  // Zustand persisted store
+  const { locations: savedShops, addLocation, removeLocation } = useLocationStore();
+
+  const isShopSaved = useCallback((market: any) => {
+    return savedShops.some(
+      (shop) =>
+        shop.name === market.name &&
+        Math.abs(shop.latitude - market.latitude) < 0.0005 &&
+        Math.abs(shop.longitude - market.longitude) < 0.0005
+    );
+  }, [savedShops]);
 
   const fetchMarketsFromOverpass = async (region: any) => {
     if (region.latitudeDelta > 0.15) {
@@ -66,14 +74,14 @@ export default function StoresScreen() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return;
-      
+
       const location = await Location.getCurrentPositionAsync({});
-      
+
       const latitudeDelta = 0.04;
       const longitudeDelta = 0.04;
       const actualLatitude = location.coords.latitude;
       const actualLongitude = location.coords.longitude;
-      
+
       // Calculate adjusted latitude to shift visual center above bottom sheet
       const adjustedLatitude = actualLatitude - (latitudeDelta * 0.25);
 
@@ -83,9 +91,9 @@ export default function StoresScreen() {
         latitudeDelta,
         longitudeDelta,
       };
-      
+
       mapRef.current?.animateToRegion(newRegion, 1000);
-      
+
       // Fetch markets around actual location
       fetchMarketsFromOverpass({
         latitude: actualLatitude,
@@ -102,16 +110,10 @@ export default function StoresScreen() {
     handleLocateMe();
   }, []);
 
-  const locations = [
-    { id: 1, name: "Migros Jet", address: "Atatürk Cad. No: 45", distance: "450m", latitude: 41.0082, longitude: 28.9784 },
-    { id: 2, name: "Macrocenter", address: "Sokak Sk. No: 12", distance: "1.2km", latitude: 41.0112, longitude: 28.9804 },
-    { id: 3, name: "BİM", address: "Mahalle Yolu No: 8", distance: "2.1km", latitude: 41.0052, longitude: 28.9754 },
-  ];
-
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
-      
+
       {/* Full Screen Background Map */}
       <MapView
         ref={mapRef}
@@ -128,27 +130,30 @@ export default function StoresScreen() {
         showsPointsOfInterest={false}
         onRegionChangeComplete={handleRegionChangeComplete}
       >
-        {markets.map(market => (
-          <Marker 
-            key={market.id} 
-            coordinate={{ latitude: market.latitude, longitude: market.longitude }}
-            title={market.name}
-          >
-            <View className="bg-white p-1.5 rounded-full border border-slate-200 shadow-sm">
-              <ShoppingBasket size={18} color="#0f172a" />
-            </View>
-          </Marker>
-        ))}
+        {markets.map(market => {
+          const saved = isShopSaved(market);
+          return (
+            <Marker
+              key={market.id}
+              coordinate={{ latitude: market.latitude, longitude: market.longitude }}
+              title={market.name}
+            >
+              <View style={[styles.markerPill, saved && styles.markerPillSaved]}>
+                <ShoppingBasket size={18} color={saved ? '#fff' : '#0f172a'} />
+              </View>
+            </Marker>
+          );
+        })}
       </MapView>
 
       {/* Floating Top Bar */}
-      <View 
+      <View
         style={[styles.floatingHeader, { top: Math.max(20, insets.top) }]}
         className="flex-row items-center px-4"
       >
         <View className="flex-1 bg-white/95 rounded-full h-14 flex-row items-center px-4 shadow-lg border border-slate-100 mr-3 shadow-black/10">
           <Search size={22} color="#94a3b8" />
-          <TextInput 
+          <TextInput
             className="flex-1 ml-3 text-[16px] text-slate-900 font-medium h-full"
             placeholder="Search stores nearby..."
             placeholderTextColor="#94a3b8"
@@ -161,7 +166,7 @@ export default function StoresScreen() {
 
       {/* Locate Me Button */}
       <Animated.View style={[styles.locateButtonContainer, animatedLocateStyle]}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.locateButton}
           onPress={handleLocateMe}
           activeOpacity={0.8}
@@ -181,27 +186,46 @@ export default function StoresScreen() {
             <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">Saved Shops</Text>
           </View>
         )}
-        backgroundStyle={{ 
-          borderRadius: 32, 
-          shadowColor: '#000', 
-          shadowOffset: { width: 0, height: -10 }, 
-          shadowOpacity: 0.08, 
-          shadowRadius: 20, 
+        backgroundStyle={{
+          borderRadius: 32,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -10 },
+          shadowOpacity: 0.08,
+          shadowRadius: 20,
           elevation: 15,
-          backgroundColor: '#f8fafc' 
+          backgroundColor: '#f8fafc'
         }}
       >
-        
-        <BottomSheetScrollView 
+
+        <BottomSheetScrollView
           contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 150 }}
           showsVerticalScrollIndicator={false}
         >
-          {locations.map((loc) => (
-            <TouchableOpacity 
-              key={loc.id} 
+          {/* Empty state */}
+          {savedShops.length === 0 && (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIcon}>
+                <Store size={32} color="#cbd5e1" />
+              </View>
+              <Text style={styles.emptyTitle}>No saved shops yet</Text>
+              <Text style={styles.emptySub}>Tap a marker on the map to save your favourite shops</Text>
+            </View>
+          )}
+
+          {/* Saved shop cards */}
+          {savedShops.map((loc) => (
+            <TouchableOpacity
+              key={loc.id}
               className="mb-3.5 bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-100 shadow-sm"
-              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 }}
+              style={[
+                { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 },
+                deleteMode && styles.deleteCard,
+              ]}
               onPress={() => {
+                if (deleteMode) {
+                  removeLocation(loc.id);
+                  return;
+                }
                 const latitudeDelta = 0.01;
                 const longitudeDelta = 0.01;
                 const adjustedLatitude = loc.latitude - (latitudeDelta * 0.25);
@@ -216,28 +240,56 @@ export default function StoresScreen() {
               }}
             >
               <View className="flex-row items-center gap-4 flex-1">
-                <View className="bg-slate-50 w-[54px] h-[54px] rounded-full items-center justify-center border border-slate-100">
-                  <Store size={22} color="#0f172a" />
+                <View
+                  style={[
+                    styles.shopIcon,
+                    deleteMode && styles.shopIconDelete,
+                  ]}
+                >
+                  {deleteMode ? (
+                    <Trash2 size={22} color="#ef4444" />
+                  ) : (
+                    <Store size={22} color="#0f172a" />
+                  )}
                 </View>
                 <View className="flex-1">
                   <Text className="text-[16px] font-bold text-slate-900 tracking-tight mb-0.5">{loc.name}</Text>
-                  <Text className="text-[13px] font-medium text-slate-500" numberOfLines={1}>{loc.address}</Text>
+                  <Text className="text-[13px] font-medium text-slate-500" numberOfLines={1}>
+                    {deleteMode ? 'Tap to remove' : `${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`}
+                  </Text>
                 </View>
               </View>
               <View className="flex-row items-center gap-2 pl-2">
-                <Text className="text-slate-500 font-bold text-[13px]">{loc.distance}</Text>
-                <ChevronRight size={18} color="#cbd5e1" />
+                {deleteMode ? (
+                  <X size={18} color="#ef4444" />
+                ) : (
+                  <ChevronRight size={18} color="#cbd5e1" />
+                )}
               </View>
             </TouchableOpacity>
           ))}
-          
-          <TouchableOpacity 
-            className="bg-slate-900 h-[64px] rounded-[24px] justify-center items-center shadow-lg mt-4 flex-row gap-2"
-            style={{ shadowColor: '#0f172a', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 8 }}
-          >
-            <Plus size={22} color="#fff" />
-            <Text className="text-white font-bold text-[16px]">Add New Store</Text>
-          </TouchableOpacity>
+
+          {/* Split action buttons */}
+          <View style={styles.btnRow}>
+            <TouchableOpacity
+              style={styles.addBtn}
+              activeOpacity={0.8}
+            >
+              <Plus size={20} color="#fff" />
+              <Text style={styles.addBtnText}>Add New Store</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.deleteBtn, deleteMode && styles.deleteBtnActive]}
+              activeOpacity={0.8}
+              onPress={() => setDeleteMode(!deleteMode)}
+            >
+              <Trash2 size={20} color={deleteMode ? '#fff' : '#ef4444'} />
+              <Text style={[styles.deleteBtnText, deleteMode && styles.deleteBtnTextActive]}>
+                {deleteMode ? 'Done' : 'Delete Shop'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </BottomSheetScrollView>
       </BottomSheet>
     </View>
@@ -254,36 +306,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 10,
-  },
-  markerContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  markerBubble: {
-    backgroundColor: '#0f172a',
-    padding: 8,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#ffffff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 4,
-  },
-  markerTriangle: {
-    width: 0,
-    height: 0,
-    backgroundColor: 'transparent',
-    borderStyle: 'solid',
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderBottomWidth: 8,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: '#0f172a',
-    transform: [{ rotate: '180deg' }],
-    marginTop: -1,
   },
   locateButtonContainer: {
     position: 'absolute',
@@ -304,9 +326,123 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  sheetHeader: {
-    paddingHorizontal: 24,
-    paddingTop: 10,
-    paddingBottom: 20,
-  }
+
+  /* ── Map marker ────────────────────────── */
+  markerPill: {
+    backgroundColor: '#ffffff',
+    padding: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  markerPillSaved: {
+    backgroundColor: '#0f172a',
+    borderColor: '#0f172a',
+  },
+
+  /* ── Empty state ───────────────────────── */
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  emptyIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  emptyTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#64748b',
+    marginBottom: 6,
+  },
+  emptySub: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#94a3b8',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+
+  /* ── Saved shop card extras ────────────── */
+  shopIcon: {
+    backgroundColor: '#f8fafc',
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  shopIconDelete: {
+    backgroundColor: '#fef2f2',
+    borderColor: '#fecaca',
+  },
+  deleteCard: {
+    borderColor: '#fecaca',
+  },
+
+  /* ── Split action buttons ──────────────── */
+  btnRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 4,
+  },
+  addBtn: {
+    flex: 1,
+    height: 58,
+    borderRadius: 20,
+    backgroundColor: '#0f172a',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  addBtnText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  deleteBtn: {
+    flex: 1,
+    height: 58,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1.5,
+    borderColor: '#fecaca',
+  },
+  deleteBtnActive: {
+    backgroundColor: '#ef4444',
+    borderColor: '#ef4444',
+  },
+  deleteBtnText: {
+    color: '#ef4444',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  deleteBtnTextActive: {
+    color: '#fff',
+  },
 });
