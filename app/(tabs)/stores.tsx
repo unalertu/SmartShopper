@@ -68,14 +68,31 @@ export default function StoresScreen() {
       if (status !== 'granted') return;
       
       const location = await Location.getCurrentPositionAsync({});
+      
+      const latitudeDelta = 0.04;
+      const longitudeDelta = 0.04;
+      const actualLatitude = location.coords.latitude;
+      const actualLongitude = location.coords.longitude;
+      
+      // Calculate adjusted latitude to shift visual center above bottom sheet
+      const adjustedLatitude = actualLatitude - (latitudeDelta * 0.25);
+
       const newRegion = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        latitudeDelta: 0.04,
-        longitudeDelta: 0.04,
+        latitude: adjustedLatitude,
+        longitude: actualLongitude,
+        latitudeDelta,
+        longitudeDelta,
       };
+      
       mapRef.current?.animateToRegion(newRegion, 1000);
-      fetchMarketsFromOverpass(newRegion);
+      
+      // Fetch markets around actual location
+      fetchMarketsFromOverpass({
+        latitude: actualLatitude,
+        longitude: actualLongitude,
+        latitudeDelta,
+        longitudeDelta
+      });
     } catch (error) {
       console.warn('Error fetching location', error);
     }
@@ -106,7 +123,6 @@ export default function StoresScreen() {
           latitudeDelta: 0.04,
           longitudeDelta: 0.04,
         }}
-        mapPadding={{ top: 0, right: 0, bottom: SCREEN_HEIGHT * 0.3, left: 0 }}
         showsUserLocation={true}
         followsUserLocation={false}
         showsPointsOfInterest={false}
@@ -186,11 +202,14 @@ export default function StoresScreen() {
               className="mb-3.5 bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-100 shadow-sm"
               style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 }}
               onPress={() => {
+                const latitudeDelta = 0.01;
+                const longitudeDelta = 0.01;
+                const adjustedLatitude = loc.latitude - (latitudeDelta * 0.25);
                 const region = {
-                  latitude: loc.latitude,
+                  latitude: adjustedLatitude,
                   longitude: loc.longitude,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
+                  latitudeDelta,
+                  longitudeDelta,
                 };
                 mapRef.current?.animateToRegion(region, 800);
                 bottomSheetRef.current?.snapToIndex(0);

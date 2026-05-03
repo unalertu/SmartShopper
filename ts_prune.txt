@@ -1,0 +1,36 @@
+app/_layout.tsx:21 - default
+app/_layout.tsx:17 - unstable_settings
+app/add-item.tsx:18 - default
+app/add-location.tsx:26 - default
+components/FrostedHeader.tsx:15 - default
+components/FrostedHeader.tsx:60 - HEADER_CONTENT_HEIGHT (used in module)
+constants/index.ts:1 - Colors
+constants/index.ts:1 - Spacing
+constants/index.ts:1 - BorderRadius
+constants/index.ts:1 - FontSize
+constants/index.ts:1 - GEOFENCE_DEFAULT_RADIUS
+constants/index.ts:1 - BACKGROUND_LOCATION_TASK
+constants/index.ts:2 - CATEGORIES
+constants/index.ts:2 - UNITS
+constants/index.ts:2 - getCategoryIcon
+constants/index.ts:2 - getCategoryLabel
+hooks/use-color-scheme.web.ts:7 - useColorScheme (used in module)
+services/index.ts:1 - requestLocationPermissions
+services/index.ts:1 - getCurrentLocation
+services/index.ts:1 - getDistance
+services/index.ts:2 - setupNotifications
+services/index.ts:2 - sendLocalNotification
+services/index.ts:3 - fetchMarkets
+services/overpassService.ts:16 - MarketElement (used in module)
+store/index.ts:1 - useShoppingListStore
+store/index.ts:2 - useLocationStore
+store/index.ts:4 - ShoppingItem
+store/index.ts:5 - SavedLocation
+app/(tabs)/_layout.tsx:202 - default
+app/(tabs)/index.tsx:13 - default
+app/(tabs)/locations.tsx:9 - default
+app/(tabs)/profile.tsx:21 - default
+app/(tabs)/settings.tsx:14 - default
+app/(tabs)/shared.tsx:7 - default
+app/(tabs)/stores.tsx:15 - default
+app/list/[id].tsx:8 - default

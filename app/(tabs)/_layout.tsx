@@ -15,6 +15,7 @@ import {
   ScanBarcode,
 } from "lucide-react-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import GradientBlurBackground from "../../components/GradientBlurBackground";
 
 // ── Tab config: maps route name → icon + label ──
 const TAB_CONFIG: Record<string, { label: string; Icon: any }> = {
@@ -206,7 +207,13 @@ export default function TabLayout() {
   return (
     <Tabs
       tabBar={(props) => renderCustomTabBar({ ...props, insets, isActionsMenuOpen, setIsActionsMenuOpen })}
-      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: '#f8fafc' } }}
+      screenOptions={{
+        headerTransparent: true,
+        headerBackground: () => <GradientBlurBackground />,
+        sceneStyle: { backgroundColor: '#f8fafc' },
+        headerTitle: '',
+        headerStyle: { height: 110 }
+      }}
     >
       <Tabs.Screen name="index" options={{ title: "Home" }} />
       <Tabs.Screen name="stores" options={{ title: "Stores" }} />
