@@ -2,12 +2,13 @@ import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Store, Plus, ChevronRight, Search, SlidersHorizontal, ShoppingBasket, LocateFixed, Trash2, X } from 'lucide-react-native';
+import { Store, Plus, ChevronRight, Search, SlidersHorizontal, ShoppingBasket, LocateFixed, Trash2, MapPin } from 'lucide-react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import Animated, { useSharedValue, useAnimatedStyle, FadeInDown, FadeOutUp, LinearTransition } from 'react-native-reanimated';
+import { Swipeable } from 'react-native-gesture-handler';
 import { fetchMarkets } from '../../services/overpassService';
 import { useLocationStore } from '../../store';
 
@@ -18,8 +19,45 @@ export default function StoresScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
 
-  const snapPoints = useMemo(() => ['30%', '50%', '90%'], []);
+  // Zustand persisted store
+  const { locations, addLocation, removeLocation } = useLocationStore();
+  const savedShops = locations ?? [];
+
+  const snapPoints = useMemo(() => {
+    const HEADER_HEIGHT = 80;       // handle + "Saved Shops" title
+    const CARD_HEIGHT = 82;         // each shop card (~54 icon + padding + margin)
+    const HINT_CARD_HEIGHT = 100;   // placeholder hint card
+    const EMPTY_STATE_HEIGHT = 170; // empty-state block
+    const BOTTOM_PADDING = 32;      // breathing room at the bottom
+
+    let contentHeight: number;
+
+    if (savedShops.length === 0) {
+      contentHeight = HEADER_HEIGHT + EMPTY_STATE_HEIGHT + BOTTOM_PADDING;
+    } else {
+      contentHeight =
+        HEADER_HEIGHT +
+        savedShops.length * CARD_HEIGHT +
+        (savedShops.length < 3 ? HINT_CARD_HEIGHT : 0) +
+        BOTTOM_PADDING;
+    }
+
+    // Convert to a percentage of screen height, clamped between 30% and 90%
+    const maxPercent = Math.min(90, Math.max(30, Math.ceil((contentHeight / SCREEN_HEIGHT) * 100)));
+
+    // Build snap points: always start at 30%, add a middle point if useful, then the dynamic max
+    const points: string[] = ['30%'];
+    if (maxPercent > 50) {
+      points.push('50%');
+    }
+    if (maxPercent > 30) {
+      points.push(`${maxPercent}%`);
+    }
+
+    return points;
+  }, [savedShops.length]);
 
   const animatedPosition = useSharedValue(SCREEN_HEIGHT);
   const animatedLocateStyle = useAnimatedStyle(() => ({
@@ -28,11 +66,9 @@ export default function StoresScreen() {
 
   const [markets, setMarkets] = useState<any[]>([]);
   const [currentRegion, setCurrentRegion] = useState<any>(null);
-  const [deleteMode, setDeleteMode] = useState(false);
   const [selectedShopToSave, setSelectedShopToSave] = useState<any>(null);
 
-  // Zustand persisted store
-  const { locations: savedShops, addLocation, removeLocation } = useLocationStore();
+
 
   const isShopSaved = useCallback((market: any) => {
     return savedShops.some(
@@ -111,6 +147,33 @@ export default function StoresScreen() {
     handleLocateMe();
   }, []);
 
+  // Close any open swipeable when another one opens
+  const closeAllSwipeables = (exceptId?: string) => {
+    swipeableRefs.current.forEach((ref, id) => {
+      if (id !== exceptId) {
+        ref.close();
+      }
+    });
+  };
+
+  const renderRightActions = (locId: string) => {
+    return (
+      <TouchableOpacity
+        style={styles.swipeDeleteAction}
+        activeOpacity={0.7}
+        onPress={() => {
+          removeLocation(locId);
+          swipeableRefs.current.delete(locId);
+        }}
+      >
+        <View style={styles.swipeDeleteInner}>
+          <Trash2 size={22} color="#fff" />
+          <Text style={styles.swipeDeleteText}>Delete</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
@@ -148,7 +211,7 @@ export default function StoresScreen() {
                 e.stopPropagation();
                 if (!saved) {
                   setSelectedShopToSave(market);
-                  bottomSheetRef.current?.snapToIndex(1);
+                  bottomSheetRef.current?.snapToIndex(snapPoints.length - 1);
                 } else {
                   setSelectedShopToSave(null);
                 }
@@ -194,7 +257,7 @@ export default function StoresScreen() {
       {/* Draggable Bottom Sheet */}
       <BottomSheet
         ref={bottomSheetRef}
-        index={1}
+        index={Math.min(1, snapPoints.length - 1)}
         animatedPosition={animatedPosition}
         snapPoints={snapPoints}
         handleComponent={useCallback(() => (
@@ -245,7 +308,7 @@ export default function StoresScreen() {
       >
 
         <BottomSheetScrollView
-          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 150 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
           showsVerticalScrollIndicator={false}
         >
           {/* Empty state */}
@@ -259,84 +322,66 @@ export default function StoresScreen() {
             </View>
           )}
 
-          {/* Saved shop cards */}
+          {/* Saved shop cards with swipe-to-delete */}
           {savedShops.map((loc) => (
-            <TouchableOpacity
+            <Swipeable
               key={loc.id}
-              className="mb-3.5 bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-100 shadow-sm"
-              style={[
-                { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 },
-                deleteMode && styles.deleteCard,
-              ]}
-              onPress={() => {
-                if (deleteMode) {
-                  removeLocation(loc.id);
-                  return;
+              ref={(ref) => {
+                if (ref) {
+                  swipeableRefs.current.set(loc.id, ref);
+                } else {
+                  swipeableRefs.current.delete(loc.id);
                 }
-                const latitudeDelta = 0.01;
-                const longitudeDelta = 0.01;
-                const adjustedLatitude = loc.latitude - (latitudeDelta * 0.25);
-                const region = {
-                  latitude: adjustedLatitude,
-                  longitude: loc.longitude,
-                  latitudeDelta,
-                  longitudeDelta,
-                };
-                mapRef.current?.animateToRegion(region, 800);
-                bottomSheetRef.current?.snapToIndex(0);
               }}
+              renderRightActions={() => renderRightActions(loc.id)}
+              rightThreshold={40}
+              overshootRight={false}
+              friction={2}
+              onSwipeableWillOpen={() => closeAllSwipeables(loc.id)}
             >
-              <View className="flex-row items-center gap-4 flex-1">
-                <View
-                  style={[
-                    styles.shopIcon,
-                    deleteMode && styles.shopIconDelete,
-                  ]}
-                >
-                  {deleteMode ? (
-                    <Trash2 size={22} color="#ef4444" />
-                  ) : (
+              <TouchableOpacity
+                className="mb-3.5 bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-100 shadow-sm"
+                style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 }}
+                activeOpacity={0.7}
+                onPress={() => {
+                  const latitudeDelta = 0.01;
+                  const longitudeDelta = 0.01;
+                  const adjustedLatitude = loc.latitude - (latitudeDelta * 0.25);
+                  const region = {
+                    latitude: adjustedLatitude,
+                    longitude: loc.longitude,
+                    latitudeDelta,
+                    longitudeDelta,
+                  };
+                  mapRef.current?.animateToRegion(region, 800);
+                  bottomSheetRef.current?.snapToIndex(0);
+                }}
+              >
+                <View className="flex-row items-center gap-4 flex-1">
+                  <View style={styles.shopIcon}>
                     <Store size={22} color="#0f172a" />
-                  )}
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-[16px] font-bold text-slate-900 tracking-tight mb-0.5">{loc.name}</Text>
+                    <Text className="text-[13px] font-medium text-slate-500" numberOfLines={1}>
+                      {`${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`}
+                    </Text>
+                  </View>
                 </View>
-                <View className="flex-1">
-                  <Text className="text-[16px] font-bold text-slate-900 tracking-tight mb-0.5">{loc.name}</Text>
-                  <Text className="text-[13px] font-medium text-slate-500" numberOfLines={1}>
-                    {deleteMode ? 'Tap to remove' : `${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`}
-                  </Text>
-                </View>
-              </View>
-              <View className="flex-row items-center gap-2 pl-2">
-                {deleteMode ? (
-                  <X size={18} color="#ef4444" />
-                ) : (
+                <View className="flex-row items-center gap-2 pl-2">
                   <ChevronRight size={18} color="#cbd5e1" />
-                )}
-              </View>
-            </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            </Swipeable>
           ))}
 
-          {/* Split action buttons */}
-          <View style={styles.btnRow}>
-            <TouchableOpacity
-              style={styles.addBtn}
-              activeOpacity={0.8}
-            >
-              <Plus size={20} color="#fff" />
-              <Text style={styles.addBtnText}>Add New Store</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.deleteBtn, deleteMode && styles.deleteBtnActive]}
-              activeOpacity={0.8}
-              onPress={() => setDeleteMode(!deleteMode)}
-            >
-              <Trash2 size={20} color={deleteMode ? '#fff' : '#ef4444'} />
-              <Text style={[styles.deleteBtnText, deleteMode && styles.deleteBtnTextActive]}>
-                {deleteMode ? 'Done' : 'Delete Shop'}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          {/* Hint/Placeholder Card — shown when fewer than 3 shops saved */}
+          {savedShops.length > 0 && savedShops.length < 3 && (
+            <View style={styles.hintCard}>
+              <MapPin size={28} color="#BDBDBD" />
+              <Text style={styles.hintText}>Tap a map marker to add more shops</Text>
+            </View>
+          )}
         </BottomSheetScrollView>
       </BottomSheet>
     </View>
@@ -434,15 +479,54 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#f1f5f9',
   },
-  shopIconDelete: {
-    backgroundColor: '#fef2f2',
-    borderColor: '#fecaca',
+
+  /* ── Swipe-to-delete action ────────────── */
+  swipeDeleteAction: {
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    marginBottom: 14,
   },
-  deleteCard: {
-    borderColor: '#fecaca',
+  swipeDeleteInner: {
+    backgroundColor: '#ef4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 88,
+    height: '100%',
+    borderRadius: 24,
+    marginLeft: 8,
+    gap: 4,
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  swipeDeleteText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 
-  /* ── Split action buttons ──────────────── */
+  /* ── Hint / Placeholder Card ─────────── */
+  hintCard: {
+    borderStyle: 'dashed',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    borderRadius: 16,
+    marginTop: 16,
+    paddingVertical: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hintText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#BDBDBD',
+    marginTop: 10,
+  },
+
+  /* ── Context save button ───────────────── */
   contextSaveBtn: {
     backgroundColor: '#0f172a',
     borderRadius: 16,
@@ -463,54 +547,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '700',
-  },
-  btnRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 4,
-  },
-  addBtn: {
-    flex: 1,
-    height: 58,
-    borderRadius: 20,
-    backgroundColor: '#0f172a',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.22,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  addBtnText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  deleteBtn: {
-    flex: 1,
-    height: 58,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderWidth: 1.5,
-    borderColor: '#fecaca',
-  },
-  deleteBtnActive: {
-    backgroundColor: '#ef4444',
-    borderColor: '#ef4444',
-  },
-  deleteBtnText: {
-    color: '#ef4444',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  deleteBtnTextActive: {
-    color: '#fff',
   },
 });
