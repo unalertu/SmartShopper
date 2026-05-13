@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Dimensions, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Store, Plus, ChevronRight, Search, SlidersHorizontal, ShoppingBasket, LocateFixed, Trash2, MapPin } from 'lucide-react-native';
@@ -192,8 +192,12 @@ export default function StoresScreen() {
         followsUserLocation={false}
         showsPointsOfInterest={false}
         onRegionChangeComplete={handleRegionChangeComplete}
-        onPanDrag={() => setSelectedShopToSave(null)}
+        onPanDrag={() => {
+          setSelectedShopToSave(null);
+          Keyboard.dismiss();
+        }}
         onPress={(e) => {
+          Keyboard.dismiss();
           if (e.nativeEvent.action !== 'marker-press') {
             setSelectedShopToSave(null);
           }
@@ -212,6 +216,7 @@ export default function StoresScreen() {
               title={market.name}
               onPress={(e) => {
                 e.stopPropagation();
+                Keyboard.dismiss();
                 const now = Date.now();
                 if (now - lastTap.current < 300) return;
                 lastTap.current = now;
@@ -316,6 +321,8 @@ export default function StoresScreen() {
         <BottomSheetScrollView
           contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          onScrollBeginDrag={Keyboard.dismiss}
         >
           {/* Empty state */}
           {savedShops.length === 0 && (
@@ -355,6 +362,7 @@ export default function StoresScreen() {
                   style={{ backgroundColor: 'white', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 }}
                   activeOpacity={0.7}
                   onPress={() => {
+                    Keyboard.dismiss();
                     const latitudeDelta = 0.01;
                     const longitudeDelta = 0.01;
                     const adjustedLatitude = loc.latitude - (latitudeDelta * 0.25);
