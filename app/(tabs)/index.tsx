@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Flame, ShoppingBag, Crown, Plus, Home, Users, User, List, ChevronRight, Radar, BellRing, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings, ScanBarcode } from 'lucide-react-native';
@@ -9,6 +9,8 @@ import ProgressiveBlur from '../../components/ProgressiveBlur';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
 import { fetchMarkets } from '../../services/overpassService';
+import { Swipeable } from 'react-native-gesture-handler';
+import Animated, { FadeOutLeft, LinearTransition } from 'react-native-reanimated';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -98,11 +100,41 @@ export default function HomeScreen() {
     })();
   }, []);
 
-  const shoppingLists = [
+  const [shoppingLists, setShoppingLists] = useState([
     { id: 1, name: "Ahmet için alınacaklar", count: 4 }, 
     { id: 2, name: "Kendi ihtiyaçlarım", count: 12 }, 
     { id: 3, name: "Buse'ye alınacaklar", count: 2 }
-  ];
+  ]);
+
+  const swipeableRefs = useRef<Map<number, Swipeable>>(new Map());
+
+  const closeAllSwipeables = (exceptId?: number) => {
+    swipeableRefs.current.forEach((ref, id) => {
+      if (id !== exceptId) {
+        ref.close();
+      }
+    });
+  };
+
+  const removeList = (id: number) => {
+    setShoppingLists(prev => prev.filter(list => list.id !== id));
+  };
+
+  const renderRightActions = (listId: number) => {
+    return (
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => {
+          removeList(listId);
+          swipeableRefs.current.delete(listId);
+        }}
+      >
+        <View style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'flex-end', width: 80, height: '100%', borderRadius: 24, marginLeft: 8 }}>
+          <Text style={{ color: 'white', fontWeight: 'bold', paddingRight: 16 }}>Delete</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     // 1. ROOT MUST BE A STANDARD VIEW, NOT SafeAreaView!
@@ -194,29 +226,50 @@ export default function HomeScreen() {
           {/* 3. My Lists Section */}
           <Text className="text-[22px] font-extrabold tracking-tight mx-6 mb-4 text-slate-900">My Lists</Text>
           {shoppingLists.map((list) => (
-            <TouchableOpacity 
-              key={list.id} 
-              onPress={() => router.push(`/list/${list.id}`)}
-              className="mx-6 mb-3 bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-50"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.04,
-                shadowRadius: 16,
-                elevation: 3,
-              }}
+            <Animated.View
+              key={list.id}
+              layout={LinearTransition.springify()}
+              exiting={FadeOutLeft.duration(200)}
             >
-              <View className="flex-row items-center gap-4">
-                <View className="bg-slate-100 w-[52px] h-[52px] rounded-full items-center justify-center">
-                  <List size={22} color="#334155" />
-                </View>
-                <View>
-                  <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{list.name}</Text>
-                  <Text className="text-[13px] font-medium text-slate-400 mt-1">{list.count} items</Text>
-                </View>
-              </View>
-              <ChevronRight size={24} color="#cbd5e1" />
-            </TouchableOpacity>
+              <Swipeable
+                containerStyle={{ marginHorizontal: 24, marginBottom: 12 }}
+                ref={(ref) => {
+                  if (ref) {
+                    swipeableRefs.current.set(list.id, ref);
+                  } else {
+                    swipeableRefs.current.delete(list.id);
+                  }
+                }}
+                renderRightActions={() => renderRightActions(list.id)}
+                rightThreshold={40}
+                overshootRight={false}
+                friction={2}
+                onSwipeableWillOpen={() => closeAllSwipeables(list.id)}
+              >
+                <TouchableOpacity 
+                  onPress={() => router.push(`/list/${list.id}`)}
+                  className="bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-50"
+                  style={{
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 6 },
+                    shadowOpacity: 0.04,
+                    shadowRadius: 16,
+                    elevation: 3,
+                  }}
+                >
+                  <View className="flex-row items-center gap-4">
+                    <View className="bg-slate-100 w-[52px] h-[52px] rounded-full items-center justify-center">
+                      <List size={22} color="#334155" />
+                    </View>
+                    <View>
+                      <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{list.name}</Text>
+                      <Text className="text-[13px] font-medium text-slate-400 mt-1">{list.count} items</Text>
+                    </View>
+                  </View>
+                  <ChevronRight size={24} color="#cbd5e1" />
+                </TouchableOpacity>
+              </Swipeable>
+            </Animated.View>
           ))}
 
           {/* 5. Secondary "Premium" Card */}

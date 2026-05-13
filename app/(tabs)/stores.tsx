@@ -7,7 +7,7 @@ import MapView, { Marker } from 'react-native-maps';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import Animated, { useSharedValue, useAnimatedStyle, FadeInDown, FadeOutUp, LinearTransition } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, FadeInDown, FadeOutUp, FadeOutLeft, LinearTransition } from 'react-native-reanimated';
 import { Swipeable } from 'react-native-gesture-handler';
 import { fetchMarkets } from '../../services/overpassService';
 import { useLocationStore } from '../../store';
@@ -217,7 +217,7 @@ export default function StoresScreen() {
                 lastTap.current = now;
                 if (!saved) {
                   setSelectedShopToSave(market);
-                  bottomSheetRef.current?.snapToIndex(snapPoints.length - 1);
+                  // bottomSheetRef.current?.snapToIndex(snapPoints.length - 1);
                 } else {
                   setSelectedShopToSave(null);
                 }
@@ -240,7 +240,7 @@ export default function StoresScreen() {
           <Search size={22} color="#94a3b8" />
           <TextInput
             className="flex-1 ml-3 text-[16px] text-slate-900 font-medium h-full"
-            placeholder="Search stores nearby..."
+            placeholder="Search shops..."
             placeholderTextColor="#94a3b8"
           />
         </View>
@@ -298,7 +298,7 @@ export default function StoresScreen() {
               layout={LinearTransition.springify()} 
               className="text-[22px] font-extrabold tracking-tight text-slate-900"
             >
-              Saved Shops
+              My Shops
             </Animated.Text>
           </Animated.View>
         ), [selectedShopToSave, addLocation])}
@@ -330,56 +330,61 @@ export default function StoresScreen() {
 
           {/* Saved shop cards with swipe-to-delete */}
           {savedShops.map((loc) => (
-            <Swipeable
+            <Animated.View
               key={loc.id}
-              containerStyle={{ marginBottom: 14 }}
-              ref={(ref) => {
-                if (ref) {
-                  swipeableRefs.current.set(loc.id, ref);
-                } else {
-                  swipeableRefs.current.delete(loc.id);
-                }
-              }}
-              renderRightActions={() => renderRightActions(loc.id)}
-              rightThreshold={40}
-              overshootRight={false}
-              friction={2}
-              onSwipeableWillOpen={() => closeAllSwipeables(loc.id)}
+              layout={LinearTransition.springify()}
+              exiting={FadeOutLeft.duration(200)}
             >
-              <TouchableOpacity
-                className="bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-100 shadow-sm"
-                style={{ backgroundColor: 'white', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 }}
-                activeOpacity={0.7}
-                onPress={() => {
-                  const latitudeDelta = 0.01;
-                  const longitudeDelta = 0.01;
-                  const adjustedLatitude = loc.latitude - (latitudeDelta * 0.25);
-                  const region = {
-                    latitude: adjustedLatitude,
-                    longitude: loc.longitude,
-                    latitudeDelta,
-                    longitudeDelta,
-                  };
-                  mapRef.current?.animateToRegion(region, 800);
-                  bottomSheetRef.current?.snapToIndex(0);
+              <Swipeable
+                containerStyle={{ marginBottom: 14 }}
+                ref={(ref) => {
+                  if (ref) {
+                    swipeableRefs.current.set(loc.id, ref);
+                  } else {
+                    swipeableRefs.current.delete(loc.id);
+                  }
                 }}
+                renderRightActions={() => renderRightActions(loc.id)}
+                rightThreshold={40}
+                overshootRight={false}
+                friction={2}
+                onSwipeableWillOpen={() => closeAllSwipeables(loc.id)}
               >
-                <View className="flex-row items-center gap-4 flex-1">
-                  <View style={styles.shopIcon}>
-                    <Store size={22} color="#0f172a" />
+                <TouchableOpacity
+                  className="bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-100 shadow-sm"
+                  style={{ backgroundColor: 'white', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 }}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    const latitudeDelta = 0.01;
+                    const longitudeDelta = 0.01;
+                    const adjustedLatitude = loc.latitude - (latitudeDelta * 0.25);
+                    const region = {
+                      latitude: adjustedLatitude,
+                      longitude: loc.longitude,
+                      latitudeDelta,
+                      longitudeDelta,
+                    };
+                    mapRef.current?.animateToRegion(region, 800);
+                    bottomSheetRef.current?.snapToIndex(0);
+                  }}
+                >
+                  <View className="flex-row items-center gap-4 flex-1">
+                    <View style={styles.shopIcon}>
+                      <Store size={22} color="#0f172a" />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-[16px] font-bold text-slate-900 tracking-tight mb-0.5">{loc.name}</Text>
+                      <Text className="text-[13px] font-medium text-slate-500" numberOfLines={1}>
+                        {`${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`}
+                      </Text>
+                    </View>
                   </View>
-                  <View className="flex-1">
-                    <Text className="text-[16px] font-bold text-slate-900 tracking-tight mb-0.5">{loc.name}</Text>
-                    <Text className="text-[13px] font-medium text-slate-500" numberOfLines={1}>
-                      {`${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`}
-                    </Text>
+                  <View className="flex-row items-center gap-2 pl-2">
+                    <ChevronRight size={18} color="#cbd5e1" />
                   </View>
-                </View>
-                <View className="flex-row items-center gap-2 pl-2">
-                  <ChevronRight size={18} color="#cbd5e1" />
-                </View>
-              </TouchableOpacity>
-            </Swipeable>
+                </TouchableOpacity>
+              </Swipeable>
+            </Animated.View>
           ))}
 
           {/* Hint/Placeholder Card — shown when fewer than 3 shops saved */}

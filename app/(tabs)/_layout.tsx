@@ -20,7 +20,7 @@ import GradientBlurBackground from "../../components/GradientBlurBackground";
 // ── Tab config: maps route name → icon + label ──
 const TAB_CONFIG: Record<string, { label: string; Icon: any }> = {
   index:   { label: "Home",    Icon: Home },
-  stores:  { label: "Stores",  Icon: MapPin },
+  stores:  { label: "Shops",  Icon: MapPin },
   shared:  { label: "Shared",  Icon: Users },
   profile: { label: "Profile", Icon: User },
 };
@@ -216,7 +216,7 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: "Home" }} />
-      <Tabs.Screen name="stores" options={{ title: "Stores" }} />
+      <Tabs.Screen name="stores" options={{ title: "Shops" }} />
       <Tabs.Screen name="shared" options={{ title: "Shared" }} />
       <Tabs.Screen name="profile" options={{ title: "Profile" }} />
       <Tabs.Screen name="locations" options={{ href: null }} />
