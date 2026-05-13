@@ -272,6 +272,30 @@ export default function HomeScreen() {
             </Animated.View>
           ))}
 
+          <View className="mx-6 mb-2 mt-2">
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={{
+                backgroundColor: '#0f172a',
+                borderRadius: 16,
+                paddingVertical: 14,
+                paddingHorizontal: 16,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                shadowColor: '#0f172a',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 8,
+                elevation: 4,
+              }}
+            >
+              <Plus size={20} color="#fff" />
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Add</Text>
+            </TouchableOpacity>
+          </View>
+
           {/* 5. Secondary "Premium" Card */}
           <View 
             className="mx-6 mt-5 bg-white rounded-[32px] p-6 min-h-[160px] relative overflow-hidden border border-slate-50"
