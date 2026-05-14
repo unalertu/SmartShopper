@@ -197,7 +197,7 @@ export default function HomeScreen() {
         {/* 2. THE MAP WIDGET */}
           {/* Smart Status Card */}
           <View 
-            className="mx-6 mt-2 mb-6 rounded-[32px] bg-white border border-slate-50 overflow-hidden"
+            className="mx-6 mt-2 mb-6 rounded-[32px] bg-white border border-slate-200 overflow-hidden"
             style={{
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 6 },
@@ -283,7 +283,7 @@ export default function HomeScreen() {
               >
                 <TouchableOpacity 
                   onPress={() => router.push(`/list/${list.id}`)}
-                  className="bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-50"
+                  className="bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-200"
                   style={{
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 6 },
@@ -356,7 +356,7 @@ export default function HomeScreen() {
               >
                 <TouchableOpacity 
                   onPress={() => router.push(`/stores`)}
-                  className="bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-50"
+                  className="bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-200"
                   style={{
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 6 },
@@ -406,7 +406,7 @@ export default function HomeScreen() {
 
           {/* 5. Secondary "Premium" Card */}
           <View 
-            className="mx-6 mt-5 bg-white rounded-[32px] p-6 min-h-[160px] relative overflow-hidden border border-slate-50"
+            className="mx-6 mt-5 bg-white rounded-[32px] p-6 min-h-[160px] relative overflow-hidden border border-slate-200"
             style={{
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 10 },
@@ -451,7 +451,7 @@ export default function HomeScreen() {
           <Text className="text-[22px] font-extrabold tracking-tight mx-6 mt-10 mb-4 text-slate-900">Recently uploaded</Text>
           
           <View 
-            className="mx-6 bg-white rounded-[32px] p-6 items-center border border-slate-50"
+            className="mx-6 bg-white rounded-[32px] p-6 items-center border border-slate-200"
             style={{
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 8 },
