@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Flame, ShoppingBag, Crown, Plus, Home, Users, User, List, ChevronRight, Radar, BellRing, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings, ScanBarcode } from 'lucide-react-native';
+import { Flame, Store, ShoppingBag, Crown, Plus, Home, Users, User, List, ChevronRight, Radar, BellRing, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings, ScanBarcode } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
@@ -136,6 +136,41 @@ export default function HomeScreen() {
     );
   };
 
+  const [myShops, setMyShops] = useState([
+    { id: 1, name: "Migros - Kadıköy", count: "Saved Shop" }, 
+    { id: 2, name: "Macrocenter - Moda", count: "Saved Shop" }
+  ]);
+
+  const swipeableShopRefs = useRef<Map<number, Swipeable>>(new Map());
+
+  const closeAllShopSwipeables = (exceptId?: number) => {
+    swipeableShopRefs.current.forEach((ref, id) => {
+      if (id !== exceptId) {
+        ref.close();
+      }
+    });
+  };
+
+  const removeShop = (id: number) => {
+    setMyShops(prev => prev.filter(shop => shop.id !== id));
+  };
+
+  const renderShopRightActions = (shopId: number) => {
+    return (
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => {
+          removeShop(shopId);
+          swipeableShopRefs.current.delete(shopId);
+        }}
+      >
+        <View style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'flex-end', width: 80, height: '100%', borderRadius: 24, marginLeft: 8 }}>
+          <Text style={{ color: 'white', fontWeight: 'bold', paddingRight: 16 }}>Delete</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     // 1. ROOT MUST BE A STANDARD VIEW, NOT SafeAreaView!
     <View className="flex-1 bg-slate-50"> 
@@ -150,7 +185,7 @@ export default function HomeScreen() {
         {/* SCROLLING HEADER CONTENT */}
         <View 
           className="px-6 flex-row justify-between items-center"
-          style={{ paddingTop: insets.top, paddingBottom: 10 }}
+          style={{ paddingTop: insets.top, paddingBottom: 0 }}
         >
           <View className="flex-row items-center gap-2">
             <Image source={require('../../assets/images/app-logo.png')} style={{ width: 56, height: 56, marginLeft: -24, marginTop: -4 }} resizeMode="contain" />
@@ -162,7 +197,7 @@ export default function HomeScreen() {
         {/* 2. THE MAP WIDGET */}
           {/* Smart Status Card */}
           <View 
-            className="mx-6 mt-6 mb-6 rounded-[32px] bg-white border border-slate-50 overflow-hidden"
+            className="mx-6 mt-2 mb-6 rounded-[32px] bg-white border border-slate-50 overflow-hidden"
             style={{
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 6 },
@@ -264,6 +299,79 @@ export default function HomeScreen() {
                     <View>
                       <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{list.name}</Text>
                       <Text className="text-[13px] font-medium text-slate-400 mt-1">{list.count} items</Text>
+                    </View>
+                  </View>
+                  <ChevronRight size={24} color="#cbd5e1" />
+                </TouchableOpacity>
+              </Swipeable>
+            </Animated.View>
+          ))}
+
+          <View className="mx-6 mb-2 mt-2">
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={{
+                backgroundColor: '#0f172a',
+                borderRadius: 16,
+                paddingVertical: 14,
+                paddingHorizontal: 16,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                shadowColor: '#0f172a',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 8,
+                elevation: 4,
+              }}
+            >
+              <Plus size={20} color="#fff" />
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Add</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* 4. My Shops Section */}
+          <Text className="text-[22px] font-extrabold tracking-tight mx-6 mt-8 mb-4 text-slate-900">My Shops</Text>
+          {myShops.map((shop) => (
+            <Animated.View
+              key={shop.id}
+              layout={LinearTransition.springify()}
+              exiting={FadeOutLeft.duration(200)}
+            >
+              <Swipeable
+                containerStyle={{ marginHorizontal: 24, marginBottom: 12 }}
+                ref={(ref) => {
+                  if (ref) {
+                    swipeableShopRefs.current.set(shop.id, ref);
+                  } else {
+                    swipeableShopRefs.current.delete(shop.id);
+                  }
+                }}
+                renderRightActions={() => renderShopRightActions(shop.id)}
+                rightThreshold={40}
+                overshootRight={false}
+                friction={2}
+                onSwipeableWillOpen={() => closeAllShopSwipeables(shop.id)}
+              >
+                <TouchableOpacity 
+                  onPress={() => router.push(`/stores`)}
+                  className="bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-50"
+                  style={{
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 6 },
+                    shadowOpacity: 0.04,
+                    shadowRadius: 16,
+                    elevation: 3,
+                  }}
+                >
+                  <View className="flex-row items-center gap-4">
+                    <View className="bg-slate-100 w-[52px] h-[52px] rounded-full items-center justify-center">
+                      <Store size={22} color="#334155" />
+                    </View>
+                    <View>
+                      <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{shop.name}</Text>
+                      <Text className="text-[13px] font-medium text-slate-400 mt-1">{shop.count}</Text>
                     </View>
                   </View>
                   <ChevronRight size={24} color="#cbd5e1" />
