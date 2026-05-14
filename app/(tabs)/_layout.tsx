@@ -136,7 +136,7 @@ function renderCustomTabBar({
         }}
       >
         <View
-          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(248, 250, 252, 0.8)', paddingLeft: 20, paddingRight: 6, paddingVertical: 6, borderRadius: 9999, borderTopWidth: 0.5, borderTopColor: "#f1f5f9" }}
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(248, 250, 252, 0.8)', paddingLeft: 20, paddingRight: 6, paddingVertical: 6, borderRadius: 9999, borderWidth: 1, borderColor: "#e2e8f0" }}
         >
           {/* Map over actual Expo Router state.routes */}
           {state.routes.map((route, index) => {
