@@ -12,6 +12,7 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { fetchMarkets } from '../../services/overpassService';
 import { useLocationStore } from '../../store';
 import AnimatedScreen from '../../components/AnimatedScreen';
+import * as Haptics from 'expo-haptics';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -110,6 +111,7 @@ export default function StoresScreen() {
   };
 
   const handleLocateMe = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return;
@@ -163,6 +165,7 @@ export default function StoresScreen() {
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           removeLocation(locId);
           swipeableRefs.current.delete(locId);
         }}
@@ -222,6 +225,7 @@ export default function StoresScreen() {
                 const now = Date.now();
                 if (now - lastTap.current < 300) return;
                 lastTap.current = now;
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 if (!saved) {
                   setSelectedShopToSave(market);
                   // bottomSheetRef.current?.snapToIndex(snapPoints.length - 1);
@@ -284,6 +288,7 @@ export default function StoresScreen() {
                   style={styles.contextSaveBtn}
                   activeOpacity={0.8}
                   onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     addLocation({
                       name: selectedShopToSave.name || 'Unknown Store',
                       address: selectedShopToSave.address || 'Unknown Address',
@@ -364,6 +369,7 @@ export default function StoresScreen() {
                   style={{ backgroundColor: 'white', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 }}
                   activeOpacity={0.7}
                   onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     Keyboard.dismiss();
                     const latitudeDelta = 0.01;
                     const longitudeDelta = 0.01;

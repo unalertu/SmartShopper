@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
+import * as Haptics from "expo-haptics";
 import {
   Home,
   MapPin,
@@ -63,7 +64,11 @@ function renderCustomTabBar({
                 backgroundColor: '#ffffff', borderRadius: 28, width: 105, height: 105, padding: 16, justifyContent: 'center', alignItems: 'center',
                 shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.08, shadowRadius: 16, elevation: 5,
               }}
-              onPress={() => { setIsActionsMenuOpen(false); console.log("New Shopping List"); }}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setIsActionsMenuOpen(false); 
+                console.log("New Shopping List"); 
+              }}
             >
               <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f8fafc', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
                 <PlusCircle size={24} color="#0f172a" strokeWidth={2.5} />
@@ -77,7 +82,11 @@ function renderCustomTabBar({
                 backgroundColor: '#ffffff', borderRadius: 28, width: 105, height: 105, padding: 16, justifyContent: 'center', alignItems: 'center',
                 shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.08, shadowRadius: 16, elevation: 5,
               }}
-              onPress={() => { setIsActionsMenuOpen(false); console.log("Add Location"); }}
+              onPress={() => { 
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setIsActionsMenuOpen(false); 
+                console.log("Add Location"); 
+              }}
             >
               <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f8fafc', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
                 <MapPin size={24} color="#0f172a" strokeWidth={2.5} />
@@ -91,7 +100,11 @@ function renderCustomTabBar({
                 backgroundColor: '#ffffff', borderRadius: 28, width: 105, height: 105, padding: 16, justifyContent: 'center', alignItems: 'center',
                 shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.08, shadowRadius: 16, elevation: 5,
               }}
-              onPress={() => { setIsActionsMenuOpen(false); console.log("Quick Item Add"); }}
+              onPress={() => { 
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setIsActionsMenuOpen(false); 
+                console.log("Quick Item Add"); 
+              }}
             >
               <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f8fafc', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
                 <CheckCircle size={24} color="#0f172a" strokeWidth={2.5} />
@@ -105,7 +118,11 @@ function renderCustomTabBar({
                 backgroundColor: '#ffffff', borderRadius: 28, width: 105, height: 105, padding: 16, justifyContent: 'center', alignItems: 'center',
                 shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.08, shadowRadius: 16, elevation: 5,
               }}
-              onPress={() => { setIsActionsMenuOpen(false); console.log("Scan Item"); }}
+              onPress={() => { 
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setIsActionsMenuOpen(false); 
+                console.log("Scan Item"); 
+              }}
             >
               <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f8fafc', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
                 <ScanBarcode size={24} color="#0f172a" strokeWidth={2.5} />
@@ -153,6 +170,7 @@ function renderCustomTabBar({
                 accessibilityState={isFocused ? { selected: true } : {}}
                 accessibilityLabel={label}
                 onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   const event = navigation.emit({
                     type: "tabPress",
                     target: route.key,
@@ -184,7 +202,10 @@ function renderCustomTabBar({
 
           {/* Floating Action Button */}
           <TouchableOpacity
-            onPress={() => setIsActionsMenuOpen(!isActionsMenuOpen)}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setIsActionsMenuOpen(!isActionsMenuOpen);
+            }}
             style={{ backgroundColor: '#0f172a', borderRadius: 24, width: 48, height: 48, alignItems: 'center', justifyContent: 'center', marginLeft: 6, shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 8 }}
           >
             {isActionsMenuOpen ? (

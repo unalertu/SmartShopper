@@ -4,6 +4,7 @@ import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, MoreHorizontal, ShoppingBag, CheckCircle, Clock, Trash2, Plus, Mic, ScanBarcode, Minus, AlignLeft } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
+import * as Haptics from 'expo-haptics';
 
 export default function ListDetailScreen() {
   const router = useRouter();
@@ -57,6 +58,7 @@ export default function ListDetailScreen() {
 
   const handleAddItem = () => {
     if (newItemText.trim().length === 0) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     console.log("Adding item:", newItemText, "qty:", quantity, selectedUnit, "category:", selectedCategory, "note:", note);
     resetModalState();
     setIsAddModalVisible(false);
@@ -136,6 +138,7 @@ export default function ListDetailScreen() {
                 <View className="flex-row items-center gap-4 flex-1">
                   {/* Circular Checkbox */}
                   <TouchableOpacity 
+                    onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
                     className={`w-6 h-6 rounded-full border-[2px] items-center justify-center ${
                       item.isCompleted ? 'bg-slate-900 border-slate-900' : 'bg-transparent border-slate-300'
                     }`}
@@ -175,7 +178,10 @@ export default function ListDetailScreen() {
         style={{ bottom: insets.bottom > 0 ? insets.bottom + 16 : 40 }}
       >
         <TouchableOpacity 
-          onPress={() => setIsAddModalVisible(true)}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setIsAddModalVisible(true);
+          }}
           className="bg-slate-900 py-[18px] rounded-full flex-row justify-center items-center shadow-lg"
           style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 16, elevation: 10 }}
         >
@@ -213,7 +219,10 @@ export default function ListDetailScreen() {
                     return (
                       <TouchableOpacity 
                         key={index}
-                        onPress={() => setSelectedCategory(cat)}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          setSelectedCategory(cat);
+                        }}
                         className={`px-5 py-2.5 rounded-full mr-3 ${isSelected ? 'bg-slate-900' : 'bg-slate-100'}`}
                       >
                         <Text className={`font-semibold ${isSelected ? 'text-white' : 'text-slate-600'}`}>{cat}</Text>
@@ -249,11 +258,11 @@ export default function ListDetailScreen() {
               <View className="flex-row items-center mb-5 gap-4 z-10">
                 {/* Quantity Counter */}
                 <View className="bg-slate-100 rounded-full px-4 py-2 flex-row items-center gap-4">
-                  <TouchableOpacity onPress={() => setQuantity(prev => Math.max(1, prev - 1))}>
+                  <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setQuantity(prev => Math.max(1, prev - 1)); }}>
                     <Minus size={18} color="#0f172a" strokeWidth={2.5} />
                   </TouchableOpacity>
                   <Text className="text-base font-bold text-slate-900 min-w-[20px] text-center">{quantity}</Text>
-                  <TouchableOpacity onPress={() => setQuantity(prev => prev + 1)}>
+                  <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setQuantity(prev => prev + 1); }}>
                     <Plus size={18} color="#0f172a" strokeWidth={2.5} />
                   </TouchableOpacity>
                 </View>
@@ -265,7 +274,10 @@ export default function ListDetailScreen() {
                     return (
                       <TouchableOpacity
                         key={unit}
-                        onPress={() => setSelectedUnit(unit)}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          setSelectedUnit(unit);
+                        }}
                         className={`px-4 py-2 rounded-full ${isSelected ? 'bg-slate-900' : 'bg-slate-100'}`}
                       >
                         <Text className={`text-sm font-semibold ${isSelected ? 'text-white' : 'text-slate-600'}`}>{unit}</Text>
@@ -309,7 +321,10 @@ export default function ListDetailScreen() {
                   {suggestedItems.map((suggestion, idx) => (
                     <TouchableOpacity 
                       key={idx}
-                      onPress={() => setNewItemText(suggestion)}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setNewItemText(suggestion);
+                      }}
                       className="bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl"
                     >
                       <Text className="text-slate-600 font-medium">{suggestion}</Text>

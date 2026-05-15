@@ -5,6 +5,7 @@ import { Flame, Store, ShoppingBag, Crown, Plus, Home, Users, User, List, Chevro
 import { BlurView } from 'expo-blur';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import ProgressiveBlur from '../../components/ProgressiveBlur';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
@@ -113,6 +114,7 @@ export default function HomeScreen() {
   const [newListName, setNewListName] = useState('');
 
   const handlePresentModalPress = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     newListBottomSheetRef.current?.present();
   }, []);
 
@@ -164,6 +166,7 @@ export default function HomeScreen() {
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           removeList(listId);
           swipeableRefs.current.delete(listId);
         }}
@@ -193,6 +196,7 @@ export default function HomeScreen() {
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           removeLocation(shopId);
           swipeableShopRefs.current.delete(shopId);
         }}
@@ -244,7 +248,7 @@ export default function HomeScreen() {
             {/* Map Widget Always Visible */}
             <View className="flex-col">
               {/* Upper Tier: Dynamic Map Preview */}
-              <TouchableOpacity activeOpacity={0.8} onPress={() => router.navigate('/stores')}>
+              <TouchableOpacity activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.navigate('/stores'); }}>
                 <View className="w-full h-48 rounded-t-[32px] overflow-hidden" pointerEvents="none">
                   {userLocation ? (
                     <MapView
@@ -276,7 +280,7 @@ export default function HomeScreen() {
               {/* Lower Tier: Info & Action */}
               <TouchableOpacity 
                 activeOpacity={0.8} 
-                onPress={() => router.navigate('/stores')}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.navigate('/stores'); }}
                 className="flex-row justify-between items-center py-4 px-6"
               >
                 <View className="flex-row items-center gap-3">
@@ -319,7 +323,7 @@ export default function HomeScreen() {
                 onSwipeableWillOpen={() => closeAllSwipeables(list.id)}
               >
                 <TouchableOpacity 
-                  onPress={() => router.push(`/list/${list.id}`)}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/list/${list.id}`); }}
                   className="bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-200"
                   style={{
                     shadowColor: '#000',
@@ -409,7 +413,7 @@ export default function HomeScreen() {
                 onSwipeableWillOpen={() => closeAllShopSwipeables(shop.id)}
               >
                 <TouchableOpacity 
-                  onPress={() => router.push(`/stores`)}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/stores`); }}
                   className="bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-200"
                   style={{
                     shadowColor: '#000',
@@ -437,7 +441,7 @@ export default function HomeScreen() {
           <Animated.View layout={LinearTransition.springify()} className="mx-6 mb-2 mt-2">
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => router.push('/stores')}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/stores'); }}
               style={{
                 backgroundColor: '#0f172a',
                 borderRadius: 16,
@@ -481,6 +485,7 @@ export default function HomeScreen() {
 
             <View className="absolute inset-0 items-center justify-center z-20">
               <TouchableOpacity 
+                onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
                 className="bg-[#D4AF37] rounded-full px-5 py-2.5 flex-row items-center gap-2"
                 style={{
                   shadowColor: '#D4AF37',
@@ -568,7 +573,7 @@ export default function HomeScreen() {
               onSubmitEditing={handleAddList}
             />
             <TouchableOpacity
-              onPress={handleAddList}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleAddList(); }}
               activeOpacity={0.8}
               style={{
                 backgroundColor: '#0f172a',
