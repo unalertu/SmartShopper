@@ -45,3 +45,4 @@ app-example
 # non-project files
 *.pdf
 Gemini_Generated_Image_*.png
+*.exe
