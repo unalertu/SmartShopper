@@ -11,6 +11,7 @@ import Animated, { useSharedValue, useAnimatedStyle, FadeInDown, FadeOutUp, Fade
 import { Swipeable } from 'react-native-gesture-handler';
 import { fetchMarkets } from '../../services/overpassService';
 import { useLocationStore } from '../../store';
+import AnimatedScreen from '../../components/AnimatedScreen';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -174,6 +175,7 @@ export default function StoresScreen() {
   };
 
   return (
+    <AnimatedScreen>
     <View style={styles.container}>
       <StatusBar style="dark" />
 
@@ -405,6 +407,7 @@ export default function StoresScreen() {
         </BottomSheetScrollView>
       </BottomSheet>
     </View>
+    </AnimatedScreen>
   );
 }
 

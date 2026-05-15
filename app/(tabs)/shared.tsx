@@ -3,11 +3,13 @@ import { View, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Users } from 'lucide-react-native';
+import AnimatedScreen from '../../components/AnimatedScreen';
 
 export default function SharedScreen() {
   const insets = useSafeAreaInsets();
 
   return (
+    <AnimatedScreen>
     <View className="flex-1 bg-slate-50">
       <StatusBar style="dark" />
       <View style={{ paddingTop: insets.top + 16 }} className="px-6 pb-6">
@@ -23,5 +25,6 @@ export default function SharedScreen() {
         </Text>
       </View>
     </View>
+    </AnimatedScreen>
   );
 }

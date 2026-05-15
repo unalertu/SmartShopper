@@ -17,12 +17,14 @@ import {
   Settings,
   Navigation
 } from 'lucide-react-native';
+import AnimatedScreen from '../../components/AnimatedScreen';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   return (
+    <AnimatedScreen>
     <View className="flex-1 bg-white">
       <StatusBar style="dark" />
       <ScrollView 
@@ -194,5 +196,6 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </ScrollView>
     </View>
+    </AnimatedScreen>
   );
 }

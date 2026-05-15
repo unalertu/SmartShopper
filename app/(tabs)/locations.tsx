@@ -5,6 +5,7 @@ import { Plus, MapPin, Navigation, Trash2 } from "lucide-react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useLocationStore } from "@/store";
 import { Colors } from "@/constants/theme";
+import AnimatedScreen from '../../components/AnimatedScreen';
 
 export default function LocationsScreen() {
   const router = useRouter();
@@ -26,6 +27,7 @@ export default function LocationsScreen() {
   };
 
   return (
+    <AnimatedScreen>
     <SafeAreaView className="flex-1 bg-surface-50">
       {/* Header */}
       <View className="px-6 pt-4 pb-2">
@@ -147,5 +149,6 @@ export default function LocationsScreen() {
         <Plus size={28} color="#ffffff" strokeWidth={2.5} />
       </Pressable>
     </SafeAreaView>
+    </AnimatedScreen>
   );
 }

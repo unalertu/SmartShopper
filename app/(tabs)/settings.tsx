@@ -10,6 +10,7 @@ import {
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useShoppingListStore, useLocationStore } from "@/store";
 import { Colors } from "@/constants/theme";
+import AnimatedScreen from '../../components/AnimatedScreen';
 
 export default function SettingsScreen() {
   const { items, clearPurchased, clearAll } = useShoppingListStore();
@@ -42,6 +43,7 @@ export default function SettingsScreen() {
   };
 
   return (
+    <AnimatedScreen>
     <SafeAreaView className="flex-1 bg-surface-50">
       {/* Header */}
       <View className="px-6 pt-4 pb-4">
@@ -139,6 +141,7 @@ export default function SettingsScreen() {
         </Animated.View>
       </Animated.ScrollView>
     </SafeAreaView>
+    </AnimatedScreen>
   );
 }
 

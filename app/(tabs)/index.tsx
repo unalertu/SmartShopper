@@ -13,6 +13,7 @@ import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeOutLeft, LinearTransition } from 'react-native-reanimated';
 import { useLocationStore } from '../../store';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import AnimatedScreen from '../../components/AnimatedScreen';
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -205,6 +206,7 @@ export default function HomeScreen() {
 
   return (
     // 1. ROOT MUST BE A STANDARD VIEW, NOT SafeAreaView!
+    <AnimatedScreen>
     <View className="flex-1 bg-slate-50"> 
       <StatusBar style="dark" />
 
@@ -585,5 +587,6 @@ export default function HomeScreen() {
           </View>
         </BottomSheetModal>
     </View>
+    </AnimatedScreen>
   );
 }

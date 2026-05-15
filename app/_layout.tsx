@@ -42,12 +42,25 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-          <Stack>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: "ios_from_right",
+              gestureEnabled: true,
+              fullScreenGestureEnabled: true,
+              customAnimationOnGesture: true,
+              animationDuration: 350,
+            }}
+          >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen
               name="add-item"
               options={{
                 presentation: "modal",
+                animation: "slide_from_bottom",
+                gestureEnabled: true,
+                fullScreenGestureEnabled: true,
+                customAnimationOnGesture: true,
                 title: "Add Item",
                 headerShown: false,
               }}
@@ -56,7 +69,21 @@ export default function RootLayout() {
               name="add-location"
               options={{
                 presentation: "modal",
+                animation: "slide_from_bottom",
+                gestureEnabled: true,
+                fullScreenGestureEnabled: true,
+                customAnimationOnGesture: true,
                 title: "Add Location",
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="list/[id]"
+              options={{
+                animation: "ios_from_right",
+                gestureEnabled: true,
+                fullScreenGestureEnabled: true,
+                customAnimationOnGesture: true,
                 headerShown: false,
               }}
             />
