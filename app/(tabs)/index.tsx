@@ -11,6 +11,7 @@ import MapView, { Marker } from 'react-native-maps';
 import { fetchMarkets } from '../../services/overpassService';
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeOutLeft, LinearTransition } from 'react-native-reanimated';
+import { useLocationStore } from '../../store';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 export default function HomeScreen() {
   const router = useRouter();
@@ -173,14 +174,12 @@ export default function HomeScreen() {
     );
   };
 
-  const [myShops, setMyShops] = useState([
-    { id: 1, name: "Migros - Kadıköy", count: "Saved Shop" }, 
-    { id: 2, name: "Macrocenter - Moda", count: "Saved Shop" }
-  ]);
+  // Shared Zustand store for saved shops (synced with Stores page)
+  const { locations: savedShops, removeLocation } = useLocationStore();
 
-  const swipeableShopRefs = useRef<Map<number, Swipeable>>(new Map());
+  const swipeableShopRefs = useRef<Map<string, Swipeable>>(new Map());
 
-  const closeAllShopSwipeables = (exceptId?: number) => {
+  const closeAllShopSwipeables = (exceptId?: string) => {
     swipeableShopRefs.current.forEach((ref, id) => {
       if (id !== exceptId) {
         ref.close();
@@ -188,16 +187,12 @@ export default function HomeScreen() {
     });
   };
 
-  const removeShop = (id: number) => {
-    setMyShops(prev => prev.filter(shop => shop.id !== id));
-  };
-
-  const renderShopRightActions = (shopId: number) => {
+  const renderShopRightActions = (shopId: string) => {
     return (
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={() => {
-          removeShop(shopId);
+          removeLocation(shopId);
           swipeableShopRefs.current.delete(shopId);
         }}
       >
@@ -376,7 +371,21 @@ export default function HomeScreen() {
           <Animated.View layout={LinearTransition.springify()}>
             <Text className="text-[22px] font-extrabold tracking-tight mx-6 mt-8 mb-4 text-slate-900">My Shops</Text>
           </Animated.View>
-          {myShops.map((shop) => (
+          {savedShops.length === 0 && (
+            <Animated.View layout={LinearTransition.springify()} className="mx-6 mb-4">
+              <View
+                className="rounded-[24px] p-6 items-center border border-dashed border-slate-200"
+                style={{ backgroundColor: '#fafafa' }}
+              >
+                <View className="bg-slate-100 w-[56px] h-[56px] rounded-full items-center justify-center mb-3">
+                  <Store size={24} color="#cbd5e1" />
+                </View>
+                <Text className="text-[15px] font-semibold text-slate-400 tracking-tight">No saved shops yet</Text>
+                <Text className="text-[13px] font-medium text-slate-300 mt-1">Tap Add to save shops from the map</Text>
+              </View>
+            </Animated.View>
+          )}
+          {savedShops.map((shop) => (
             <Animated.View
               key={shop.id}
               layout={LinearTransition.springify()}
@@ -412,9 +421,9 @@ export default function HomeScreen() {
                     <View className="bg-slate-100 w-[52px] h-[52px] rounded-full items-center justify-center">
                       <Store size={22} color="#334155" />
                     </View>
-                    <View>
+                    <View className="flex-1">
                       <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{shop.name}</Text>
-                      <Text className="text-[13px] font-medium text-slate-400 mt-1">{shop.count}</Text>
+                      <Text className="text-[13px] font-medium text-slate-400 mt-1" numberOfLines={1}>{shop.address || 'Saved Shop'}</Text>
                     </View>
                   </View>
                   <ChevronRight size={24} color="#cbd5e1" />
@@ -426,6 +435,7 @@ export default function HomeScreen() {
           <Animated.View layout={LinearTransition.springify()} className="mx-6 mb-2 mt-2">
             <TouchableOpacity
               activeOpacity={0.8}
+              onPress={() => router.push('/stores')}
               style={{
                 backgroundColor: '#0f172a',
                 borderRadius: 16,
