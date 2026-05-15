@@ -222,10 +222,10 @@ export default function HomeScreen() {
         {/* SCROLLING HEADER CONTENT */}
         <View 
           className="px-6 flex-row justify-between items-center"
-          style={{ paddingTop: insets.top, paddingBottom: 0 }}
+          style={{ paddingTop: insets.top, paddingBottom: 12 }}
         >
           <View className="flex-row items-center gap-2">
-            <Image source={require('../../assets/images/app-logo.png')} style={{ width: 56, height: 56, marginLeft: -24, marginTop: -4 }} resizeMode="contain" />
+            <Image source={require('../../assets/images/app-logo.png')} style={{ width: 36, height: 36, marginLeft: 0, marginTop: 0 }} resizeMode="contain" />
             <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight" style={{ marginTop: 6 }}>Smart Shopper</Text>
           </View>
 
