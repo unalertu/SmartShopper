@@ -233,7 +233,8 @@ export default function HomeScreen() {
 
         {/* 2. THE MAP WIDGET */}
           {/* Smart Status Card */}
-          <View 
+          <Animated.View 
+            layout={LinearTransition.springify()}
             className="mx-6 mt-2 mb-6 rounded-[32px] bg-white border border-slate-200 overflow-hidden"
             style={{
               shadowColor: '#000',
@@ -293,10 +294,12 @@ export default function HomeScreen() {
 
               </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
 
           {/* 3. My Lists Section */}
-          <Text className="text-[22px] font-extrabold tracking-tight mx-6 mb-4 text-slate-900">My Lists</Text>
+          <Animated.View layout={LinearTransition.springify()}>
+            <Text className="text-[22px] font-extrabold tracking-tight mx-6 mb-4 text-slate-900">My Lists</Text>
+          </Animated.View>
           {shoppingLists.map((list) => (
             <Animated.View
               key={list.id}
@@ -344,7 +347,7 @@ export default function HomeScreen() {
             </Animated.View>
           ))}
 
-          <View className="mx-6 mb-2 mt-2">
+          <Animated.View layout={LinearTransition.springify()} className="mx-6 mb-2 mt-2">
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={handlePresentModalPress}
@@ -367,10 +370,12 @@ export default function HomeScreen() {
               <Plus size={20} color="#fff" />
               <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Add</Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
 
           {/* 4. My Shops Section */}
-          <Text className="text-[22px] font-extrabold tracking-tight mx-6 mt-8 mb-4 text-slate-900">My Shops</Text>
+          <Animated.View layout={LinearTransition.springify()}>
+            <Text className="text-[22px] font-extrabold tracking-tight mx-6 mt-8 mb-4 text-slate-900">My Shops</Text>
+          </Animated.View>
           {myShops.map((shop) => (
             <Animated.View
               key={shop.id}
@@ -418,7 +423,7 @@ export default function HomeScreen() {
             </Animated.View>
           ))}
 
-          <View className="mx-6 mb-2 mt-2">
+          <Animated.View layout={LinearTransition.springify()} className="mx-6 mb-2 mt-2">
             <TouchableOpacity
               activeOpacity={0.8}
               style={{
@@ -440,10 +445,11 @@ export default function HomeScreen() {
               <Plus size={20} color="#fff" />
               <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Add</Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
 
           {/* 5. Secondary "Premium" Card */}
-          <View 
+          <Animated.View 
+            layout={LinearTransition.springify()}
             className="mx-6 mt-5 bg-white rounded-[32px] p-6 min-h-[160px] relative overflow-hidden border border-slate-200"
             style={{
               shadowColor: '#000',
@@ -476,19 +482,22 @@ export default function HomeScreen() {
                 <Text className="text-[#1e1e1e] font-bold text-sm tracking-wide">Premium</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
           
           {/* Pagination dots */}
-          <View className="flex-row justify-center mt-5 gap-2">
+          <Animated.View layout={LinearTransition.springify()} className="flex-row justify-center mt-5 gap-2">
             <View className="w-[7px] h-[7px] rounded-full bg-slate-900" />
             <View className="w-[7px] h-[7px] rounded-full border border-slate-300 bg-transparent" />
             <View className="w-[7px] h-[7px] rounded-full border border-slate-300 bg-transparent" />
-          </View>
+          </Animated.View>
 
           {/* 6. "Recently Uploaded" Section */}
-          <Text className="text-[22px] font-extrabold tracking-tight mx-6 mt-10 mb-4 text-slate-900">Recently uploaded</Text>
+          <Animated.View layout={LinearTransition.springify()}>
+            <Text className="text-[22px] font-extrabold tracking-tight mx-6 mt-10 mb-4 text-slate-900">Recently uploaded</Text>
+          </Animated.View>
           
-          <View 
+          <Animated.View 
+            layout={LinearTransition.springify()}
             className="mx-6 bg-white rounded-[32px] p-6 items-center border border-slate-200"
             style={{
               shadowColor: '#000',
@@ -517,7 +526,7 @@ export default function HomeScreen() {
               </View>
             </View>
             <Text className="text-slate-400 text-sm font-medium tracking-wide mt-6">Tap + to add your first shopping list</Text>
-          </View>
+          </Animated.View>
         </ScrollView>
 
         {/* Bottom Sheet for Adding New List */}
