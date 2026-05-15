@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import * as SplashScreen from "expo-splash-screen";
 import "react-native-reanimated";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { setupNotifications } from "@/services/notificationService";
@@ -33,28 +34,30 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="add-item"
-            options={{
-              presentation: "modal",
-              title: "Add Item",
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="add-location"
-            options={{
-              presentation: "modal",
-              title: "Add Location",
-              headerShown: false,
-            }}
-          />
-        </Stack>
-        <StatusBar style="dark" />
-      </ThemeProvider>
+      <BottomSheetModalProvider>
+        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="add-item"
+              options={{
+                presentation: "modal",
+                title: "Add Item",
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="add-location"
+              options={{
+                presentation: "modal",
+                title: "Add Location",
+                headerShown: false,
+              }}
+            />
+          </Stack>
+          <StatusBar style="dark" />
+        </ThemeProvider>
+      </BottomSheetModalProvider>
     </GestureHandlerRootView>
   );
 }

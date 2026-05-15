@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Flame, Store, ShoppingBag, Crown, Plus, Home, Users, User, List, ChevronRight, Radar, BellRing, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings, ScanBarcode } from 'lucide-react-native';
@@ -11,7 +11,7 @@ import MapView, { Marker } from 'react-native-maps';
 import { fetchMarkets } from '../../services/overpassService';
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeOutLeft, LinearTransition } from 'react-native-reanimated';
-
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -105,6 +105,43 @@ export default function HomeScreen() {
     { id: 2, name: "Kendi ihtiyaçlarım", count: 12 }, 
     { id: 3, name: "Buse'ye alınacaklar", count: 2 }
   ]);
+
+  const newListBottomSheetRef = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => ['35%'], []);
+  const [newListName, setNewListName] = useState('');
+
+  const handlePresentModalPress = useCallback(() => {
+    newListBottomSheetRef.current?.present();
+  }, []);
+
+  const handleCloseModalPress = useCallback(() => {
+    newListBottomSheetRef.current?.dismiss();
+    setNewListName('');
+  }, []);
+
+  const handleAddList = () => {
+    if (newListName.trim()) {
+      const newList = {
+        id: Date.now(),
+        name: newListName.trim(),
+        count: 0,
+      };
+      setShoppingLists([newList, ...shoppingLists]);
+      setNewListName('');
+      newListBottomSheetRef.current?.dismiss();
+    }
+  };
+
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+      />
+    ),
+    []
+  );
 
   const swipeableRefs = useRef<Map<number, Swipeable>>(new Map());
 
@@ -310,6 +347,7 @@ export default function HomeScreen() {
           <View className="mx-6 mb-2 mt-2">
             <TouchableOpacity
               activeOpacity={0.8}
+              onPress={handlePresentModalPress}
               style={{
                 backgroundColor: '#0f172a',
                 borderRadius: 16,
@@ -481,6 +519,52 @@ export default function HomeScreen() {
             <Text className="text-slate-400 text-sm font-medium tracking-wide mt-6">Tap + to add your first shopping list</Text>
           </View>
         </ScrollView>
+
+        {/* Bottom Sheet for Adding New List */}
+        <BottomSheetModal
+          ref={newListBottomSheetRef}
+          index={0}
+          snapPoints={snapPoints}
+          backdropComponent={renderBackdrop}
+          enablePanDownToClose={true}
+          handleIndicatorStyle={{ backgroundColor: '#cbd5e1', width: 40 }}
+          backgroundStyle={{ borderRadius: 32 }}
+        >
+          <View className="flex-1 px-6 pt-2 pb-6 bg-white">
+            <View className="flex-row justify-between items-center mb-6">
+              <Text className="text-[20px] font-bold text-slate-900 tracking-tight">Create New List</Text>
+              <TouchableOpacity onPress={handleCloseModalPress} className="bg-slate-100 p-2 rounded-full">
+                <X size={20} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+            <BottomSheetTextInput
+              value={newListName}
+              onChangeText={setNewListName}
+              placeholder="List name (e.g., Grocery, Weekly)..."
+              className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-[16px] text-slate-900 mb-6 font-medium"
+              placeholderTextColor="#94a3b8"
+              autoFocus
+              onSubmitEditing={handleAddList}
+            />
+            <TouchableOpacity
+              onPress={handleAddList}
+              activeOpacity={0.8}
+              style={{
+                backgroundColor: '#0f172a',
+                borderRadius: 16,
+                paddingVertical: 16,
+                alignItems: 'center',
+                shadowColor: '#0f172a',
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.2,
+                shadowRadius: 12,
+                elevation: 4,
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Create List</Text>
+            </TouchableOpacity>
+          </View>
+        </BottomSheetModal>
     </View>
   );
 }
