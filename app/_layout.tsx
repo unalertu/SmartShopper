@@ -16,6 +16,15 @@ import LaunchScreen from "@/components/LaunchScreen";
 // Prevent splash screen auto-hide
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
+// Custom theme — overrides the default white background that shows during swipe-back gestures
+const AppLightTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: '#f8fafc',
+  },
+};
+
 export const unstable_settings = {
   anchor: "(tabs)",
 };
@@ -27,7 +36,7 @@ export default function RootLayout() {
   useEffect(() => {
     // Setup notifications on app mount
     setupNotifications();
-    
+
     // Hide native splash screen so custom launch screen takes over
     setTimeout(() => {
       SplashScreen.hideAsync().catch(() => {});
@@ -39,16 +48,15 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#f8fafc' }}>
       <BottomSheetModalProvider>
-        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : AppLightTheme}>
           <Stack
             screenOptions={{
               headerShown: false,
               animation: "ios_from_right",
               gestureEnabled: true,
               fullScreenGestureEnabled: true,
-              customAnimationOnGesture: true,
               animationDuration: 350,
             }}
           >
@@ -60,7 +68,6 @@ export default function RootLayout() {
                 animation: "slide_from_bottom",
                 gestureEnabled: true,
                 fullScreenGestureEnabled: true,
-                customAnimationOnGesture: true,
                 title: "Add Item",
                 headerShown: false,
               }}
@@ -72,7 +79,6 @@ export default function RootLayout() {
                 animation: "slide_from_bottom",
                 gestureEnabled: true,
                 fullScreenGestureEnabled: true,
-                customAnimationOnGesture: true,
                 title: "Add Location",
                 headerShown: false,
               }}
@@ -83,7 +89,6 @@ export default function RootLayout() {
                 animation: "ios_from_right",
                 gestureEnabled: true,
                 fullScreenGestureEnabled: true,
-                customAnimationOnGesture: true,
                 headerShown: false,
               }}
             />

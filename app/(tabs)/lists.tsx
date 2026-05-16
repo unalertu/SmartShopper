@@ -11,6 +11,18 @@ import Animated, { FadeOutLeft, LinearTransition } from 'react-native-reanimated
 import { useListsStore } from '../../store';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 
+const getRelativeDate = (timestamp?: number): string => {
+  if (!timestamp) return 'bugün';
+  const now = Date.now();
+  const diff = now - timestamp;
+  const days = Math.floor(diff / 86400000);
+  if (days === 0) return 'bugün';
+  if (days === 1) return 'dün';
+  if (days < 7) return `${days} gün önce`;
+  if (days < 30) return `${Math.floor(days / 7)} hafta önce`;
+  return `${Math.floor(days / 30)} ay önce`;
+};
+
 export default function ListsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -142,7 +154,7 @@ export default function ListsScreen() {
                       </View>
                       <View>
                         <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{list.name}</Text>
-                        <Text className="text-[13px] font-medium text-slate-400 mt-1">{list.count} items</Text>
+                        <Text className="text-[13px] font-medium text-slate-400 mt-1">{list.count} ürün • Güncellendi {getRelativeDate(list.createdAt)}</Text>
                       </View>
                     </View>
                     <ChevronRight size={24} color="#cbd5e1" />

@@ -8,6 +8,7 @@ import Animated, {
   withDelay,
   Easing,
   interpolate,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { MapPin } from 'lucide-react-native';
 
@@ -70,7 +71,7 @@ export default function RadarPinIcon({
   const containerSize = size * 1.5;
   const maxRingSize = containerSize;
 
-  const makeRingStyle = (progress: Animated.SharedValue<number>) =>
+  const makeRingStyle = (progress: SharedValue<number>) =>
     useAnimatedStyle(() => {
       const scale = interpolate(progress.value, [0, 1], [0.3, 1]);
       const opacity = interpolate(progress.value, [0, 0.2, 1], [0, 0.35, 0]);
