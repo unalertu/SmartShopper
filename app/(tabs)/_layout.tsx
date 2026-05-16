@@ -7,7 +7,7 @@ import * as Haptics from "expo-haptics";
 import {
   Home,
   MapPin,
-  List,
+  Menu,
   User,
   Plus,
   X,
@@ -22,7 +22,7 @@ import GradientBlurBackground from "../../components/GradientBlurBackground";
 const TAB_CONFIG: Record<string, { label: string; Icon: any }> = {
   index:   { label: "Home",    Icon: Home },
   stores:  { label: "Shops",  Icon: MapPin },
-  lists:   { label: "Lists",   Icon: List },
+  lists:   { label: "Lists",   Icon: Menu },
   profile: { label: "Profile", Icon: User },
 };
 

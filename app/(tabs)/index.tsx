@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Flame, Store, ShoppingBag, Crown, Plus, Home, Users, User, List, ChevronRight, Radar, BellRing, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings, ScanBarcode } from 'lucide-react-native';
+import { Flame, Store, ShoppingBag, Crown, Plus, Home, Users, User, Menu, ChevronRight, Radar, BellRing, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings, ScanBarcode } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
@@ -324,7 +324,7 @@ export default function HomeScreen() {
                 >
                   <View className="flex-row items-center gap-4">
                     <View className="bg-slate-100 w-[52px] h-[52px] rounded-full items-center justify-center">
-                      <List size={22} color="#334155" />
+                      <Menu size={22} color="#334155" />
                     </View>
                     <View>
                       <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{list.name}</Text>

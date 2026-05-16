@@ -2,7 +2,7 @@ import React, { useRef, useState, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { List, ChevronRight, Plus, X } from 'lucide-react-native';
+import { Menu, ChevronRight, Plus, X } from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -97,7 +97,7 @@ export default function ListsScreen() {
                 style={{ backgroundColor: '#fafafa' }}
               >
                 <View className="bg-slate-100 w-[56px] h-[56px] rounded-full items-center justify-center mb-3">
-                  <List size={24} color="#cbd5e1" />
+                  <Menu size={24} color="#cbd5e1" />
                 </View>
                 <Text className="text-[15px] font-semibold text-slate-400 tracking-tight">No lists yet</Text>
                 <Text className="text-[13px] font-medium text-slate-300 mt-1">Tap Add to create a new list</Text>
@@ -138,7 +138,7 @@ export default function ListsScreen() {
                   >
                     <View className="flex-row items-center gap-4">
                       <View className="bg-slate-100 w-[52px] h-[52px] rounded-full items-center justify-center">
-                        <List size={22} color="#334155" />
+                        <Menu size={22} color="#334155" />
                       </View>
                       <View>
                         <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{list.name}</Text>
