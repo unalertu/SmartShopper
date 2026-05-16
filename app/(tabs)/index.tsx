@@ -270,14 +270,16 @@ export default function HomeScreen() {
               <TouchableOpacity 
                 activeOpacity={0.8} 
                 onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.navigate('/stores'); }}
-                className="flex-row justify-between items-center py-4 px-6"
+                className="flex-row justify-between items-center p-4"
               >
-                <View className="flex-row items-center gap-3">
-                  <View className="relative">
-                    <BellRing size={24} color="#64748b" />
-                    {isNearStore && (
-                      <View className="absolute -top-0.5 -right-0.5 bg-green-400 w-2.5 h-2.5 rounded-full border-[1.5px] border-white" />
-                    )}
+                <View className="flex-row items-center gap-4">
+                  <View className="w-[52px] items-center justify-center">
+                    <View className="relative">
+                      <MapPin size={28} color="#334155" />
+                      {isNearStore && (
+                        <View className="absolute -top-0.5 -right-0.5 bg-green-400 w-2.5 h-2.5 rounded-full border-[1.5px] border-white" />
+                      )}
+                    </View>
                   </View>
                   <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{nearbyStore}</Text>
                 </View>
