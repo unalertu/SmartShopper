@@ -137,8 +137,8 @@ export default function ListsScreen() {
                     }}
                   >
                     <View className="flex-row items-center gap-4">
-                      <View className="bg-slate-100 w-[52px] h-[52px] rounded-full items-center justify-center">
-                        <Menu size={22} color="#334155" />
+                      <View className="w-[52px] items-center justify-center">
+                        <Menu size={28} color="#334155" />
                       </View>
                       <View>
                         <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{list.name}</Text>

@@ -385,8 +385,8 @@ export default function StoresScreen() {
                   }}
                 >
                   <View className="flex-row items-center gap-4 flex-1">
-                    <View style={styles.shopIcon}>
-                      <Store size={22} color="#0f172a" />
+                    <View className="w-[52px] items-center justify-center">
+                      <Store size={28} color="#0f172a" />
                     </View>
                     <View className="flex-1">
                       <Text className="text-[16px] font-bold text-slate-900 tracking-tight mb-0.5">{loc.name}</Text>
