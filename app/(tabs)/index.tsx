@@ -272,7 +272,18 @@ export default function HomeScreen() {
                       zoomEnabled={false}
                       pitchEnabled={false}
                       rotateEnabled={false}
-                    />
+                    >
+                      {savedShops.map((shop) => (
+                        <Marker
+                          key={shop.id}
+                          coordinate={{ latitude: shop.latitude, longitude: shop.longitude }}
+                        >
+                          <View className="bg-slate-900 p-1.5 rounded-full border border-slate-200" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 4, elevation: 3 }}>
+                            <Store size={14} color="#fff" />
+                          </View>
+                        </Marker>
+                      ))}
+                    </MapView>
                   ) : (
                     <View className="w-full h-full bg-slate-200 items-center justify-center">
                       <Text className="text-slate-500 font-medium">Loading map...</Text>
@@ -438,7 +449,9 @@ export default function HomeScreen() {
                     </View>
                     <View className="flex-1">
                       <Text className="text-[16px] font-medium text-slate-900 tracking-tight">{shop.name}</Text>
-                      <Text className="text-[13px] font-medium text-slate-400 mt-1" numberOfLines={1}>{shop.address || 'Saved Shop'}</Text>
+                      <Text className="text-[13px] font-medium text-slate-400 mt-1" numberOfLines={1}>
+                        {userLocation ? formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, shop.latitude, shop.longitude)) : (shop.address || 'Saved Shop')}
+                      </Text>
                     </View>
                   </View>
                   <ChevronRight size={24} color="#cbd5e1" />

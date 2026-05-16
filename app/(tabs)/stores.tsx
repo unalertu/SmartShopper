@@ -70,6 +70,27 @@ export default function StoresScreen() {
   const [markets, setMarkets] = useState<any[]>([]);
   const [currentRegion, setCurrentRegion] = useState<any>(null);
   const [selectedShopToSave, setSelectedShopToSave] = useState<any>(null);
+  const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
+
+  // Haversine formula
+  const haversineDistance = (
+    lat1: number, lon1: number,
+    lat2: number, lon2: number
+  ): number => {
+    const R = 6371000;
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
+  const formatDistance = (meters: number): string => {
+    if (meters < 1000) return `${Math.round(meters)}m away`;
+    return `${(meters / 1000).toFixed(1)}km away`;
+  };
 
 
 
@@ -122,6 +143,8 @@ export default function StoresScreen() {
       const longitudeDelta = 0.04;
       const actualLatitude = location.coords.latitude;
       const actualLongitude = location.coords.longitude;
+      
+      setUserLocation({ latitude: actualLatitude, longitude: actualLongitude });
 
       // Calculate adjusted latitude to shift visual center above bottom sheet
       const adjustedLatitude = actualLatitude - (latitudeDelta * 0.25);
@@ -208,13 +231,35 @@ export default function StoresScreen() {
           }
         }}
       >
+        {/* Render Saved Shops permanently */}
+        {savedShops.map((shop) => (
+          <Marker
+            key={`saved-${shop.id}`}
+            coordinate={{ latitude: shop.latitude, longitude: shop.longitude }}
+            title={shop.name}
+            onPress={(e) => {
+              e.stopPropagation();
+              Keyboard.dismiss();
+              const now = Date.now();
+              if (now - lastTap.current < 300) return;
+              lastTap.current = now;
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setSelectedShopToSave(null);
+            }}
+          >
+            <View style={[styles.markerPill, styles.markerPillSaved]}>
+              <ShoppingBasket size={18} color="#fff" />
+            </View>
+          </Marker>
+        ))}
+
+        {/* Render Unsaved Markets from Overpass */}
         {markets
           .filter((market, index, self) => 
             index === self.findIndex((m) => m.latitude === market.latitude && m.longitude === market.longitude)
           )
-          .map(market => {
-          const saved = isShopSaved(market);
-          return (
+          .filter((market) => !isShopSaved(market))
+          .map(market => (
             <Marker
               key={market.id}
               coordinate={{ latitude: market.latitude, longitude: market.longitude }}
@@ -226,20 +271,14 @@ export default function StoresScreen() {
                 if (now - lastTap.current < 300) return;
                 lastTap.current = now;
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                if (!saved) {
-                  setSelectedShopToSave(market);
-                  // bottomSheetRef.current?.snapToIndex(snapPoints.length - 1);
-                } else {
-                  setSelectedShopToSave(null);
-                }
+                setSelectedShopToSave(market);
               }}
             >
-              <View style={[styles.markerPill, saved && styles.markerPillSaved]}>
-                <ShoppingBasket size={18} color={saved ? '#fff' : '#0f172a'} />
+              <View style={styles.markerPill}>
+                <ShoppingBasket size={18} color="#0f172a" />
               </View>
             </Marker>
-          );
-        })}
+          ))}
       </MapView>
 
       {/* Floating Top Bar */}
@@ -308,7 +347,7 @@ export default function StoresScreen() {
             )}
             <Animated.Text 
               layout={LinearTransition.springify()} 
-              className="text-[22px] font-extrabold tracking-tight text-slate-900"
+              className="text-[22px] font-semibold tracking-tight text-slate-900"
             >
               My Shops
             </Animated.Text>
@@ -389,12 +428,12 @@ export default function StoresScreen() {
                 >
                   <View className="flex-row items-center gap-4 flex-1">
                     <View className="w-[52px] items-center justify-center">
-                      <Store size={28} color="#0f172a" />
+                      <Store size={28} color="#334155" />
                     </View>
                     <View className="flex-1">
                       <Text className="text-[16px] font-medium text-slate-900 tracking-tight mb-0.5">{loc.name}</Text>
                       <Text className="text-[13px] font-medium text-slate-500" numberOfLines={1}>
-                        {`${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`}
+                        {userLocation ? formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, loc.latitude, loc.longitude)) : (loc.address || 'Saved Shop')}
                       </Text>
                     </View>
                   </View>
