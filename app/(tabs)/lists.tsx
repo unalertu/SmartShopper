@@ -97,6 +97,7 @@ export default function ListsScreen() {
           className="flex-1"
           contentContainerStyle={{ paddingBottom: 150, paddingTop: insets.top + 16 }} 
           showsVerticalScrollIndicator={false}
+          onScrollBeginDrag={() => closeAllSwipeables()}
         >
           <View className="px-6 mb-6">
             <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight">Lists</Text>
@@ -153,7 +154,7 @@ export default function ListsScreen() {
                         <Menu size={28} color="#334155" />
                       </View>
                       <View>
-                        <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{list.name}</Text>
+                        <Text className="text-[16px] font-medium text-slate-900 tracking-tight">{list.name}</Text>
                         <Text className="text-[13px] font-medium text-slate-400 mt-1">{list.count} ürün • Güncellendi {getRelativeDate(list.createdAt)}</Text>
                       </View>
                     </View>

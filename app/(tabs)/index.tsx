@@ -222,6 +222,10 @@ export default function HomeScreen() {
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 150 }} 
         showsVerticalScrollIndicator={false}
+        onScrollBeginDrag={() => {
+          closeAllSwipeables();
+          closeAllShopSwipeables();
+        }}
       >
         {/* SCROLLING HEADER CONTENT */}
         <View 
@@ -295,7 +299,7 @@ export default function HomeScreen() {
                       active={isNearStore}
                     />
                   </View>
-                  <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{nearbyStore}</Text>
+                  <Text className="text-[16px] font-medium text-slate-900 tracking-tight">{nearbyStore}</Text>
                 </View>
 
               </TouchableOpacity>
@@ -304,7 +308,7 @@ export default function HomeScreen() {
 
           {/* 3. My Lists Section */}
           <Animated.View layout={LinearTransition.springify()}>
-            <Text className="text-[22px] font-extrabold tracking-tight mx-6 mb-4 text-slate-900">My Lists</Text>
+            <Text className="text-[22px] font-semibold tracking-tight mx-6 mb-4 text-slate-900">My Lists</Text>
           </Animated.View>
           {shoppingLists.map((list) => (
             <Animated.View
@@ -343,7 +347,7 @@ export default function HomeScreen() {
                       <Menu size={28} color="#334155" />
                     </View>
                     <View>
-                      <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{list.name}</Text>
+                      <Text className="text-[16px] font-medium text-slate-900 tracking-tight">{list.name}</Text>
                       <Text className="text-[13px] font-medium text-slate-400 mt-1">{list.count} ürün • Güncellendi {getRelativeDate(list.createdAt)}</Text>
                     </View>
                   </View>
@@ -380,7 +384,7 @@ export default function HomeScreen() {
 
           {/* 4. My Shops Section */}
           <Animated.View layout={LinearTransition.springify()}>
-            <Text className="text-[22px] font-extrabold tracking-tight mx-6 mt-8 mb-4 text-slate-900">My Shops</Text>
+            <Text className="text-[22px] font-semibold tracking-tight mx-6 mt-8 mb-4 text-slate-900">My Shops</Text>
           </Animated.View>
           {savedShops.length === 0 && (
             <Animated.View layout={LinearTransition.springify()} className="mx-6 mb-4">
@@ -433,7 +437,7 @@ export default function HomeScreen() {
                       <Store size={28} color="#334155" />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-[16px] font-bold text-slate-900 tracking-tight">{shop.name}</Text>
+                      <Text className="text-[16px] font-medium text-slate-900 tracking-tight">{shop.name}</Text>
                       <Text className="text-[13px] font-medium text-slate-400 mt-1" numberOfLines={1}>{shop.address || 'Saved Shop'}</Text>
                     </View>
                   </View>

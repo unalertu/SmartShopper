@@ -329,7 +329,10 @@ export default function StoresScreen() {
           contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          onScrollBeginDrag={Keyboard.dismiss}
+          onScrollBeginDrag={() => {
+            Keyboard.dismiss();
+            closeAllSwipeables();
+          }}
         >
           {/* Empty state */}
           {savedShops.length === 0 && (
@@ -389,7 +392,7 @@ export default function StoresScreen() {
                       <Store size={28} color="#0f172a" />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-[16px] font-bold text-slate-900 tracking-tight mb-0.5">{loc.name}</Text>
+                      <Text className="text-[16px] font-medium text-slate-900 tracking-tight mb-0.5">{loc.name}</Text>
                       <Text className="text-[13px] font-medium text-slate-500" numberOfLines={1}>
                         {`${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`}
                       </Text>
