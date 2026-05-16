@@ -12,7 +12,7 @@ import MapView, { Marker } from 'react-native-maps';
 import { fetchMarkets } from '../../services/overpassService';
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeOutLeft, LinearTransition } from 'react-native-reanimated';
-import { useLocationStore } from '../../store';
+import { useLocationStore, useListsStore } from '../../store';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import AnimatedScreen from '../../components/AnimatedScreen';
 export default function HomeScreen() {
@@ -103,11 +103,7 @@ export default function HomeScreen() {
     })();
   }, []);
 
-  const [shoppingLists, setShoppingLists] = useState([
-    { id: 1, name: "Ahmet için alınacaklar", count: 4 }, 
-    { id: 2, name: "Kendi ihtiyaçlarım", count: 12 }, 
-    { id: 3, name: "Buse'ye alınacaklar", count: 2 }
-  ]);
+  const { lists: shoppingLists, addList, removeList } = useListsStore();
 
   const newListBottomSheetRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => ['35%'], []);
@@ -125,12 +121,7 @@ export default function HomeScreen() {
 
   const handleAddList = () => {
     if (newListName.trim()) {
-      const newList = {
-        id: Date.now(),
-        name: newListName.trim(),
-        count: 0,
-      };
-      setShoppingLists([newList, ...shoppingLists]);
+      addList(newListName.trim());
       setNewListName('');
       newListBottomSheetRef.current?.dismiss();
     }
@@ -157,9 +148,7 @@ export default function HomeScreen() {
     });
   };
 
-  const removeList = (id: number) => {
-    setShoppingLists(prev => prev.filter(list => list.id !== id));
-  };
+
 
   const renderRightActions = (listId: number) => {
     return (
