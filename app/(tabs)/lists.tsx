@@ -149,13 +149,13 @@ export default function ListsScreen() {
                       elevation: 3,
                     }}
                   >
-                    <View className="flex-row items-center gap-4">
+                    <View className="flex-row items-center gap-4 flex-1">
                       <View className="w-[52px] items-center justify-center">
                         <Menu size={28} color="#334155" />
                       </View>
-                      <View>
-                        <Text className="text-[16px] font-medium text-slate-900 tracking-tight">{list.name}</Text>
-                        <Text className="text-[13px] font-medium text-slate-400 mt-1">{list.count} ürün • Güncellendi {getRelativeDate(list.createdAt)}</Text>
+                      <View className="flex-1">
+                        <Text className="text-[16px] font-medium text-slate-900 tracking-tight" numberOfLines={1}>{list.name}</Text>
+                        <Text className="text-[13px] font-medium text-slate-400 mt-1" numberOfLines={1}>{list.count} ürün • Güncellendi {getRelativeDate(list.createdAt)}</Text>
                       </View>
                     </View>
                     <ChevronRight size={24} color="#cbd5e1" />
