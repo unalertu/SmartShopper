@@ -72,8 +72,8 @@ export default function HomeScreen() {
         const userLon = location.coords.longitude;
         setUserLocation({ latitude: userLat, longitude: userLon });
 
-        // Search within ~3.3 km radius
-        let offset = 0.03;
+        // Search within ~1.5 km radius to speed up initial load
+        let offset = 0.015;
         let s = userLat - offset;
         let n = userLat + offset;
         let w = userLon - offset;
@@ -109,8 +109,12 @@ export default function HomeScreen() {
           setNearbyStore('No stores nearby');
           setIsNearStore(false);
         }
-      } catch (error) {
-        console.error('Error fetching nearby store:', error);
+      } catch (error: any) {
+        if (error?.name === 'AbortError' || error?.message?.includes('AbortError')) {
+          console.log('Nearby store fetch timed out (expected in slow network/large area).');
+        } else {
+          console.error('Error fetching nearby store:', error);
+        }
         setNearbyStore('Could not find stores');
         setIsNearStore(false);
       }

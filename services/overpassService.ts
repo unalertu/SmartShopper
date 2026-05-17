@@ -27,7 +27,7 @@ export const fetchMarkets = async (
   east: number,
   retriesPerMirror = 1
 ): Promise<MarketElement[]> => {
-  const query = `[out:json][timeout:60];
+  const query = `[out:json][timeout:20];
 (
   node["shop"~"supermarket|convenience|grocery|greengrocer|mall|department_store|general"](${south},${west},${north},${east});
   way["shop"~"supermarket|convenience|grocery|greengrocer|mall|department_store|general"](${south},${west},${north},${east});
@@ -49,17 +49,20 @@ out center;`;
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 25000);
 
-      // Use standard urlencoded format — most reliable across all mirrors
-      const response = await fetch(mirror, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `data=${encodeURIComponent(query)}`,
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
+      let response: Response;
+      try {
+        // Use standard urlencoded format — most reliable across all mirrors
+        response = await fetch(mirror, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `data=${encodeURIComponent(query)}`,
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (response.status === 429 || response.status === 504 || response.status === 502 || response.status === 403) {
         console.log(`📡 Mirror ${mirror} unavailable (${response.status}). Rotating...`);
