@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Store, Plus, ChevronRight, Search, SlidersHorizontal, ShoppingBasket, LocateFixed, Trash2, MapPin } from 'lucide-react-native';
 import MapView, { Marker } from 'react-native-maps';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import * as Location from 'expo-location';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import Animated, { useSharedValue, useAnimatedStyle, FadeInDown, FadeOutUp, FadeOutLeft, LinearTransition } from 'react-native-reanimated';
@@ -22,7 +22,21 @@ export default function StoresScreen() {
   const mapRef = useRef<MapView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
+  const markerRefs = useRef<Record<string, any>>({});
   const lastTap = useRef(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        // Screen is losing focus, hide all open callouts to prevent glitching on iOS
+        Object.values(markerRefs.current).forEach((marker) => {
+          if (marker && typeof marker.hideCallout === 'function') {
+            marker.hideCallout();
+          }
+        });
+      };
+    }, [])
+  );
 
   // Zustand persisted store
   const { locations, addLocation, removeLocation } = useLocationStore();
@@ -120,7 +134,13 @@ export default function StoresScreen() {
       const east = region.longitude + lonDelta / 2;
 
       const fetchedMarkets = await fetchMarkets(south, west, north, east);
-      setMarkets(fetchedMarkets);
+      setMarkets(prev => {
+        const combined = [...prev, ...fetchedMarkets];
+        // Deduplicate by ID so markers don't stack and we keep existing ones
+        return combined.filter(
+          (market, index, self) => index === self.findIndex((m) => m.id === market.id)
+        );
+      });
     } catch (error: any) {
       console.log('Error fetching from Overpass:', error);
     }
@@ -235,6 +255,9 @@ export default function StoresScreen() {
         {savedShops.map((shop) => (
           <Marker
             key={`saved-${shop.id}`}
+            ref={(ref) => {
+              if (ref) markerRefs.current[`saved-${shop.id}`] = ref;
+            }}
             coordinate={{ latitude: shop.latitude, longitude: shop.longitude }}
             title={shop.name}
             onPress={(e) => {
@@ -262,6 +285,9 @@ export default function StoresScreen() {
           .map(market => (
             <Marker
               key={market.id}
+              ref={(ref) => {
+                if (ref) markerRefs.current[market.id] = ref;
+              }}
               coordinate={{ latitude: market.latitude, longitude: market.longitude }}
               title={market.name}
               onPress={(e) => {
