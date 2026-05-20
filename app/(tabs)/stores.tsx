@@ -392,11 +392,7 @@ export default function StoresScreen() {
       <View
         style={[styles.floatingHeader, { top: Math.max(20, insets.top), zIndex: 15 }]}
       >
-        <BlurView
-          tint="systemChromeMaterialLight"
-          intensity={80}
-          style={styles.glassContainer}
-        >
+        <View style={styles.glassContainer}>
           <View style={styles.topNavRow}>
             {/* "Shops" Title */}
             <Animated.View style={[styles.titleContainer, titleAnimatedStyle]}>
@@ -406,12 +402,12 @@ export default function StoresScreen() {
             {/* Animated Search Bar */}
             <Animated.View style={[styles.searchBarOuter, searchBarAnimatedStyle]}>
               <View style={styles.searchBarInner}>
-                <Search size={16} color="#8e8e93" strokeWidth={2.5} />
+                <Search size={17} color="#94a3b8" strokeWidth={2.5} />
                 <TextInput
                   ref={searchInputRef}
                   style={styles.searchInput}
                   placeholder="Search shops..."
-                  placeholderTextColor="#8e8e93"
+                  placeholderTextColor="#94a3b8"
                   value={searchText}
                   onChangeText={setSearchText}
                   onFocus={handleSearchFocus}
@@ -423,7 +419,7 @@ export default function StoresScreen() {
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <View style={styles.clearButton}>
-                      <X size={10} color="#fff" strokeWidth={3} />
+                      <X size={10} color="#64748b" strokeWidth={3} />
                     </View>
                   </TouchableOpacity>
                 )}
@@ -433,7 +429,7 @@ export default function StoresScreen() {
             {/* Filter Button */}
             <Animated.View style={[styles.filterContainer, filterAnimatedStyle]}>
               <TouchableOpacity style={styles.filterButton} activeOpacity={0.7}>
-                <SlidersHorizontal size={17} color="#3c3c43" strokeWidth={2.5} />
+                <SlidersHorizontal size={18} color="#334155" strokeWidth={2.5} />
               </TouchableOpacity>
             </Animated.View>
 
@@ -444,24 +440,20 @@ export default function StoresScreen() {
               </TouchableOpacity>
             </Animated.View>
           </View>
-        </BlurView>
+        </View>
       </View>
 
       {/* Locate Me Button */}
       <Animated.View style={[styles.locateButtonContainer, animatedLocateStyle]}>
-        <BlurView
-          tint="systemChromeMaterialLight"
-          intensity={80}
-          style={styles.locateButtonBlur}
-        >
+        <View style={styles.locateButtonSurface}>
           <TouchableOpacity
             style={styles.locateButton}
             onPress={handleLocateMe}
             activeOpacity={0.7}
           >
-            <LocateFixed size={20} color="#3c3c43" strokeWidth={2.5} />
+            <LocateFixed size={20} color="#334155" strokeWidth={2.5} />
           </TouchableOpacity>
-        </BlurView>
+        </View>
       </Animated.View>
 
       {/* Draggable Bottom Sheet */}
@@ -625,18 +617,18 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
   },
   glassContainer: {
+    backgroundColor: 'rgba(255,255,255,0.97)',
     borderRadius: 9999,
-    overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.5)',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 24,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
+    elevation: 3,
   },
   topNavRow: {
     flexDirection: 'row',
@@ -651,26 +643,26 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1c1c1e',
+    color: '#0f172a',
     letterSpacing: -0.4,
   },
   searchBarOuter: {
-    height: 36,
+    height: 38,
   },
   searchBarInner: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(120,120,128,0.12)',
-    borderRadius: 10,
-    paddingHorizontal: 10,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 12,
+    paddingHorizontal: 12,
   },
   searchInput: {
     flex: 1,
-    marginLeft: 6,
+    marginLeft: 8,
     fontSize: 15,
-    fontWeight: '400',
-    color: '#1c1c1e',
+    fontWeight: '500',
+    color: '#0f172a',
     height: '100%',
     letterSpacing: -0.2,
   },
@@ -678,27 +670,27 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: 'rgba(120,120,128,0.3)',
+    backgroundColor: '#cbd5e1',
     alignItems: 'center',
     justifyContent: 'center',
   },
   filterContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 2,
+    marginLeft: 4,
   },
   filterButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: 'rgba(120,120,128,0.12)',
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelText: {
     fontSize: 16,
-    fontWeight: '400',
-    color: '#007AFF',
+    fontWeight: '600',
+    color: '#0f172a',
     marginLeft: 10,
     letterSpacing: -0.2,
   },
@@ -708,18 +700,18 @@ const styles = StyleSheet.create({
     right: 16,
     zIndex: 10,
   },
-  locateButtonBlur: {
+  locateButtonSurface: {
     width: 44,
     height: 44,
     borderRadius: 9999,
-    overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: 'rgba(255,255,255,0.97)',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.04,
     shadowRadius: 16,
-    elevation: 8,
+    elevation: 3,
   },
   locateButton: {
     flex: 1,
