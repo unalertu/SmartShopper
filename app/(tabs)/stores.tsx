@@ -1,14 +1,15 @@
 import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Dimensions, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Dimensions, Keyboard, TouchableWithoutFeedback, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Store, Plus, ChevronRight, Search, SlidersHorizontal, ShoppingBasket, LocateFixed, Trash2, MapPin } from 'lucide-react-native';
+import { Store, Plus, ChevronRight, Search, SlidersHorizontal, ShoppingBasket, LocateFixed, Trash2, MapPin, X } from 'lucide-react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as Location from 'expo-location';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import Animated, { useSharedValue, useAnimatedStyle, FadeInDown, FadeOutUp, FadeOutLeft, LinearTransition } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, interpolate, FadeInDown, FadeOutUp, FadeOutLeft, LinearTransition } from 'react-native-reanimated';
 import { Swipeable } from 'react-native-gesture-handler';
+import { BlurView } from 'expo-blur';
 import { fetchMarkets } from '../../services/overpassService';
 import { useLocationStore } from '../../store';
 import AnimatedScreen from '../../components/AnimatedScreen';
@@ -79,6 +80,74 @@ export default function StoresScreen() {
   const animatedPosition = useSharedValue(SCREEN_HEIGHT);
   const animatedLocateStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: animatedPosition.value - 66 }],
+  }));
+
+  // ── Search focus animation state ──
+  const searchInputRef = useRef<TextInput>(null);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const searchFocus = useSharedValue(0); // 0 = idle, 1 = focused
+
+  const SPRING_CONFIG = { damping: 20, stiffness: 180, mass: 0.8 };
+
+  const handleSearchFocus = useCallback(() => {
+    setIsSearchFocused(true);
+    searchFocus.value = withSpring(1, SPRING_CONFIG);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, []);
+
+  const dismissSearch = useCallback(() => {
+    searchInputRef.current?.blur();
+    setIsSearchFocused(false);
+    setSearchText('');
+    searchFocus.value = withSpring(0, SPRING_CONFIG);
+    Keyboard.dismiss();
+  }, []);
+
+  // Animated styles for the "Shops" title
+  const titleAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(searchFocus.value, [0, 0.5], [1, 0]),
+    transform: [
+      { translateX: interpolate(searchFocus.value, [0, 1], [0, -20]) },
+      { scale: interpolate(searchFocus.value, [0, 1], [1, 0.8]) },
+    ],
+  }));
+
+  // Animated styles for the filter button
+  const filterAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(searchFocus.value, [0, 0.5], [1, 0]),
+    transform: [
+      { translateX: interpolate(searchFocus.value, [0, 1], [0, 20]) },
+      { scale: interpolate(searchFocus.value, [0, 1], [1, 0.8]) },
+    ],
+  }));
+
+  // Animated styles for the search bar container
+  const searchBarAnimatedStyle = useAnimatedStyle(() => ({
+    flex: 1,
+    marginLeft: interpolate(searchFocus.value, [0, 1], [12, 0]),
+    marginRight: interpolate(searchFocus.value, [0, 1], [12, 0]),
+  }));
+
+  // Cancel button animated style
+  const cancelAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: searchFocus.value,
+    transform: [
+      { translateX: interpolate(searchFocus.value, [0, 1], [30, 0]) },
+    ],
+    width: interpolate(searchFocus.value, [0, 1], [0, 60]),
+  }));
+
+  // Map blur overlay animated style
+  const mapBlurAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(searchFocus.value, [0, 1], [0, 1]),
+  }));
+
+  // Bottom sheet push-down animated style
+  const bottomSheetPushStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: interpolate(searchFocus.value, [0, 1], [0, 40]) },
+    ],
   }));
 
   const [markets, setMarkets] = useState<any[]>([]);
@@ -307,36 +376,96 @@ export default function StoresScreen() {
           ))}
       </MapView>
 
-      {/* Floating Top Bar */}
-      <View
-        style={[styles.floatingHeader, { top: Math.max(20, insets.top) }]}
-        className="flex-row items-center px-4"
+      {/* ── Animated Search Blur Overlay ── */}
+      <Animated.View
+        pointerEvents={isSearchFocused ? 'auto' : 'none'}
+        style={[StyleSheet.absoluteFillObject, { zIndex: 5 }, mapBlurAnimatedStyle]}
       >
-        <View className="flex-1 bg-white/95 rounded-full h-14 flex-row items-center px-4 shadow-lg border border-slate-100 mr-3 shadow-black/10">
-          <Search size={22} color="#94a3b8" />
-          <TextInput
-            className="flex-1 ml-3 text-[16px] text-slate-900 font-medium h-full"
-            placeholder="Search shops..."
-            placeholderTextColor="#94a3b8"
-          />
-        </View>
-        <TouchableOpacity className="bg-white/95 w-14 h-14 rounded-full items-center justify-center shadow-lg border border-slate-100 shadow-black/10">
-          <SlidersHorizontal size={22} color="#0f172a" />
-        </TouchableOpacity>
+        <BlurView intensity={18} tint="light" style={[StyleSheet.absoluteFillObject]}>
+          <TouchableWithoutFeedback onPress={dismissSearch}>
+            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(248,250,252,0.3)' }]} />
+          </TouchableWithoutFeedback>
+        </BlurView>
+      </Animated.View>
+
+      {/* ── Animated Top Navigation Bar ── */}
+      <View
+        style={[styles.floatingHeader, { top: Math.max(20, insets.top), zIndex: 15 }]}
+      >
+        <BlurView
+          tint="systemChromeMaterialLight"
+          intensity={80}
+          style={styles.glassContainer}
+        >
+          <View style={styles.topNavRow}>
+            {/* "Shops" Title */}
+            <Animated.View style={[styles.titleContainer, titleAnimatedStyle]}>
+              <Text style={styles.titleText}>Shops</Text>
+            </Animated.View>
+
+            {/* Animated Search Bar */}
+            <Animated.View style={[styles.searchBarOuter, searchBarAnimatedStyle]}>
+              <View style={styles.searchBarInner}>
+                <Search size={16} color="#8e8e93" strokeWidth={2.5} />
+                <TextInput
+                  ref={searchInputRef}
+                  style={styles.searchInput}
+                  placeholder="Search shops..."
+                  placeholderTextColor="#8e8e93"
+                  value={searchText}
+                  onChangeText={setSearchText}
+                  onFocus={handleSearchFocus}
+                  returnKeyType="search"
+                />
+                {isSearchFocused && searchText.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => setSearchText('')}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <View style={styles.clearButton}>
+                      <X size={10} color="#fff" strokeWidth={3} />
+                    </View>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </Animated.View>
+
+            {/* Filter Button */}
+            <Animated.View style={[styles.filterContainer, filterAnimatedStyle]}>
+              <TouchableOpacity style={styles.filterButton} activeOpacity={0.7}>
+                <SlidersHorizontal size={17} color="#3c3c43" strokeWidth={2.5} />
+              </TouchableOpacity>
+            </Animated.View>
+
+            {/* Cancel Button (visible when focused) */}
+            <Animated.View style={[{ overflow: 'hidden' }, cancelAnimatedStyle]}>
+              <TouchableOpacity onPress={dismissSearch} activeOpacity={0.7}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        </BlurView>
       </View>
 
       {/* Locate Me Button */}
       <Animated.View style={[styles.locateButtonContainer, animatedLocateStyle]}>
-        <TouchableOpacity
-          style={styles.locateButton}
-          onPress={handleLocateMe}
-          activeOpacity={0.8}
+        <BlurView
+          tint="systemChromeMaterialLight"
+          intensity={80}
+          style={styles.locateButtonBlur}
         >
-          <LocateFixed size={24} color="#0f172a" />
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.locateButton}
+            onPress={handleLocateMe}
+            activeOpacity={0.7}
+          >
+            <LocateFixed size={20} color="#3c3c43" strokeWidth={2.5} />
+          </TouchableOpacity>
+        </BlurView>
       </Animated.View>
 
       {/* Draggable Bottom Sheet */}
+      <Animated.View style={[{ flex: 1, position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 2 }, bottomSheetPushStyle]} pointerEvents="box-none">
       <BottomSheet
         ref={bottomSheetRef}
         index={Math.min(1, snapPoints.length - 1)}
@@ -480,6 +609,7 @@ export default function StoresScreen() {
           )}
         </BottomSheetScrollView>
       </BottomSheet>
+      </Animated.View>
     </View>
     </AnimatedScreen>
   );
@@ -495,6 +625,82 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 10,
+    paddingHorizontal: 12,
+  },
+  glassContainer: {
+    borderRadius: 9999,
+    overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.5)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  topNavRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 52,
+    paddingHorizontal: 16,
+  },
+  titleContainer: {
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  titleText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1c1c1e',
+    letterSpacing: -0.4,
+  },
+  searchBarOuter: {
+    height: 36,
+  },
+  searchBarInner: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(120,120,128,0.12)',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 6,
+    fontSize: 15,
+    fontWeight: '400',
+    color: '#1c1c1e',
+    height: '100%',
+    letterSpacing: -0.2,
+  },
+  clearButton: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: 'rgba(120,120,128,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 2,
+  },
+  filterButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(120,120,128,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelText: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#007AFF',
+    marginLeft: 10,
+    letterSpacing: -0.2,
   },
   locateButtonContainer: {
     position: 'absolute',
@@ -502,18 +708,23 @@ const styles = StyleSheet.create({
     right: 16,
     zIndex: 10,
   },
+  locateButtonBlur: {
+    width: 44,
+    height: 44,
+    borderRadius: 9999,
+    overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.5)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
+  },
   locateButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#fff',
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
   },
 
   /* ── Map marker ────────────────────────── */
