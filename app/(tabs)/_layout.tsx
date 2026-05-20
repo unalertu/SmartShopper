@@ -8,7 +8,7 @@ import {
   Home,
   MapPin,
   Menu,
-  User,
+  Settings,
   Plus,
   X,
   PlusCircle,
@@ -23,7 +23,7 @@ const TAB_CONFIG: Record<string, { label: string; Icon: any }> = {
   index:   { label: "Home",    Icon: Home },
   stores:  { label: "Shops",  Icon: MapPin },
   lists:   { label: "Lists",   Icon: Menu },
-  profile: { label: "Profile", Icon: User },
+  profile: { label: "Settings", Icon: Settings },
 };
 
 // ── Custom Tab Bar ──

@@ -5,7 +5,6 @@ import { StatusBar } from 'expo-status-bar';
 import { 
   User, 
   Bell, 
-  SlidersHorizontal, 
   SunMoon, 
   ChevronRight,
   LifeBuoy,
@@ -14,8 +13,13 @@ import {
   Shield,
   FileText,
   Trash,
-  Settings,
-  Navigation
+  Navigation,
+  Crown,
+  ShoppingCart,
+  MapPin,
+  MessageSquare,
+  Info,
+  Lock,
 } from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
 
@@ -32,44 +36,49 @@ export default function ProfileScreen() {
         contentContainerStyle={{ 
           paddingTop: insets.top + 16, 
           paddingHorizontal: 24,
-          paddingBottom: 100 // Space for tab bar
+          paddingBottom: 100
         }}
         showsVerticalScrollIndicator={false}
       >
         {/* Title */}
-        <Text className="text-3xl font-bold text-slate-900 mb-6">Profile</Text>
+        <Text className="text-3xl font-bold text-slate-900 mb-6">Settings</Text>
 
-        {/* Widget 1: Avatar Header */}
+        {/* Account */}
         <View 
           className="bg-white border border-slate-100 rounded-3xl p-4 mb-4 flex-row items-center shadow-sm"
           style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }}
         >
-          {/* Avatar */}
           <View className="bg-slate-100 h-16 w-16 rounded-full justify-center items-center mr-4">
             <User size={32} color="#94a3b8" strokeWidth={1.5} />
           </View>
-
-          {/* User Info & Edit */}
           <View className="flex-col flex-1 justify-center">
             <Text className="text-lg font-bold text-slate-900 mb-0.5">Arda</Text>
-            <View className="flex-row items-center mt-1">
-              <Text className="text-sm text-slate-500 mb-0">test@gmail.com</Text>
-              <TouchableOpacity className="p-1.5 rounded-full bg-slate-100 ml-2">
-                <Settings size={14} color="#0f172a" />
-              </TouchableOpacity>
+            <Text className="text-sm text-slate-500">test@gmail.com</Text>
+          </View>
+          <ChevronRight size={20} color="#cbd5e1" />
+        </View>
+
+        {/* Premium */}
+        <TouchableOpacity 
+          className="bg-slate-900 rounded-3xl p-4 mb-6 flex-row items-center justify-between shadow-sm"
+          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 4 }}
+          activeOpacity={0.8}
+        >
+          <View className="flex-row items-center">
+            <View className="bg-[#D4AF37] h-10 w-10 rounded-full justify-center items-center mr-3">
+              <Crown size={20} color="#1e1e1e" fill="#1e1e1e" />
+            </View>
+            <View>
+              <Text className="text-white font-bold text-[15px]">Premium</Text>
+              <Text className="text-slate-400 text-xs mt-0.5">Upgrade for unlimited features</Text>
             </View>
           </View>
-        </View>
-
-        {/* Subscription Info Card */}
-        <View className="bg-white border border-slate-100 rounded-3xl p-4 mb-6 flex-row items-center justify-between shadow-sm">
-          <Text className="text-slate-900 font-bold text-sm">Subscription Tier</Text>
-          <View className="bg-slate-900 px-3 py-1 rounded-full">
-            <Text className="text-white font-bold text-[10px] uppercase tracking-widest">PRO Plan</Text>
+          <View className="bg-[#D4AF37] px-3 py-1 rounded-full">
+            <Text className="text-[#1e1e1e] font-bold text-[10px] uppercase tracking-widest">PRO</Text>
           </View>
-        </View>
+        </TouchableOpacity>
 
-        {/* Card 1: Preferences */}
+        {/* Card 1: Notifications & Location */}
         <View 
           className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 shadow-sm"
           style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 }}
@@ -88,32 +97,35 @@ export default function ProfileScreen() {
             />
           </View>
 
-          {/* Location Services */}
-          <TouchableOpacity className="flex-row justify-between items-center p-4 border-b border-slate-50">
+          {/* Location & Background */}
+          <TouchableOpacity className="flex-row justify-between items-center p-4">
             <View className="flex-row items-center">
-              <Navigation size={20} color="#64748b" />
-              <Text className="text-slate-900 font-medium ml-3 text-[15px]">Location Services</Text>
+              <MapPin size={20} color="#64748b" />
+              <Text className="text-slate-900 font-medium ml-3 text-[15px]">Location & Background</Text>
             </View>
             <ChevronRight size={20} color="#cbd5e1" />
           </TouchableOpacity>
-          
-          {/* Units */}
+        </View>
+
+        {/* Card 2: Shopping Preferences & Appearance */}
+        <View 
+          className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 shadow-sm"
+          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 }}
+        >
+          {/* Shopping Preferences */}
           <TouchableOpacity className="flex-row justify-between items-center p-4 border-b border-slate-50">
             <View className="flex-row items-center">
-              <SlidersHorizontal size={20} color="#64748b" />
-              <Text className="text-slate-900 font-medium ml-3 text-[15px]">Units</Text>
+              <ShoppingCart size={20} color="#64748b" />
+              <Text className="text-slate-900 font-medium ml-3 text-[15px]">Shopping Preferences</Text>
             </View>
-            <View className="flex-row items-center gap-1.5">
-              <Text className="text-slate-400 font-medium text-sm">Metric</Text>
-              <ChevronRight size={20} color="#cbd5e1" />
-            </View>
+            <ChevronRight size={20} color="#cbd5e1" />
           </TouchableOpacity>
 
-          {/* Theme */}
+          {/* Appearance */}
           <TouchableOpacity className="flex-row justify-between items-center p-4">
             <View className="flex-row items-center">
               <SunMoon size={20} color="#64748b" />
-              <Text className="text-slate-900 font-medium ml-3 text-[15px]">Theme</Text>
+              <Text className="text-slate-900 font-medium ml-3 text-[15px]">Appearance</Text>
             </View>
             <View className="flex-row items-center gap-1.5">
               <Text className="text-slate-400 font-medium text-sm">System</Text>
@@ -122,72 +134,72 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Card 2: Support & Feedback */}
+        {/* Card 3: Privacy & Data */}
         <View 
           className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 shadow-sm"
           style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 }}
         >
-          {/* Help Center */}
+          <TouchableOpacity className="flex-row justify-between items-center p-4">
+            <View className="flex-row items-center">
+              <Lock size={20} color="#64748b" />
+              <Text className="text-slate-900 font-medium ml-3 text-[15px]">Privacy & Data</Text>
+            </View>
+            <ChevronRight size={20} color="#cbd5e1" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Card 4: Help & Support, Feedback */}
+        <View 
+          className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 shadow-sm"
+          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 }}
+        >
+          {/* Help & Support */}
           <TouchableOpacity className="flex-row justify-between items-center p-4 border-b border-slate-50">
             <View className="flex-row items-center">
               <LifeBuoy size={20} color="#64748b" />
-              <Text className="text-slate-900 font-medium ml-3 text-[15px]">Help Center</Text>
-            </View>
-            <ChevronRight size={20} color="#cbd5e1" />
-          </TouchableOpacity>
-          
-          {/* Rate App */}
-          <TouchableOpacity className="flex-row justify-between items-center p-4 border-b border-slate-50">
-            <View className="flex-row items-center">
-              <Star size={20} color="#64748b" />
-              <Text className="text-slate-900 font-medium ml-3 text-[15px]">Rate App</Text>
+              <Text className="text-slate-900 font-medium ml-3 text-[15px]">Help & Support</Text>
             </View>
             <ChevronRight size={20} color="#cbd5e1" />
           </TouchableOpacity>
 
-          {/* Share with Friends */}
+          {/* Feedback */}
           <TouchableOpacity className="flex-row justify-between items-center p-4">
             <View className="flex-row items-center">
-              <Share size={20} color="#64748b" />
-              <Text className="text-slate-900 font-medium ml-3 text-[15px]">Share with Friends</Text>
+              <MessageSquare size={20} color="#64748b" />
+              <Text className="text-slate-900 font-medium ml-3 text-[15px]">Feedback</Text>
             </View>
             <ChevronRight size={20} color="#cbd5e1" />
           </TouchableOpacity>
         </View>
 
-        {/* Card 3: Account & Legal */}
+        {/* Card 5: Legal & About */}
         <View 
           className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 shadow-sm"
           style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 }}
         >
-          {/* Privacy Policy */}
-          <TouchableOpacity className="flex-row justify-between items-center p-4 border-b border-slate-50">
-            <View className="flex-row items-center">
-              <Shield size={20} color="#64748b" />
-              <Text className="text-slate-900 font-medium ml-3 text-[15px]">Privacy Policy</Text>
-            </View>
-            <ChevronRight size={20} color="#cbd5e1" />
-          </TouchableOpacity>
-          
-          {/* Terms of Service */}
+          {/* Legal */}
           <TouchableOpacity className="flex-row justify-between items-center p-4 border-b border-slate-50">
             <View className="flex-row items-center">
               <FileText size={20} color="#64748b" />
-              <Text className="text-slate-900 font-medium ml-3 text-[15px]">Terms of Service</Text>
+              <Text className="text-slate-900 font-medium ml-3 text-[15px]">Legal</Text>
             </View>
             <ChevronRight size={20} color="#cbd5e1" />
           </TouchableOpacity>
 
-          {/* Delete Account */}
+          {/* About */}
           <TouchableOpacity className="flex-row justify-between items-center p-4">
             <View className="flex-row items-center">
-              <Trash size={20} color="#ef4444" />
-              <Text className="text-red-500 font-medium ml-3 text-[15px]">Delete Account</Text>
+              <Info size={20} color="#64748b" />
+              <Text className="text-slate-900 font-medium ml-3 text-[15px]">About</Text>
+            </View>
+            <View className="flex-row items-center gap-1.5">
+              <Text className="text-slate-400 font-medium text-sm">v1.0.0</Text>
+              <ChevronRight size={20} color="#cbd5e1" />
             </View>
           </TouchableOpacity>
         </View>
 
-        {/* Primary Action Button */}
+        {/* Log Out */}
         <TouchableOpacity 
           className="bg-slate-900 h-16 rounded-[24px] justify-center items-center shadow-lg mt-2 mb-10"
           style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 15, elevation: 8 }}
