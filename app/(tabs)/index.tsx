@@ -358,8 +358,8 @@ export default function HomeScreen() {
                   }}
                 >
                   <View className="flex-row items-center gap-3.5 flex-1">
-                    <View className="w-[46px] h-[46px] bg-slate-50 rounded-full items-center justify-center">
-                      <Menu size={22} color="#334155" />
+                    <View className="w-10 h-10 bg-slate-100/60 rounded-[12px] items-center justify-center">
+                      <Menu size={20} color="#475569" />
                     </View>
                     <View className="flex-1">
                       <Text className="text-[16px] font-semibold text-slate-900 tracking-tight" numberOfLines={1}>{list.name}</Text>
@@ -448,8 +448,8 @@ export default function HomeScreen() {
                   }}
                 >
                   <View className="flex-row items-center gap-3.5 flex-1">
-                    <View className="w-[46px] h-[46px] bg-slate-50 rounded-full items-center justify-center">
-                      <Store size={22} color="#334155" />
+                    <View className="w-10 h-10 bg-slate-100/60 rounded-[12px] items-center justify-center">
+                      <Store size={20} color="#475569" />
                     </View>
                     <View className="flex-1">
                       <Text className="text-[16px] font-semibold text-slate-900 tracking-tight" numberOfLines={1}>{shop.name}</Text>
