@@ -17,6 +17,7 @@ import Animated, {
   interpolate,
   runOnJS,
   Easing,
+  SharedValue,
 } from "react-native-reanimated";
 import { Bell, MapPin, ListChecks, Sparkles } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
@@ -45,7 +46,7 @@ function BenefitRow({
   Icon: any;
   title: string;
   delay: number;
-  rowProgress: Animated.SharedValue<number>;
+  rowProgress: SharedValue<number>;
 }) {
   const itemProgress = useSharedValue(0);
 

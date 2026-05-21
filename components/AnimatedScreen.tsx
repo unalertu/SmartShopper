@@ -35,8 +35,6 @@ export default function AnimatedScreen({ children, style }: AnimatedScreenProps)
         stiffness: 90,
         mass: 0.8,
         overshootClamping: false,
-        restDisplacementThreshold: 0.01,
-        restSpeedThreshold: 0.01,
       });
 
       return () => {

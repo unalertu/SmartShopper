@@ -17,6 +17,60 @@ import AnimatedScreen from '../../components/AnimatedScreen';
 import * as Haptics from 'expo-haptics';
 import MapCluster from '../../components/MapCluster';
 import StoreMarker from '../../components/StoreMarker';
+import { create } from 'zustand';
+
+interface LocalUIState {
+  selectedShopToSave: any | null;
+  setSelectedShopToSave: (shop: any | null) => void;
+}
+const useLocalUIStore = create<LocalUIState>((set) => ({
+  selectedShopToSave: null,
+  setSelectedShopToSave: (shop) => set({ selectedShopToSave: shop })
+}));
+
+const CustomHandle = () => {
+  const selectedShopToSave = useLocalUIStore((s) => s.selectedShopToSave);
+  const setSelectedShopToSave = useLocalUIStore((s) => s.setSelectedShopToSave);
+  const { addLocation } = useLocationStore();
+
+  return (
+    <Animated.View layout={LinearTransition.springify()} className="w-full pt-5 pb-2 px-6">
+      {selectedShopToSave && (
+        <Animated.View
+          entering={FadeInDown.duration(300).springify()}
+          exiting={FadeOutUp.duration(200)}
+        >
+          <TouchableOpacity
+            style={styles.contextSaveBtn}
+            activeOpacity={0.8}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              addLocation({
+                name: selectedShopToSave.name || 'Unknown Store',
+                address: selectedShopToSave.address || 'Unknown Address',
+                latitude: selectedShopToSave.latitude,
+                longitude: selectedShopToSave.longitude,
+                radius: 500,
+              });
+              setSelectedShopToSave(null);
+            }}
+          >
+            <Plus size={20} color="#fff" />
+            <Text style={styles.contextSaveBtnText}>
+              Save {selectedShopToSave.name}
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
+      <Animated.Text 
+        layout={LinearTransition.springify()} 
+        className="text-[22px] font-semibold tracking-tight text-slate-900"
+      >
+        My Shops
+      </Animated.Text>
+    </Animated.View>
+  );
+};
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -155,7 +209,8 @@ export default function StoresScreen() {
 
   const [markets, setMarkets] = useState<any[]>([]);
   const [currentRegion, setCurrentRegion] = useState<any>(null);
-  const [selectedShopToSave, setSelectedShopToSave] = useState<any>(null);
+  const selectedShopToSave = useLocalUIStore((s) => s.selectedShopToSave);
+  const setSelectedShopToSave = useLocalUIStore((s) => s.setSelectedShopToSave);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
 
   // Clustering state
@@ -575,43 +630,7 @@ export default function StoresScreen() {
         index={Math.min(1, snapPoints.length - 1)}
         animatedPosition={animatedPosition}
         snapPoints={snapPoints}
-        handleComponent={useCallback(() => (
-          <Animated.View layout={LinearTransition.springify()} className="w-full pt-5 pb-2 px-6">
-            {selectedShopToSave && (
-              <Animated.View
-                entering={FadeInDown.duration(300).springify()}
-                exiting={FadeOutUp.duration(200)}
-              >
-                <TouchableOpacity
-                  style={styles.contextSaveBtn}
-                  activeOpacity={0.8}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    addLocation({
-                      name: selectedShopToSave.name || 'Unknown Store',
-                      address: selectedShopToSave.address || 'Unknown Address',
-                      latitude: selectedShopToSave.latitude,
-                      longitude: selectedShopToSave.longitude,
-                      radius: 500,
-                    });
-                    setSelectedShopToSave(null);
-                  }}
-                >
-                  <Plus size={20} color="#fff" />
-                  <Text style={styles.contextSaveBtnText}>
-                    Save {selectedShopToSave.name}
-                  </Text>
-                </TouchableOpacity>
-              </Animated.View>
-            )}
-            <Animated.Text 
-              layout={LinearTransition.springify()} 
-              className="text-[22px] font-semibold tracking-tight text-slate-900"
-            >
-              My Shops
-            </Animated.Text>
-          </Animated.View>
-        ), [selectedShopToSave, addLocation])}
+        handleComponent={CustomHandle}
         backgroundStyle={{
           borderRadius: 32,
           shadowColor: '#000',
