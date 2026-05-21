@@ -10,10 +10,13 @@ import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, interpolate, FadeInDown, FadeOutUp, FadeOutLeft, LinearTransition } from 'react-native-reanimated';
 import { Swipeable } from 'react-native-gesture-handler';
 import { BlurView } from 'expo-blur';
+import Supercluster, { PointFeature } from 'supercluster';
 import { fetchMarkets } from '../../services/overpassService';
 import { useLocationStore } from '../../store';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import * as Haptics from 'expo-haptics';
+import MapCluster from '../../components/MapCluster';
+import StoreMarker from '../../components/StoreMarker';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -155,6 +158,13 @@ export default function StoresScreen() {
   const [selectedShopToSave, setSelectedShopToSave] = useState<any>(null);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
 
+  // Clustering state
+  const superclusterRef = useRef(new Supercluster({
+    radius: 45,
+    maxZoom: 16,
+  }));
+  const [clusters, setClusters] = useState<any[]>([]);
+
   // Haversine formula
   const haversineDistance = (
     lat1: number, lon1: number,
@@ -186,11 +196,21 @@ export default function StoresScreen() {
     );
   }, [savedShops]);
 
+  const fetchAbortController = useRef<AbortController | null>(null);
+
   const fetchMarketsFromOverpass = async (region: any) => {
-    if (region.latitudeDelta > 0.15) {
+    // 0.08 delta is roughly an 8km box. Beyond this, Overpass takes way too long.
+    if (region.latitudeDelta > 0.08) {
       console.log("Zoomed out too far, skipping fetch.");
       return;
     }
+
+    // Cancel any ongoing fetch to prevent queue pile-up and overloading
+    if (fetchAbortController.current) {
+      fetchAbortController.current.abort();
+    }
+    const controller = new AbortController();
+    fetchAbortController.current = controller;
 
     try {
       const minDelta = 0.04;
@@ -202,16 +222,25 @@ export default function StoresScreen() {
       const north = region.latitude + latDelta / 2;
       const east = region.longitude + lonDelta / 2;
 
-      const fetchedMarkets = await fetchMarkets(south, west, north, east);
+      const fetchedMarkets = await fetchMarkets(south, west, north, east, controller.signal);
+      if (!fetchedMarkets || fetchedMarkets.length === 0) return;
+
       setMarkets(prev => {
         const combined = [...prev, ...fetchedMarkets];
         // Deduplicate by ID so markers don't stack and we keep existing ones
-        return combined.filter(
+        const unique = combined.filter(
           (market, index, self) => index === self.findIndex((m) => m.id === market.id)
         );
+        // Only update state if the array actually changed to prevent unnecessary re-renders
+        if (unique.length === prev.length) return prev;
+        return unique;
       });
     } catch (error: any) {
-      console.log('Error fetching from Overpass:', error);
+      if (error.name === 'AbortError' || error.message?.includes('AbortError')) {
+        console.log('Previous overpass fetch aborted due to new map pan.');
+      } else {
+        console.log('Error fetching from Overpass:', error);
+      }
     }
   };
 
@@ -219,6 +248,79 @@ export default function StoresScreen() {
     setCurrentRegion(region);
     fetchMarketsFromOverpass(region);
   };
+
+  const points = useMemo(() => {
+    const allPoints: PointFeature<any>[] = [];
+    
+    // Add saved shops
+    savedShops.forEach(shop => {
+      allPoints.push({
+        type: 'Feature',
+        properties: {
+          ...shop,
+          cluster: false,
+          id: `saved-${shop.id}`,
+          isSaved: true
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: [shop.longitude, shop.latitude]
+        }
+      });
+    });
+
+    // Add unsaved markets
+    const uniqueMarkets = markets
+      .filter((market, index, self) => 
+        index === self.findIndex((m) => m.latitude === market.latitude && m.longitude === market.longitude)
+      )
+      .filter((market) => !isShopSaved(market));
+
+    uniqueMarkets.forEach(market => {
+      allPoints.push({
+        type: 'Feature',
+        properties: {
+          ...market,
+          cluster: false,
+          id: market.id,
+          isSaved: false
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: [market.longitude, market.latitude]
+        }
+      });
+    });
+
+    return allPoints;
+  }, [savedShops, markets, isShopSaved]);
+
+  const updateClusters = useCallback((region: any) => {
+    if (!region) return;
+    const padding = region.longitudeDelta * 0.5; // Load markers slightly outside the view
+    const bbox: [number, number, number, number] = [
+      region.longitude - region.longitudeDelta / 2 - padding,
+      region.latitude - region.latitudeDelta / 2 - padding,
+      region.longitude + region.longitudeDelta / 2 + padding,
+      region.latitude + region.latitudeDelta / 2 + padding,
+    ];
+    
+    const lngDelta = Math.max(region.longitudeDelta, 0.0001);
+    const zoom = Math.max(0, Math.round(Math.log(360 / lngDelta) / Math.LN2));
+    
+    try {
+      const newClusters = superclusterRef.current.getClusters(bbox, zoom);
+      setClusters(newClusters);
+    } catch (error) {
+      console.log("Supercluster error:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    superclusterRef.current.load(points);
+    updateClusters(currentRegion);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [points]); // Deliberately omitting currentRegion to prevent reloading the entire KD-tree on every pan
 
   const handleLocateMe = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -320,45 +422,51 @@ export default function StoresScreen() {
           }
         }}
       >
-        {/* Render Saved Shops permanently */}
-        {savedShops.map((shop) => (
-          <Marker
-            key={`saved-${shop.id}`}
-            ref={(ref) => {
-              if (ref) markerRefs.current[`saved-${shop.id}`] = ref;
-            }}
-            coordinate={{ latitude: shop.latitude, longitude: shop.longitude }}
-            title={shop.name}
-            onPress={(e) => {
-              e.stopPropagation();
-              Keyboard.dismiss();
-              const now = Date.now();
-              if (now - lastTap.current < 300) return;
-              lastTap.current = now;
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setSelectedShopToSave(null);
-            }}
-          >
-            <View style={[styles.markerPill, styles.markerPillSaved]}>
-              <ShoppingBasket size={18} color="#fff" />
-            </View>
-          </Marker>
-        ))}
+        {clusters.map((cluster) => {
+          const [longitude, latitude] = cluster.geometry.coordinates;
+          const { cluster: isCluster, point_count: pointCount } = cluster.properties;
+          const clusterId = cluster.id;
 
-        {/* Render Unsaved Markets from Overpass */}
-        {markets
-          .filter((market, index, self) => 
-            index === self.findIndex((m) => m.latitude === market.latitude && m.longitude === market.longitude)
-          )
-          .filter((market) => !isShopSaved(market))
-          .map(market => (
+          if (isCluster) {
+            return (
+              <Marker
+                key={`cluster-${clusterId}`}
+                coordinate={{ latitude, longitude }}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  Keyboard.dismiss();
+                  
+                  const zoom = superclusterRef.current.getClusterExpansionZoom(clusterId);
+                  const longitudeDelta = 360 / Math.pow(2, zoom);
+                  const latitudeDelta = longitudeDelta * (SCREEN_HEIGHT / Dimensions.get('window').width);
+                  
+                  mapRef.current?.animateToRegion({
+                    latitude,
+                    longitude,
+                    latitudeDelta,
+                    longitudeDelta,
+                  }, 500);
+                }}
+              >
+                <MapCluster pointCount={pointCount} onPress={() => {}} />
+              </Marker>
+            );
+          }
+
+          // Not a cluster, it's an individual marker
+          const properties = cluster.properties;
+          const isSaved = properties.isSaved;
+          const isSelected = selectedShopToSave?.id === properties.id || (isSaved && selectedShopToSave?.id === `saved-${properties.id}`);
+
+          return (
             <Marker
-              key={market.id}
+              key={properties.id}
               ref={(ref) => {
-                if (ref) markerRefs.current[market.id] = ref;
+                if (ref) markerRefs.current[properties.id] = ref;
               }}
-              coordinate={{ latitude: market.latitude, longitude: market.longitude }}
-              title={market.name}
+              coordinate={{ latitude, longitude }}
+              title={properties.name}
               onPress={(e) => {
                 e.stopPropagation();
                 Keyboard.dismiss();
@@ -366,14 +474,18 @@ export default function StoresScreen() {
                 if (now - lastTap.current < 300) return;
                 lastTap.current = now;
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setSelectedShopToSave(market);
+                
+                if (isSaved) {
+                  setSelectedShopToSave(null);
+                } else {
+                  setSelectedShopToSave(properties);
+                }
               }}
             >
-              <View style={styles.markerPill}>
-                <ShoppingBasket size={18} color="#0f172a" />
-              </View>
+              <StoreMarker isSaved={isSaved} isSelected={isSelected} />
             </Marker>
-          ))}
+          );
+        })}
       </MapView>
 
       {/* ── Animated Search Blur Overlay ── */}

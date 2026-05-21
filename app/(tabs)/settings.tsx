@@ -28,6 +28,7 @@ import {
   Languages,
   Ruler,
   Vibrate,
+  MapPin,
 } from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import { useShoppingListStore, useLocationStore, useListsStore } from '../../store';

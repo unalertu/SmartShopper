@@ -58,7 +58,7 @@ export default function LocationsScreen() {
               No stores saved
             </Text>
             <Text className="text-base text-surface-400 text-center px-8">
-              Add your favorite grocery stores to get reminded when you're near them
+              {"Add your favorite grocery stores to get reminded when you're near them"}
             </Text>
           </Animated.View>
         ) : (

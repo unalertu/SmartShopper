@@ -16,6 +16,7 @@ import { useLocationStore, useListsStore } from '../../store';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import RadarPinIcon from '../../components/RadarPinIcon';
+import StoreMarker from '../../components/StoreMarker';
 
 const getRelativeDate = (timestamp?: number): string => {
   if (!timestamp) return 'bugün';
@@ -282,9 +283,7 @@ export default function HomeScreen() {
                           key={shop.id}
                           coordinate={{ latitude: shop.latitude, longitude: shop.longitude }}
                         >
-                          <View className="bg-slate-900 p-1.5 rounded-full border border-slate-100" style={{ shadowColor: '#0f172a', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }}>
-                            <Store size={14} color="#fff" />
-                          </View>
+                          <StoreMarker isSaved={true} isSelected={false} />
                         </Marker>
                       ))}
                     </MapView>

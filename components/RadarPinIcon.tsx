@@ -71,7 +71,7 @@ export default function RadarPinIcon({
   const containerSize = size * 1.5;
   const maxRingSize = containerSize;
 
-  const makeRingStyle = (progress: SharedValue<number>) =>
+  const useRingStyle = (progress: SharedValue<number>) =>
     useAnimatedStyle(() => {
       const scale = interpolate(progress.value, [0, 1], [0.3, 1]);
       const opacity = interpolate(progress.value, [0, 0.2, 1], [0, 0.35, 0]);
@@ -89,9 +89,9 @@ export default function RadarPinIcon({
       };
     });
 
-  const ring1Style = makeRingStyle(ring1);
-  const ring2Style = makeRingStyle(ring2);
-  const ring3Style = makeRingStyle(ring3);
+  const ring1Style = useRingStyle(ring1);
+  const ring2Style = useRingStyle(ring2);
+  const ring3Style = useRingStyle(ring3);
 
   return (
     <View

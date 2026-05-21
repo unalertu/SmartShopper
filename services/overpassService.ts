@@ -25,6 +25,7 @@ export const fetchMarkets = async (
   west: number,
   north: number,
   east: number,
+  signal?: AbortSignal,
   retriesPerMirror = 1
 ): Promise<MarketElement[]> => {
   const query = `[out:json][timeout:20];
@@ -45,8 +46,12 @@ out center;`;
     console.log(`📡 Fetching from Overpass mirror: ${mirror}`);
 
     try {
-      // Use AbortController for timeout (25s)
+      // Use AbortController for timeout (25s) or external abort
       const controller = new AbortController();
+      if (signal) {
+        signal.addEventListener('abort', () => controller.abort());
+        if (signal.aborted) controller.abort();
+      }
       const timeoutId = setTimeout(() => controller.abort(), 25000);
 
       let response: Response;
