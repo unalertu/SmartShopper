@@ -12,6 +12,9 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { setupNotifications } from "@/services/notificationService";
 import LaunchScreen from "@/components/LaunchScreen";
+import NotificationPermissionScreen, {
+  shouldShowNotificationPermission,
+} from "@/components/NotificationPermissionScreen";
 
 // Prevent splash screen auto-hide
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -32,19 +35,30 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [showLaunchScreen, setShowLaunchScreen] = useState(true);
+  const [showNotificationPermission, setShowNotificationPermission] = useState(false);
 
   useEffect(() => {
-    // Setup notifications on app mount
-    setupNotifications();
-
     // Hide native splash screen so custom launch screen takes over
     setTimeout(() => {
       SplashScreen.hideAsync().catch(() => {});
     }, 100);
   }, []);
 
-  const handleLaunchFinish = useCallback(() => {
+  const handleLaunchFinish = useCallback(async () => {
     setShowLaunchScreen(false);
+
+    // Check if we should show the notification pre-permission screen
+    const shouldShow = await shouldShowNotificationPermission();
+    if (shouldShow) {
+      setShowNotificationPermission(true);
+    } else {
+      // Permission already handled — just ensure notifications are set up
+      setupNotifications();
+    }
+  }, []);
+
+  const handleNotificationPermissionComplete = useCallback(() => {
+    setShowNotificationPermission(false);
   }, []);
 
   return (
@@ -93,9 +107,16 @@ export default function RootLayout() {
               }}
             />
           </Stack>
-          <StatusBar style="dark" />
+          <StatusBar style={showNotificationPermission ? "light" : "dark"} />
         </ThemeProvider>
       </BottomSheetModalProvider>
+
+      {/* Notification Pre-Permission Screen (shown after launch, before app) */}
+      {showNotificationPermission && (
+        <NotificationPermissionScreen
+          onComplete={handleNotificationPermissionComplete}
+        />
+      )}
 
       {/* Custom Animated Launch Screen */}
       {showLaunchScreen && <LaunchScreen onFinish={handleLaunchFinish} />}

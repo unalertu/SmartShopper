@@ -554,8 +554,14 @@ export default function StoresScreen() {
                 onSwipeableWillOpen={() => closeAllSwipeables(loc.id)}
               >
                 <TouchableOpacity
-                  className="bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-100 shadow-sm"
-                  style={{ backgroundColor: 'white', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 }}
+                  className="bg-white rounded-[24px] py-3.5 px-4 flex-row items-center justify-between border border-slate-100"
+                  style={{
+                    shadowColor: '#0f172a',
+                    shadowOffset: { width: 0, height: 8 },
+                    shadowOpacity: 0.03,
+                    shadowRadius: 24,
+                    elevation: 3,
+                  }}
                   activeOpacity={0.7}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -573,20 +579,18 @@ export default function StoresScreen() {
                     bottomSheetRef.current?.snapToIndex(0);
                   }}
                 >
-                  <View className="flex-row items-center gap-4 flex-1">
-                    <View className="w-[52px] items-center justify-center">
-                      <Store size={28} color="#334155" />
+                  <View className="flex-row items-center gap-3.5 flex-1">
+                    <View className="w-10 h-10 bg-slate-100/60 rounded-[12px] items-center justify-center">
+                      <Store size={20} color="#475569" />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-[16px] font-medium text-slate-900 tracking-tight mb-0.5">{loc.name}</Text>
-                      <Text className="text-[13px] font-medium text-slate-500" numberOfLines={1}>
+                      <Text className="text-[16px] font-semibold text-slate-900 tracking-tight" numberOfLines={1}>{loc.name}</Text>
+                      <Text className="text-[13px] font-medium text-slate-500 mt-0.5" numberOfLines={1}>
                         {userLocation ? formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, loc.latitude, loc.longitude)) : (loc.address || 'Saved Shop')}
                       </Text>
                     </View>
                   </View>
-                  <View className="flex-row items-center gap-2 pl-2">
-                    <ChevronRight size={18} color="#cbd5e1" />
-                  </View>
+                  <ChevronRight size={18} color="#94a3b8" />
                 </TouchableOpacity>
               </Swipeable>
             </Animated.View>

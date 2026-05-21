@@ -140,25 +140,25 @@ export default function ListsScreen() {
                 >
                   <TouchableOpacity 
                     onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/list/${list.id}`); }}
-                    className="bg-white rounded-[24px] p-4 flex-row items-center justify-between border border-slate-200"
+                    className="bg-white rounded-[24px] py-3.5 px-4 flex-row items-center justify-between border border-slate-100"
                     style={{
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 6 },
-                      shadowOpacity: 0.04,
-                      shadowRadius: 16,
+                      shadowColor: '#0f172a',
+                      shadowOffset: { width: 0, height: 8 },
+                      shadowOpacity: 0.03,
+                      shadowRadius: 24,
                       elevation: 3,
                     }}
                   >
-                    <View className="flex-row items-center gap-4 flex-1">
-                      <View className="w-[52px] items-center justify-center">
-                        <Menu size={28} color="#334155" />
+                    <View className="flex-row items-center gap-3.5 flex-1">
+                      <View className="w-10 h-10 bg-slate-100/60 rounded-[12px] items-center justify-center">
+                        <Menu size={20} color="#475569" />
                       </View>
                       <View className="flex-1">
-                        <Text className="text-[16px] font-medium text-slate-900 tracking-tight" numberOfLines={1}>{list.name}</Text>
-                        <Text className="text-[13px] font-medium text-slate-400 mt-1" numberOfLines={1}>{list.count} ürün • Güncellendi {getRelativeDate(list.createdAt)}</Text>
+                        <Text className="text-[16px] font-semibold text-slate-900 tracking-tight" numberOfLines={1}>{list.name}</Text>
+                        <Text className="text-[13px] font-medium text-slate-500 mt-0.5" numberOfLines={1}>{list.count} ürün • Güncellendi {getRelativeDate(list.createdAt)}</Text>
                       </View>
                     </View>
-                    <ChevronRight size={24} color="#cbd5e1" />
+                    <ChevronRight size={18} color="#94a3b8" />
                   </TouchableOpacity>
                 </Swipeable>
               </Animated.View>

@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Switch, Alert, Linking, Platform, AppState } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import * as Notifications from 'expo-notifications';
+import * as Haptics from 'expo-haptics';
 import { 
   User, 
   Bell, 
@@ -22,15 +24,94 @@ import {
   Lock,
 } from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
+import NotificationPermissionScreen from '../../components/NotificationPermissionScreen';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [showPermissionScreen, setShowPermissionScreen] = useState(false);
+
+  // Check notification permission on mount + whenever app returns from background
+  useEffect(() => {
+    checkNotificationStatus();
+
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        checkNotificationStatus();
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  const checkNotificationStatus = useCallback(async () => {
+    const { status } = await Notifications.getPermissionsAsync();
+    setNotificationsEnabled(status === 'granted');
+  }, []);
+
+  const handleNotificationToggle = useCallback(async (value: boolean) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    if (value) {
+      // User wants to enable — check if permanently denied first
+      const { status } = await Notifications.getPermissionsAsync();
+
+      if (status === 'denied') {
+        // iOS has permanently denied — must go to system settings
+        Alert.alert(
+          'Notifications Disabled',
+          'To enable notifications, please allow them in your device Settings.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Open Settings',
+              onPress: () => {
+                if (Platform.OS === 'ios') {
+                  Linking.openURL('app-settings:');
+                } else {
+                  Linking.openSettings();
+                }
+              },
+            },
+          ]
+        );
+        return;
+      }
+
+      // Show the premium permission screen
+      setShowPermissionScreen(true);
+    } else {
+      // User wants to disable — iOS requires system settings
+      Alert.alert(
+        'Disable Notifications',
+        'To turn off notifications, please go to your device Settings.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Open Settings',
+            onPress: () => {
+              if (Platform.OS === 'ios') {
+                Linking.openURL('app-settings:');
+              } else {
+                Linking.openSettings();
+              }
+            },
+          },
+        ]
+      );
+    }
+  }, []);
+
+  const handlePermissionScreenComplete = useCallback(() => {
+    setShowPermissionScreen(false);
+    // Re-check status after the permission flow finishes
+    checkNotificationStatus();
+  }, [checkNotificationStatus]);
 
   return (
     <AnimatedScreen>
     <View className="flex-1 bg-white">
-      <StatusBar style="dark" />
+      <StatusBar style={showPermissionScreen ? "light" : "dark"} />
       <ScrollView 
         className="flex-1" 
         contentContainerStyle={{ 
@@ -91,8 +172,9 @@ export default function ProfileScreen() {
             </View>
             <Switch
               value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-              trackColor={{ false: '#e2e8f0', true: '#0f172a' }}
+              onValueChange={handleNotificationToggle}
+              trackColor={{ false: '#cbd5e1', true: '#0f172a' }}
+              ios_backgroundColor="#cbd5e1"
               thumbColor={'#ffffff'}
             />
           </View>
@@ -207,6 +289,13 @@ export default function ProfileScreen() {
           <Text className="text-white font-bold text-lg">Log Out</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Premium Notification Permission Screen Overlay */}
+      {showPermissionScreen && (
+        <NotificationPermissionScreen
+          onComplete={handlePermissionScreenComplete}
+        />
+      )}
     </View>
     </AnimatedScreen>
   );
