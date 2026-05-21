@@ -246,6 +246,7 @@ export default function StoresScreen() {
 
   const handleRegionChangeComplete = (region: any) => {
     setCurrentRegion(region);
+    updateClusters(region);
     fetchMarketsFromOverpass(region);
   };
 
@@ -466,7 +467,6 @@ export default function StoresScreen() {
                 if (ref) markerRefs.current[properties.id] = ref;
               }}
               coordinate={{ latitude, longitude }}
-              title={properties.name}
               onPress={(e) => {
                 e.stopPropagation();
                 Keyboard.dismiss();

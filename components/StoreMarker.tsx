@@ -9,21 +9,26 @@ interface StoreMarkerProps {
 
 const StoreMarker: React.FC<StoreMarkerProps> = ({ isSaved, isSelected }) => {
   const scale = useRef(new Animated.Value(0.5)).current;
-  const selectedScale = useRef(new Animated.Value(isSelected ? 1.25 : 1)).current;
   const glowOpacity = useRef(new Animated.Value(isSelected ? 1 : 0)).current;
+
+  // Track initial mount to avoid duplicate animations
+  const isMounted = useRef(false);
 
   useEffect(() => {
     Animated.spring(scale, {
-      toValue: 1,
+      toValue: isSelected ? 1.25 : 1,
       friction: 5,
       tension: 100,
       useNativeDriver: false,
     }).start();
+    isMounted.current = true;
   }, []);
 
   useEffect(() => {
+    if (!isMounted.current) return;
+    
     Animated.parallel([
-      Animated.spring(selectedScale, {
+      Animated.spring(scale, {
         toValue: isSelected ? 1.25 : 1,
         friction: 5,
         tension: 150,
@@ -37,26 +42,32 @@ const StoreMarker: React.FC<StoreMarkerProps> = ({ isSaved, isSelected }) => {
     ]).start();
   }, [isSelected]);
 
-  const animatedTransform = [{ scale: Animated.multiply(scale, selectedScale) }];
-
   return (
-    <Animated.View style={[styles.container, { transform: animatedTransform }]}>
-      {/* Subtle Glow Layer */}
-      <Animated.View style={[styles.glow, { opacity: glowOpacity, transform: [{ scale: 1.4 }] }, isSaved ? styles.glowSaved : styles.glowUnsaved]} />
-      
-      {/* Main Pill */}
-      <View style={[styles.markerPill, isSaved ? styles.markerPillSaved : styles.markerPillUnsaved]}>
-        {isSaved ? (
-          <MapPin size={18} color="#fff" />
-        ) : (
-          <ShoppingBasket size={18} color="#0f172a" />
-        )}
-      </View>
-    </Animated.View>
+    <View style={styles.wrapper}>
+      <Animated.View style={[styles.container, { transform: [{ scale }] }]}>
+        {/* Subtle Glow Layer */}
+        <Animated.View style={[styles.glow, { opacity: glowOpacity, transform: [{ scale: 1.4 }] }, isSaved ? styles.glowSaved : styles.glowUnsaved]} />
+        
+        {/* Main Pill */}
+        <View style={[styles.markerPill, isSaved ? styles.markerPillSaved : styles.markerPillUnsaved]}>
+          {isSaved ? (
+            <MapPin size={18} color="#fff" />
+          ) : (
+            <ShoppingBasket size={18} color="#0f172a" />
+          )}
+        </View>
+      </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  wrapper: {
+    width: 70,
+    height: 70,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   container: {
     alignItems: 'center',
     justifyContent: 'center',
