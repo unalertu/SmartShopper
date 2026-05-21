@@ -276,14 +276,19 @@ function CustomTabBar({
       </Animated.View>
 
       {/* ── Navigation Bar ── */}
-      <BlurView
-        tint="light"
-        intensity={95}
+      <Pressable
         style={[
           styles.navBarBlur,
           { bottom: insets.bottom > 0 ? insets.bottom - 12 : 6 },
         ]}
+        onPress={() => {}}
+        accessible={false}
       >
+        <BlurView
+          tint="light"
+          intensity={95}
+          style={StyleSheet.absoluteFill}
+        />
         <View style={styles.navBarInner}>
           {state.routes.map((route, index) => {
             const config = TAB_CONFIG[route.name];
@@ -324,7 +329,7 @@ function CustomTabBar({
             }}
           />
         </View>
-      </BlurView>
+      </Pressable>
     </>
   );
 }
