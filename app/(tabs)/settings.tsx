@@ -18,7 +18,7 @@ import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import * as Location from 'expo-location';
 
-import Animated, { FadeInDown, LinearTransition, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { FadeInDown, LinearTransition, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Bell,
@@ -194,11 +194,11 @@ export default function SettingsScreen() {
   });
 
   const handleProCardPressIn = () => {
-    scale.value = withSpring(0.95, { damping: 15, stiffness: 200 });
+    scale.value = withTiming(0.95, { duration: 150 });
   };
 
   const handleProCardPressOut = () => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 200 });
+    scale.value = withTiming(1, { duration: 150 });
   };
 
   const handleProCardPress = () => {

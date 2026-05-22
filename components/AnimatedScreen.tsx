@@ -29,12 +29,10 @@ export default function AnimatedScreen({ children, style }: AnimatedScreenProps)
       // Reset to initial state
       progress.value = 0;
 
-      // Animate in with spring physics (Cal AI feel)
-      progress.value = withSpring(1, {
-        damping: 20,
-        stiffness: 90,
-        mass: 0.8,
-        overshootClamping: false,
+      // Animate in with timing to avoid long spring oscillations that cause blur
+      progress.value = withTiming(1, {
+        duration: 400,
+        easing: Easing.out(Easing.cubic),
       });
 
       return () => {
@@ -53,9 +51,6 @@ export default function AnimatedScreen({ children, style }: AnimatedScreenProps)
       transform: [
         {
           translateY: interpolate(progress.value, [0, 1], [8, 0]),
-        },
-        {
-          scale: interpolate(progress.value, [0, 1], [0.98, 1]),
         },
       ],
     };
