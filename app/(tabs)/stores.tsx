@@ -213,7 +213,12 @@ export default function StoresScreen() {
   }));
 
   const [markets, setMarkets] = useState<any[]>([]);
-  const [currentRegion, setCurrentRegion] = useState<any>(null);
+  const [currentRegion, setCurrentRegion] = useState<any>({
+    latitude: 41.0082,
+    longitude: 28.9784,
+    latitudeDelta: 0.04,
+    longitudeDelta: 0.04,
+  });
   const selectedShopToSave = useLocalUIStore((s) => s.selectedShopToSave);
   const setSelectedShopToSave = useLocalUIStore((s) => s.setSelectedShopToSave);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
@@ -259,8 +264,8 @@ export default function StoresScreen() {
   const fetchAbortController = useRef<AbortController | null>(null);
 
   const fetchMarketsFromOverpass = async (region: any) => {
-    // 0.08 delta is roughly an 8km box. Beyond this, Overpass takes way too long.
-    if (region.latitudeDelta > 0.08) {
+    // 0.045 delta is roughly a 4.5km box. Beyond this, Overpass takes way too long and exhausts the geofence.
+    if (region.latitudeDelta > 0.045 || region.longitudeDelta > 0.045) {
       console.log("Zoomed out too far, skipping fetch.");
       return;
     }
@@ -464,7 +469,16 @@ export default function StoresScreen() {
   };
 
   useEffect(() => {
-    handleLocateMe();
+    let timeout: ReturnType<typeof setTimeout>;
+    const locate = () => {
+      if (useLocationStore.persist?.hasHydrated()) {
+        handleLocateMe();
+      } else {
+        timeout = setTimeout(locate, 50);
+      }
+    };
+    locate();
+    return () => clearTimeout(timeout);
   }, []);
 
   // Close any open swipeable when another one opens
