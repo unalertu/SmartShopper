@@ -83,6 +83,7 @@ export default function StoresScreen() {
   const markerRefs = useRef<Record<string, any>>({});
   const lastTap = useRef(0);
   const regionDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fetchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isAnimatingRef = useRef(false);
   const tracksViewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [tracksViewId, setTracksViewId] = useState<string | null>(null);
@@ -216,8 +217,8 @@ export default function StoresScreen() {
   const [currentRegion, setCurrentRegion] = useState<any>({
     latitude: 41.0082,
     longitude: 28.9784,
-    latitudeDelta: 0.04,
-    longitudeDelta: 0.04,
+    latitudeDelta: 0.015,
+    longitudeDelta: 0.015,
   });
   const selectedShopToSave = useLocalUIStore((s) => s.selectedShopToSave);
   const setSelectedShopToSave = useLocalUIStore((s) => s.setSelectedShopToSave);
@@ -278,7 +279,7 @@ export default function StoresScreen() {
     fetchAbortController.current = controller;
 
     try {
-      const minDelta = 0.04;
+      const minDelta = 0.01;
       const latDelta = Math.max(region.latitudeDelta, minDelta);
       const lonDelta = Math.max(region.longitudeDelta, minDelta);
 
@@ -317,9 +318,17 @@ export default function StoresScreen() {
     regionDebounceRef.current = setTimeout(() => {
       setCurrentRegion(region);
       updateClusters(region);
-      fetchMarketsFromOverpass(region);
       isAnimatingRef.current = false;
     }, isAnimatingRef.current ? 200 : 50);
+
+    // Add a 1 second debounce specifically for fetching from Overpass API
+    // so we don't exhaust the service when the user drags repeatedly
+    if (fetchDebounceRef.current) {
+      clearTimeout(fetchDebounceRef.current);
+    }
+    fetchDebounceRef.current = setTimeout(() => {
+      fetchMarketsFromOverpass(region);
+    }, 1000);
   }, [updateClusters]);
 
   const points = useMemo(() => {
@@ -437,8 +446,8 @@ export default function StoresScreen() {
 
       const location = await Location.getCurrentPositionAsync({});
 
-      const latitudeDelta = 0.04;
-      const longitudeDelta = 0.04;
+      const latitudeDelta = 0.015;
+      const longitudeDelta = 0.015;
       const actualLatitude = location.coords.latitude;
       const actualLongitude = location.coords.longitude;
       
@@ -455,6 +464,8 @@ export default function StoresScreen() {
       };
 
       mapRef.current?.animateToRegion(newRegion, 1000);
+      setCurrentRegion(newRegion);
+      updateClusters(newRegion);
 
       // Fetch markets around actual location
       fetchMarketsFromOverpass({
@@ -520,8 +531,8 @@ export default function StoresScreen() {
         initialRegion={{
           latitude: 41.0082,
           longitude: 28.9784,
-          latitudeDelta: 0.04,
-          longitudeDelta: 0.04,
+          latitudeDelta: 0.015,
+          longitudeDelta: 0.015,
         }}
         showsUserLocation={true}
         followsUserLocation={false}
