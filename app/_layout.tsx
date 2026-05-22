@@ -15,9 +15,13 @@ import LaunchScreen from "@/components/LaunchScreen";
 import NotificationPermissionScreen, {
   shouldShowNotificationPermission,
 } from "@/components/NotificationPermissionScreen";
+import { useSettingsStore } from "@/store/useSettingsStore";
+import { useShoppingListStore } from "@/store/useShoppingListStore";
 
 // Prevent splash screen auto-hide
 SplashScreen.preventAutoHideAsync().catch(() => {});
+
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 // Custom theme — overrides the default white background that shows during swipe-back gestures
 const AppLightTheme = {
@@ -42,6 +46,24 @@ export default function RootLayout() {
     setTimeout(() => {
       SplashScreen.hideAsync().catch(() => {});
     }, 100);
+  }, []);
+
+  // Auto-delete purchased items older than 7 days when the setting is enabled
+  useEffect(() => {
+    const { autoDeletePurchased } = useSettingsStore.getState();
+    if (!autoDeletePurchased) return;
+
+    const { items } = useShoppingListStore.getState();
+    const now = Date.now();
+    const expiredIds = items
+      .filter((item) => item.isPurchased && now - item.createdAt > SEVEN_DAYS_MS)
+      .map((item) => item.id);
+
+    if (expiredIds.length > 0) {
+      useShoppingListStore.setState((state) => ({
+        items: state.items.filter((item) => !expiredIds.includes(item.id)),
+      }));
+    }
   }, []);
 
   const handleLaunchFinish = useCallback(async () => {

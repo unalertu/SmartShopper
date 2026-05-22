@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, Alert, Linking, Platform, AppState } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import * as Haptics from 'expo-haptics';
 import { 
@@ -25,10 +26,12 @@ import {
 } from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import NotificationPermissionScreen from '../../components/NotificationPermissionScreen';
+import { useSettingsStore } from '../../store/useSettingsStore';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const router = useRouter();
+  const { notificationsEnabled, setNotificationsEnabled, theme } = useSettingsStore();
   const [showPermissionScreen, setShowPermissionScreen] = useState(false);
 
   // Check notification permission on mount + whenever app returns from background
@@ -180,7 +183,13 @@ export default function ProfileScreen() {
           </View>
 
           {/* Location & Background */}
-          <TouchableOpacity className="flex-row justify-between items-center p-4">
+          <TouchableOpacity 
+            className="flex-row justify-between items-center p-4"
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/settings');
+            }}
+          >
             <View className="flex-row items-center">
               <MapPin size={20} color="#64748b" />
               <Text className="text-slate-900 font-medium ml-3 text-[15px]">Location & Background</Text>
@@ -195,7 +204,13 @@ export default function ProfileScreen() {
           style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 }}
         >
           {/* Shopping Preferences */}
-          <TouchableOpacity className="flex-row justify-between items-center p-4 border-b border-slate-50">
+          <TouchableOpacity 
+            className="flex-row justify-between items-center p-4 border-b border-slate-50"
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/settings');
+            }}
+          >
             <View className="flex-row items-center">
               <ShoppingCart size={20} color="#64748b" />
               <Text className="text-slate-900 font-medium ml-3 text-[15px]">Shopping Preferences</Text>
@@ -204,13 +219,19 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           {/* Appearance */}
-          <TouchableOpacity className="flex-row justify-between items-center p-4">
+          <TouchableOpacity 
+            className="flex-row justify-between items-center p-4"
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/settings');
+            }}
+          >
             <View className="flex-row items-center">
               <SunMoon size={20} color="#64748b" />
               <Text className="text-slate-900 font-medium ml-3 text-[15px]">Appearance</Text>
             </View>
             <View className="flex-row items-center gap-1.5">
-              <Text className="text-slate-400 font-medium text-sm">System</Text>
+              <Text className="text-slate-400 font-medium text-sm capitalize">{theme}</Text>
               <ChevronRight size={20} color="#cbd5e1" />
             </View>
           </TouchableOpacity>
@@ -221,7 +242,13 @@ export default function ProfileScreen() {
           className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 shadow-sm"
           style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 }}
         >
-          <TouchableOpacity className="flex-row justify-between items-center p-4">
+          <TouchableOpacity 
+            className="flex-row justify-between items-center p-4"
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/settings');
+            }}
+          >
             <View className="flex-row items-center">
               <Lock size={20} color="#64748b" />
               <Text className="text-slate-900 font-medium ml-3 text-[15px]">Privacy & Data</Text>
@@ -236,7 +263,13 @@ export default function ProfileScreen() {
           style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 }}
         >
           {/* Help & Support */}
-          <TouchableOpacity className="flex-row justify-between items-center p-4 border-b border-slate-50">
+          <TouchableOpacity 
+            className="flex-row justify-between items-center p-4 border-b border-slate-50"
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/settings');
+            }}
+          >
             <View className="flex-row items-center">
               <LifeBuoy size={20} color="#64748b" />
               <Text className="text-slate-900 font-medium ml-3 text-[15px]">Help & Support</Text>
@@ -245,7 +278,13 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           {/* Feedback */}
-          <TouchableOpacity className="flex-row justify-between items-center p-4">
+          <TouchableOpacity 
+            className="flex-row justify-between items-center p-4"
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/settings');
+            }}
+          >
             <View className="flex-row items-center">
               <MessageSquare size={20} color="#64748b" />
               <Text className="text-slate-900 font-medium ml-3 text-[15px]">Feedback</Text>
@@ -260,7 +299,13 @@ export default function ProfileScreen() {
           style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 }}
         >
           {/* Legal */}
-          <TouchableOpacity className="flex-row justify-between items-center p-4 border-b border-slate-50">
+          <TouchableOpacity 
+            className="flex-row justify-between items-center p-4 border-b border-slate-50"
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/settings');
+            }}
+          >
             <View className="flex-row items-center">
               <FileText size={20} color="#64748b" />
               <Text className="text-slate-900 font-medium ml-3 text-[15px]">Legal</Text>
@@ -269,7 +314,13 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           {/* About */}
-          <TouchableOpacity className="flex-row justify-between items-center p-4">
+          <TouchableOpacity 
+            className="flex-row justify-between items-center p-4"
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/settings');
+            }}
+          >
             <View className="flex-row items-center">
               <Info size={20} color="#64748b" />
               <Text className="text-slate-900 font-medium ml-3 text-[15px]">About</Text>

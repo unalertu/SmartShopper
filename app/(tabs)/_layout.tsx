@@ -35,7 +35,7 @@ const TAB_CONFIG: Record<string, { label: string; Icon: any }> = {
   index:   { label: "Home",     Icon: Home },
   stores:  { label: "Shops",    Icon: MapPin },
   lists:   { label: "Lists",    Icon: Menu },
-  profile: { label: "Settings", Icon: Settings },
+  settings: { label: "Settings", Icon: Settings },
 };
 
 // ── Animated Tab Item ──
@@ -488,9 +488,9 @@ export default function TabLayout() {
       <Tabs.Screen name="index" options={{ title: "Home" }} />
       <Tabs.Screen name="stores" options={{ title: "Shops", headerShown: false }} />
       <Tabs.Screen name="lists" options={{ title: "Lists" }} />
-      <Tabs.Screen name="profile" options={{ title: "Profile" }} />
+      <Tabs.Screen name="settings" options={{ title: "Settings" }} />
       <Tabs.Screen name="locations" options={{ href: null }} />
-      <Tabs.Screen name="settings" options={{ href: null }} />
+      <Tabs.Screen name="profile" options={{ href: null }} />
     </Tabs>
   );
 }
