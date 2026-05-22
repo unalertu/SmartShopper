@@ -40,13 +40,21 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [showLaunchScreen, setShowLaunchScreen] = useState(true);
   const [showNotificationPermission, setShowNotificationPermission] = useState(false);
+  const _hasHydrated = useSettingsStore((state) => state._hasHydrated);
 
   useEffect(() => {
     // Hide native splash screen so custom launch screen takes over
-    setTimeout(() => {
-      SplashScreen.hideAsync().catch(() => {});
-    }, 100);
-  }, []);
+    if (_hasHydrated) {
+      setTimeout(() => {
+        SplashScreen.hideAsync().catch(() => {});
+      }, 100);
+    }
+  }, [_hasHydrated]);
+
+  // Ensure the Root Layout only renders when Zustand is fully hydrated
+  if (!_hasHydrated) {
+    return null;
+  }
 
   // Auto-delete purchased items older than 7 days when the setting is enabled
   useEffect(() => {
@@ -122,8 +130,8 @@ export default function RootLayout() {
             <Stack.Screen
               name="paywall"
               options={{
-                presentation: "modal",
-                animation: "slide_from_bottom",
+                presentation: "transparentModal",
+                animation: "fade",
                 gestureEnabled: true,
                 fullScreenGestureEnabled: true,
                 headerShown: false,

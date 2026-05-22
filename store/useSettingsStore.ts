@@ -7,6 +7,10 @@ export type ThemeOption = "system" | "light" | "dark";
 export type GeofenceRadius = 50 | 100 | 200 | 500;
 
 interface SettingsState {
+  // ── Hydration ──
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
+
   // ── Notifications & Alerts ──
   notificationsEnabled: boolean;
   soundEnabled: boolean;
@@ -38,6 +42,7 @@ interface SettingsState {
 }
 
 const DEFAULT_SETTINGS = {
+  _hasHydrated: false,
   notificationsEnabled: false,
   soundEnabled: true,
   hapticEnabled: true,
@@ -54,6 +59,7 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       ...DEFAULT_SETTINGS,
 
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
       setNotificationsEnabled: (enabled) =>
         set({ notificationsEnabled: enabled }),
       setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
@@ -71,6 +77,9 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: "settings-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

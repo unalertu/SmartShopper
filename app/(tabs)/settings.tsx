@@ -11,6 +11,7 @@ import {
   AppState,
   Share,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
@@ -115,7 +116,6 @@ function SettingsGroup({
 }) {
   return (
     <Animated.View
-      entering={FadeInDown.duration(400).delay(delay)}
       layout={LinearTransition.springify()}
       className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 shadow-sm mx-6"
       style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 }}
@@ -139,6 +139,43 @@ const THEME_LABELS: Record<ThemeOption, string> = {
   light: 'Light',
   dark: 'Dark',
 };
+
+// ─── Pro Profile Card Memoized ────────────────────────────────────────────────
+const ProProfileCard = React.memo(({ animatedStyle }: { animatedStyle: any }) => (
+  <Animated.View style={animatedStyle}>
+    <View
+      className="bg-white border border-slate-100 rounded-3xl p-4 shadow-sm flex-row items-center"
+      style={{
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 2,
+      }}
+    >
+      <View className="h-12 w-12 rounded-full bg-slate-100 items-center justify-center mr-4 overflow-hidden">
+        <Image 
+          source={{ uri: 'https://i.pravatar.cc/150?u=arda' }} 
+          style={{ width: '100%', height: '100%' }} 
+          transition={null}
+          cachePolicy="memory-disk"
+        />
+      </View>
+      <View className="flex-1 justify-center">
+        <View className="flex-row items-center mb-0.5 gap-2">
+          <Text className="text-[17px] font-semibold text-slate-900 tracking-tight">Arda</Text>
+          <View className="bg-[#D4AF37]/10 px-1.5 py-0.5 rounded flex-row items-center border border-[#D4AF37]/20">
+            <Text className="text-[#D4AF37] font-bold text-[9px] uppercase tracking-wider">
+              Pro
+            </Text>
+          </View>
+        </View>
+        <Text className="text-[13px] text-slate-500">test@gmail.com</Text>
+      </View>
+      <ChevronRight size={18} color="#cbd5e1" />
+    </View>
+  </Animated.View>
+));
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
@@ -600,7 +637,6 @@ export default function SettingsScreen() {
         >
           {/* Header */}
           <Animated.View
-            entering={FadeInDown.duration(300)}
             layout={LinearTransition.springify()}
             className="flex-row items-center mx-6 mb-6"
           >
@@ -611,7 +647,6 @@ export default function SettingsScreen() {
 
           {/* SmartShopper Pro Card */}
           <Animated.View
-            entering={FadeInDown.duration(400).delay(50)}
             layout={LinearTransition.springify()}
             className="mx-6 mb-8"
           >
@@ -621,34 +656,7 @@ export default function SettingsScreen() {
               onPressOut={handleProCardPressOut}
               onPress={handleProCardPress}
             >
-              <Animated.View style={animatedProCardStyle}>
-                <View
-                  className="bg-white border border-slate-100 rounded-3xl p-4 shadow-sm flex-row items-center"
-                  style={{
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.05,
-                    shadowRadius: 10,
-                    elevation: 2,
-                  }}
-                >
-                  <View className="h-12 w-12 rounded-full bg-slate-100 items-center justify-center mr-4">
-                    <User size={24} color="#94a3b8" strokeWidth={1.5} />
-                  </View>
-                  <View className="flex-1 justify-center">
-                    <View className="flex-row items-center mb-0.5 gap-2">
-                      <Text className="text-[17px] font-semibold text-slate-900 tracking-tight">Arda</Text>
-                      <View className="bg-[#D4AF37]/10 px-1.5 py-0.5 rounded flex-row items-center border border-[#D4AF37]/20">
-                        <Text className="text-[#D4AF37] font-bold text-[9px] uppercase tracking-wider">
-                          Pro
-                        </Text>
-                      </View>
-                    </View>
-                    <Text className="text-[13px] text-slate-500">test@gmail.com</Text>
-                  </View>
-                  <ChevronRight size={18} color="#cbd5e1" />
-                </View>
-              </Animated.View>
+              <ProProfileCard animatedStyle={animatedProCardStyle} />
             </TouchableOpacity>
           </Animated.View>
 
@@ -895,7 +903,6 @@ export default function SettingsScreen() {
 
           {/* Log Out */}
           <Animated.View
-            entering={FadeInDown.duration(400).delay(650)}
             layout={LinearTransition.springify()}
             className="mx-6 mb-10 mt-2"
           >
@@ -916,7 +923,6 @@ export default function SettingsScreen() {
 
           {/* Footer */}
           <Animated.View
-            entering={FadeInDown.duration(400).delay(700)}
             layout={LinearTransition.springify()}
             className="items-center mb-4"
           >

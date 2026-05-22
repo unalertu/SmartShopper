@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, Alert, Linking, Platform, AppState } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
@@ -132,8 +133,13 @@ export default function ProfileScreen() {
           className="bg-white border border-slate-100 rounded-3xl p-4 mb-4 flex-row items-center shadow-sm"
           style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }}
         >
-          <View className="bg-slate-100 h-16 w-16 rounded-full justify-center items-center mr-4">
-            <User size={32} color="#94a3b8" strokeWidth={1.5} />
+          <View className="bg-slate-100 h-16 w-16 rounded-full justify-center items-center mr-4 overflow-hidden">
+            <Image 
+              source={{ uri: 'https://i.pravatar.cc/150?u=arda' }} 
+              style={{ width: '100%', height: '100%' }} 
+              transition={null} 
+              cachePolicy="memory-disk"
+            />
           </View>
           <View className="flex-col flex-1 justify-center">
             <Text className="text-lg font-bold text-slate-900 mb-0.5">Arda</Text>
