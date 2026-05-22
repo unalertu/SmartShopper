@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, TextInput, Dimensions, Keyboa
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Store, Plus, ChevronRight, Search, SlidersHorizontal, ShoppingBasket, LocateFixed, Trash2, MapPin, X } from 'lucide-react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Callout } from 'react-native-maps';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as Location from 'expo-location';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
@@ -35,7 +35,7 @@ const CustomHandle = () => {
 
   return (
     <Animated.View layout={LinearTransition.springify()} className="w-full pt-5 pb-2 px-6">
-      {selectedShopToSave && (
+      {selectedShopToSave && !selectedShopToSave.isSaved && (
         <Animated.View
           entering={FadeInDown.duration(300).springify()}
           exiting={FadeOutUp.duration(200)}
@@ -82,6 +82,11 @@ export default function StoresScreen() {
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
   const markerRefs = useRef<Record<string, any>>({});
   const lastTap = useRef(0);
+  const regionDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isAnimatingRef = useRef(false);
+  const tracksViewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [tracksViewId, setTracksViewId] = useState<string | null>(null);
+  const [readyCalloutId, setReadyCalloutId] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -299,11 +304,18 @@ export default function StoresScreen() {
     }
   };
 
-  const handleRegionChangeComplete = (region: any) => {
-    setCurrentRegion(region);
-    updateClusters(region);
-    fetchMarketsFromOverpass(region);
-  };
+  const handleRegionChangeComplete = useCallback((region: any) => {
+    // Debounce to prevent cluster engine thrashing during animateToRegion
+    if (regionDebounceRef.current) {
+      clearTimeout(regionDebounceRef.current);
+    }
+    regionDebounceRef.current = setTimeout(() => {
+      setCurrentRegion(region);
+      updateClusters(region);
+      fetchMarketsFromOverpass(region);
+      isAnimatingRef.current = false;
+    }, isAnimatingRef.current ? 200 : 50);
+  }, [updateClusters]);
 
   const points = useMemo(() => {
     const allPoints: PointFeature<any>[] = [];
@@ -377,6 +389,40 @@ export default function StoresScreen() {
     updateClusters(currentRegion);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [points]); // Deliberately omitting currentRegion to prevent reloading the entire KD-tree on every pan
+
+  // Handle tracksViewChanges and hiding callouts when selection changes
+  useEffect(() => {
+    if (selectedShopToSave) {
+      const markerId = selectedShopToSave.id;
+
+      // Enable tracksViewChanges briefly for the selected marker so its callout can render
+      setTracksViewId(markerId);
+      if (tracksViewTimerRef.current) clearTimeout(tracksViewTimerRef.current);
+      tracksViewTimerRef.current = setTimeout(() => {
+        setTracksViewId(null);
+      }, 1500);
+
+    } else {
+      setReadyCalloutId(null);
+      // Hide all callouts when deselected
+      Object.values(markerRefs.current).forEach((marker) => {
+        if (marker && typeof marker.hideCallout === 'function') {
+          marker.hideCallout();
+        }
+      });
+    }
+  }, [selectedShopToSave]);
+
+  // Programmatically show the callout only after it has mounted
+  useEffect(() => {
+    if (readyCalloutId) {
+      const markerRef = markerRefs.current[readyCalloutId];
+      if (markerRef && typeof markerRef.showCallout === 'function') {
+        // Small delay to ensure the native view has mounted before showing
+        setTimeout(() => markerRef.showCallout(), 50);
+      }
+    }
+  }, [readyCalloutId]);
 
   const handleLocateMe = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -488,10 +534,12 @@ export default function StoresScreen() {
               <Marker
                 key={`cluster-${clusterId}`}
                 coordinate={{ latitude, longitude }}
+                tracksViewChanges={false}
                 onPress={(e) => {
                   e.stopPropagation();
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   Keyboard.dismiss();
+                  isAnimatingRef.current = true;
                   
                   const zoom = superclusterRef.current.getClusterExpansionZoom(clusterId);
                   const longitudeDelta = 360 / Math.pow(2, zoom);
@@ -502,7 +550,7 @@ export default function StoresScreen() {
                     longitude,
                     latitudeDelta,
                     longitudeDelta,
-                  }, 500);
+                  }, 350);
                 }}
               >
                 <MapCluster pointCount={pointCount} onPress={() => {}} />
@@ -514,6 +562,8 @@ export default function StoresScreen() {
           const properties = cluster.properties;
           const isSaved = properties.isSaved;
           const isSelected = selectedShopToSave?.id === properties.id || (isSaved && selectedShopToSave?.id === `saved-${properties.id}`);
+          const markerName = properties.name || 'Store';
+          const needsTracking = tracksViewId === properties.id;
 
           return (
             <Marker
@@ -522,6 +572,9 @@ export default function StoresScreen() {
                 if (ref) markerRefs.current[properties.id] = ref;
               }}
               coordinate={{ latitude, longitude }}
+              anchor={{ x: 0.5, y: 0.5 }}
+              calloutAnchor={{ x: 0.5, y: 0 }}
+              tracksViewChanges={needsTracking}
               onPress={(e) => {
                 e.stopPropagation();
                 Keyboard.dismiss();
@@ -530,14 +583,40 @@ export default function StoresScreen() {
                 lastTap.current = now;
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 
-                if (isSaved) {
-                  setSelectedShopToSave(null);
-                } else {
-                  setSelectedShopToSave(properties);
-                }
+                setReadyCalloutId(null); // Hide any existing callout
+                setSelectedShopToSave(properties);
+
+                isAnimatingRef.current = true;
+                // Keep the current zoom level if known, otherwise default to 0.01
+                const latDelta = currentRegion?.latitudeDelta || 0.01;
+                const lonDelta = currentRegion?.longitudeDelta || 0.01;
+                // Offset latitude so the marker isn't hidden under the bottom sheet
+                const adjustedLatitude = latitude - (latDelta * 0.25);
+                
+                mapRef.current?.animateToRegion({
+                  latitude: adjustedLatitude,
+                  longitude,
+                  latitudeDelta: latDelta,
+                  longitudeDelta: lonDelta,
+                }, 350);
+
+                // Mount the callout after map centering animation finishes
+                setTimeout(() => {
+                  setReadyCalloutId(properties.id);
+                }, 400);
               }}
             >
               <StoreMarker isSaved={isSaved} isSelected={isSelected} />
+              {readyCalloutId === properties.id && (
+                <Callout tooltip onPress={() => {}}>
+                  <View style={styles.calloutContainer} pointerEvents="none">
+                    <View style={styles.calloutBubble}>
+                      <Text style={styles.calloutText} numberOfLines={1}>{markerName}</Text>
+                    </View>
+                    <View style={styles.calloutArrow} />
+                  </View>
+                </Callout>
+              )}
             </Marker>
           );
         })}
@@ -697,6 +776,7 @@ export default function StoresScreen() {
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     Keyboard.dismiss();
+                    isAnimatingRef.current = true;
                     const latitudeDelta = 0.01;
                     const longitudeDelta = 0.01;
                     const adjustedLatitude = loc.latitude - (latitudeDelta * 0.25);
@@ -706,8 +786,16 @@ export default function StoresScreen() {
                       latitudeDelta,
                       longitudeDelta,
                     };
-                    mapRef.current?.animateToRegion(region, 800);
+                    mapRef.current?.animateToRegion(region, 500);
                     bottomSheetRef.current?.snapToIndex(0);
+
+                    // Select this shop and show its callout after animation settles
+                    const savedId = `saved-${loc.id}`;
+                    setReadyCalloutId(null);
+                    setSelectedShopToSave({ ...loc, id: savedId, isSaved: true });
+                    setTimeout(() => {
+                      setReadyCalloutId(savedId);
+                    }, 550);
                   }}
                 >
                   <View className="flex-row items-center gap-3.5 flex-1">
@@ -982,5 +1070,43 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '700',
+  },
+
+  /* ── Marker Callout Tooltip ──────────── */
+  calloutContainer: {
+    alignItems: 'center',
+    minWidth: 60,
+    maxWidth: 200,
+  },
+  calloutBubble: {
+    backgroundColor: 'rgba(15, 23, 42, 0.92)',
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  calloutText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: -0.3,
+    textAlign: 'center',
+  },
+  calloutArrow: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 8,
+    borderRightWidth: 8,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: 'rgba(15, 23, 42, 0.92)',
+    marginTop: -1,
   },
 });

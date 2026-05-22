@@ -7,7 +7,7 @@ interface StoreMarkerProps {
   isSelected: boolean;
 }
 
-const StoreMarker: React.FC<StoreMarkerProps> = ({ isSaved, isSelected }) => {
+const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelected }) => {
   const scale = useRef(new Animated.Value(0.5)).current;
   const glowOpacity = useRef(new Animated.Value(isSelected ? 1 : 0)).current;
 
@@ -19,7 +19,7 @@ const StoreMarker: React.FC<StoreMarkerProps> = ({ isSaved, isSelected }) => {
       toValue: isSelected ? 1.25 : 1,
       friction: 5,
       tension: 100,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
     isMounted.current = true;
   }, []);
@@ -32,12 +32,12 @@ const StoreMarker: React.FC<StoreMarkerProps> = ({ isSaved, isSelected }) => {
         toValue: isSelected ? 1.25 : 1,
         friction: 5,
         tension: 150,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }),
       Animated.timing(glowOpacity, {
         toValue: isSelected ? 1 : 0,
         duration: 300,
-        useNativeDriver: false,
+        useNativeDriver: true,
       })
     ]).start();
   }, [isSelected]);
@@ -59,7 +59,9 @@ const StoreMarker: React.FC<StoreMarkerProps> = ({ isSaved, isSelected }) => {
       </Animated.View>
     </View>
   );
-};
+}, (prevProps, nextProps) => {
+  return prevProps.isSaved === nextProps.isSaved && prevProps.isSelected === nextProps.isSelected;
+});
 
 const styles = StyleSheet.create({
   wrapper: {

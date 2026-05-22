@@ -6,7 +6,7 @@ interface MapClusterProps {
   onPress: () => void;
 }
 
-const MapCluster: React.FC<MapClusterProps> = ({ pointCount, onPress }) => {
+const MapCluster: React.FC<MapClusterProps> = React.memo(({ pointCount, onPress }) => {
   const scale = useRef(new Animated.Value(0.5)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
@@ -16,12 +16,12 @@ const MapCluster: React.FC<MapClusterProps> = ({ pointCount, onPress }) => {
         toValue: 1,
         friction: 5,
         tension: 100,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }),
       Animated.timing(opacity, {
         toValue: 1,
         duration: 300,
-        useNativeDriver: false,
+        useNativeDriver: true,
       })
     ]).start();
   }, []);
@@ -33,7 +33,10 @@ const MapCluster: React.FC<MapClusterProps> = ({ pointCount, onPress }) => {
       </View>
     </Animated.View>
   );
-};
+}, (prevProps, nextProps) => {
+  // Only re-render if pointCount changes
+  return prevProps.pointCount === nextProps.pointCount;
+});
 
 const styles = StyleSheet.create({
   container: {
