@@ -17,7 +17,8 @@ import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import * as Location from 'expo-location';
 
-import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeInDown, LinearTransition, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   Bell,
   ChevronRight,
@@ -144,6 +145,28 @@ const THEME_LABELS: Record<ThemeOption, string> = {
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+
+  // ── Animated Values for Pro Card ──
+  const scale = useSharedValue(1);
+
+  const animatedProCardStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
+
+  const handleProCardPressIn = () => {
+    scale.value = withSpring(0.95, { damping: 15, stiffness: 200 });
+  };
+
+  const handleProCardPressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 200 });
+  };
+
+  const handleProCardPress = () => {
+    hapticImpact(ImpactFeedbackStyle.Light);
+    router.push('/paywall');
+  };
 
   // ── Store selectors ──
   const { items, clearPurchased, clearAll: clearAllItems } = useShoppingListStore();
@@ -586,54 +609,46 @@ export default function SettingsScreen() {
             </Text>
           </Animated.View>
 
-          {/* Account */}
+          {/* SmartShopper Pro Card */}
           <Animated.View
-            entering={FadeInDown.duration(300).delay(50)}
+            entering={FadeInDown.duration(400).delay(50)}
             layout={LinearTransition.springify()}
-            className="mx-6 mb-4"
+            className="mx-6 mb-8"
           >
-            <TouchableOpacity 
-              className="bg-white border border-slate-100 rounded-3xl p-4 flex-row items-center shadow-sm"
-              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }}
-              onPress={() => {
-                hapticImpact(ImpactFeedbackStyle.Light);
-                Alert.alert('Profile', 'Profile settings coming soon.');
-              }}
+            <TouchableOpacity
+              activeOpacity={1}
+              onPressIn={handleProCardPressIn}
+              onPressOut={handleProCardPressOut}
+              onPress={handleProCardPress}
             >
-              <View className="bg-slate-100 h-16 w-16 rounded-full justify-center items-center mr-4">
-                <User size={32} color="#94a3b8" strokeWidth={1.5} />
-              </View>
-              <View className="flex-col flex-1 justify-center">
-                <Text className="text-lg font-bold text-slate-900 mb-0.5">Arda</Text>
-                <Text className="text-sm text-slate-500">test@gmail.com</Text>
-              </View>
-              <ChevronRight size={20} color="#cbd5e1" />
-            </TouchableOpacity>
-          </Animated.View>
-
-          {/* Premium */}
-          <Animated.View
-            entering={FadeInDown.duration(300).delay(70)}
-            layout={LinearTransition.springify()}
-            className="mx-6 mb-6"
-          >
-            <TouchableOpacity 
-              className="bg-slate-900 rounded-3xl p-4 flex-row items-center justify-between shadow-sm"
-              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 4 }}
-              activeOpacity={0.8}
-            >
-              <View className="flex-row items-center">
-                <View className="bg-[#D4AF37] h-10 w-10 rounded-full justify-center items-center mr-3">
-                  <Crown size={20} color="#1e1e1e" fill="#1e1e1e" />
+              <Animated.View style={animatedProCardStyle}>
+                <View
+                  className="bg-white border border-slate-100 rounded-3xl p-4 shadow-sm flex-row items-center"
+                  style={{
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 10,
+                    elevation: 2,
+                  }}
+                >
+                  <View className="h-12 w-12 rounded-full bg-slate-100 items-center justify-center mr-4">
+                    <User size={24} color="#94a3b8" strokeWidth={1.5} />
+                  </View>
+                  <View className="flex-1 justify-center">
+                    <View className="flex-row items-center mb-0.5 gap-2">
+                      <Text className="text-[17px] font-semibold text-slate-900 tracking-tight">Arda</Text>
+                      <View className="bg-[#D4AF37]/10 px-1.5 py-0.5 rounded flex-row items-center border border-[#D4AF37]/20">
+                        <Text className="text-[#D4AF37] font-bold text-[9px] uppercase tracking-wider">
+                          Pro
+                        </Text>
+                      </View>
+                    </View>
+                    <Text className="text-[13px] text-slate-500">test@gmail.com</Text>
+                  </View>
+                  <ChevronRight size={18} color="#cbd5e1" />
                 </View>
-                <View>
-                  <Text className="text-white font-bold text-[15px]">Premium</Text>
-                  <Text className="text-slate-400 text-xs mt-0.5">Upgrade for unlimited features</Text>
-                </View>
-              </View>
-              <View className="bg-[#D4AF37] px-3 py-1 rounded-full">
-                <Text className="text-[#1e1e1e] font-bold text-[10px] uppercase tracking-widest">PRO</Text>
-              </View>
+              </Animated.View>
             </TouchableOpacity>
           </Animated.View>
 

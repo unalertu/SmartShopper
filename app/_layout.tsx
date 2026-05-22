@@ -120,6 +120,16 @@ export default function RootLayout() {
               }}
             />
             <Stack.Screen
+              name="paywall"
+              options={{
+                presentation: "modal",
+                animation: "slide_from_bottom",
+                gestureEnabled: true,
+                fullScreenGestureEnabled: true,
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
               name="list/[id]"
               options={{
                 animation: "ios_from_right",
