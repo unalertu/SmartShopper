@@ -173,16 +173,17 @@ export default function PaywallScreen() {
         <TouchableOpacity
           onPress={handleSubscribe}
           activeOpacity={0.8}
-          className="w-full shadow-sm rounded-[34px]"
-          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 }}
+          className="w-full shadow-sm"
+          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3, borderRadius: 34 }}
         >
           <LinearGradient
             colors={['#D4AF37', '#B38B22']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            className="w-full items-center justify-center py-[22px] rounded-[34px]"
+            className="w-full"
+            style={{ paddingVertical: 18, borderRadius: 34, alignItems: 'center', justifyContent: 'center' }}
           >
-            <Text className="text-[#1e1e1e] font-bold text-[20px] leading-6">
+            <Text className="text-[#1e1e1e] font-bold" style={{ fontSize: 18, lineHeight: 24, textAlign: 'center' }}>
               Start 7-Day Free Trial
             </Text>
           </LinearGradient>

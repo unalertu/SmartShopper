@@ -207,34 +207,23 @@ export default function SettingsScreen() {
   };
 
   // ── Store selectors ──
-  const { items, clearPurchased, clearAll: clearAllItems } = useShoppingListStore();
-  const { locations } = useLocationStore();
-  const { lists } = useListsStore();
-
+  const { clearAll: clearAllItems } = useShoppingListStore();
 
   const {
     notificationsEnabled,
-    soundEnabled,
     hapticEnabled,
     locationEnabled,
     geofenceRadius,
     distanceUnit,
     theme,
-    smartSuggestionsEnabled,
-    autoDeletePurchased,
     setNotificationsEnabled,
-    setSoundEnabled,
     setHapticEnabled,
     setLocationEnabled,
     setGeofenceRadius,
     setDistanceUnit,
     setTheme,
-    setSmartSuggestionsEnabled,
-    setAutoDeletePurchased,
     resetSettings,
   } = useSettingsStore();
-
-  const purchasedCount = items.filter((i) => i.isPurchased).length;
 
   // ── Sync real notification status ──
   const syncNotificationStatus = useCallback(async () => {
@@ -442,38 +431,6 @@ export default function SettingsScreen() {
     ]);
   }, [theme, setTheme]);
 
-  const handleClearPurchased = useCallback(() => {
-    if (purchasedCount === 0) {
-      Alert.alert('No Items', 'There are no purchased items to clear.');
-      return;
-    }
-    hapticImpact(ImpactFeedbackStyle.Medium);
-    Alert.alert(
-      'Clear Purchased Items',
-      `Remove ${purchasedCount} purchased item${purchasedCount !== 1 ? 's' : ''}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Clear', style: 'destructive', onPress: clearPurchased },
-      ]
-    );
-  }, [purchasedCount, clearPurchased]);
-
-  const handleClearAll = useCallback(() => {
-    if (items.length === 0) {
-      Alert.alert('No Items', 'There are no items to clear.');
-      return;
-    }
-    hapticImpact(ImpactFeedbackStyle.Heavy);
-    Alert.alert(
-      'Clear All Items',
-      'This will remove all items from your shopping list. This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Clear All', style: 'destructive', onPress: clearAllItems },
-      ]
-    );
-  }, [items.length, clearAllItems]);
-
   const handleResetApp = useCallback(() => {
     hapticImpact(ImpactFeedbackStyle.Heavy);
     Alert.alert(
@@ -513,62 +470,6 @@ export default function SettingsScreen() {
       ]
     );
   }, [clearAllItems, resetSettings]);
-
-  const handleExportData = useCallback(async () => {
-    hapticImpact(ImpactFeedbackStyle.Light);
-
-    try {
-      const { File: FSFile, Paths } = await import('expo-file-system');
-      const Sharing = await import('expo-sharing');
-
-      const exportData = {
-        exportedAt: new Date().toISOString(),
-        version: '1.0.0',
-        items: useShoppingListStore.getState().items,
-        lists: useListsStore.getState().lists,
-        locations: useLocationStore.getState().locations,
-        settings: {
-          soundEnabled,
-          hapticEnabled,
-          geofenceRadius,
-          distanceUnit,
-          theme,
-          smartSuggestionsEnabled,
-          autoDeletePurchased,
-        },
-      };
-
-      const json = JSON.stringify(exportData, null, 2);
-      const file = new FSFile(Paths.cache, 'smartshopper_backup.json');
-
-      if (file.exists) {
-        file.delete();
-      }
-      file.create();
-      file.write(json);
-
-      const isSharingAvailable = await Sharing.isAvailableAsync();
-      if (isSharingAvailable) {
-        await Sharing.shareAsync(file.uri, {
-          mimeType: 'application/json',
-          dialogTitle: 'Export SmartShopper Data',
-          UTI: 'public.json',
-        });
-      } else {
-        Alert.alert('Sharing Unavailable', 'Sharing is not available on this device.');
-      }
-    } catch {
-      Alert.alert('Export Failed', 'Something went wrong while exporting your data.');
-    }
-  }, [
-    soundEnabled,
-    hapticEnabled,
-    geofenceRadius,
-    distanceUnit,
-    theme,
-    smartSuggestionsEnabled,
-    autoDeletePurchased,
-  ]);
 
   const handleShareApp = useCallback(async () => {
     hapticImpact(ImpactFeedbackStyle.Light);
@@ -676,19 +577,7 @@ export default function SettingsScreen() {
                 />
               }
             />
-            <SettingsRow
-              icon={<Volume2 size={20} color="#64748b" />}
-              label="Sound"
-              sublabel="Alert sounds for notifications"
-              rightElement={
-                <Switch
-                  value={soundEnabled}
-                  onValueChange={toggleWithHaptic(setSoundEnabled)}
-                  trackColor={switchTrackColor}
-                  thumbColor="#ffffff"
-                />
-              }
-            />
+
             <SettingsRow
               icon={<Vibrate size={20} color="#64748b" />}
               label="Haptic Feedback"
@@ -769,37 +658,6 @@ export default function SettingsScreen() {
             />
           </SettingsGroup>
 
-          {/* ── Smart Features ── */}
-          <SettingsGroup delay={350}>
-            <SettingsRow
-              icon={<SlidersHorizontal size={20} color="#64748b" />}
-              label="Smart Suggestions"
-              sublabel="AI-powered item recommendations"
-              rightElement={
-                <Switch
-                  value={smartSuggestionsEnabled}
-                  onValueChange={toggleWithHaptic(setSmartSuggestionsEnabled)}
-                  trackColor={switchTrackColor}
-                  thumbColor="#ffffff"
-                />
-              }
-            />
-            <SettingsRow
-              icon={<RefreshCw size={20} color="#64748b" />}
-              label="Auto-clear Purchased"
-              sublabel="Remove bought items after 7 days"
-              isLast
-              rightElement={
-                <Switch
-                  value={autoDeletePurchased}
-                  onValueChange={toggleWithHaptic(setAutoDeletePurchased)}
-                  trackColor={switchTrackColor}
-                  thumbColor="#ffffff"
-                />
-              }
-            />
-          </SettingsGroup>
-
           {/* ── Privacy & Security ── */}
           <SettingsGroup delay={400}>
             <SettingsRow
@@ -810,30 +668,6 @@ export default function SettingsScreen() {
                 hapticImpact(ImpactFeedbackStyle.Light);
                 Linking.openURL('https://smartshopper.app/privacy');
               }}
-            />
-          </SettingsGroup>
-
-          {/* ── Data Management ── */}
-          <SettingsGroup delay={450}>
-            <SettingsRow
-              icon={<Download size={20} color="#64748b" />}
-              label="Export Data"
-              sublabel="Download your lists & settings"
-              onPress={handleExportData}
-            />
-            <SettingsRow
-              icon={<Trash2 size={20} color="#64748b" />}
-              label="Clear Purchased Items"
-              sublabel={`${purchasedCount} item${purchasedCount !== 1 ? 's' : ''}`}
-              onPress={handleClearPurchased}
-            />
-            <SettingsRow
-              icon={<Trash size={20} color="#ef4444" />}
-              label="Clear All Items"
-              sublabel={`${items.length} item${items.length !== 1 ? 's' : ''}`}
-              isDanger
-              isLast
-              onPress={handleClearAll}
             />
           </SettingsGroup>
 
