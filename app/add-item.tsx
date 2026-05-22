@@ -28,7 +28,7 @@ export default function AddItemScreen() {
   const handleAdd = () => {
     if (!name.trim()) return;
 
-    addItem({
+    addItem(1, { // Added dummy listId 1, though this screen seems unused
       name: name.trim(),
       quantity,
       unit: selectedUnit,

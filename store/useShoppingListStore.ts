@@ -1,9 +1,11 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useListsStore } from "./useListsStore";
 
 export interface ShoppingItem {
   id: string;
+  listId: number;
   name: string;
   quantity: number;
   unit: string;
@@ -14,13 +16,13 @@ export interface ShoppingItem {
 
 interface ShoppingListState {
   items: ShoppingItem[];
-  addItem: (item: Omit<ShoppingItem, "id" | "createdAt" | "isPurchased">) => void;
+  addItem: (listId: number, item: Omit<ShoppingItem, "id" | "listId" | "createdAt" | "isPurchased">) => void;
   removeItem: (id: string) => void;
   togglePurchased: (id: string) => void;
   updateItem: (id: string, updates: Partial<ShoppingItem>) => void;
-  clearPurchased: () => void;
-  clearAll: () => void;
-  getUnpurchasedCount: () => number;
+  clearPurchased: (listId?: number) => void;
+  clearAll: (listId?: number) => void;
+  getUnpurchasedCount: (listId?: number) => number;
 }
 
 const generateId = () =>
@@ -31,23 +33,31 @@ export const useShoppingListStore = create<ShoppingListState>()(
     (set, get) => ({
       items: [],
 
-      addItem: (item) =>
-        set((state) => ({
-          items: [
-            {
-              ...item,
-              id: generateId(),
-              isPurchased: false,
-              createdAt: Date.now(),
-            },
-            ...state.items,
-          ],
-        })),
+      addItem: (listId, item) =>
+        set((state) => {
+          const newItem = {
+            ...item,
+            id: generateId(),
+            listId,
+            isPurchased: false,
+            createdAt: Date.now(),
+          };
+          const newItems = [newItem, ...state.items];
+          const newCount = newItems.filter(i => i.listId === listId).length;
+          useListsStore.getState().updateListCount(listId, newCount);
+          return { items: newItems };
+        }),
 
       removeItem: (id) =>
-        set((state) => ({
-          items: state.items.filter((item) => item.id !== id),
-        })),
+        set((state) => {
+          const itemToRemove = state.items.find(i => i.id === id);
+          const newItems = state.items.filter((item) => item.id !== id);
+          if (itemToRemove) {
+            const newCount = newItems.filter(i => i.listId === itemToRemove.listId).length;
+            useListsStore.getState().updateListCount(itemToRemove.listId, newCount);
+          }
+          return { items: newItems };
+        }),
 
       togglePurchased: (id) =>
         set((state) => ({
@@ -63,15 +73,22 @@ export const useShoppingListStore = create<ShoppingListState>()(
           ),
         })),
 
-      clearPurchased: () =>
+      clearPurchased: (listId) =>
         set((state) => ({
-          items: state.items.filter((item) => !item.isPurchased),
+          items: state.items.filter((item) => 
+            listId ? (item.listId !== listId || !item.isPurchased) : !item.isPurchased
+          ),
         })),
 
-      clearAll: () => set({ items: [] }),
+      clearAll: (listId) => 
+        set((state) => ({ 
+          items: listId ? state.items.filter(item => item.listId !== listId) : [] 
+        })),
 
-      getUnpurchasedCount: () =>
-        get().items.filter((item) => !item.isPurchased).length,
+      getUnpurchasedCount: (listId) =>
+        get().items.filter((item) => 
+          listId ? (item.listId === listId && !item.isPurchased) : !item.isPurchased
+        ).length,
     }),
     {
       name: "shopping-list-storage",
