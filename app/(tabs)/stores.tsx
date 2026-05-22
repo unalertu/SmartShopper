@@ -440,7 +440,7 @@ export default function StoresScreen() {
           swipeableRefs.current.delete(locId);
         }}
       >
-        <View style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'flex-end', width: 80, height: '100%', borderRadius: 16 }}>
+        <View style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'flex-end', width: 80, height: '100%', borderRadius: 20 }}>
           <Text style={{ color: 'white', fontWeight: 'bold', paddingRight: 16 }}>Delete</Text>
         </View>
       </TouchableOpacity>
@@ -632,12 +632,12 @@ export default function StoresScreen() {
         snapPoints={snapPoints}
         handleComponent={CustomHandle}
         backgroundStyle={{
-          borderRadius: 32,
+          borderRadius: 28,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -10 },
-          shadowOpacity: 0.08,
-          shadowRadius: 20,
-          elevation: 15,
+          shadowOffset: { width: 0, height: -6 },
+          shadowOpacity: 0.05,
+          shadowRadius: 16,
+          elevation: 10,
           backgroundColor: '#f8fafc'
         }}
       >
@@ -685,13 +685,13 @@ export default function StoresScreen() {
                 onSwipeableWillOpen={() => closeAllSwipeables(loc.id)}
               >
                 <TouchableOpacity
-                  className="bg-white rounded-[24px] py-3.5 px-4 flex-row items-center justify-between border border-slate-100"
+                  className="bg-white rounded-[20px] py-3.5 px-4 flex-row items-center justify-between border border-slate-200/70"
                   style={{
                     shadowColor: '#0f172a',
-                    shadowOffset: { width: 0, height: 8 },
-                    shadowOpacity: 0.03,
-                    shadowRadius: 24,
-                    elevation: 3,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.04,
+                    shadowRadius: 8,
+                    elevation: 2,
                   }}
                   activeOpacity={0.7}
                   onPress={() => {
@@ -756,20 +756,20 @@ const styles = StyleSheet.create({
   },
   glassContainer: {
     backgroundColor: 'rgba(255,255,255,0.97)',
-    borderRadius: 9999,
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.04,
-    shadowRadius: 16,
+    borderColor: 'rgba(226,232,240,0.8)',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
     elevation: 3,
   },
   topNavRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 52,
-    paddingHorizontal: 16,
+    height: 46,
+    paddingHorizontal: 14,
   },
   titleContainer: {
     justifyContent: 'center',
@@ -782,15 +782,15 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
   },
   searchBarOuter: {
-    height: 38,
+    height: 34,
   },
   searchBarInner: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f1f5f9',
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    borderRadius: 10,
+    paddingHorizontal: 10,
   },
   searchInput: {
     flex: 1,
@@ -815,9 +815,9 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   filterButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
@@ -841,11 +841,11 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     backgroundColor: 'rgba(255,255,255,0.97)',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.04,
-    shadowRadius: 16,
+    borderColor: 'rgba(226,232,240,0.8)',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
     elevation: 3,
   },
   locateButton: {
@@ -881,13 +881,13 @@ const styles = StyleSheet.create({
   emptyIcon: {
     width: 72,
     height: 72,
-    borderRadius: 36,
+    borderRadius: 9999,
     backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: 'rgba(226,232,240,0.8)',
   },
   emptyTitle: {
     fontSize: 17,
@@ -927,14 +927,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: 88,
     height: '100%',
-    borderRadius: 24,
+    borderRadius: 20,
     marginLeft: 8,
     gap: 4,
     shadowColor: '#ef4444',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
   },
   swipeDeleteText: {
     color: '#fff',
@@ -946,9 +946,9 @@ const styles = StyleSheet.create({
   /* ── Hint / Placeholder Card ─────────── */
   hintCard: {
     borderStyle: 'dashed',
-    borderWidth: 2,
-    borderColor: '#E0E0E0',
-    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    borderRadius: 20,
     marginTop: 16,
     paddingVertical: 32,
     alignItems: 'center',
@@ -964,7 +964,7 @@ const styles = StyleSheet.create({
   /* ── Context save button ───────────────── */
   contextSaveBtn: {
     backgroundColor: '#0f172a',
-    borderRadius: 16,
+    borderRadius: 20,
     paddingVertical: 14,
     paddingHorizontal: 16,
     flexDirection: 'row',
@@ -973,10 +973,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     gap: 8,
     shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 3,
   },
   contextSaveBtnText: {
     color: '#fff',
