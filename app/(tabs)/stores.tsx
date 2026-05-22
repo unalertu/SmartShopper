@@ -44,8 +44,12 @@ export default function StoresScreen() {
   const fetchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isAnimatingRef = useRef(false);
   const tracksViewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const calloutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [tracksViewId, setTracksViewId] = useState<string | null>(null);
   const [readyCalloutId, setReadyCalloutId] = useState<string | null>(null);
+
+  // Stable ref for fetchMarketsFromOverpass so memoized callbacks always call the latest version
+  const fetchMarketsRef = useRef<(region: any) => void>(() => {});
 
   useFocusEffect(
     useCallback(() => {
@@ -59,6 +63,17 @@ export default function StoresScreen() {
       };
     }, [])
   );
+
+  // ── Cleanup on unmount: abort in-flight fetches + clear all timers ──
+  useEffect(() => {
+    return () => {
+      if (fetchAbortController.current) fetchAbortController.current.abort();
+      if (regionDebounceRef.current) clearTimeout(regionDebounceRef.current);
+      if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
+      if (tracksViewTimerRef.current) clearTimeout(tracksViewTimerRef.current);
+      if (calloutTimerRef.current) clearTimeout(calloutTimerRef.current);
+    };
+  }, []);
 
   // Zustand persisted store
   const { locations, addLocation, removeLocation } = useLocationStore();
@@ -221,8 +236,9 @@ export default function StoresScreen() {
   }, [savedShops]);
 
   const fetchAbortController = useRef<AbortController | null>(null);
+  const MAX_CACHED_MARKETS = 500;
 
-  const fetchMarketsFromOverpass = async (region: any) => {
+  const fetchMarketsFromOverpass = useCallback(async (region: any) => {
     // 0.045 delta is roughly a 4.5km box. Beyond this, Overpass takes way too long and exhausts the geofence.
     if (region.latitudeDelta > 0.045 || region.longitudeDelta > 0.045) {
       console.log("Zoomed out too far, skipping fetch.");
@@ -247,6 +263,9 @@ export default function StoresScreen() {
       const east = region.longitude + lonDelta / 2;
 
       const fetchedMarkets = await fetchMarkets(south, west, north, east, controller.signal);
+
+      // Guard: if the controller was aborted while awaiting, don't update state
+      if (controller.signal.aborted) return;
       if (!fetchedMarkets || fetchedMarkets.length === 0) return;
 
       setMarkets(prev => {
@@ -257,6 +276,10 @@ export default function StoresScreen() {
         );
         // Only update state if the array actually changed to prevent unnecessary re-renders
         if (unique.length === prev.length) return prev;
+        // Cap the array to prevent unbounded memory growth during extended map panning
+        if (unique.length > MAX_CACHED_MARKETS) {
+          return unique.slice(unique.length - MAX_CACHED_MARKETS);
+        }
         return unique;
       });
     } catch (error: any) {
@@ -266,7 +289,33 @@ export default function StoresScreen() {
         console.log('Error fetching from Overpass:', error);
       }
     }
-  };
+  }, []);
+
+  // Keep the stable ref in sync with the latest fetchMarketsFromOverpass
+  useEffect(() => {
+    fetchMarketsRef.current = fetchMarketsFromOverpass;
+  }, [fetchMarketsFromOverpass]);
+
+  const updateClusters = useCallback((region: any) => {
+    if (!region) return;
+    const padding = region.longitudeDelta * 0.5; // Load markers slightly outside the view
+    const bbox: [number, number, number, number] = [
+      region.longitude - region.longitudeDelta / 2 - padding,
+      region.latitude - region.latitudeDelta / 2 - padding,
+      region.longitude + region.longitudeDelta / 2 + padding,
+      region.latitude + region.latitudeDelta / 2 + padding,
+    ];
+    
+    const lngDelta = Math.max(region.longitudeDelta, 0.0001);
+    const zoom = Math.max(0, Math.round(Math.log(360 / lngDelta) / Math.LN2));
+    
+    try {
+      const newClusters = superclusterRef.current.getClusters(bbox, zoom);
+      setClusters(newClusters);
+    } catch (error) {
+      console.log("Supercluster error:", error);
+    }
+  }, []);
 
   const handleRegionChangeComplete = useCallback((region: any) => {
     // Debounce to prevent cluster engine thrashing during animateToRegion
@@ -285,7 +334,7 @@ export default function StoresScreen() {
       clearTimeout(fetchDebounceRef.current);
     }
     fetchDebounceRef.current = setTimeout(() => {
-      fetchMarketsFromOverpass(region);
+      fetchMarketsRef.current(region);
     }, 1000);
   }, [updateClusters]);
 
@@ -335,27 +384,6 @@ export default function StoresScreen() {
     return allPoints;
   }, [savedShops, markets, isShopSaved]);
 
-  const updateClusters = useCallback((region: any) => {
-    if (!region) return;
-    const padding = region.longitudeDelta * 0.5; // Load markers slightly outside the view
-    const bbox: [number, number, number, number] = [
-      region.longitude - region.longitudeDelta / 2 - padding,
-      region.latitude - region.latitudeDelta / 2 - padding,
-      region.longitude + region.longitudeDelta / 2 + padding,
-      region.latitude + region.latitudeDelta / 2 + padding,
-    ];
-    
-    const lngDelta = Math.max(region.longitudeDelta, 0.0001);
-    const zoom = Math.max(0, Math.round(Math.log(360 / lngDelta) / Math.LN2));
-    
-    try {
-      const newClusters = superclusterRef.current.getClusters(bbox, zoom);
-      setClusters(newClusters);
-    } catch (error) {
-      console.log("Supercluster error:", error);
-    }
-  }, []);
-
   useEffect(() => {
     superclusterRef.current.load(points);
     updateClusters(currentRegion);
@@ -396,7 +424,7 @@ export default function StoresScreen() {
     }
   }, [readyCalloutId]);
 
-  const handleLocateMe = async () => {
+  const handleLocateMe = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -425,8 +453,8 @@ export default function StoresScreen() {
       setCurrentRegion(newRegion);
       updateClusters(newRegion);
 
-      // Fetch markets around actual location
-      fetchMarketsFromOverpass({
+      // Fetch markets around actual location (via ref for latest version)
+      fetchMarketsRef.current({
         latitude: actualLatitude,
         longitude: actualLongitude,
         latitudeDelta,
@@ -435,13 +463,17 @@ export default function StoresScreen() {
     } catch (error) {
       console.warn('Error fetching location', error);
     }
-  };
+  }, [updateClusters]);
+
+  // Stable ref so the mount effect always calls the latest handleLocateMe
+  const handleLocateMeRef = useRef(handleLocateMe);
+  useEffect(() => { handleLocateMeRef.current = handleLocateMe; }, [handleLocateMe]);
 
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout>;
     const locate = () => {
       if (useLocationStore.persist?.hasHydrated()) {
-        handleLocateMe();
+        handleLocateMeRef.current();
       } else {
         timeout = setTimeout(locate, 50);
       }
@@ -543,6 +575,7 @@ export default function StoresScreen() {
 
           // Not a cluster, it's an individual marker
           const properties = cluster.properties;
+          if (!properties?.id) return null; // Guard against corrupted cluster data
           const isSaved = properties.isSaved;
           const isSelected = selectedShopToSave?.id === properties.id || (isSaved && selectedShopToSave?.id === `saved-${properties.id}`);
           const markerName = properties.name || 'Store';
@@ -562,10 +595,12 @@ export default function StoresScreen() {
                 e.stopPropagation();
                 Keyboard.dismiss();
                 const now = Date.now();
-                if (now - lastTap.current < 300) return;
+                if (now - lastTap.current < 400) return; // Increased from 300 to cover animation duration
                 lastTap.current = now;
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 
+                // Cancel any in-flight callout timer from a previous rapid tap
+                if (calloutTimerRef.current) clearTimeout(calloutTimerRef.current);
                 setReadyCalloutId(null); // Hide any existing callout
                 setSelectedShopToSave(properties);
 
@@ -584,7 +619,7 @@ export default function StoresScreen() {
                 }, 350);
 
                 // Mount the callout after map centering animation finishes
-                setTimeout(() => {
+                calloutTimerRef.current = setTimeout(() => {
                   setReadyCalloutId(properties.id);
                 }, 400);
               }}

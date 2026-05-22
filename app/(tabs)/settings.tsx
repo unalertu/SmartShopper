@@ -176,6 +176,7 @@ const ProProfileCard = React.memo(({ animatedStyle }: { animatedStyle: any }) =>
     </View>
   </Animated.View>
 ));
+ProProfileCard.displayName = 'ProProfileCard';
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 

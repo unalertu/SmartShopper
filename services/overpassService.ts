@@ -42,14 +42,21 @@ out center;`;
   const attemptedMirrors = new Set<number>();
 
   while (attemptedMirrors.size < MIRROR_POOL.length) {
+    // Bail out early if the caller already aborted (e.g. new map pan)
+    if (signal?.aborted) {
+      const err = new DOMException('The operation was aborted.', 'AbortError');
+      throw err;
+    }
+
     const mirror = MIRROR_POOL[currentMirrorIndex];
     console.log(`📡 Fetching from Overpass mirror: ${mirror}`);
 
     try {
       // Use AbortController for timeout (25s) or external abort
       const controller = new AbortController();
+      const onCallerAbort = () => controller.abort();
       if (signal) {
-        signal.addEventListener('abort', () => controller.abort());
+        signal.addEventListener('abort', onCallerAbort, { once: true });
         if (signal.aborted) controller.abort();
       }
       const timeoutId = setTimeout(() => controller.abort(), 25000);
@@ -67,6 +74,8 @@ out center;`;
         });
       } finally {
         clearTimeout(timeoutId);
+        // Remove the listener to prevent leaks when the fetch completed normally
+        if (signal) signal.removeEventListener('abort', onCallerAbort);
       }
 
       if (response.status === 429 || response.status === 504 || response.status === 502 || response.status === 403) {
@@ -132,6 +141,10 @@ out center;`;
       
       return [];
     } catch (error: any) {
+      // If the caller's signal was aborted (map pan), stop immediately — don't rotate
+      if (signal?.aborted) {
+        throw error;
+      }
       lastError = error;
       const reason = error.name === 'AbortError' ? 'timeout (25s)' : error.message;
       console.log(`🔁 Rotating mirror due to ${reason} on ${mirror}`);

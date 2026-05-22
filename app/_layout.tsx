@@ -51,11 +51,6 @@ export default function RootLayout() {
     }
   }, [_hasHydrated]);
 
-  // Ensure the Root Layout only renders when Zustand is fully hydrated
-  if (!_hasHydrated) {
-    return null;
-  }
-
   // Auto-delete purchased items older than 7 days when the setting is enabled
   useEffect(() => {
     const { autoDeletePurchased } = useSettingsStore.getState();
@@ -90,6 +85,11 @@ export default function RootLayout() {
   const handleNotificationPermissionComplete = useCallback(() => {
     setShowNotificationPermission(false);
   }, []);
+
+  // Ensure the Root Layout only renders when Zustand is fully hydrated
+  if (!_hasHydrated) {
+    return null;
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#f8fafc' }}>

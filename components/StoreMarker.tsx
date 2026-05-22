@@ -107,5 +107,6 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
   },
 });
+StoreMarker.displayName = 'StoreMarker';
 
 export default StoreMarker;
