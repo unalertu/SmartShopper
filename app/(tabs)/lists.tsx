@@ -7,7 +7,7 @@ import AnimatedScreen from '../../components/AnimatedScreen';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Swipeable } from 'react-native-gesture-handler';
-import Animated, { FadeOutLeft, LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeOutLeft, FadeOutUp, LinearTransition } from 'react-native-reanimated';
 import { useListsStore } from '../../store';
 import { useScrollToTop } from '@react-navigation/native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetTextInput } from '@gorhom/bottom-sheet';
@@ -108,7 +108,11 @@ export default function ListsScreen() {
           </Animated.View>
 
           {shoppingLists.length === 0 && (
-            <Animated.View layout={LinearTransition.springify()} className="mt-2 flex-1">
+            <Animated.View 
+              layout={LinearTransition.springify()} 
+              exiting={FadeOutUp.duration(200)}
+              className="mt-2 flex-1"
+            >
               {/* Empty State Hero */}
               <View className="items-center justify-center py-6">
                 <View className="w-24 h-24 bg-slate-100 rounded-full items-center justify-center mb-5 border-[6px] border-white"
@@ -162,14 +166,14 @@ export default function ListsScreen() {
             </View>
           </Animated.View>
 
-          {shoppingLists.length > 0 && (
-            <View>
-              {shoppingLists.map((list) => (
-                <Animated.View
-                  key={list.id}
-                  layout={LinearTransition.springify()}
-                  exiting={FadeOutLeft.duration(200)}
-                >
+          <Animated.View layout={LinearTransition.springify()}>
+            {shoppingLists.map((list, index) => (
+              <Animated.View
+                key={list.id}
+                layout={LinearTransition.springify()}
+                entering={FadeInDown.springify().delay(index * 100)}
+                exiting={FadeOutLeft.duration(200)}
+              >
                   <Swipeable
                     containerStyle={{ marginHorizontal: 24, marginBottom: 12 }}
                     ref={(ref) => {
@@ -210,8 +214,7 @@ export default function ListsScreen() {
                   </Swipeable>
                 </Animated.View>
               ))}
-            </View>
-          )}
+          </Animated.View>
 
           {/* Adaptive Popular Items Placeholder */}
           {shoppingLists.length === 0 ? (
