@@ -297,11 +297,6 @@ function CustomTabBar({
           onPress={() => {}}
           accessible={false}
         >
-          <BlurView
-            tint="light"
-            intensity={95}
-            style={StyleSheet.absoluteFill}
-          />
           <View style={styles.navBarInner}>
             {state.routes.map((route, index) => {
               const config = TAB_CONFIG[route.name];
@@ -360,26 +355,23 @@ const styles = StyleSheet.create({
   },
   navBarBlur: {
     marginHorizontal: 20,
-    borderRadius: 28,
-    overflow: "hidden",
+    marginBottom: 10,
+    borderRadius: 50,
+    backgroundColor: "#ffffff",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 15,
   },
   navBarInner: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "rgba(250, 251, 253, 0.88)",
     paddingLeft: 6,
     paddingRight: 5,
     paddingVertical: 4,
-    borderRadius: 28,
-    borderWidth: 0.75,
-    borderColor: "rgba(203, 213, 225, 0.5)",
-    borderTopColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: 50,
   },
 
   // Tab item
