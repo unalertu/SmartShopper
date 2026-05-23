@@ -107,8 +107,8 @@ export default function ListsScreen() {
             <Text className="text-[22px] font-semibold tracking-tight mx-6 text-slate-900">My Lists</Text>
           </Animated.View>
 
-          {shoppingLists.length === 0 ? (
-            <Animated.View layout={LinearTransition.springify()} className="mt-2 mb-6 flex-1">
+          {shoppingLists.length === 0 && (
+            <Animated.View layout={LinearTransition.springify()} className="mt-2 flex-1">
               {/* Empty State Hero */}
               <View className="items-center justify-center py-6">
                 <View className="w-24 h-24 bg-slate-100 rounded-full items-center justify-center mb-5 border-[6px] border-white"
@@ -127,122 +127,185 @@ export default function ListsScreen() {
                   Create your first grocery list and start planning your next shopping trip.
                 </Text>
               </View>
+            </Animated.View>
+          )}
 
-              {/* Quick Start Section */}
-              <View className="px-6 mt-4">
-                <View className="flex-row items-center gap-2 mb-4">
-                  <Sparkles size={18} color="#0f172a" />
-                  <Text className="text-[17px] font-bold text-slate-900 tracking-tight">Quick Start</Text>
-                </View>
-                
-                <View className="flex-row flex-wrap gap-3">
-                  {['Weekly Groceries', 'Breakfast', 'BBQ', 'Cleaning Supplies'].map((template) => (
-                    <TouchableOpacity
-                      key={template}
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        addList(template);
-                      }}
-                      className="bg-white border border-slate-100 rounded-[16px] px-4 py-3 flex-row items-center gap-2"
+          {shoppingLists.length > 0 && (
+            <View>
+              {shoppingLists.map((list) => (
+                <Animated.View
+                  key={list.id}
+                  layout={LinearTransition.springify()}
+                  exiting={FadeOutLeft.duration(200)}
+                >
+                  <Swipeable
+                    containerStyle={{ marginHorizontal: 24, marginBottom: 12 }}
+                    ref={(ref) => {
+                      if (ref) {
+                        swipeableRefs.current.set(list.id, ref);
+                      } else {
+                        swipeableRefs.current.delete(list.id);
+                      }
+                    }}
+                    renderRightActions={() => renderRightActions(list.id)}
+                    rightThreshold={40}
+                    overshootRight={false}
+                    friction={2}
+                    onSwipeableWillOpen={() => closeAllSwipeables(list.id)}
+                  >
+                    <TouchableOpacity 
+                      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/list/${list.id}`); }}
+                      className="bg-white rounded-[24px] py-3.5 px-4 flex-row items-center justify-between border border-slate-100"
                       style={{
                         shadowColor: '#0f172a',
-                        shadowOffset: { width: 0, height: 4 },
+                        shadowOffset: { width: 0, height: 8 },
                         shadowOpacity: 0.03,
-                        shadowRadius: 8,
-                        elevation: 1,
+                        shadowRadius: 24,
+                        elevation: 3,
                       }}
                     >
-                      <Plus size={16} color="#0f172a" strokeWidth={2.5} />
-                      <Text className="text-[14px] font-semibold text-slate-700">{template}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              {/* Popular Items Placeholder */}
-              <View className="px-6 mt-8">
-                <Text className="text-[17px] font-bold text-slate-900 tracking-tight mb-4">Popular Items</Text>
-                <View className="bg-white rounded-[24px] p-2 border border-slate-100" style={{
-                  shadowColor: '#0f172a',
-                  shadowOffset: { width: 0, height: 8 },
-                  shadowOpacity: 0.03,
-                  shadowRadius: 24,
-                  elevation: 2,
-                }}>
-                  {[
-                    { icon: '🥛', name: 'Milk', category: 'Dairy' },
-                    { icon: '🥚', name: 'Eggs', category: 'Dairy' },
-                    { icon: '🍞', name: 'Bread', category: 'Bakery' }
-                  ].map((item, index) => (
-                    <View key={item.name} className={`flex-row items-center justify-between p-3 ${index !== 2 ? 'border-b border-slate-50' : ''}`}>
-                      <View className="flex-row items-center gap-4">
-                        <View className="w-12 h-12 bg-slate-50 rounded-[14px] items-center justify-center">
-                          <Text className="text-2xl">{item.icon}</Text>
+                      <View className="flex-row items-center gap-3.5 flex-1">
+                        <View className="w-10 h-10 bg-slate-100/60 rounded-[12px] items-center justify-center">
+                          <Menu size={20} color="#475569" />
                         </View>
-                        <View>
-                          <Text className="text-[16px] font-bold text-slate-900">{item.name}</Text>
-                          <Text className="text-[13px] font-medium text-slate-500 mt-0.5">{item.category}</Text>
+                        <View className="flex-1">
+                          <Text className="text-[16px] font-semibold text-slate-900 tracking-tight" numberOfLines={1}>{list.name}</Text>
+                          <Text className="text-[13px] font-medium text-slate-500 mt-0.5" numberOfLines={1}>{list.count} ürün • Güncellendi {getRelativeDate(list.createdAt)}</Text>
                         </View>
                       </View>
-                      <TouchableOpacity 
-                        activeOpacity={0.7}
-                        className="w-9 h-9 bg-slate-100 rounded-full items-center justify-center"
-                      >
-                        <Plus size={18} color="#0f172a" />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </View>
+                      <ChevronRight size={18} color="#94a3b8" />
+                    </TouchableOpacity>
+                  </Swipeable>
+                </Animated.View>
+              ))}
+            </View>
+          )}
+
+          {/* Adaptive Quick Start Section */}
+          {shoppingLists.length === 0 ? (
+            <Animated.View layout={LinearTransition.springify()} className="px-6 mt-4">
+              <View className="flex-row items-center gap-2 mb-4">
+                <Sparkles size={18} color="#0f172a" />
+                <Text className="text-[17px] font-bold text-slate-900 tracking-tight">Quick Start</Text>
+              </View>
+              
+              <View className="flex-row flex-wrap gap-3">
+                {['Weekly Groceries', 'Breakfast', 'BBQ', 'Cleaning Supplies'].map((template) => (
+                  <TouchableOpacity
+                    key={template}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      addList(template);
+                    }}
+                    className="bg-white border border-slate-100 rounded-[16px] px-4 py-3 flex-row items-center gap-2"
+                    style={{
+                      shadowColor: '#0f172a',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.03,
+                      shadowRadius: 8,
+                      elevation: 1,
+                    }}
+                  >
+                    <Plus size={16} color="#0f172a" strokeWidth={2.5} />
+                    <Text className="text-[14px] font-semibold text-slate-700">{template}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </Animated.View>
           ) : (
-            shoppingLists.map((list) => (
-              <Animated.View
-                key={list.id}
-                layout={LinearTransition.springify()}
-                exiting={FadeOutLeft.duration(200)}
-              >
-                <Swipeable
-                  containerStyle={{ marginHorizontal: 24, marginBottom: 12 }}
-                  ref={(ref) => {
-                    if (ref) {
-                      swipeableRefs.current.set(list.id, ref);
-                    } else {
-                      swipeableRefs.current.delete(list.id);
-                    }
-                  }}
-                  renderRightActions={() => renderRightActions(list.id)}
-                  rightThreshold={40}
-                  overshootRight={false}
-                  friction={2}
-                  onSwipeableWillOpen={() => closeAllSwipeables(list.id)}
-                >
-                  <TouchableOpacity 
-                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/list/${list.id}`); }}
-                    className="bg-white rounded-[24px] py-3.5 px-4 flex-row items-center justify-between border border-slate-100"
-                    style={{
-                      shadowColor: '#0f172a',
-                      shadowOffset: { width: 0, height: 8 },
-                      shadowOpacity: 0.03,
-                      shadowRadius: 24,
-                      elevation: 3,
+            <Animated.View layout={LinearTransition.springify()} className="mt-6 mb-2">
+              <Text className="text-[15px] font-semibold text-slate-500 tracking-tight px-6 mb-3">Quick Templates</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, gap: 10 }}>
+                {['Weekly Groceries', 'Breakfast', 'BBQ', 'Cleaning Supplies'].map((template) => (
+                  <TouchableOpacity
+                    key={template}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      addList(template);
                     }}
+                    className="bg-white border border-slate-200 rounded-full px-4 py-2.5 flex-row items-center gap-1.5"
                   >
-                    <View className="flex-row items-center gap-3.5 flex-1">
-                      <View className="w-10 h-10 bg-slate-100/60 rounded-[12px] items-center justify-center">
-                        <Menu size={20} color="#475569" />
+                    <Plus size={14} color="#64748b" strokeWidth={2.5} />
+                    <Text className="text-[13px] font-semibold text-slate-600">{template}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </Animated.View>
+          )}
+
+          {/* Adaptive Popular Items Placeholder */}
+          {shoppingLists.length === 0 ? (
+            <Animated.View layout={LinearTransition.springify()} className="px-6 mt-8">
+              <Text className="text-[17px] font-bold text-slate-900 tracking-tight mb-4">Popular Items</Text>
+              <View className="bg-white rounded-[24px] p-2 border border-slate-100" style={{
+                shadowColor: '#0f172a',
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.03,
+                shadowRadius: 24,
+                elevation: 2,
+              }}>
+                {[
+                  { icon: '🥛', name: 'Milk', category: 'Dairy' },
+                  { icon: '🥚', name: 'Eggs', category: 'Dairy' },
+                  { icon: '🍞', name: 'Bread', category: 'Bakery' }
+                ].map((item, index) => (
+                  <View key={item.name} className={`flex-row items-center justify-between p-3 ${index !== 2 ? 'border-b border-slate-50' : ''}`}>
+                    <View className="flex-row items-center gap-4">
+                      <View className="w-12 h-12 bg-slate-50 rounded-[14px] items-center justify-center">
+                        <Text className="text-2xl">{item.icon}</Text>
                       </View>
-                      <View className="flex-1">
-                        <Text className="text-[16px] font-semibold text-slate-900 tracking-tight" numberOfLines={1}>{list.name}</Text>
-                        <Text className="text-[13px] font-medium text-slate-500 mt-0.5" numberOfLines={1}>{list.count} ürün • Güncellendi {getRelativeDate(list.createdAt)}</Text>
+                      <View>
+                        <Text className="text-[16px] font-bold text-slate-900">{item.name}</Text>
+                        <Text className="text-[13px] font-medium text-slate-500 mt-0.5">{item.category}</Text>
                       </View>
                     </View>
-                    <ChevronRight size={18} color="#94a3b8" />
-                  </TouchableOpacity>
-                </Swipeable>
-              </Animated.View>
-            ))
+                    <TouchableOpacity 
+                      activeOpacity={0.7}
+                      className="w-9 h-9 bg-slate-100 rounded-full items-center justify-center"
+                    >
+                      <Plus size={18} color="#0f172a" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            </Animated.View>
+          ) : (
+            <Animated.View layout={LinearTransition.springify()} className="mt-6 mb-2 px-6">
+              <Text className="text-[15px] font-semibold text-slate-500 tracking-tight mb-3">Popular Items</Text>
+              <View className="bg-white rounded-[20px] p-2 border border-slate-100" style={{
+                  shadowColor: '#0f172a',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.02,
+                  shadowRadius: 12,
+                  elevation: 1,
+              }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 6, gap: 12 }}>
+                  {[
+                    { icon: '🥛', name: 'Milk' },
+                    { icon: '🥚', name: 'Eggs' },
+                    { icon: '🍞', name: 'Bread' },
+                    { icon: '🍎', name: 'Apples' },
+                    { icon: '🍌', name: 'Bananas' },
+                  ].map((item) => (
+                    <TouchableOpacity
+                      key={item.name}
+                      activeOpacity={0.7}
+                      className="items-center py-3 px-2 w-[72px]"
+                    >
+                      <View className="w-12 h-12 bg-slate-50 rounded-full items-center justify-center mb-2">
+                        <Text className="text-xl">{item.icon}</Text>
+                      </View>
+                      <Text className="text-[12px] font-semibold text-slate-700 text-center" numberOfLines={1}>{item.name}</Text>
+                      <View className="absolute top-2 right-1 w-5 h-5 bg-white rounded-full items-center justify-center shadow-sm border border-slate-100">
+                         <Plus size={12} color="#0f172a" />
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </Animated.View>
           )}
 
           <Animated.View layout={LinearTransition.springify()} className="mx-6 mt-6 mb-4">
