@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Store, Plus, ChevronRight, Search, SlidersHorizontal, ShoppingBasket, LocateFixed, Trash2, MapPin, X } from 'lucide-react-native';
 import MapView, { Marker, Callout } from 'react-native-maps';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, interpolate, FadeInDown, FadeOutUp, FadeOutLeft, LinearTransition } from 'react-native-reanimated';
@@ -35,6 +35,7 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 export default function StoresScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const params = useLocalSearchParams<{ shopId?: string }>();
   const mapRef = useRef<MapView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const bottomSheetScrollRef = useRef<any>(null);
@@ -48,6 +49,7 @@ export default function StoresScreen() {
   const calloutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [tracksViewId, setTracksViewId] = useState<string | null>(null);
   const [readyCalloutId, setReadyCalloutId] = useState<string | null>(null);
+  const [tracksViewChangesAll, setTracksViewChangesAll] = useState(true);
 
   // Stable ref for fetchMarketsFromOverpass so memoized callbacks always call the latest version
   const fetchMarketsRef = useRef<(region: any) => void>(() => {});
@@ -76,9 +78,10 @@ export default function StoresScreen() {
     };
   }, []);
 
-  // Zustand persisted store
-  const { locations, addLocation, removeLocation } = useLocationStore();
+  const { locations, addLocation, removeLocation, cachedMarkets, setCachedMarkets } = useLocationStore();
   const savedShops = locations ?? [];
+
+  const [markets, setMarkets] = useState<any[]>(cachedMarkets || []);
 
   const snapPoints = useMemo(() => {
     const HEADER_HEIGHT = 80;       // handle + "Saved Shops" title
@@ -187,7 +190,11 @@ export default function StoresScreen() {
     ],
   }));
 
-  const [markets, setMarkets] = useState<any[]>([]);
+  useEffect(() => {
+    setTracksViewChangesAll(true);
+    const timer = setTimeout(() => setTracksViewChangesAll(false), 1000);
+    return () => clearTimeout(timer);
+  }, [markets?.length]);
   const [currentRegion, setCurrentRegion] = useState<any>({
     latitude: 41.0082,
     longitude: 28.9784,
@@ -307,10 +314,13 @@ export default function StoresScreen() {
         // Only update state if the array actually changed to prevent unnecessary re-renders
         if (unique.length === prev.length) return prev;
         // Cap the array to prevent unbounded memory growth during extended map panning
+        let finalMarkets = unique;
         if (unique.length > MAX_CACHED_MARKETS) {
-          return unique.slice(unique.length - MAX_CACHED_MARKETS);
+          finalMarkets = unique.slice(unique.length - MAX_CACHED_MARKETS);
         }
-        return unique;
+        // Update global cache asynchronously so it doesn't block render
+        setTimeout(() => setCachedMarkets(finalMarkets), 0);
+        return finalMarkets;
       });
     } catch (error: any) {
       if (error.name === 'AbortError' || error.message?.includes('AbortError')) {
@@ -354,7 +364,9 @@ export default function StoresScreen() {
     }
     regionDebounceRef.current = setTimeout(() => {
       setCurrentRegion(region);
-      updateClusters(region);
+      if (!isAnimatingRef.current) {
+        updateClusters(region);
+      }
       isAnimatingRef.current = false;
     }, isAnimatingRef.current ? 200 : 50);
 
@@ -403,18 +415,49 @@ export default function StoresScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [points]); // Deliberately omitting currentRegion to prevent reloading the entire KD-tree on every pan
 
+  // Handle programmatic selection via params (e.g. from Home page)
+  useEffect(() => {
+    if (params.shopId && mapRef.current) {
+      const shopToSelect = savedShops.find(s => s.id === params.shopId || `saved-${s.id}` === params.shopId);
+      if (shopToSelect) {
+        const targetShopId = `saved-${shopToSelect.id}`;
+        
+        // Don't re-select if already selected
+        if (selectedShopToSave?.id === targetShopId) return;
+
+        setSelectedShopToSave({ ...shopToSelect, id: targetShopId, isSaved: true });
+        isAnimatingRef.current = true;
+        
+        const latDelta = currentRegion?.latitudeDelta || 0.015;
+        const lonDelta = currentRegion?.longitudeDelta || 0.015;
+        const adjustedLatitude = shopToSelect.latitude - (latDelta * 0.25);
+        
+        mapRef.current.animateToRegion({
+          latitude: adjustedLatitude,
+          longitude: shopToSelect.longitude,
+          latitudeDelta: latDelta,
+          longitudeDelta: lonDelta,
+        }, 500);
+
+        if (calloutTimerRef.current) clearTimeout(calloutTimerRef.current);
+        calloutTimerRef.current = setTimeout(() => {
+          setReadyCalloutId(targetShopId);
+        }, 300);
+
+        if (bottomSheetRef.current) {
+           bottomSheetRef.current.snapToIndex(0);
+        }
+      }
+    }
+  }, [params.shopId, savedShops.length]);
+
   // Handle tracksViewChanges and hiding callouts when selection changes
   useEffect(() => {
     if (selectedShopToSave) {
       const markerId = selectedShopToSave.id;
 
-      // Enable tracksViewChanges briefly for the selected marker so its callout can render
+      // Enable tracksViewChanges for the selected marker so its callout can render and stay visible
       setTracksViewId(markerId);
-      if (tracksViewTimerRef.current) clearTimeout(tracksViewTimerRef.current);
-      tracksViewTimerRef.current = setTimeout(() => {
-        setTracksViewId(null);
-      }, 1500);
-
     } else {
       setReadyCalloutId(null);
       // Hide all callouts when deselected
@@ -561,7 +604,7 @@ export default function StoresScreen() {
           const shopId = `saved-${shop.id}`;
           const isSelected = selectedShopToSave?.id === shopId;
           const markerName = shop.name || 'Store';
-          const needsTracking = tracksViewId === shopId;
+          const needsTracking = tracksViewId === shopId || tracksViewChangesAll;
           const longitude = shop.longitude;
           const latitude = shop.latitude;
 
@@ -637,7 +680,7 @@ export default function StoresScreen() {
               <Marker
                 key={`cluster-${clusterId}`}
                 coordinate={{ latitude, longitude }}
-                tracksViewChanges={false}
+                tracksViewChanges={tracksViewChangesAll}
                 onPress={(e) => {
                   e.stopPropagation();
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -667,7 +710,7 @@ export default function StoresScreen() {
           const isSaved = properties.isSaved;
           const isSelected = selectedShopToSave?.id === properties.id || (isSaved && selectedShopToSave?.id === `saved-${properties.id}`);
           const markerName = properties.name || 'Store';
-          const needsTracking = tracksViewId === properties.id;
+          const needsTracking = tracksViewId === properties.id || tracksViewChangesAll;
 
           return (
             <Marker

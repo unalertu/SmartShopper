@@ -92,6 +92,7 @@ export default function HomeScreen() {
           markets = await fetchMarkets(s, w, n, e);
         }
         if (markets && markets.length > 0) {
+          useLocationStore.getState().setCachedMarkets(markets);
           // Find the nearest store by Haversine distance
           let nearest = markets[0];
           let minDist = haversineDistance(userLat, userLon, nearest.latitude, nearest.longitude);
@@ -436,7 +437,7 @@ export default function HomeScreen() {
                 onSwipeableWillOpen={() => closeAllShopSwipeables(shop.id)}
               >
                 <TouchableOpacity 
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/stores`); }}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/stores', params: { shopId: shop.id } }); }}
                   className="bg-white rounded-[24px] py-3.5 px-4 flex-row items-center justify-between border border-slate-100"
                   style={{
                     shadowColor: '#0f172a',

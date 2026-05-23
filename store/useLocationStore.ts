@@ -20,6 +20,8 @@ interface LocationStoreState {
   updateLocation: (id: string, updates: Partial<SavedLocation>) => void;
   toggleActive: (id: string) => void;
   getActiveLocations: () => SavedLocation[];
+  cachedMarkets: any[];
+  setCachedMarkets: (markets: any[]) => void;
 }
 
 const generateId = () =>
@@ -29,6 +31,9 @@ export const useLocationStore = create<LocationStoreState>()(
   persist(
     (set, get) => ({
       locations: [],
+      cachedMarkets: [],
+
+      setCachedMarkets: (markets) => set({ cachedMarkets: markets }),
 
       addLocation: (location) =>
         set((state) => ({
