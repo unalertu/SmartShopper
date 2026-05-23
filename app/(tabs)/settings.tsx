@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import * as Location from 'expo-location';
+import { useScrollToTop } from '@react-navigation/native';
 
 import Animated, { FadeInDown, LinearTransition, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -181,6 +182,8 @@ ProProfileCard.displayName = 'ProProfileCard';
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function SettingsScreen() {
+  const scrollRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollRef);
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -533,6 +536,7 @@ export default function SettingsScreen() {
         <StatusBar style="dark" />
 
         <ScrollView
+          ref={scrollRef}
           className="flex-1"
           contentContainerStyle={{ paddingBottom: 150, paddingTop: insets.top + 8 }}
           showsVerticalScrollIndicator={false}

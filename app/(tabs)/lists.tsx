@@ -9,6 +9,7 @@ import * as Haptics from 'expo-haptics';
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeOutLeft, LinearTransition } from 'react-native-reanimated';
 import { useListsStore } from '../../store';
+import { useScrollToTop } from '@react-navigation/native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 
 const getRelativeDate = (timestamp?: number): string => {
@@ -24,6 +25,8 @@ const getRelativeDate = (timestamp?: number): string => {
 };
 
 export default function ListsScreen() {
+  const scrollRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollRef);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { lists: shoppingLists, addList, removeList } = useListsStore();
@@ -94,6 +97,7 @@ export default function ListsScreen() {
         <StatusBar style="dark" />
         
         <ScrollView 
+          ref={scrollRef}
           className="flex-1"
           contentContainerStyle={{ paddingBottom: 150, paddingTop: insets.top + 16 }} 
           showsVerticalScrollIndicator={false}

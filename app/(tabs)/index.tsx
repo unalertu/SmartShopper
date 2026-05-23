@@ -13,6 +13,7 @@ import { fetchMarkets } from '../../services/overpassService';
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeOutLeft, LinearTransition } from 'react-native-reanimated';
 import { useLocationStore, useListsStore } from '../../store';
+import { useScrollToTop } from '@react-navigation/native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import RadarPinIcon from '../../components/RadarPinIcon';
@@ -31,6 +32,8 @@ const getRelativeDate = (timestamp?: number): string => {
 };
 
 export default function HomeScreen() {
+  const scrollRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollRef);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [nearbyStore, setNearbyStore] = useState<string>('Searching location...');
@@ -225,6 +228,7 @@ export default function HomeScreen() {
 
       {/* 2. THE SCROLLING CONTENT */}
       <ScrollView 
+        ref={scrollRef}
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 150 }} 
         showsVerticalScrollIndicator={false}
