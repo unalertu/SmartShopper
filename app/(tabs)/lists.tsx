@@ -2,7 +2,7 @@ import React, { useRef, useState, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Menu, ChevronRight, Plus, X } from 'lucide-react-native';
+import { Menu, ChevronRight, Plus, X, ShoppingBasket, Sparkles } from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -108,16 +108,92 @@ export default function ListsScreen() {
           </Animated.View>
 
           {shoppingLists.length === 0 ? (
-            <Animated.View layout={LinearTransition.springify()} className="mx-6 mb-4 mt-4">
-              <View
-                className="rounded-[24px] p-6 items-center border border-dashed border-slate-200"
-                style={{ backgroundColor: '#fafafa' }}
-              >
-                <View className="bg-slate-100 w-[56px] h-[56px] rounded-full items-center justify-center mb-3">
-                  <Menu size={24} color="#cbd5e1" />
+            <Animated.View layout={LinearTransition.springify()} className="mt-2 mb-6 flex-1">
+              {/* Empty State Hero */}
+              <View className="items-center justify-center py-6">
+                <View className="w-24 h-24 bg-slate-100 rounded-full items-center justify-center mb-5 border-[6px] border-white"
+                  style={{
+                    shadowColor: '#0f172a',
+                    shadowOffset: { width: 0, height: 8 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 16,
+                    elevation: 2,
+                  }}
+                >
+                  <ShoppingBasket size={36} color="#0f172a" strokeWidth={1.5} />
                 </View>
-                <Text className="text-[15px] font-semibold text-slate-400 tracking-tight">No lists yet</Text>
-                <Text className="text-[13px] font-medium text-slate-300 mt-1">Tap Add to create a new list</Text>
+                <Text className="text-[22px] font-bold text-slate-900 tracking-tight mb-2">No lists yet?</Text>
+                <Text className="text-[15px] font-medium text-slate-500 text-center px-10 leading-6">
+                  Create your first grocery list and start planning your next shopping trip.
+                </Text>
+              </View>
+
+              {/* Quick Start Section */}
+              <View className="px-6 mt-4">
+                <View className="flex-row items-center gap-2 mb-4">
+                  <Sparkles size={18} color="#0f172a" />
+                  <Text className="text-[17px] font-bold text-slate-900 tracking-tight">Quick Start</Text>
+                </View>
+                
+                <View className="flex-row flex-wrap gap-3">
+                  {['Weekly Groceries', 'Breakfast', 'BBQ', 'Cleaning Supplies'].map((template) => (
+                    <TouchableOpacity
+                      key={template}
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        addList(template);
+                      }}
+                      className="bg-white border border-slate-100 rounded-[16px] px-4 py-3 flex-row items-center gap-2"
+                      style={{
+                        shadowColor: '#0f172a',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.03,
+                        shadowRadius: 8,
+                        elevation: 1,
+                      }}
+                    >
+                      <Plus size={16} color="#0f172a" strokeWidth={2.5} />
+                      <Text className="text-[14px] font-semibold text-slate-700">{template}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Popular Items Placeholder */}
+              <View className="px-6 mt-8">
+                <Text className="text-[17px] font-bold text-slate-900 tracking-tight mb-4">Popular Items</Text>
+                <View className="bg-white rounded-[24px] p-2 border border-slate-100" style={{
+                  shadowColor: '#0f172a',
+                  shadowOffset: { width: 0, height: 8 },
+                  shadowOpacity: 0.03,
+                  shadowRadius: 24,
+                  elevation: 2,
+                }}>
+                  {[
+                    { icon: '🥛', name: 'Milk', category: 'Dairy' },
+                    { icon: '🥚', name: 'Eggs', category: 'Dairy' },
+                    { icon: '🍞', name: 'Bread', category: 'Bakery' }
+                  ].map((item, index) => (
+                    <View key={item.name} className={`flex-row items-center justify-between p-3 ${index !== 2 ? 'border-b border-slate-50' : ''}`}>
+                      <View className="flex-row items-center gap-4">
+                        <View className="w-12 h-12 bg-slate-50 rounded-[14px] items-center justify-center">
+                          <Text className="text-2xl">{item.icon}</Text>
+                        </View>
+                        <View>
+                          <Text className="text-[16px] font-bold text-slate-900">{item.name}</Text>
+                          <Text className="text-[13px] font-medium text-slate-500 mt-0.5">{item.category}</Text>
+                        </View>
+                      </View>
+                      <TouchableOpacity 
+                        activeOpacity={0.7}
+                        className="w-9 h-9 bg-slate-100 rounded-full items-center justify-center"
+                      >
+                        <Plus size={18} color="#0f172a" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
               </View>
             </Animated.View>
           ) : (
@@ -169,28 +245,28 @@ export default function ListsScreen() {
             ))
           )}
 
-          <Animated.View layout={LinearTransition.springify()} className="mx-6 mb-2 mt-4">
+          <Animated.View layout={LinearTransition.springify()} className="mx-6 mt-6 mb-4">
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={handlePresentModalPress}
               style={{
                 backgroundColor: '#0f172a',
-                borderRadius: 16,
-                paddingVertical: 14,
-                paddingHorizontal: 16,
+                borderRadius: 20,
+                paddingVertical: 18,
+                paddingHorizontal: 20,
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 8,
+                gap: 10,
                 shadowColor: '#0f172a',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.2,
-                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.15,
+                shadowRadius: 16,
                 elevation: 4,
               }}
             >
-              <Plus size={20} color="#fff" />
-              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Add List</Text>
+              <Plus size={22} color="#fff" strokeWidth={2.5} />
+              <Text style={{ color: '#fff', fontSize: 17, fontWeight: '700', letterSpacing: 0.3 }}>Create New List</Text>
             </TouchableOpacity>
           </Animated.View>
         </ScrollView>
