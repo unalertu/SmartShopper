@@ -153,8 +153,8 @@ export default function ListDetails() {
             className="flex-1 bg-white border border-slate-100 rounded-[24px] py-6 px-4 items-center justify-center" 
             style={{ shadowColor: '#0f172a', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.03, shadowRadius: 24, elevation: 3 }}
           >
-            <View className="bg-slate-900/5 p-3 rounded-full mb-4">
-              <Check size={20} color="#0f172a" strokeWidth={2.5} />
+            <View className="bg-green-500/10 p-3 rounded-full mb-4">
+              <Check size={20} color="#22c55e" strokeWidth={2.5} />
             </View>
             <Text className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Done</Text>
             <Text className="text-2xl font-bold text-slate-900 mt-2">{completedCount}</Text>
@@ -165,8 +165,8 @@ export default function ListDetails() {
             className="flex-1 bg-white border border-slate-100 rounded-[24px] py-6 px-4 items-center justify-center" 
             style={{ shadowColor: '#0f172a', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.03, shadowRadius: 24, elevation: 3 }}
           >
-            <View className="bg-slate-900/5 p-3 rounded-full mb-4">
-              <Clock size={20} color="#0f172a" />
+            <View className="bg-orange-500/10 p-3 rounded-full mb-4">
+              <Clock size={20} color="#f97316" />
             </View>
             <Text className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Left</Text>
             <Text className="text-2xl font-bold text-slate-900 mt-2">{remainingCount}</Text>

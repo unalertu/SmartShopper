@@ -275,61 +275,75 @@ function CustomTabBar({
         </View>
       </Animated.View>
 
-      {/* ── Navigation Bar ── */}
-      <Pressable
+      {/* ── Navigation Bar Container ── */}
+      <View
         style={[
-          styles.navBarBlur,
-          { bottom: insets.bottom > 0 ? insets.bottom - 12 : 6 },
+          styles.bottomContainer,
+          { paddingBottom: insets.bottom > 0 ? insets.bottom - 12 : 6 },
         ]}
-        onPress={() => {}}
-        accessible={false}
+        pointerEvents="box-none"
       >
-        <BlurView
-          tint="light"
-          intensity={95}
+        {/* Dead zone for empty spaces (margins & safe areas) */}
+        <Pressable
           style={StyleSheet.absoluteFill}
+          pointerEvents="auto"
+          accessible={false}
         />
-        <View style={styles.navBarInner}>
-          {state.routes.map((route, index) => {
-            const config = TAB_CONFIG[route.name];
-            if (!config) return null;
 
-            const isFocused = state.index === index;
-            const { Icon, label } = config;
-
-            return (
-              <TabItem
-                key={route.key}
-                routeKey={route.key}
-                routeName={route.name}
-                isFocused={isFocused}
-                Icon={Icon}
-                label={label}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  const event = navigation.emit({
-                    type: "tabPress",
-                    target: route.key,
-                    canPreventDefault: true,
-                  });
-                  if (!isFocused && !event.defaultPrevented) {
-                    navigation.navigate(route.name);
-                  }
-                }}
-              />
-            );
-          })}
-
-          {/* Floating Action Button */}
-          <FloatingActionButton
-            isOpen={isActionsMenuOpen}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setIsActionsMenuOpen(!isActionsMenuOpen);
-            }}
+        {/* Inner floating pill bar */}
+        <Pressable
+          style={styles.navBarBlur}
+          pointerEvents="auto"
+          onPress={() => {}}
+          accessible={false}
+        >
+          <BlurView
+            tint="light"
+            intensity={95}
+            style={StyleSheet.absoluteFill}
           />
-        </View>
-      </Pressable>
+          <View style={styles.navBarInner}>
+            {state.routes.map((route, index) => {
+              const config = TAB_CONFIG[route.name];
+              if (!config) return null;
+
+              const isFocused = state.index === index;
+              const { Icon, label } = config;
+
+              return (
+                <TabItem
+                  key={route.key}
+                  routeKey={route.key}
+                  routeName={route.name}
+                  isFocused={isFocused}
+                  Icon={Icon}
+                  label={label}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    const event = navigation.emit({
+                      type: "tabPress",
+                      target: route.key,
+                      canPreventDefault: true,
+                    });
+                    if (!isFocused && !event.defaultPrevented) {
+                      navigation.navigate(route.name);
+                    }
+                  }}
+                />
+              );
+            })}
+
+            {/* Floating Action Button */}
+            <FloatingActionButton
+              isOpen={isActionsMenuOpen}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setIsActionsMenuOpen(!isActionsMenuOpen);
+              }}
+            />
+          </View>
+        </Pressable>
+      </View>
     </>
   );
 }
@@ -337,13 +351,17 @@ function CustomTabBar({
 // ── Styles ──
 const styles = StyleSheet.create({
   // Nav bar
-  navBarBlur: {
+  bottomContainer: {
     position: "absolute",
-    left: 20,
-    right: 20,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 50,
+  },
+  navBarBlur: {
+    marginHorizontal: 20,
     borderRadius: 28,
     overflow: "hidden",
-    zIndex: 50,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
