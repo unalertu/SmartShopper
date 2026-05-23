@@ -130,6 +130,38 @@ export default function ListsScreen() {
             </Animated.View>
           )}
 
+          {/* Quick Start Section */}
+          <Animated.View layout={LinearTransition.springify()} className={`px-6 ${shoppingLists.length === 0 ? 'mt-4' : 'mb-6'}`}>
+            <View className="flex-row items-center gap-2 mb-4">
+              <Sparkles size={18} color="#0f172a" />
+              <Text className="text-[17px] font-bold text-slate-900 tracking-tight">Quick Start</Text>
+            </View>
+            
+            <View className="flex-row flex-wrap gap-3">
+              {['Weekly Groceries', 'Breakfast', 'BBQ', 'Cleaning Supplies'].map((template) => (
+                <TouchableOpacity
+                  key={template}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    addList(template);
+                  }}
+                  className="bg-white border border-slate-100 rounded-[16px] px-4 py-3 flex-row items-center gap-2"
+                  style={{
+                    shadowColor: '#0f172a',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.03,
+                    shadowRadius: 8,
+                    elevation: 1,
+                  }}
+                >
+                  <Plus size={16} color="#0f172a" strokeWidth={2.5} />
+                  <Text className="text-[14px] font-semibold text-slate-700">{template}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </Animated.View>
+
           {shoppingLists.length > 0 && (
             <View>
               {shoppingLists.map((list) => (
@@ -179,60 +211,6 @@ export default function ListsScreen() {
                 </Animated.View>
               ))}
             </View>
-          )}
-
-          {/* Adaptive Quick Start Section */}
-          {shoppingLists.length === 0 ? (
-            <Animated.View layout={LinearTransition.springify()} className="px-6 mt-4">
-              <View className="flex-row items-center gap-2 mb-4">
-                <Sparkles size={18} color="#0f172a" />
-                <Text className="text-[17px] font-bold text-slate-900 tracking-tight">Quick Start</Text>
-              </View>
-              
-              <View className="flex-row flex-wrap gap-3">
-                {['Weekly Groceries', 'Breakfast', 'BBQ', 'Cleaning Supplies'].map((template) => (
-                  <TouchableOpacity
-                    key={template}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      addList(template);
-                    }}
-                    className="bg-white border border-slate-100 rounded-[16px] px-4 py-3 flex-row items-center gap-2"
-                    style={{
-                      shadowColor: '#0f172a',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.03,
-                      shadowRadius: 8,
-                      elevation: 1,
-                    }}
-                  >
-                    <Plus size={16} color="#0f172a" strokeWidth={2.5} />
-                    <Text className="text-[14px] font-semibold text-slate-700">{template}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </Animated.View>
-          ) : (
-            <Animated.View layout={LinearTransition.springify()} className="mt-6 mb-2">
-              <Text className="text-[15px] font-semibold text-slate-500 tracking-tight px-6 mb-3">Quick Templates</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, gap: 10 }}>
-                {['Weekly Groceries', 'Breakfast', 'BBQ', 'Cleaning Supplies'].map((template) => (
-                  <TouchableOpacity
-                    key={template}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      addList(template);
-                    }}
-                    className="bg-white border border-slate-200 rounded-full px-4 py-2.5 flex-row items-center gap-1.5"
-                  >
-                    <Plus size={14} color="#64748b" strokeWidth={2.5} />
-                    <Text className="text-[13px] font-semibold text-slate-600">{template}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </Animated.View>
           )}
 
           {/* Adaptive Popular Items Placeholder */}
