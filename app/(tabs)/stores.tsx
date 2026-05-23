@@ -237,12 +237,33 @@ export default function StoresScreen() {
   }, [savedShops]);
 
   const fetchAbortController = useRef<AbortController | null>(null);
+  const fetchedRegionsRef = useRef<{south: number, west: number, north: number, east: number}[]>([]);
   const MAX_CACHED_MARKETS = 500;
 
   const fetchMarketsFromOverpass = useCallback(async (region: any) => {
     // 0.045 delta is roughly a 4.5km box. Beyond this, Overpass takes way too long and exhausts the geofence.
     if (region.latitudeDelta > 0.045 || region.longitudeDelta > 0.045) {
       console.log("Zoomed out too far, skipping fetch.");
+      return;
+    }
+
+    const minDelta = 0.01;
+    const latDelta = Math.max(region.latitudeDelta, minDelta);
+    const lonDelta = Math.max(region.longitudeDelta, minDelta);
+
+    const visibleSouth = region.latitude - latDelta / 2;
+    const visibleWest = region.longitude - lonDelta / 2;
+    const visibleNorth = region.latitude + latDelta / 2;
+    const visibleEast = region.longitude + lonDelta / 2;
+
+    const isCovered = fetchedRegionsRef.current.some(box => 
+      visibleSouth >= box.south && 
+      visibleWest >= box.west && 
+      visibleNorth <= box.north && 
+      visibleEast <= box.east
+    );
+
+    if (isCovered) {
       return;
     }
 
@@ -254,19 +275,27 @@ export default function StoresScreen() {
     fetchAbortController.current = controller;
 
     try {
-      const minDelta = 0.01;
-      const latDelta = Math.max(region.latitudeDelta, minDelta);
-      const lonDelta = Math.max(region.longitudeDelta, minDelta);
+      // Expand fetch area by 50% on each side so small pans are cached
+      const padLat = latDelta * 0.5;
+      const padLon = lonDelta * 0.5;
+      const fetchSouth = visibleSouth - padLat;
+      const fetchWest = visibleWest - padLon;
+      const fetchNorth = visibleNorth + padLat;
+      const fetchEast = visibleEast + padLon;
 
-      const south = region.latitude - latDelta / 2;
-      const west = region.longitude - lonDelta / 2;
-      const north = region.latitude + latDelta / 2;
-      const east = region.longitude + lonDelta / 2;
-
-      const fetchedMarkets = await fetchMarkets(south, west, north, east, controller.signal);
+      const fetchedMarkets = await fetchMarkets(fetchSouth, fetchWest, fetchNorth, fetchEast, controller.signal);
 
       // Guard: if the controller was aborted while awaiting, don't update state
       if (controller.signal.aborted) return;
+      
+      // Record fetched region
+      fetchedRegionsRef.current.push({
+        south: fetchSouth,
+        west: fetchWest,
+        north: fetchNorth,
+        east: fetchEast
+      });
+
       if (!fetchedMarkets || fetchedMarkets.length === 0) return;
 
       setMarkets(prev => {
