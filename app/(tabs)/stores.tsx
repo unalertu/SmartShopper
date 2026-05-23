@@ -341,23 +341,6 @@ export default function StoresScreen() {
   const points = useMemo(() => {
     const allPoints: PointFeature<any>[] = [];
     
-    // Add saved shops
-    savedShops.forEach(shop => {
-      allPoints.push({
-        type: 'Feature',
-        properties: {
-          ...shop,
-          cluster: false,
-          id: `saved-${shop.id}`,
-          isSaved: true
-        },
-        geometry: {
-          type: 'Point',
-          coordinates: [shop.longitude, shop.latitude]
-        }
-      });
-    });
-
     // Add unsaved markets
     const uniqueMarkets = markets
       .filter((market, index, self) => 
@@ -539,6 +522,72 @@ export default function StoresScreen() {
           }
         }}
       >
+        {savedShops.map((shop) => {
+          const isSaved = true;
+          const shopId = `saved-${shop.id}`;
+          const isSelected = selectedShopToSave?.id === shopId;
+          const markerName = shop.name || 'Store';
+          const needsTracking = tracksViewId === shopId;
+          const longitude = shop.longitude;
+          const latitude = shop.latitude;
+
+          return (
+            <Marker
+              key={shopId}
+              ref={(ref) => {
+                if (ref) markerRefs.current[shopId] = ref;
+              }}
+              coordinate={{ latitude, longitude }}
+              anchor={{ x: 0.5, y: 0.5 }}
+              calloutAnchor={{ x: 0.5, y: 0 }}
+              tracksViewChanges={needsTracking}
+              onPress={(e) => {
+                e.stopPropagation();
+                Keyboard.dismiss();
+                const now = Date.now();
+                if (now - lastTap.current < 400) return; // Increased from 300 to cover animation duration
+                lastTap.current = now;
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                
+                // Cancel any in-flight callout timer from a previous rapid tap
+                if (calloutTimerRef.current) clearTimeout(calloutTimerRef.current);
+                setReadyCalloutId(null); // Hide any existing callout
+                setSelectedShopToSave({ ...shop, id: shopId, isSaved: true });
+
+                isAnimatingRef.current = true;
+                // Keep the current zoom level if known, otherwise default to 0.01
+                const latDelta = currentRegion?.latitudeDelta || 0.01;
+                const lonDelta = currentRegion?.longitudeDelta || 0.01;
+                // Offset latitude so the marker isn't hidden under the bottom sheet
+                const adjustedLatitude = latitude - (latDelta * 0.25);
+                
+                mapRef.current?.animateToRegion({
+                  latitude: adjustedLatitude,
+                  longitude,
+                  latitudeDelta: latDelta,
+                  longitudeDelta: lonDelta,
+                }, 350);
+
+                // Mount the callout after map centering animation finishes
+                calloutTimerRef.current = setTimeout(() => {
+                  setReadyCalloutId(shopId);
+                }, 400);
+              }}
+            >
+              <StoreMarker isSaved={isSaved} isSelected={isSelected} />
+              {readyCalloutId === shopId && (
+                <Callout tooltip onPress={() => {}}>
+                  <View style={styles.calloutContainer} pointerEvents="none">
+                    <View style={styles.calloutBubble}>
+                      <Text style={styles.calloutText} numberOfLines={1}>{markerName}</Text>
+                    </View>
+                    <View style={styles.calloutArrow} />
+                  </View>
+                </Callout>
+              )}
+            </Marker>
+          );
+        })}
         {clusters.map((cluster) => {
           const [longitude, latitude] = cluster.geometry.coordinates;
           const { cluster: isCluster, point_count: pointCount } = cluster.properties;
