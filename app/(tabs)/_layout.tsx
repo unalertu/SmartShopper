@@ -46,6 +46,7 @@ function TabItem({
   Icon,
   label,
   onPress,
+  onLayout,
 }: {
   routeKey: string;
   routeName: string;
@@ -53,6 +54,7 @@ function TabItem({
   Icon: any;
   label: string;
   onPress: () => void;
+  onLayout?: (e: any) => void;
 }) {
   const scale = useSharedValue(1);
   const activeProgress = useSharedValue(isFocused ? 1 : 0);
@@ -61,23 +63,14 @@ function TabItem({
     activeProgress.value = withSpring(isFocused ? 1 : 0, SPRING_GENTLE);
   }, [isFocused]);
 
-  const iconContainerStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    backgroundColor: `rgba(255, 255, 255, ${interpolate(activeProgress.value, [0, 1], [0, 0.75])})`,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: interpolate(activeProgress.value, [0, 1], [0, 0.06]),
-    shadowRadius: 3,
-  }));
-
-  const labelStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(activeProgress.value, [0, 1], [0.7, 1]),
-    transform: [{ translateY: interpolate(activeProgress.value, [0, 1], [0.5, 0]) }],
-  }));
-
-  const dotStyle = useAnimatedStyle(() => ({
+  const activeIconStyle = useAnimatedStyle(() => ({
     opacity: activeProgress.value,
-    transform: [{ scale: activeProgress.value }],
+  }));
+  const inactiveIconStyle = useAnimatedStyle(() => ({
+    opacity: 1 - activeProgress.value,
+  }));
+  const containerStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
   }));
 
   const handlePressIn = useCallback(() => {
@@ -97,25 +90,17 @@ function TabItem({
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      onLayout={onLayout}
       style={styles.tabItem}
     >
-      <Animated.View style={[styles.iconContainer, iconContainerStyle]}>
-        <Icon
-          size={20}
-          color={isFocused ? "#0f172a" : "#94a3b8"}
-          strokeWidth={isFocused ? 2.4 : 1.8}
-        />
+      <Animated.View style={[styles.iconContainer, containerStyle]}>
+        <Animated.View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }, inactiveIconStyle]}>
+          <Icon size={24} color="#94a3b8" strokeWidth={1.8} />
+        </Animated.View>
+        <Animated.View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }, activeIconStyle]}>
+          <Icon size={24} color="#ffffff" strokeWidth={2.4} />
+        </Animated.View>
       </Animated.View>
-      <Animated.Text
-        style={[
-          styles.tabLabel,
-          { color: isFocused ? "#0f172a" : "#94a3b8" },
-          labelStyle,
-        ]}
-      >
-        {label}
-      </Animated.Text>
-      <Animated.View style={[styles.activeDot, dotStyle]} />
     </Pressable>
   );
 }
@@ -227,6 +212,31 @@ function CustomTabBar({
   setIsActionsMenuOpen: (val: boolean) => void;
 }) {
   const overlayOpacity = useSharedValue(0);
+  const [tabDimensions, setTabDimensions] = useState<{ x: number; width: number }[]>([]);
+
+  const handleTabLayout = (index: number, event: any) => {
+    const { x, width } = event.nativeEvent.layout;
+    setTabDimensions((prev) => {
+      const next = [...prev];
+      next[index] = { x, width };
+      return next;
+    });
+  };
+
+  const indicatorX = useSharedValue(0);
+  const indicatorWidth = useSharedValue(0);
+
+  useEffect(() => {
+    if (tabDimensions[state.index]) {
+      indicatorX.value = withSpring(tabDimensions[state.index].x, SPRING_GENTLE);
+      indicatorWidth.value = withSpring(tabDimensions[state.index].width, SPRING_GENTLE);
+    }
+  }, [state.index, tabDimensions]);
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: indicatorX.value }],
+    width: indicatorWidth.value,
+  }));
 
   useEffect(() => {
     overlayOpacity.value = withTiming(isActionsMenuOpen ? 1 : 0, { duration: 250 });
@@ -298,6 +308,11 @@ function CustomTabBar({
           accessible={false}
         >
           <View style={styles.navBarInner}>
+            {/* Liquid Sliding Indicator */}
+            {tabDimensions.length > 0 && (
+              <Animated.View style={[styles.slidingIndicator, indicatorStyle]} />
+            )}
+
             {state.routes.map((route, index) => {
               const config = TAB_CONFIG[route.name];
               if (!config) return null;
@@ -313,6 +328,7 @@ function CustomTabBar({
                   isFocused={isFocused}
                   Icon={Icon}
                   label={label}
+                  onLayout={(e) => handleTabLayout(index, e)}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     const event = navigation.emit({
@@ -374,32 +390,28 @@ const styles = StyleSheet.create({
     borderRadius: 50,
   },
 
+  // Sliding Indicator
+  slidingIndicator: {
+    position: "absolute",
+    top: 4,
+    bottom: 4,
+    left: 0,
+    backgroundColor: "#0f172a",
+    borderRadius: 50,
+  },
+
   // Tab item
   tabItem: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 2,
+    paddingVertical: 6,
   },
   iconContainer: {
     width: 40,
-    height: 30,
-    borderRadius: 12,
+    height: 40,
     alignItems: "center",
     justifyContent: "center",
-  },
-  tabLabel: {
-    fontSize: 10,
-    fontWeight: "600",
-    marginTop: 1,
-    letterSpacing: 0.15,
-  },
-  activeDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#0f172a",
-    marginTop: 2,
   },
 
   // FAB
