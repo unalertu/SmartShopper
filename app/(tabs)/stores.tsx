@@ -37,6 +37,7 @@ export default function StoresScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const bottomSheetScrollRef = useRef<any>(null);
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
   const markerRefs = useRef<Record<string, any>>({});
   const lastTap = useRef(0);
@@ -482,6 +483,10 @@ export default function StoresScreen() {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           removeLocation(locId);
           swipeableRefs.current.delete(locId);
+          swipeableRefs.current.delete('context-' + locId);
+          if (selectedShopToSave && (selectedShopToSave.id === locId || selectedShopToSave.id === `saved-${locId}`)) {
+            setSelectedShopToSave(null);
+          }
         }}
       >
         <View style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'flex-end', width: 80, height: '100%', borderRadius: 20 }}>
@@ -568,10 +573,15 @@ export default function StoresScreen() {
                   longitudeDelta: lonDelta,
                 }, 350);
 
-                // Mount the callout after map centering animation finishes
+                // Mount the callout slightly faster to reduce delay
                 calloutTimerRef.current = setTimeout(() => {
                   setReadyCalloutId(shopId);
-                }, 400);
+                }, 200);
+
+                // Ensure the bottom sheet is partially open to show the context card
+                if (bottomSheetRef.current) {
+                   bottomSheetRef.current.snapToIndex(0);
+                }
               }}
             >
               <StoreMarker isSaved={isSaved} isSelected={isSelected} />
@@ -667,10 +677,10 @@ export default function StoresScreen() {
                   longitudeDelta: lonDelta,
                 }, 350);
 
-                // Mount the callout after map centering animation finishes
+                // Mount the callout slightly faster to reduce delay
                 calloutTimerRef.current = setTimeout(() => {
                   setReadyCalloutId(properties.id);
-                }, 400);
+                }, 200);
               }}
             >
               <StoreMarker isSaved={isSaved} isSelected={isSelected} />
@@ -789,6 +799,7 @@ export default function StoresScreen() {
       >
 
         <BottomSheetScrollView
+          ref={bottomSheetScrollRef}
           contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -826,6 +837,65 @@ export default function StoresScreen() {
                 </TouchableOpacity>
               </Animated.View>
             )}
+            {selectedShopToSave && selectedShopToSave.isSaved && (() => {
+              const originalId = selectedShopToSave.id.toString().replace('saved-', '');
+              return (
+              <Animated.View
+                entering={FadeInDown.duration(300).springify()}
+                exiting={FadeOutUp.duration(200)}
+                style={{ marginBottom: 16 }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'stretch' }}>
+                  <View
+                    className="bg-white rounded-[20px] py-3.5 px-4 flex-row items-center justify-between border border-slate-200/70"
+                    style={{
+                      flex: 1,
+                      shadowColor: '#0f172a',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.04,
+                      shadowRadius: 8,
+                      elevation: 2,
+                      marginRight: 10,
+                    }}
+                  >
+                    <View className="flex-row items-center gap-3.5 flex-1">
+                      <View className="w-10 h-10 bg-slate-100/60 rounded-[12px] items-center justify-center">
+                        <Store size={20} color="#475569" />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-[16px] font-semibold text-slate-900 tracking-tight" numberOfLines={1}>{selectedShopToSave.name}</Text>
+                        <Text className="text-[13px] font-medium text-slate-500 mt-0.5" numberOfLines={1}>
+                          {userLocation ? formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, selectedShopToSave.latitude, selectedShopToSave.longitude)) : (selectedShopToSave.address || 'Saved Shop')}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      removeLocation(originalId);
+                      setSelectedShopToSave(null);
+                    }}
+                    style={{
+                      backgroundColor: '#FF3B30',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      width: 80,
+                      borderRadius: 20,
+                      shadowColor: '#FF3B30',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 6,
+                      elevation: 3,
+                    }}
+                  >
+                    <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+              );
+            })()}
             <Animated.Text 
               layout={LinearTransition.springify()} 
               className="text-[22px] font-semibold tracking-tight text-slate-900"
@@ -845,7 +915,11 @@ export default function StoresScreen() {
           )}
 
           {/* Saved shop cards with swipe-to-delete */}
-          {savedShops.map((loc) => (
+          {savedShops.map((loc) => {
+            if (selectedShopToSave && selectedShopToSave.isSaved && selectedShopToSave.id === `saved-${loc.id}`) {
+              return null;
+            }
+            return (
             <Animated.View
               key={loc.id}
               layout={LinearTransition.springify()}
@@ -916,7 +990,8 @@ export default function StoresScreen() {
                 </TouchableOpacity>
               </Swipeable>
             </Animated.View>
-          ))}
+            );
+          })}
 
           {/* Hint/Placeholder Card — shown when fewer than 3 shops saved */}
           {savedShops.length > 0 && savedShops.length < 3 && (
