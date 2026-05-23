@@ -13,15 +13,15 @@ import { useScrollToTop } from '@react-navigation/native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 
 const getRelativeDate = (timestamp?: number): string => {
-  if (!timestamp) return 'bugün';
+  if (!timestamp) return 'today';
   const now = Date.now();
   const diff = now - timestamp;
   const days = Math.floor(diff / 86400000);
-  if (days === 0) return 'bugün';
-  if (days === 1) return 'dün';
-  if (days < 7) return `${days} gün önce`;
-  if (days < 30) return `${Math.floor(days / 7)} hafta önce`;
-  return `${Math.floor(days / 30)} ay önce`;
+  if (days === 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 7) return `${days} days ago`;
+  if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+  return `${Math.floor(days / 30)} months ago`;
 };
 
 export default function ListsScreen() {
@@ -207,7 +207,7 @@ export default function ListsScreen() {
                         </View>
                         <View className="flex-1">
                           <Text className="text-[16px] font-semibold text-slate-900 tracking-tight" numberOfLines={1}>{list.name}</Text>
-                          <Text className="text-[13px] font-medium text-slate-500 mt-0.5" numberOfLines={1}>{list.count} ürün • Güncellendi {getRelativeDate(list.createdAt)}</Text>
+                          <Text className="text-[13px] font-medium text-slate-500 mt-0.5" numberOfLines={1}>{list.count} items • Updated {getRelativeDate(list.createdAt)}</Text>
                         </View>
                       </View>
                       <ChevronRight size={18} color="#94a3b8" />
