@@ -326,8 +326,9 @@ export default function HomeScreen() {
           </Animated.View>
 
           {/* 3. My Lists Section */}
-          <Animated.View layout={LinearTransition.springify()}>
-            <Text className="text-[22px] font-extrabold tracking-tight mx-6 mb-4 text-slate-900">My Lists</Text>
+          <Animated.View layout={LinearTransition.springify()} className="flex-row items-center mx-6 mb-4 mt-2">
+            <View className="w-2.5 h-2.5 rounded-full bg-slate-900 mr-2.5" />
+            <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">My Lists</Text>
           </Animated.View>
           {shoppingLists.map((list) => (
             <Animated.View
@@ -402,8 +403,9 @@ export default function HomeScreen() {
           </Animated.View>
 
           {/* 4. My Shops Section */}
-          <Animated.View layout={LinearTransition.springify()}>
-            <Text className="text-[22px] font-extrabold tracking-tight mx-6 mt-6 mb-4 text-slate-900">My Shops</Text>
+          <Animated.View layout={LinearTransition.springify()} className="flex-row items-center mx-6 mt-8 mb-4">
+            <View className="w-2.5 h-2.5 rounded-full bg-slate-900 mr-2.5" />
+            <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">My Shops</Text>
           </Animated.View>
           {savedShops.length === 0 && (
             <Animated.View layout={LinearTransition.springify()} className="mx-6 mb-5">

@@ -103,8 +103,9 @@ export default function ListsScreen() {
           showsVerticalScrollIndicator={false}
           onScrollBeginDrag={() => closeAllSwipeables()}
         >
-          <Animated.View layout={LinearTransition.springify()} className="mb-4">
-            <Text className="text-[22px] font-semibold tracking-tight mx-6 text-slate-900">My Lists</Text>
+          <Animated.View layout={LinearTransition.springify()} className="flex-row items-center mx-6 mb-4 mt-2">
+            <View className="w-2.5 h-2.5 rounded-full bg-slate-900 mr-2.5" />
+            <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">My Lists</Text>
           </Animated.View>
 
           {shoppingLists.length === 0 && (

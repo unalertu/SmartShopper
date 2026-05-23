@@ -968,12 +968,10 @@ export default function StoresScreen() {
               </Animated.View>
               );
             })()}
-            <Animated.Text 
-              layout={LinearTransition.springify()} 
-              className="text-[22px] font-semibold tracking-tight text-slate-900"
-            >
-              My Shops
-            </Animated.Text>
+            <Animated.View layout={LinearTransition.springify()} className="flex-row items-center mt-2 mb-2">
+              <View className="w-2.5 h-2.5 rounded-full bg-slate-900 mr-2.5" />
+              <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">My Shops</Text>
+            </Animated.View>
           </Animated.View>
           {/* Empty state */}
           {savedShops.length === 0 && (
