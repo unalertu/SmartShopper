@@ -233,15 +233,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingLeft: 6,
     paddingRight: 5,
-    paddingVertical: 4,
+    paddingVertical: 2,
     borderRadius: 50,
   },
 
   // Sliding Indicator
   slidingIndicator: {
     position: "absolute",
-    top: 4,
-    bottom: 4,
+    top: 2,
+    bottom: 2,
     left: 0,
     backgroundColor: "#0f172a",
     borderRadius: 50,
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 6,
+    paddingVertical: 4,
   },
   iconContainer: {
     width: 40,
