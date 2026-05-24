@@ -26,7 +26,15 @@ const getRelativeDate = (timestamp?: number): string => {
 
 export default function ListsScreen() {
   const scrollRef = useRef<ScrollView>(null);
-  useScrollToTop(scrollRef);
+  const quickStartScrollRef = useRef<ScrollView>(null);
+  
+  const mergedScrollRef = useRef({
+    scrollTo: (options: any) => {
+      scrollRef.current?.scrollTo(options);
+      quickStartScrollRef.current?.scrollTo({ x: 0, y: 0, animated: true });
+    }
+  });
+  useScrollToTop(mergedScrollRef);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { lists: shoppingLists, addList, removeList } = useListsStore();
@@ -136,35 +144,50 @@ export default function ListsScreen() {
           )}
 
           {/* Quick Start Section */}
-          <Animated.View layout={LinearTransition.springify()} className={`px-6 ${shoppingLists.length === 0 ? 'mt-4' : 'mb-6'}`}>
-            <View className="flex-row items-center gap-2 mb-4">
+          <Animated.View layout={LinearTransition.springify()} className={`${shoppingLists.length === 0 ? 'mt-4' : 'mb-6'}`}>
+            <View className="flex-row items-center gap-2 mb-4 px-6">
               <Sparkles size={18} color="#0f172a" />
               <Text className="text-[17px] font-bold text-slate-900 tracking-tight">Quick Start</Text>
             </View>
             
-            <View className="flex-row flex-wrap gap-3">
-              {['Weekly Groceries', 'Breakfast', 'BBQ', 'Cleaning Supplies'].map((template) => (
-                <TouchableOpacity
-                  key={template}
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    addList(template);
-                  }}
-                  className="bg-white border border-slate-100 rounded-[16px] px-4 py-3 flex-row items-center gap-2"
-                  style={{
-                    shadowColor: '#0f172a',
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.03,
-                    shadowRadius: 8,
-                    elevation: 1,
-                  }}
-                >
-                  <Plus size={16} color="#0f172a" strokeWidth={2.5} />
-                  <Text className="text-[14px] font-semibold text-slate-700">{template}</Text>
-                </TouchableOpacity>
+            <ScrollView 
+              ref={quickStartScrollRef}
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              contentContainerStyle={{ paddingHorizontal: 24 }}
+            >
+              <View style={{ gap: 12 }}>
+                {[
+                  ['Weekly Groceries', 'Dinner Party', 'Office Supplies', 'Fitness'],
+                  ['Breakfast', 'Cleaning Supplies', 'Pet Supplies', 'Baking'],
+                  ['BBQ', 'Snacks', 'Pharmacy', 'Movie Night']
+                ].map((row, rowIndex) => (
+                  <View key={rowIndex} className="flex-row" style={{ gap: 12 }}>
+                    {row.map((template) => (
+                    <TouchableOpacity
+                      key={template}
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        addList(template);
+                      }}
+                      className="bg-white border border-slate-100 rounded-[16px] px-4 py-3 flex-row items-center gap-2"
+                      style={{
+                        shadowColor: '#0f172a',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.03,
+                        shadowRadius: 8,
+                        elevation: 1,
+                      }}
+                    >
+                      <Plus size={16} color="#0f172a" strokeWidth={2.5} />
+                      <Text className="text-[14px] font-semibold text-slate-700">{template}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               ))}
-            </View>
+              </View>
+            </ScrollView>
           </Animated.View>
 
           <Animated.View layout={LinearTransition.springify()}>
