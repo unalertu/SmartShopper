@@ -660,10 +660,10 @@ export default function StoresScreen() {
               {readyCalloutId === shopId && (
                 <Callout tooltip onPress={() => {}}>
                   <View style={styles.calloutContainer} pointerEvents="none">
-                    <View style={styles.calloutBubble}>
-                      <Text style={styles.calloutText} numberOfLines={1}>{markerName}</Text>
+                    <View style={[styles.calloutBubble, isSaved ? styles.calloutBubbleSaved : styles.calloutBubbleUnsaved]}>
+                      <Text style={[styles.calloutText, isSaved ? styles.calloutTextSaved : styles.calloutTextUnsaved]} numberOfLines={1}>{markerName}</Text>
                     </View>
-                    <View style={styles.calloutArrow} />
+                    <View style={[styles.calloutArrow, isSaved ? styles.calloutArrowSaved : styles.calloutArrowUnsaved]} />
                   </View>
                 </Callout>
               )}
@@ -759,10 +759,10 @@ export default function StoresScreen() {
               {readyCalloutId === properties.id && (
                 <Callout tooltip onPress={() => {}}>
                   <View style={styles.calloutContainer} pointerEvents="none">
-                    <View style={styles.calloutBubble}>
-                      <Text style={styles.calloutText} numberOfLines={1}>{markerName}</Text>
+                    <View style={[styles.calloutBubble, isSaved ? styles.calloutBubbleSaved : styles.calloutBubbleUnsaved]}>
+                      <Text style={[styles.calloutText, isSaved ? styles.calloutTextSaved : styles.calloutTextUnsaved]} numberOfLines={1}>{markerName}</Text>
                     </View>
-                    <View style={styles.calloutArrow} />
+                    <View style={[styles.calloutArrow, isSaved ? styles.calloutArrowSaved : styles.calloutArrowUnsaved]} />
                   </View>
                 </Callout>
               )}
@@ -1327,7 +1327,6 @@ const styles = StyleSheet.create({
     maxWidth: 200,
   },
   calloutBubble: {
-    backgroundColor: 'rgba(15, 23, 42, 0.92)',
     borderRadius: 12,
     paddingVertical: 8,
     paddingHorizontal: 14,
@@ -1337,12 +1336,25 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
+  calloutBubbleUnsaved: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  calloutBubbleSaved: {
+    backgroundColor: '#ef4444',
+  },
   calloutText: {
-    color: '#ffffff',
     fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.3,
     textAlign: 'center',
+  },
+  calloutTextUnsaved: {
+    color: '#0f172a',
+  },
+  calloutTextSaved: {
+    color: '#ffffff',
   },
   calloutArrow: {
     width: 0,
@@ -1354,7 +1366,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 8,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderTopColor: 'rgba(15, 23, 42, 0.92)',
     marginTop: -1,
+  },
+  calloutArrowUnsaved: {
+    borderTopColor: '#ffffff',
+    marginTop: -2,
+  },
+  calloutArrowSaved: {
+    borderTopColor: '#ef4444',
   },
 });
