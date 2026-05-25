@@ -308,9 +308,17 @@ export default function StoresScreen() {
     const cellsToFetch = [];
     const newPendingCells = [];
 
-    // Find missing grid cells
-    for (let lat = Math.floor(searchSouth / GRID_SIZE) * GRID_SIZE; lat <= searchNorth; lat += GRID_SIZE) {
-      for (let lon = Math.floor(searchWest / GRID_SIZE) * GRID_SIZE; lon <= searchEast; lon += GRID_SIZE) {
+    // Find missing grid cells using strict integer bounds to prevent directional floating-point bias
+    const startLatIdx = Math.floor(searchSouth / GRID_SIZE);
+    const endLatIdx = Math.ceil(searchNorth / GRID_SIZE);
+    const startLonIdx = Math.floor(searchWest / GRID_SIZE);
+    const endLonIdx = Math.ceil(searchEast / GRID_SIZE);
+
+    for (let latIdx = startLatIdx; latIdx < endLatIdx; latIdx++) {
+      for (let lonIdx = startLonIdx; lonIdx < endLonIdx; lonIdx++) {
+        // Clean floating point drift
+        const lat = Math.round((latIdx * GRID_SIZE) * 1000) / 1000;
+        const lon = Math.round((lonIdx * GRID_SIZE) * 1000) / 1000;
         const cellId = `${lat.toFixed(3)},${lon.toFixed(3)}`;
         if (!fetchedGridCellsRef.current.has(cellId) && !pendingGridCellsRef.current.has(cellId)) {
           cellsToFetch.push({ lat, lon, cellId });
@@ -381,11 +389,11 @@ export default function StoresScreen() {
         if (cell.lon + GRID_SIZE > maxLon) maxLon = cell.lon + GRID_SIZE;
       }
 
-      // 6. Overpass protection: fetch exactly the bounding box of missing data
-      const fetchSouth = minLat;
-      const fetchWest = minLon;
-      const fetchNorth = maxLat;
-      const fetchEast = maxLon;
+      // 6. Overpass protection: fetch exactly the bounding box of missing data, snapped cleanly to prevent query drift
+      const fetchSouth = Math.round(minLat * 1000) / 1000;
+      const fetchWest = Math.round(minLon * 1000) / 1000;
+      const fetchNorth = Math.round(maxLat * 1000) / 1000;
+      const fetchEast = Math.round(maxLon * 1000) / 1000;
 
       const fetchedMarkets = await fetchMarkets(fetchSouth, fetchWest, fetchNorth, fetchEast, controller.signal);
 
