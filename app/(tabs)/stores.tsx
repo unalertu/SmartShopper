@@ -261,14 +261,28 @@ export default function StoresScreen() {
   }, [savedShops]);
 
   const fetchAbortController = useRef<AbortController | null>(null);
-  const fetchedRegionsRef = useRef<{south: number, west: number, north: number, east: number}[]>([]);
+  const fetchedGridCellsRef = useRef<Set<string>>(new Set());
+  const pendingGridCellsRef = useRef<Set<string>>(new Set());
+  const lastFetchCenterRef = useRef<{latitude: number, longitude: number} | null>(null);
+  const GRID_SIZE = 0.02; // Roughly 2km x 2km grid
   const MAX_CACHED_MARKETS = 500;
 
   const fetchMarketsFromOverpass = useCallback(async (region: any) => {
-    // 0.045 delta is roughly a 4.5km box. Beyond this, Overpass takes way too long and exhausts the geofence.
     if (region.latitudeDelta > 0.045 || region.longitudeDelta > 0.045) {
       console.log("Zoomed out too far, skipping fetch.");
       return;
+    }
+
+    // 2. Minimum movement threshold
+    if (lastFetchCenterRef.current) {
+      const distance = haversineDistance(
+        lastFetchCenterRef.current.latitude, lastFetchCenterRef.current.longitude,
+        region.latitude, region.longitude
+      );
+      if (distance < 200) { // Less than 200 meters, don't trigger fetch
+        console.log("Movement below threshold, skipping fetch.");
+        return;
+      }
     }
 
     const minDelta = 0.01;
@@ -280,18 +294,41 @@ export default function StoresScreen() {
     const visibleNorth = region.latitude + latDelta / 2;
     const visibleEast = region.longitude + lonDelta / 2;
 
-    const isCovered = fetchedRegionsRef.current.some(box => 
-      visibleSouth >= box.south && 
-      visibleWest >= box.west && 
-      visibleNorth <= box.north && 
-      visibleEast <= box.east
-    );
+    // Expand fetch area by 20% on each side to pre-cache slightly
+    const padLat = latDelta * 0.2;
+    const padLon = lonDelta * 0.2;
+    
+    const searchSouth = visibleSouth - padLat;
+    const searchWest = visibleWest - padLon;
+    const searchNorth = visibleNorth + padLat;
+    const searchEast = visibleEast + padLon;
 
-    if (isCovered) {
+    const cellsToFetch = [];
+    const newPendingCells = [];
+
+    // Find missing grid cells
+    for (let lat = Math.floor(searchSouth / GRID_SIZE) * GRID_SIZE; lat <= searchNorth; lat += GRID_SIZE) {
+      for (let lon = Math.floor(searchWest / GRID_SIZE) * GRID_SIZE; lon <= searchEast; lon += GRID_SIZE) {
+        const cellId = `${lat.toFixed(3)},${lon.toFixed(3)}`;
+        if (!fetchedGridCellsRef.current.has(cellId) && !pendingGridCellsRef.current.has(cellId)) {
+          cellsToFetch.push({ lat, lon, cellId });
+          newPendingCells.push(cellId);
+        }
+      }
+    }
+
+    if (cellsToFetch.length === 0) {
+      // 3. BBox / region caching: All required cells are cached or pending
       return;
     }
 
-    // Cancel any ongoing fetch to prevent queue pile-up and overloading
+    lastFetchCenterRef.current = { latitude: region.latitude, longitude: region.longitude };
+
+    // 4. Request deduplication: Mark new cells as pending
+    newPendingCells.forEach(id => pendingGridCellsRef.current.add(id));
+
+    // Cancel previous fetch if we are initiating a new one
+    // 5. Smarter abort handling: we only abort if we ACTUALLY need to fetch new data
     if (fetchAbortController.current) {
       fetchAbortController.current.abort();
     }
@@ -299,47 +336,52 @@ export default function StoresScreen() {
     fetchAbortController.current = controller;
 
     try {
-      // Expand fetch area by 50% on each side so small pans are cached
-      const padLat = latDelta * 0.5;
-      const padLon = lonDelta * 0.5;
-      const fetchSouth = visibleSouth - padLat;
-      const fetchWest = visibleWest - padLon;
-      const fetchNorth = visibleNorth + padLat;
-      const fetchEast = visibleEast + padLon;
+      // Compute bounding box of ALL missing cells
+      let minLat = cellsToFetch[0].lat;
+      let maxLat = cellsToFetch[0].lat + GRID_SIZE;
+      let minLon = cellsToFetch[0].lon;
+      let maxLon = cellsToFetch[0].lon + GRID_SIZE;
+
+      for (const cell of cellsToFetch) {
+        if (cell.lat < minLat) minLat = cell.lat;
+        if (cell.lat + GRID_SIZE > maxLat) maxLat = cell.lat + GRID_SIZE;
+        if (cell.lon < minLon) minLon = cell.lon;
+        if (cell.lon + GRID_SIZE > maxLon) maxLon = cell.lon + GRID_SIZE;
+      }
+
+      // 6. Overpass protection: fetch exactly the bounding box of missing data
+      const fetchSouth = minLat;
+      const fetchWest = minLon;
+      const fetchNorth = maxLat;
+      const fetchEast = maxLon;
 
       const fetchedMarkets = await fetchMarkets(fetchSouth, fetchWest, fetchNorth, fetchEast, controller.signal);
 
-      // Guard: if the controller was aborted while awaiting, don't update state
-      if (controller.signal.aborted) return;
-      
-      // Record fetched region
-      fetchedRegionsRef.current.push({
-        south: fetchSouth,
-        west: fetchWest,
-        north: fetchNorth,
-        east: fetchEast
+      // Remove from pending, add to fetched
+      newPendingCells.forEach(id => {
+        pendingGridCellsRef.current.delete(id);
+        fetchedGridCellsRef.current.add(id);
       });
 
       if (!fetchedMarkets || fetchedMarkets.length === 0) return;
 
       setMarkets(prev => {
         const combined = [...prev, ...fetchedMarkets];
-        // Deduplicate by ID so markers don't stack and we keep existing ones
         const unique = combined.filter(
           (market, index, self) => index === self.findIndex((m) => m.id === market.id)
         );
-        // Only update state if the array actually changed to prevent unnecessary re-renders
         if (unique.length === prev.length) return prev;
-        // Cap the array to prevent unbounded memory growth during extended map panning
         let finalMarkets = unique;
         if (unique.length > MAX_CACHED_MARKETS) {
           finalMarkets = unique.slice(unique.length - MAX_CACHED_MARKETS);
         }
-        // Update global cache asynchronously so it doesn't block render
         setTimeout(() => setCachedMarkets(finalMarkets), 0);
         return finalMarkets;
       });
     } catch (error: any) {
+      // On failure or abort, remove from pending so they can be retried
+      newPendingCells.forEach(id => pendingGridCellsRef.current.delete(id));
+      
       if (error.name === 'AbortError' || error.message?.includes('AbortError')) {
         console.log('Previous overpass fetch aborted due to new map pan.');
       } else {
@@ -608,6 +650,11 @@ export default function StoresScreen() {
         onPanDrag={() => {
           setSelectedShopToSave(null);
           Keyboard.dismiss();
+          // 1. Avoid firing requests during continuous panning
+          if (fetchDebounceRef.current) {
+            clearTimeout(fetchDebounceRef.current);
+            fetchDebounceRef.current = null;
+          }
         }}
         onPress={(e) => {
           Keyboard.dismiss();
