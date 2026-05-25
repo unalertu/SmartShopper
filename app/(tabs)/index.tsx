@@ -79,7 +79,7 @@ export default function HomeScreen() {
         );
 
         if (!hasNearbyMarkets && !useLocationStore.getState().isFetchingMarkets) {
-          useLocationStore.getState().setIsFetchingMarkets(true);
+          useLocationStore.getState().setIsFetchingMarkets(true, { latitude: userLat, longitude: userLon });
           let offset = 0.015;
           let s = userLat - offset;
           let n = userLat + offset;

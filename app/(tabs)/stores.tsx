@@ -263,7 +263,7 @@ export default function StoresScreen() {
   const fetchAbortController = useRef<AbortController | null>(null);
   const fetchedGridCellsRef = useRef<Set<string>>(new Set());
   const pendingGridCellsRef = useRef<Set<string>>(new Set());
-  const lastFetchCenterRef = useRef<{latitude: number, longitude: number} | null>(null);
+  const lastFetchCenterRef = useRef<{latitude: number, longitude: number, latitudeDelta?: number, longitudeDelta?: number} | null>(null);
   const GRID_SIZE = 0.02; // Roughly 2km x 2km grid
   const MAX_CACHED_MARKETS = 500;
 
@@ -273,14 +273,16 @@ export default function StoresScreen() {
       return;
     }
 
-    // 2. Minimum movement threshold
+    // 2. Minimum movement threshold: Ignore tiny floating-point changes and micro-pans
     if (lastFetchCenterRef.current) {
       const distance = haversineDistance(
         lastFetchCenterRef.current.latitude, lastFetchCenterRef.current.longitude,
         region.latitude, region.longitude
       );
-      if (distance < 200) { // Less than 200 meters, don't trigger fetch
-        console.log("Movement below threshold, skipping fetch.");
+      const latDeltaDiff = Math.abs((lastFetchCenterRef.current.latitudeDelta || region.latitudeDelta) - region.latitudeDelta);
+      
+      if (distance < 1000 && latDeltaDiff < 0.005) { 
+        console.log("Movement below threshold (dist < 1km & zoom unchanged), skipping fetch.");
         return;
       }
     }
@@ -322,12 +324,36 @@ export default function StoresScreen() {
       return;
     }
 
-    if (useLocationStore.getState().isFetchingMarkets) {
-      console.log("Already fetching markets globally, skipping duplicate request.");
-      return;
+    const state = useLocationStore.getState();
+    if (state.isFetchingMarkets && state.fetchingRegionCenter) {
+      const dist = haversineDistance(
+        state.fetchingRegionCenter.latitude, state.fetchingRegionCenter.longitude,
+        region.latitude, region.longitude
+      );
+      if (dist < 5000) {
+        console.log("Already fetching markets globally in this area, skipping duplicate request.");
+        return;
+      }
     }
 
-    lastFetchCenterRef.current = { latitude: region.latitude, longitude: region.longitude };
+    // Prevent aborting an actively running fetch for tiny region changes
+    if (state.isFetchingMarkets && fetchAbortController.current && lastFetchCenterRef.current) {
+      const distFromOngoing = haversineDistance(
+        lastFetchCenterRef.current.latitude, lastFetchCenterRef.current.longitude,
+        region.latitude, region.longitude
+      );
+      if (distFromOngoing < 4000) {
+        console.log("Ongoing fetch still relevant (dist < 4km). Letting it finish before requesting edge cells.");
+        return;
+      }
+    }
+
+    lastFetchCenterRef.current = { 
+      latitude: region.latitude, 
+      longitude: region.longitude,
+      latitudeDelta: region.latitudeDelta,
+      longitudeDelta: region.longitudeDelta
+    };
 
     // 4. Request deduplication: Mark new cells as pending
     newPendingCells.forEach(id => pendingGridCellsRef.current.add(id));

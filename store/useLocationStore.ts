@@ -23,7 +23,8 @@ interface LocationStoreState {
   cachedMarkets: any[];
   setCachedMarkets: (markets: any[]) => void;
   isFetchingMarkets: boolean;
-  setIsFetchingMarkets: (isFetching: boolean) => void;
+  fetchingRegionCenter: { latitude: number, longitude: number } | null;
+  setIsFetchingMarkets: (isFetching: boolean, center?: { latitude: number, longitude: number } | null) => void;
 }
 
 const generateId = () =>
@@ -35,9 +36,13 @@ export const useLocationStore = create<LocationStoreState>()(
       locations: [],
       cachedMarkets: [],
       isFetchingMarkets: false,
+      fetchingRegionCenter: null,
 
       setCachedMarkets: (markets) => set({ cachedMarkets: markets }),
-      setIsFetchingMarkets: (isFetching) => set({ isFetchingMarkets: isFetching }),
+      setIsFetchingMarkets: (isFetching, center = null) => set({ 
+        isFetchingMarkets: isFetching,
+        fetchingRegionCenter: isFetching ? center : null
+      }),
 
       addLocation: (location) =>
         set((state) => ({
