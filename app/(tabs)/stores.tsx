@@ -12,6 +12,7 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { BlurView } from 'expo-blur';
 import Supercluster, { PointFeature } from 'supercluster';
 import { fetchMarkets } from '../../services/overpassService';
+import { mapCacheManager } from '../../services';
 import { useLocationStore } from '../../store';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import * as Haptics from 'expo-haptics';
@@ -212,12 +213,8 @@ export default function StoresScreen() {
     ],
   }));
 
-  const [currentRegion, setCurrentRegion] = useState<any>({
-    latitude: 41.0082,
-    longitude: 28.9784,
-    latitudeDelta: 0.015,
-    longitudeDelta: 0.015,
-  });
+  const [initialRegion, setInitialRegion] = useState<any>(null);
+  const [currentRegion, setCurrentRegion] = useState<any>(null);
   const selectedShopToSave = useLocalUIStore((s) => s.selectedShopToSave);
   const setSelectedShopToSave = useLocalUIStore((s) => s.setSelectedShopToSave);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
@@ -273,101 +270,27 @@ export default function StoresScreen() {
       return;
     }
 
-    // 2. Minimum movement threshold: Ignore tiny floating-point changes and micro-pans
-    if (lastFetchCenterRef.current) {
-      const distance = haversineDistance(
-        lastFetchCenterRef.current.latitude, lastFetchCenterRef.current.longitude,
-        region.latitude, region.longitude
-      );
-      const latDeltaDiff = Math.abs((lastFetchCenterRef.current.latitudeDelta || region.latitudeDelta) - region.latitudeDelta);
+    const cachedData = mapCacheManager.getStoresForRegion(region);
+
+    if (cachedData) {
+      console.log("Cache hit for region:", mapCacheManager.getRegionKey(region));
       
-      if (distance < 1000 && latDeltaDiff < 0.005) { 
-        console.log("Movement below threshold (dist < 1km & zoom unchanged), skipping fetch.");
-        return;
+      const prev = useLocationStore.getState().cachedMarkets || [];
+      const combined = [...prev, ...cachedData];
+      const unique = combined.filter(
+        (market, index, self) => index === self.findIndex((m) => m.id === market.id)
+      );
+      
+      let finalMarkets = unique;
+      if (unique.length > MAX_CACHED_MARKETS) {
+        finalMarkets = unique.slice(unique.length - MAX_CACHED_MARKETS);
       }
-    }
-
-    const minDelta = 0.01;
-    const latDelta = Math.max(region.latitudeDelta, minDelta);
-    const lonDelta = Math.max(region.longitudeDelta, minDelta);
-
-    const visibleSouth = region.latitude - latDelta / 2;
-    const visibleWest = region.longitude - lonDelta / 2;
-    const visibleNorth = region.latitude + latDelta / 2;
-    const visibleEast = region.longitude + lonDelta / 2;
-
-    // Expand fetch area by 20% on each side to pre-cache slightly
-    const padLat = latDelta * 0.2;
-    const padLon = lonDelta * 0.2;
-    
-    const searchSouth = visibleSouth - padLat;
-    const searchWest = visibleWest - padLon;
-    const searchNorth = visibleNorth + padLat;
-    const searchEast = visibleEast + padLon;
-
-    const cellsToFetch = [];
-    const newPendingCells = [];
-
-    // Find missing grid cells using strict integer bounds to prevent directional floating-point bias
-    const startLatIdx = Math.floor(searchSouth / GRID_SIZE);
-    const endLatIdx = Math.ceil(searchNorth / GRID_SIZE);
-    const startLonIdx = Math.floor(searchWest / GRID_SIZE);
-    const endLonIdx = Math.ceil(searchEast / GRID_SIZE);
-
-    for (let latIdx = startLatIdx; latIdx < endLatIdx; latIdx++) {
-      for (let lonIdx = startLonIdx; lonIdx < endLonIdx; lonIdx++) {
-        // Clean floating point drift
-        const lat = Math.round((latIdx * GRID_SIZE) * 1000) / 1000;
-        const lon = Math.round((lonIdx * GRID_SIZE) * 1000) / 1000;
-        const cellId = `${lat.toFixed(3)},${lon.toFixed(3)}`;
-        if (!fetchedGridCellsRef.current.has(cellId) && !pendingGridCellsRef.current.has(cellId)) {
-          cellsToFetch.push({ lat, lon, cellId });
-          newPendingCells.push(cellId);
-        }
+      if (finalMarkets.length !== prev.length) {
+        setCachedMarkets(finalMarkets);
       }
-    }
-
-    if (cellsToFetch.length === 0) {
-      // 3. BBox / region caching: All required cells are cached or pending
       return;
     }
 
-    const state = useLocationStore.getState();
-    if (state.isFetchingMarkets && state.fetchingRegionCenter) {
-      const dist = haversineDistance(
-        state.fetchingRegionCenter.latitude, state.fetchingRegionCenter.longitude,
-        region.latitude, region.longitude
-      );
-      if (dist < 5000) {
-        console.log("Already fetching markets globally in this area, skipping duplicate request.");
-        return;
-      }
-    }
-
-    // Prevent aborting an actively running fetch for tiny region changes
-    if (state.isFetchingMarkets && fetchAbortController.current && lastFetchCenterRef.current) {
-      const distFromOngoing = haversineDistance(
-        lastFetchCenterRef.current.latitude, lastFetchCenterRef.current.longitude,
-        region.latitude, region.longitude
-      );
-      if (distFromOngoing < 4000) {
-        console.log("Ongoing fetch still relevant (dist < 4km). Letting it finish before requesting edge cells.");
-        return;
-      }
-    }
-
-    lastFetchCenterRef.current = { 
-      latitude: region.latitude, 
-      longitude: region.longitude,
-      latitudeDelta: region.latitudeDelta,
-      longitudeDelta: region.longitudeDelta
-    };
-
-    // 4. Request deduplication: Mark new cells as pending
-    newPendingCells.forEach(id => pendingGridCellsRef.current.add(id));
-
-    // Cancel previous fetch if we are initiating a new one
-    // 5. Smarter abort handling: we only abort if we ACTUALLY need to fetch new data
     if (fetchAbortController.current) {
       fetchAbortController.current.abort();
     }
@@ -376,59 +299,36 @@ export default function StoresScreen() {
 
     try {
       setIsFetchingMarkets(true);
-      // Compute bounding box of ALL missing cells
-      let minLat = cellsToFetch[0].lat;
-      let maxLat = cellsToFetch[0].lat + GRID_SIZE;
-      let minLon = cellsToFetch[0].lon;
-      let maxLon = cellsToFetch[0].lon + GRID_SIZE;
+      const minDelta = 0.01;
+      const latDelta = Math.max(region.latitudeDelta, minDelta);
+      const lonDelta = Math.max(region.longitudeDelta, minDelta);
 
-      for (const cell of cellsToFetch) {
-        if (cell.lat < minLat) minLat = cell.lat;
-        if (cell.lat + GRID_SIZE > maxLat) maxLat = cell.lat + GRID_SIZE;
-        if (cell.lon < minLon) minLon = cell.lon;
-        if (cell.lon + GRID_SIZE > maxLon) maxLon = cell.lon + GRID_SIZE;
-      }
-
-      // 6. Overpass protection: fetch exactly the bounding box of missing data, snapped cleanly to prevent query drift
-      const fetchSouth = Math.round(minLat * 1000) / 1000;
-      const fetchWest = Math.round(minLon * 1000) / 1000;
-      const fetchNorth = Math.round(maxLat * 1000) / 1000;
-      const fetchEast = Math.round(maxLon * 1000) / 1000;
+      const fetchSouth = region.latitude - latDelta / 2;
+      const fetchWest = region.longitude - lonDelta / 2;
+      const fetchNorth = region.latitude + latDelta / 2;
+      const fetchEast = region.longitude + lonDelta / 2;
 
       const fetchedMarkets = await fetchMarkets(fetchSouth, fetchWest, fetchNorth, fetchEast, controller.signal);
 
-      // Remove from pending, add to fetched
-      newPendingCells.forEach(id => {
-        pendingGridCellsRef.current.delete(id);
-        fetchedGridCellsRef.current.add(id);
-      });
-
-      setIsFetchingMarkets(false);
-
-      if (!fetchedMarkets || fetchedMarkets.length === 0) return;
+      mapCacheManager.setStoresForRegion(region, fetchedMarkets);
 
       const prev = useLocationStore.getState().cachedMarkets || [];
       const combined = [...prev, ...fetchedMarkets];
       const unique = combined.filter(
         (market, index, self) => index === self.findIndex((m) => m.id === market.id)
       );
-      if (unique.length !== prev.length) {
-        let finalMarkets = unique;
-        if (unique.length > MAX_CACHED_MARKETS) {
-          finalMarkets = unique.slice(unique.length - MAX_CACHED_MARKETS);
-        }
-        setCachedMarkets(finalMarkets);
-      }
-    } catch (error: any) {
-      setIsFetchingMarkets(false);
-      // On failure or abort, remove from pending so they can be retried
-      newPendingCells.forEach(id => pendingGridCellsRef.current.delete(id));
       
-      if (error.name === 'AbortError' || error.message?.includes('AbortError')) {
-        console.log('Previous overpass fetch aborted due to new map pan.');
-      } else {
+      let finalMarkets = unique;
+      if (unique.length > MAX_CACHED_MARKETS) {
+        finalMarkets = unique.slice(unique.length - MAX_CACHED_MARKETS);
+      }
+      setCachedMarkets(finalMarkets);
+    } catch (error: any) {
+      if (error.name !== 'AbortError' && !error.message?.includes('AbortError')) {
         console.log('Error fetching from Overpass:', error);
       }
+    } finally {
+      setIsFetchingMarkets(false);
     }
   }, []);
 
@@ -581,11 +481,27 @@ export default function StoresScreen() {
     }
   }, [readyCalloutId]);
 
-  const handleLocateMe = useCallback(async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  const handleLocateMe = useCallback(async (isInitial = false) => {
+    if (!isInitial) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    const fallbackRegion = {
+      latitude: 41.0082,
+      longitude: 28.9784,
+      latitudeDelta: 0.015,
+      longitudeDelta: 0.015,
+    };
+
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
+      if (status !== 'granted') {
+        if (isInitial) {
+          setInitialRegion(fallbackRegion);
+          setCurrentRegion(fallbackRegion);
+        }
+        return;
+      }
 
       const location = await Location.getCurrentPositionAsync({});
 
@@ -606,8 +522,13 @@ export default function StoresScreen() {
         longitudeDelta,
       };
 
-      mapRef.current?.animateToRegion(newRegion, 1000);
-      setCurrentRegion(newRegion);
+      if (isInitial) {
+        setInitialRegion(newRegion);
+        setCurrentRegion(newRegion);
+      } else {
+        mapRef.current?.animateToRegion(newRegion, 1000);
+        setCurrentRegion(newRegion);
+      }
       updateClusters(newRegion);
 
       // Fetch markets around actual location (via ref for latest version)
@@ -619,6 +540,10 @@ export default function StoresScreen() {
       });
     } catch (error) {
       console.warn('Error fetching location', error);
+      if (isInitial) {
+        setInitialRegion(fallbackRegion);
+        setCurrentRegion(fallbackRegion);
+      }
     }
   }, [updateClusters]);
 
@@ -630,7 +555,7 @@ export default function StoresScreen() {
     let timeout: ReturnType<typeof setTimeout>;
     const locate = () => {
       if (useLocationStore.persist?.hasHydrated()) {
-        handleLocateMeRef.current();
+        handleLocateMeRef.current(true);
       } else {
         timeout = setTimeout(locate, 50);
       }
@@ -675,16 +600,12 @@ export default function StoresScreen() {
       <StatusBar style="dark" />
 
       {/* Full Screen Background Map */}
+      {initialRegion ? (
       <MapView
         ref={mapRef}
         userInterfaceStyle="light"
         style={StyleSheet.absoluteFillObject}
-        initialRegion={{
-          latitude: 41.0082,
-          longitude: 28.9784,
-          latitudeDelta: 0.015,
-          longitudeDelta: 0.015,
-        }}
+        initialRegion={initialRegion}
         showsUserLocation={true}
         followsUserLocation={false}
         showsPointsOfInterest={false}
@@ -876,6 +797,9 @@ export default function StoresScreen() {
           );
         })}
       </MapView>
+      ) : (
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#f8fafc' }]} />
+      )}
 
       {/* ── Animated Search Blur Overlay ── */}
       <Animated.View
