@@ -66,8 +66,6 @@ export default function HomeScreen() {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
-          setNearbyStore('Location permission denied');
-          setIsNearStore(false);
           return;
         }
 
@@ -76,55 +74,81 @@ export default function HomeScreen() {
         const userLon = location.coords.longitude;
         setUserLocation({ latitude: userLat, longitude: userLon });
 
-        // Search within ~1.5 km radius to speed up initial load
-        let offset = 0.015;
-        let s = userLat - offset;
-        let n = userLat + offset;
-        let w = userLon - offset;
-        let e = userLon + offset;
+        const hasNearbyMarkets = useLocationStore.getState().cachedMarkets.some(
+          (m: any) => haversineDistance(userLat, userLon, m.latitude, m.longitude) < 5000
+        );
 
-        let markets = await fetchMarkets(s, w, n, e);
+        if (!hasNearbyMarkets && !useLocationStore.getState().isFetchingMarkets) {
+          useLocationStore.getState().setIsFetchingMarkets(true);
+          let offset = 0.015;
+          let s = userLat - offset;
+          let n = userLat + offset;
+          let w = userLon - offset;
+          let e = userLon + offset;
 
-        // Fallback: widen to ~5.5 km if nothing found
-        if (!markets || markets.length === 0) {
-          offset = 0.05;
-          s = userLat - offset;
-          n = userLat + offset;
-          w = userLon - offset;
-          e = userLon + offset;
-          markets = await fetchMarkets(s, w, n, e);
-        }
-        if (markets && markets.length > 0) {
-          useLocationStore.getState().setCachedMarkets(markets);
-          // Find the nearest store by Haversine distance
-          let nearest = markets[0];
-          let minDist = haversineDistance(userLat, userLon, nearest.latitude, nearest.longitude);
+          let fetchedMarkets = await fetchMarkets(s, w, n, e);
 
-          for (let i = 1; i < markets.length; i++) {
-            const dist = haversineDistance(userLat, userLon, markets[i].latitude, markets[i].longitude);
-            if (dist < minDist) {
-              minDist = dist;
-              nearest = markets[i];
-            }
+          if (!fetchedMarkets || fetchedMarkets.length === 0) {
+            offset = 0.05;
+            s = userLat - offset;
+            n = userLat + offset;
+            w = userLon - offset;
+            e = userLon + offset;
+            fetchedMarkets = await fetchMarkets(s, w, n, e);
           }
 
-          setNearbyStore(`${nearest.name} is ${formatDistance(minDist)}`);
-          setIsNearStore(true);
-        } else {
-          setNearbyStore('No stores nearby');
-          setIsNearStore(false);
+          if (fetchedMarkets && fetchedMarkets.length > 0) {
+            const prev = useLocationStore.getState().cachedMarkets || [];
+            const combined = [...prev, ...fetchedMarkets];
+            const unique = combined.filter(
+              (market, index, self) => index === self.findIndex((m: any) => m.id === market.id)
+            );
+            useLocationStore.getState().setCachedMarkets(unique);
+          }
+          useLocationStore.getState().setIsFetchingMarkets(false);
         }
       } catch (error: any) {
+        useLocationStore.getState().setIsFetchingMarkets(false);
         if (error?.name === 'AbortError' || error?.message?.includes('AbortError')) {
           console.log('Nearby store fetch timed out (expected in slow network/large area).');
         } else {
           console.error('Error fetching nearby store:', error);
         }
-        setNearbyStore('Could not find stores');
-        setIsNearStore(false);
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (!userLocation) {
+      setNearbyStore('Searching location...');
+      setIsNearStore(false);
+      return;
+    }
+
+    if (cachedMarkets && cachedMarkets.length > 0) {
+      let nearest = cachedMarkets[0];
+      let minDist = haversineDistance(userLocation.latitude, userLocation.longitude, nearest.latitude, nearest.longitude);
+
+      for (let i = 1; i < cachedMarkets.length; i++) {
+        const dist = haversineDistance(userLocation.latitude, userLocation.longitude, cachedMarkets[i].latitude, cachedMarkets[i].longitude);
+        if (dist < minDist) {
+          minDist = dist;
+          nearest = cachedMarkets[i];
+        }
+      }
+
+      if (minDist < 10000) {
+        setNearbyStore(`${nearest.name} is ${formatDistance(minDist)}`);
+        setIsNearStore(true);
+      } else {
+        setNearbyStore(isFetchingMarkets ? 'Searching nearby...' : 'No stores nearby');
+        setIsNearStore(false);
+      }
+    } else {
+      setNearbyStore(isFetchingMarkets ? 'Searching nearby...' : 'No stores nearby');
+      setIsNearStore(false);
+    }
+  }, [cachedMarkets, userLocation, isFetchingMarkets]);
 
   const { lists: shoppingLists, addList, removeList } = useListsStore();
 
@@ -191,7 +215,7 @@ export default function HomeScreen() {
   };
 
   // Shared Zustand store for saved shops (synced with Stores page)
-  const { locations: savedShops, removeLocation } = useLocationStore();
+  const { locations: savedShops, removeLocation, cachedMarkets, isFetchingMarkets } = useLocationStore();
 
   const swipeableShopRefs = useRef<Map<string, Swipeable>>(new Map());
 

@@ -100,10 +100,10 @@ export default function StoresScreen() {
     };
   }, []);
 
-  const { locations, addLocation, removeLocation, cachedMarkets, setCachedMarkets } = useLocationStore();
+  const { locations, addLocation, removeLocation, cachedMarkets, setCachedMarkets, isFetchingMarkets, setIsFetchingMarkets } = useLocationStore();
   const savedShops = locations ?? [];
 
-  const [markets, setMarkets] = useState<any[]>(cachedMarkets || []);
+  const markets = cachedMarkets || [];
 
   const snapPoints = useMemo(() => {
     const HEADER_HEIGHT = 80;       // handle + "Saved Shops" title
@@ -322,6 +322,11 @@ export default function StoresScreen() {
       return;
     }
 
+    if (useLocationStore.getState().isFetchingMarkets) {
+      console.log("Already fetching markets globally, skipping duplicate request.");
+      return;
+    }
+
     lastFetchCenterRef.current = { latitude: region.latitude, longitude: region.longitude };
 
     // 4. Request deduplication: Mark new cells as pending
@@ -336,6 +341,7 @@ export default function StoresScreen() {
     fetchAbortController.current = controller;
 
     try {
+      setIsFetchingMarkets(true);
       // Compute bounding box of ALL missing cells
       let minLat = cellsToFetch[0].lat;
       let maxLat = cellsToFetch[0].lat + GRID_SIZE;
@@ -363,22 +369,24 @@ export default function StoresScreen() {
         fetchedGridCellsRef.current.add(id);
       });
 
+      setIsFetchingMarkets(false);
+
       if (!fetchedMarkets || fetchedMarkets.length === 0) return;
 
-      setMarkets(prev => {
-        const combined = [...prev, ...fetchedMarkets];
-        const unique = combined.filter(
-          (market, index, self) => index === self.findIndex((m) => m.id === market.id)
-        );
-        if (unique.length === prev.length) return prev;
+      const prev = useLocationStore.getState().cachedMarkets || [];
+      const combined = [...prev, ...fetchedMarkets];
+      const unique = combined.filter(
+        (market, index, self) => index === self.findIndex((m) => m.id === market.id)
+      );
+      if (unique.length !== prev.length) {
         let finalMarkets = unique;
         if (unique.length > MAX_CACHED_MARKETS) {
           finalMarkets = unique.slice(unique.length - MAX_CACHED_MARKETS);
         }
-        setTimeout(() => setCachedMarkets(finalMarkets), 0);
-        return finalMarkets;
-      });
+        setCachedMarkets(finalMarkets);
+      }
     } catch (error: any) {
+      setIsFetchingMarkets(false);
       // On failure or abort, remove from pending so they can be retried
       newPendingCells.forEach(id => pendingGridCellsRef.current.delete(id));
       
