@@ -32,6 +32,29 @@ const useLocalUIStore = create<LocalUIState>((set) => ({
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+// TrackedMarker Wrapper for isolating tracksViewChanges logic
+const TrackedMarker = React.forwardRef(({ children, forceTrack, ...props }: any, ref: any) => {
+  const [tracksViewChanges, setTracksViewChanges] = useState(true);
+
+  useEffect(() => {
+    if (forceTrack) {
+      setTracksViewChanges(true);
+    } else {
+      const timer = setTimeout(() => {
+        setTracksViewChanges(false);
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, [forceTrack]);
+
+  return (
+    <Marker ref={ref} tracksViewChanges={tracksViewChanges} {...props}>
+      {children}
+    </Marker>
+  );
+});
+TrackedMarker.displayName = 'TrackedMarker';
+
 export default function StoresScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -49,7 +72,6 @@ export default function StoresScreen() {
   const calloutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [tracksViewId, setTracksViewId] = useState<string | null>(null);
   const [readyCalloutId, setReadyCalloutId] = useState<string | null>(null);
-  const [tracksViewChangesAll, setTracksViewChangesAll] = useState(true);
 
   // Stable ref for fetchMarketsFromOverpass so memoized callbacks always call the latest version
   const fetchMarketsRef = useRef<(region: any) => void>(() => {});
@@ -190,11 +212,6 @@ export default function StoresScreen() {
     ],
   }));
 
-  useEffect(() => {
-    setTracksViewChangesAll(true);
-    const timer = setTimeout(() => setTracksViewChangesAll(false), 1000);
-    return () => clearTimeout(timer);
-  }, [markets?.length]);
   const [currentRegion, setCurrentRegion] = useState<any>({
     latitude: 41.0082,
     longitude: 28.9784,
@@ -604,21 +621,21 @@ export default function StoresScreen() {
           const shopId = `saved-${shop.id}`;
           const isSelected = selectedShopToSave?.id === shopId;
           const markerName = shop.name || 'Store';
-          const needsTracking = tracksViewId === shopId || tracksViewChangesAll;
+          const needsTracking = tracksViewId === shopId;
           const longitude = shop.longitude;
           const latitude = shop.latitude;
 
           return (
-            <Marker
+            <TrackedMarker
               key={shopId}
-              ref={(ref) => {
+              ref={(ref: any) => {
                 if (ref) markerRefs.current[shopId] = ref;
               }}
               coordinate={{ latitude, longitude }}
               anchor={{ x: 0.5, y: 0.5 }}
               calloutAnchor={{ x: 0.5, y: 0 }}
-              tracksViewChanges={needsTracking}
-              onPress={(e) => {
+              forceTrack={needsTracking}
+              onPress={(e: any) => {
                 e.stopPropagation();
                 Keyboard.dismiss();
                 const now = Date.now();
@@ -667,7 +684,7 @@ export default function StoresScreen() {
                   </View>
                 </Callout>
               )}
-            </Marker>
+            </TrackedMarker>
           );
         })}
         {clusters.map((cluster) => {
@@ -677,11 +694,11 @@ export default function StoresScreen() {
 
           if (isCluster) {
             return (
-              <Marker
+              <TrackedMarker
                 key={`cluster-${clusterId}`}
                 coordinate={{ latitude, longitude }}
-                tracksViewChanges={tracksViewChangesAll}
-                onPress={(e) => {
+                forceTrack={false}
+                onPress={(e: any) => {
                   e.stopPropagation();
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   Keyboard.dismiss();
@@ -700,7 +717,7 @@ export default function StoresScreen() {
                 }}
               >
                 <MapCluster pointCount={pointCount} onPress={() => {}} />
-              </Marker>
+              </TrackedMarker>
             );
           }
 
@@ -710,19 +727,19 @@ export default function StoresScreen() {
           const isSaved = properties.isSaved;
           const isSelected = selectedShopToSave?.id === properties.id || (isSaved && selectedShopToSave?.id === `saved-${properties.id}`);
           const markerName = properties.name || 'Store';
-          const needsTracking = tracksViewId === properties.id || tracksViewChangesAll;
+          const needsTracking = tracksViewId === properties.id;
 
           return (
-            <Marker
+            <TrackedMarker
               key={properties.id}
-              ref={(ref) => {
+              ref={(ref: any) => {
                 if (ref) markerRefs.current[properties.id] = ref;
               }}
               coordinate={{ latitude, longitude }}
               anchor={{ x: 0.5, y: 0.5 }}
               calloutAnchor={{ x: 0.5, y: 0 }}
-              tracksViewChanges={needsTracking}
-              onPress={(e) => {
+              forceTrack={needsTracking}
+              onPress={(e: any) => {
                 e.stopPropagation();
                 Keyboard.dismiss();
                 const now = Date.now();
@@ -766,7 +783,7 @@ export default function StoresScreen() {
                   </View>
                 </Callout>
               )}
-            </Marker>
+            </TrackedMarker>
           );
         })}
       </MapView>
