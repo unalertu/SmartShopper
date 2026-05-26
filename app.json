@@ -14,7 +14,8 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "SmartShopper needs your location to remind you about your shopping list when you're near saved stores.",
         "NSLocationAlwaysUsageDescription": "SmartShopper needs background location access to detect when you're near saved stores.",
         "NSLocationWhenInUseUsageDescription": "SmartShopper needs your location to find nearby stores.",
-        "UIBackgroundModes": ["location", "fetch"]
+        "UIBackgroundModes": ["location", "fetch"],
+        "LSApplicationQueriesSchemes": ["comgooglemaps", "yandexmaps", "maps"]
       }
     },
     "android": {

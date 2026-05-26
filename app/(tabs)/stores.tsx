@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Dimensions, Keyboard, TouchableWithoutFeedback, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Dimensions, Keyboard, TouchableWithoutFeedback, Linking, ActionSheetIOS } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Store, Plus, ChevronRight, Search, SlidersHorizontal, ShoppingBasket, LocateFixed, Trash2, MapPin, X } from 'lucide-react-native';
+import { Store, Plus, ChevronRight, Search, SlidersHorizontal, ShoppingBasket, LocateFixed, Trash2, MapPin, X, Navigation2 } from 'lucide-react-native';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
@@ -55,6 +55,53 @@ const TrackedMarker = React.forwardRef(({ children, forceTrack, ...props }: any,
   );
 });
 TrackedMarker.displayName = 'TrackedMarker';
+
+// Helper: show directions action sheet for a shop
+function openDirectionsSheet(latitude: number, longitude: number) {
+  const options = ['Cancel', 'Apple Maps', 'Google Maps', 'Yandex Maps'];
+  const cancelButtonIndex = 0;
+
+  ActionSheetIOS.showActionSheetWithOptions(
+    {
+      options,
+      cancelButtonIndex,
+      title: 'Get Directions',
+      message: 'Choose a maps application',
+    },
+    async (index: number) => {
+      if (index === cancelButtonIndex) return;
+
+      if (index === 1) {
+        // Apple Maps
+        const url = `maps://?daddr=${latitude},${longitude}`;
+        const canOpen = await Linking.canOpenURL(url);
+        if (canOpen) {
+          Linking.openURL(url);
+        } else {
+          Linking.openURL(`https://maps.apple.com/?daddr=${latitude},${longitude}`);
+        }
+      } else if (index === 2) {
+        // Google Maps
+        const nativeUrl = `comgooglemaps://?daddr=${latitude},${longitude}`;
+        const canOpen = await Linking.canOpenURL(nativeUrl);
+        if (canOpen) {
+          Linking.openURL(nativeUrl);
+        } else {
+          Linking.openURL(`https://maps.google.com/?q=${latitude},${longitude}`);
+        }
+      } else if (index === 3) {
+        // Yandex Maps
+        const nativeUrl = `yandexmaps://maps.yandex.com/?pt=${longitude},${latitude}&z=16`;
+        const canOpen = await Linking.canOpenURL(nativeUrl);
+        if (canOpen) {
+          Linking.openURL(nativeUrl);
+        } else {
+          Linking.openURL(`https://yandex.com/maps/?pt=${longitude},${latitude}&z=16`);
+        }
+      }
+    }
+  );
+}
 
 export default function StoresScreen() {
   const insets = useSafeAreaInsets();
@@ -916,9 +963,10 @@ export default function StoresScreen() {
               <Animated.View
                 entering={FadeInDown.duration(300).springify()}
                 exiting={FadeOutUp.duration(200)}
+                style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}
               >
                 <TouchableOpacity
-                  style={styles.contextSaveBtn}
+                  style={[styles.contextSaveBtn, { flex: 1, marginBottom: 0 }]}
                   activeOpacity={0.8}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -936,6 +984,17 @@ export default function StoresScreen() {
                   <Text style={styles.contextSaveBtnText}>
                     Save {selectedShopToSave.name}
                   </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.contextDirectionsBtn}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    openDirectionsSheet(selectedShopToSave.latitude, selectedShopToSave.longitude);
+                  }}
+                >
+                  <Navigation2 size={18} color="#0f172a" />
+                  <Text style={styles.contextDirectionsBtnText}>Directions</Text>
                 </TouchableOpacity>
               </Animated.View>
             )}
@@ -992,9 +1051,20 @@ export default function StoresScreen() {
                       elevation: 3,
                     }}
                   >
-                    <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete</Text>
+                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>Delete</Text>
                   </TouchableOpacity>
                 </View>
+                <TouchableOpacity
+                  style={[styles.contextDirectionsBtn, { marginTop: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 12, backgroundColor: '#f1f5f9' }]}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    openDirectionsSheet(selectedShopToSave.latitude, selectedShopToSave.longitude);
+                  }}
+                >
+                  <Navigation2 size={18} color="#0f172a" />
+                  <Text style={styles.contextDirectionsBtnText}>Directions</Text>
+                </TouchableOpacity>
               </Animated.View>
               );
             })()}
@@ -1347,6 +1417,28 @@ const styles = StyleSheet.create({
   contextSaveBtnText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: '700',
+  },
+  contextDirectionsBtn: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  contextDirectionsBtnText: {
+    color: '#0f172a',
+    fontSize: 14,
     fontWeight: '700',
   },
 
