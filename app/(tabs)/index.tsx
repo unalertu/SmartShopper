@@ -41,6 +41,9 @@ export default function HomeScreen() {
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
 
+  // Shared Zustand store for saved shops (synced with Stores page)
+  const { locations: savedShops, removeLocation, cachedMarkets, isFetchingMarkets } = useLocationStore();
+
   // Haversine formula — returns distance in meters between two lat/lng points
   const haversineDistance = (
     lat1: number, lon1: number,
@@ -214,8 +217,7 @@ export default function HomeScreen() {
     );
   };
 
-  // Shared Zustand store for saved shops (synced with Stores page)
-  const { locations: savedShops, removeLocation, cachedMarkets, isFetchingMarkets } = useLocationStore();
+
 
   const swipeableShopRefs = useRef<Map<string, Swipeable>>(new Map());
 

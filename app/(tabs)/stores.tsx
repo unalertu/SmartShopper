@@ -873,7 +873,7 @@ export default function StoresScreen() {
         <View style={styles.locateButtonSurface}>
           <TouchableOpacity
             style={styles.locateButton}
-            onPress={handleLocateMe}
+            onPress={() => handleLocateMe()}
             activeOpacity={0.7}
           >
             <LocateFixed size={20} color="#334155" strokeWidth={2.5} />

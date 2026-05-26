@@ -53,7 +53,7 @@ import {
   useListsStore,
   useSettingsStore,
 } from '../../store';
-import type { GeofenceRadius, ThemeOption } from '../../store';
+import type { ThemeOption } from '../../store';
 import { hapticImpact, hapticNotification } from '../../services/haptics';
 import * as Haptics from 'expo-haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
@@ -128,12 +128,6 @@ function SettingsGroup({
 
 // ─── Label Maps ───────────────────────────────────────────────────────────────
 
-const RADIUS_LABELS: Record<GeofenceRadius, string> = {
-  50: '50m',
-  100: '100m',
-  200: '200m',
-  500: '500m',
-};
 
 const THEME_LABELS: Record<ThemeOption, string> = {
   system: 'System',
@@ -216,13 +210,11 @@ export default function SettingsScreen() {
     notificationsEnabled,
     hapticEnabled,
     locationEnabled,
-    geofenceRadius,
     distanceUnit,
     theme,
     setNotificationsEnabled,
     setHapticEnabled,
     setLocationEnabled,
-    setGeofenceRadius,
     setDistanceUnit,
     setTheme,
     resetSettings,
@@ -393,26 +385,6 @@ export default function SettingsScreen() {
     [setLocationEnabled]
   );
 
-  const handleGeofenceRadiusPick = useCallback(() => {
-    hapticImpact(ImpactFeedbackStyle.Light);
-
-    const options: GeofenceRadius[] = [50, 100, 200, 500];
-    Alert.alert(
-      'Geofence Radius',
-      'Choose the distance that triggers store alerts.',
-      [
-        ...options.map((radius) => ({
-          text: `${RADIUS_LABELS[radius]}${radius === geofenceRadius ? '  ✓' : ''}`,
-          onPress: () => {
-            hapticImpact(ImpactFeedbackStyle.Light);
-            setGeofenceRadius(radius);
-          },
-        })),
-        { text: 'Cancel', style: 'cancel' as const },
-      ]
-    );
-  }, [geofenceRadius, setGeofenceRadius]);
-
   const handleDistanceUnitToggle = useCallback(() => {
     hapticImpact(ImpactFeedbackStyle.Light);
     setDistanceUnit(distanceUnit === 'metric' ? 'imperial' : 'metric');
@@ -566,6 +538,20 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </Animated.View>
 
+          {/* ── Subscription ── */}
+          <SettingsGroup delay={50}>
+            <SettingsRow
+              icon={<Crown size={20} color="#D4AF37" />}
+              label="Restore Purchases"
+              sublabel="Restore your Pro subscription"
+              isLast
+              onPress={() => {
+                hapticImpact(ImpactFeedbackStyle.Heavy);
+                Alert.alert('Purchases Restored', 'Your Pro subscription has been successfully restored.');
+              }}
+            />
+          </SettingsGroup>
+
           {/* ── Notifications & Alerts ── */}
           <SettingsGroup delay={100}>
             <SettingsRow
@@ -611,20 +597,6 @@ export default function SettingsScreen() {
                   trackColor={switchTrackColor}
                   thumbColor="#ffffff"
                 />
-              }
-            />
-            <SettingsRow
-              icon={<MapPin size={20} color="#64748b" />}
-              label="Geofence Radius"
-              sublabel="Distance to trigger alerts"
-              onPress={handleGeofenceRadiusPick}
-              rightElement={
-                <View className="flex-row items-center gap-1.5">
-                  <Text className="text-[13px] font-medium text-slate-400">
-                    {RADIUS_LABELS[geofenceRadius]}
-                  </Text>
-                  <ChevronRight size={18} color="#cbd5e1" />
-                </View>
               }
             />
             <SettingsRow

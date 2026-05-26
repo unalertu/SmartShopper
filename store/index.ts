@@ -9,5 +9,4 @@ export type { ShoppingList } from "./useListsStore";
 export type {
   DistanceUnit,
   ThemeOption,
-  GeofenceRadius,
 } from "./useSettingsStore";

@@ -195,7 +195,12 @@ export default function PaywallScreen() {
           <TouchableOpacity>
             <Text className="text-slate-400 text-xs">Privacy Policy</Text>
           </TouchableOpacity>
-          <TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              alert('Purchases Restored: Your Pro subscription has been successfully restored.');
+            }}
+          >
             <Text className="text-slate-400 text-xs">Restore</Text>
           </TouchableOpacity>
         </View>

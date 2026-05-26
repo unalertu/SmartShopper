@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export type DistanceUnit = "metric" | "imperial";
 export type ThemeOption = "system" | "light" | "dark";
-export type GeofenceRadius = 50 | 100 | 200 | 500;
+
 
 interface SettingsState {
   // ── Hydration ──
@@ -18,7 +18,7 @@ interface SettingsState {
 
   // ── Location ──
   locationEnabled: boolean;
-  geofenceRadius: GeofenceRadius;
+
   distanceUnit: DistanceUnit;
 
   // ── Appearance ──
@@ -33,7 +33,7 @@ interface SettingsState {
   setSoundEnabled: (enabled: boolean) => void;
   setHapticEnabled: (enabled: boolean) => void;
   setLocationEnabled: (enabled: boolean) => void;
-  setGeofenceRadius: (radius: GeofenceRadius) => void;
+
   setDistanceUnit: (unit: DistanceUnit) => void;
   setTheme: (theme: ThemeOption) => void;
   setSmartSuggestionsEnabled: (enabled: boolean) => void;
@@ -47,7 +47,7 @@ const DEFAULT_SETTINGS = {
   soundEnabled: true,
   hapticEnabled: true,
   locationEnabled: false,
-  geofenceRadius: 100 as GeofenceRadius,
+
   distanceUnit: "metric" as DistanceUnit,
   theme: "system" as ThemeOption,
   smartSuggestionsEnabled: true,
@@ -65,7 +65,7 @@ export const useSettingsStore = create<SettingsState>()(
       setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
       setHapticEnabled: (enabled) => set({ hapticEnabled: enabled }),
       setLocationEnabled: (enabled) => set({ locationEnabled: enabled }),
-      setGeofenceRadius: (radius) => set({ geofenceRadius: radius }),
+
       setDistanceUnit: (unit) => set({ distanceUnit: unit }),
       setTheme: (theme) => set({ theme }),
       setSmartSuggestionsEnabled: (enabled) =>
