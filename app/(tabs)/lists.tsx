@@ -2,13 +2,13 @@ import React, { useRef, useState, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Menu, ChevronRight, Plus, X, ShoppingBasket, Sparkles } from 'lucide-react-native';
+import { Menu, ChevronRight, Plus, X, ShoppingBasket, Sparkles, ListPlus, PackagePlus, Clock, Activity } from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeInDown, FadeOutLeft, FadeOutUp, LinearTransition } from 'react-native-reanimated';
-import { useListsStore } from '../../store';
+import { useListsStore, useShoppingListStore } from '../../store';
 import { useScrollToTop } from '@react-navigation/native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 
@@ -42,6 +42,7 @@ export default function ListsScreen() {
   const newListBottomSheetRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => ['35%'], []);
   const [newListName, setNewListName] = useState('');
+  const [showAllTemplates, setShowAllTemplates] = useState(false);
 
   const handlePresentModalPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -145,9 +146,29 @@ export default function ListsScreen() {
 
           {/* Quick Start Section */}
           <Animated.View layout={LinearTransition.springify()} className={`${shoppingLists.length === 0 ? 'mt-4' : 'mb-6'}`}>
-            <View className="flex-row items-center gap-2 mb-4 px-6">
-              <Sparkles size={18} color="#0f172a" />
-              <Text className="text-[17px] font-bold text-slate-900 tracking-tight">Quick Start</Text>
+            <View className="flex-row items-center justify-between mb-3 px-6">
+              <View className="flex-row items-center gap-1.5">
+                <Sparkles size={14} color="#94a3b8" strokeWidth={2} />
+                <Text className="text-[14px] font-bold text-slate-500 tracking-wide uppercase">Quick Start</Text>
+              </View>
+              {(() => {
+                const allTemplates = [
+                  ['Weekly Groceries', 'Dinner Party', 'Office Supplies'],
+                  ['Breakfast', 'Cleaning', 'Pet Supplies'],
+                  ['BBQ', 'Snacks', 'Pharmacy', 'Baking'],
+                ];
+                return allTemplates.length > 2 ? (
+                  <TouchableOpacity
+                    activeOpacity={0.6}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setShowAllTemplates(!showAllTemplates);
+                    }}
+                  >
+                    <Text className="text-[12px] font-semibold text-slate-400">{showAllTemplates ? 'Show Less' : 'See All'}</Text>
+                  </TouchableOpacity>
+                ) : null;
+              })()}
             </View>
             
             <ScrollView 
@@ -156,36 +177,39 @@ export default function ListsScreen() {
               showsHorizontalScrollIndicator={false} 
               contentContainerStyle={{ paddingHorizontal: 24 }}
             >
-              <View style={{ gap: 12 }}>
-                {[
-                  ['Weekly Groceries', 'Dinner Party', 'Office Supplies', 'Fitness'],
-                  ['Breakfast', 'Cleaning Supplies', 'Pet Supplies', 'Baking'],
-                  ['BBQ', 'Snacks', 'Pharmacy', 'Movie Night']
-                ].map((row, rowIndex) => (
-                  <View key={rowIndex} className="flex-row" style={{ gap: 12 }}>
-                    {row.map((template) => (
-                    <TouchableOpacity
-                      key={template}
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        addList(template);
-                      }}
-                      className="bg-white border border-slate-100 rounded-[16px] px-4 py-3 flex-row items-center gap-2"
-                      style={{
-                        shadowColor: '#0f172a',
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.03,
-                        shadowRadius: 8,
-                        elevation: 1,
-                      }}
-                    >
-                      <Plus size={16} color="#0f172a" strokeWidth={2.5} />
-                      <Text className="text-[14px] font-semibold text-slate-700">{template}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              ))}
+              <View style={{ gap: 8 }}>
+                {(() => {
+                  const rows = [
+                    ['Weekly Groceries', 'Dinner Party', 'Office Supplies'],
+                    ['Breakfast', 'Cleaning', 'Pet Supplies'],
+                    ...(showAllTemplates ? [['BBQ', 'Snacks', 'Pharmacy', 'Baking']] : []),
+                  ];
+                  return rows.map((row, rowIndex) => (
+                    <View key={rowIndex} className="flex-row" style={{ gap: 8 }}>
+                      {row.map((template) => (
+                        <TouchableOpacity
+                          key={template}
+                          activeOpacity={0.7}
+                          onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            addList(template);
+                          }}
+                          className="bg-white border border-slate-100/70 rounded-[12px] px-3.5 py-2 flex-row items-center gap-1.5"
+                          style={{
+                            shadowColor: '#0f172a',
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: 0.015,
+                            shadowRadius: 4,
+                            elevation: 1,
+                          }}
+                        >
+                          <Plus size={13} color="#94a3b8" strokeWidth={2.5} />
+                          <Text className="text-[13px] font-medium text-slate-600">{template}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  ));
+                })()}
               </View>
             </ScrollView>
           </Animated.View>
@@ -240,101 +264,152 @@ export default function ListsScreen() {
               ))}
           </Animated.View>
 
-          {/* Adaptive Popular Items Placeholder */}
-          {shoppingLists.length === 0 ? (
-            <Animated.View layout={LinearTransition.springify()} className="px-6 mt-8">
-              <Text className="text-[17px] font-bold text-slate-900 tracking-tight mb-4">Popular Items</Text>
-              <View className="bg-white rounded-[24px] p-2 border border-slate-100" style={{
-                shadowColor: '#0f172a',
-                shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: 0.03,
-                shadowRadius: 24,
-                elevation: 2,
-              }}>
-                {[
-                  { icon: '🥛', name: 'Milk', category: 'Dairy' },
-                  { icon: '🥚', name: 'Eggs', category: 'Dairy' },
-                  { icon: '🍞', name: 'Bread', category: 'Bakery' }
-                ].map((item, index) => (
-                  <View key={item.name} className={`flex-row items-center justify-between p-3 ${index !== 2 ? 'border-b border-slate-50' : ''}`}>
-                    <View className="flex-row items-center gap-4">
-                      <View className="w-12 h-12 bg-slate-50 rounded-[14px] items-center justify-center">
-                        <Text className="text-2xl">{item.icon}</Text>
-                      </View>
-                      <View>
-                        <Text className="text-[16px] font-bold text-slate-900">{item.name}</Text>
-                        <Text className="text-[13px] font-medium text-slate-500 mt-0.5">{item.category}</Text>
-                      </View>
-                    </View>
-                    <TouchableOpacity 
-                      activeOpacity={0.7}
-                      className="w-9 h-9 bg-slate-100 rounded-full items-center justify-center"
-                    >
-                      <Plus size={18} color="#0f172a" />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </View>
-            </Animated.View>
-          ) : (
-            <Animated.View layout={LinearTransition.springify()} className="mt-6 mb-2 px-6">
-              <Text className="text-[15px] font-semibold text-slate-500 tracking-tight mb-3">Popular Items</Text>
-              <View className="bg-white rounded-[20px] p-2 border border-slate-100" style={{
-                  shadowColor: '#0f172a',
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.02,
-                  shadowRadius: 12,
-                  elevation: 1,
-              }}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 6, gap: 12 }}>
-                  {[
-                    { icon: '🥛', name: 'Milk' },
-                    { icon: '🥚', name: 'Eggs' },
-                    { icon: '🍞', name: 'Bread' },
-                    { icon: '🍎', name: 'Apples' },
-                    { icon: '🍌', name: 'Bananas' },
-                  ].map((item) => (
-                    <TouchableOpacity
-                      key={item.name}
-                      activeOpacity={0.7}
-                      className="items-center py-3 px-2 w-[72px]"
-                    >
-                      <View className="w-12 h-12 bg-slate-50 rounded-full items-center justify-center mb-2">
-                        <Text className="text-xl">{item.icon}</Text>
-                      </View>
-                      <Text className="text-[12px] font-semibold text-slate-700 text-center" numberOfLines={1}>{item.name}</Text>
-                      <View className="absolute top-2 right-1 w-5 h-5 bg-white rounded-full items-center justify-center shadow-sm border border-slate-100">
-                         <Plus size={12} color="#0f172a" />
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            </Animated.View>
-          )}
+          {/* Recent Activity Section */}
+          {(() => {
+            // Build activity events from lists and items
+            const activityEvents: Array<{
+              id: string;
+              type: 'list_created' | 'item_added' | 'list_updated';
+              title: string;
+              subtitle: string;
+              timestamp: number;
+              listId?: number;
+            }> = [];
 
-          <Animated.View layout={LinearTransition.springify()} className="mx-6 mt-6 mb-4">
+            // Add list creation events
+            shoppingLists.forEach((list) => {
+              if (list.createdAt) {
+                activityEvents.push({
+                  id: `list_${list.id}`,
+                  type: 'list_created',
+                  title: list.name,
+                  subtitle: 'List created',
+                  timestamp: list.createdAt,
+                  listId: list.id,
+                });
+              }
+            });
+
+            // Add item events from shopping list store
+            const allItems = useShoppingListStore.getState().items;
+            allItems.slice(0, 10).forEach((item) => {
+              const parentList = shoppingLists.find(l => l.id === item.listId);
+              activityEvents.push({
+                id: `item_${item.id}`,
+                type: 'item_added',
+                title: item.name,
+                subtitle: parentList ? `Added to ${parentList.name}` : 'Item added',
+                timestamp: item.createdAt,
+                listId: item.listId,
+              });
+            });
+
+            // Sort by most recent first and take top 6
+            activityEvents.sort((a, b) => b.timestamp - a.timestamp);
+            const recentEvents = activityEvents.slice(0, 6);
+
+            const getActivityIcon = (type: string) => {
+              switch (type) {
+                case 'list_created':
+                  return <ListPlus size={14} color="#334155" strokeWidth={2} />;
+                case 'item_added':
+                  return <PackagePlus size={14} color="#475569" strokeWidth={2} />;
+                default:
+                  return <Clock size={14} color="#94a3b8" strokeWidth={2} />;
+              }
+            };
+
+            const getIconBg = (type: string) => {
+              switch (type) {
+                case 'list_created': return 'bg-slate-100/70';
+                case 'item_added': return 'bg-slate-100/50';
+                default: return 'bg-slate-50/60';
+              }
+            };
+
+            return (
+              <Animated.View layout={LinearTransition.springify()} className="px-6 mt-6 mb-2">
+                <View className="flex-row items-center gap-1.5 mb-3">
+                  <Activity size={14} color="#94a3b8" strokeWidth={2} />
+                  <Text className="text-[14px] font-bold text-slate-500 tracking-wide uppercase">Recent Activity</Text>
+                </View>
+
+                {recentEvents.length === 0 ? (
+                  <View className="bg-white rounded-[20px] p-5 border border-slate-100 items-center" style={{
+                    shadowColor: '#0f172a',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.02,
+                    shadowRadius: 12,
+                    elevation: 1,
+                  }}>
+                    <View className="w-10 h-10 bg-slate-50 rounded-full items-center justify-center mb-2.5">
+                      <Clock size={18} color="#cbd5e1" strokeWidth={1.5} />
+                    </View>
+                    <Text className="text-[13px] font-medium text-slate-400/80 text-center">Your recent actions will appear here</Text>
+                  </View>
+                ) : (
+                  <View style={{ gap: 6 }}>
+                    {recentEvents.map((event, index) => (
+                      <Animated.View
+                        key={event.id}
+                        entering={FadeInDown.delay(index * 60).duration(300)}
+                      >
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() => {
+                            if (event.listId) {
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                              router.push(`/list/${event.listId}`);
+                            }
+                          }}
+                          className="bg-white rounded-[14px] px-3 py-2.5 flex-row items-center border border-slate-100/60"
+                          style={{
+                            shadowColor: '#0f172a',
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: 0.015,
+                            shadowRadius: 6,
+                            elevation: 1,
+                          }}
+                        >
+                          <View className={`w-7 h-7 ${getIconBg(event.type)} rounded-[8px] items-center justify-center mr-2.5`}>
+                            {getActivityIcon(event.type)}
+                          </View>
+                          <View className="flex-1 mr-2">
+                            <Text className="text-[14px] font-bold text-slate-800 tracking-tight" numberOfLines={1}>{event.title}</Text>
+                            <Text className="text-[11.5px] font-medium text-slate-400/80 mt-px" numberOfLines={1}>{event.subtitle}</Text>
+                          </View>
+                          <Text className="text-[10.5px] font-medium text-slate-400/50">{getRelativeDate(event.timestamp)}</Text>
+                        </TouchableOpacity>
+                      </Animated.View>
+                    ))}
+                  </View>
+                )}
+              </Animated.View>
+            );
+          })()}
+
+          <Animated.View layout={LinearTransition.springify()} className="mx-6 mt-5 mb-4">
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={handlePresentModalPress}
               style={{
                 backgroundColor: '#0f172a',
-                borderRadius: 20,
-                paddingVertical: 18,
-                paddingHorizontal: 20,
+                borderRadius: 16,
+                paddingVertical: 14,
+                paddingHorizontal: 18,
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 10,
+                gap: 8,
                 shadowColor: '#0f172a',
-                shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: 0.15,
-                shadowRadius: 16,
-                elevation: 4,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 12,
+                elevation: 3,
               }}
             >
-              <Plus size={22} color="#fff" strokeWidth={2.5} />
-              <Text style={{ color: '#fff', fontSize: 17, fontWeight: '700', letterSpacing: 0.3 }}>Create New List</Text>
+              <Plus size={20} color="#fff" strokeWidth={2.5} />
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600', letterSpacing: 0.2 }}>Create New List</Text>
             </TouchableOpacity>
           </Animated.View>
         </ScrollView>
