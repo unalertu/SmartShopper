@@ -279,7 +279,7 @@ export default function HomeScreen() {
           {/* Smart Status Card */}
           <Animated.View 
             layout={LinearTransition.springify()}
-            className="mx-6 mt-2 mb-5 rounded-[36px] bg-white border border-slate-100 overflow-hidden"
+            className="mx-6 mt-2 mb-3 rounded-[36px] bg-white border border-slate-100 overflow-hidden"
             style={{
               shadowColor: '#0f172a',
               shadowOffset: { width: 0, height: 8 },
@@ -352,14 +352,27 @@ export default function HomeScreen() {
           </Animated.View>
 
           {/* 3. My Lists Section */}
-          <Animated.View layout={LinearTransition.springify()} className="flex-row items-center mx-6 mb-4 mt-2">
-            <View className="w-2.5 h-2.5 rounded-full bg-slate-900 mr-2.5" />
-            <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">My Lists</Text>
+          <Animated.View layout={LinearTransition.springify()} className="flex-row items-center justify-between mx-6 mb-3 mt-1">
+            <View className="flex-row items-center">
+              <View className="w-2.5 h-2.5 rounded-full bg-slate-900 mr-2.5" />
+              <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">My Lists</Text>
+            </View>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={handlePresentModalPress}
+              className="flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5"
+              style={{
+                backgroundColor: '#0f172a',
+              }}
+            >
+              <Plus size={14} color="#fff" strokeWidth={2.5} />
+              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Add</Text>
+            </TouchableOpacity>
           </Animated.View>
           {shoppingLists.length === 0 ? (
-            <Animated.View layout={LinearTransition.springify()} className="mb-4 mt-1">
+            <Animated.View layout={LinearTransition.springify()} className="mb-3 mt-1">
               {/* Inline Empty State */}
-              <View className="px-6 mb-5 flex-row items-center justify-between">
+              <View className="px-6 mb-4 flex-row items-center justify-between">
                 <View className="flex-row items-center gap-3">
                   <View className="w-10 h-10 bg-slate-100/60 rounded-[10px] items-center justify-center">
                     <ShoppingBag size={18} color="#64748b" />
@@ -422,7 +435,7 @@ export default function HomeScreen() {
                   exiting={FadeOutLeft.duration(200)}
                 >
                   <Swipeable
-                    containerStyle={{ marginHorizontal: 24, marginBottom: 12 }}
+                    containerStyle={{ marginHorizontal: 24, marginBottom: 10 }}
                     ref={(ref) => {
                       if (ref) {
                         swipeableRefs.current.set(list.id, ref);
@@ -462,42 +475,31 @@ export default function HomeScreen() {
                 </Animated.View>
               ))}
 
-              <Animated.View layout={LinearTransition.springify()} className="mx-6 mb-6 mt-4">
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={handlePresentModalPress}
-                  style={{
-                    backgroundColor: '#0f172a',
-                    borderRadius: 20,
-                    paddingVertical: 16,
-                    paddingHorizontal: 16,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 8,
-                    shadowColor: '#0f172a',
-                    shadowOffset: { width: 0, height: 6 },
-                    shadowOpacity: 0.12,
-                    shadowRadius: 16,
-                    elevation: 4,
-                  }}
-                >
-                  <Plus size={20} color="#fff" strokeWidth={2.5} />
-                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Add List</Text>
-                </TouchableOpacity>
-              </Animated.View>
             </>
           )}
 
           {/* 4. My Shops Section */}
-          <Animated.View layout={LinearTransition.springify()} className="flex-row items-center mx-6 mt-8 mb-4">
-            <View className="w-2.5 h-2.5 rounded-full bg-slate-900 mr-2.5" />
-            <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">My Shops</Text>
+          <Animated.View layout={LinearTransition.springify()} className="flex-row items-center justify-between mx-6 mt-4 mb-3">
+            <View className="flex-row items-center">
+              <View className="w-2.5 h-2.5 rounded-full bg-slate-900 mr-2.5" />
+              <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">My Shops</Text>
+            </View>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/stores'); }}
+              className="flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5"
+              style={{
+                backgroundColor: '#0f172a',
+              }}
+            >
+              <Plus size={14} color="#fff" strokeWidth={2.5} />
+              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Add</Text>
+            </TouchableOpacity>
           </Animated.View>
           {savedShops.length === 0 && (
-            <Animated.View layout={LinearTransition.springify()} className="mx-6 mb-5">
+            <Animated.View layout={LinearTransition.springify()} className="mx-6 mb-4">
               <View
-                className="rounded-[28px] p-8 items-center border border-dashed border-slate-200"
+                className="rounded-[28px] p-6 items-center border border-dashed border-slate-200"
                 style={{ backgroundColor: '#f8fafc' }}
               >
                 <View className="bg-white border border-slate-100 w-14 h-14 rounded-full items-center justify-center mb-4" style={{ shadowColor: '#0f172a', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 2 }}>
@@ -515,7 +517,7 @@ export default function HomeScreen() {
               exiting={FadeOutLeft.duration(200)}
             >
               <Swipeable
-                containerStyle={{ marginHorizontal: 24, marginBottom: 12 }}
+                containerStyle={{ marginHorizontal: 24, marginBottom: 10 }}
                 ref={(ref) => {
                   if (ref) {
                     swipeableShopRefs.current.set(shop.id, ref);
@@ -557,30 +559,7 @@ export default function HomeScreen() {
             </Animated.View>
           ))}
 
-          <Animated.View layout={LinearTransition.springify()} className="mx-6 mb-6 mt-4">
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/stores'); }}
-              style={{
-                backgroundColor: '#0f172a',
-                borderRadius: 20,
-                paddingVertical: 16,
-                paddingHorizontal: 16,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                shadowColor: '#0f172a',
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.12,
-                shadowRadius: 16,
-                elevation: 4,
-              }}
-            >
-              <Plus size={20} color="#fff" strokeWidth={2.5} />
-              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Add Shop</Text>
-            </TouchableOpacity>
-          </Animated.View>
+
 
           {/* 5. Secondary "Premium" Card */}
           <Animated.View 
