@@ -18,6 +18,7 @@ import AnimatedScreen from '../../components/AnimatedScreen';
 import * as Haptics from 'expo-haptics';
 import MapCluster from '../../components/MapCluster';
 import StoreMarker from '../../components/StoreMarker';
+import { MapSearchIndicator } from '../../components/MapSearchIndicator';
 import { create } from 'zustand';
 
 interface LocalUIState {
@@ -645,6 +646,7 @@ export default function StoresScreen() {
     <AnimatedScreen>
     <View style={styles.container}>
       <StatusBar style="dark" />
+      <MapSearchIndicator isVisible={isFetchingMarkets} />
 
       {/* Full Screen Background Map */}
       {initialRegion ? (
@@ -660,6 +662,7 @@ export default function StoresScreen() {
         onPanDrag={() => {
           setSelectedShopToSave(null);
           Keyboard.dismiss();
+          closeAllSwipeables();
           // 1. Avoid firing requests during continuous panning
           if (fetchDebounceRef.current) {
             clearTimeout(fetchDebounceRef.current);
@@ -668,6 +671,7 @@ export default function StoresScreen() {
         }}
         onPress={(e) => {
           Keyboard.dismiss();
+          closeAllSwipeables();
           if (e.nativeEvent.action !== 'marker-press') {
             setSelectedShopToSave(null);
           }
@@ -1066,6 +1070,7 @@ export default function StoresScreen() {
                     }}
                     activeOpacity={0.7}
                     onPress={() => {
+                      closeAllSwipeables();
                       setSelectedShopToSave(null);
                     }}
                   >
@@ -1202,6 +1207,7 @@ export default function StoresScreen() {
                   }}
                   activeOpacity={0.7}
                   onPress={() => {
+                    closeAllSwipeables();
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     Keyboard.dismiss();
                     isAnimatingRef.current = true;

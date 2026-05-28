@@ -450,7 +450,7 @@ export default function HomeScreen() {
                     onSwipeableWillOpen={() => closeAllSwipeables(list.id)}
                   >
                     <TouchableOpacity 
-                      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/list/${list.id}`); }}
+                      onPress={() => { closeAllSwipeables(); closeAllShopSwipeables(); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/list/${list.id}`); }}
                       className="bg-white rounded-[24px] py-3.5 px-4 flex-row items-center justify-between border border-slate-100"
                       style={{
                         shadowColor: '#0f172a',
@@ -532,7 +532,7 @@ export default function HomeScreen() {
                 onSwipeableWillOpen={() => closeAllShopSwipeables(shop.id)}
               >
                 <TouchableOpacity 
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/stores', params: { shopId: shop.id } }); }}
+                  onPress={() => { closeAllSwipeables(); closeAllShopSwipeables(); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/stores', params: { shopId: shop.id } }); }}
                   className="bg-white rounded-[24px] py-3.5 px-4 flex-row items-center justify-between border border-slate-100"
                   style={{
                     shadowColor: '#0f172a',

@@ -221,7 +221,7 @@ export default function ListsScreen() {
                     onSwipeableWillOpen={() => closeAllSwipeables(list.id)}
                   >
                     <TouchableOpacity 
-                      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/list/${list.id}`); }}
+                      onPress={() => { closeAllSwipeables(); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/list/${list.id}`); }}
                       className="bg-white rounded-[24px] py-3.5 px-4 flex-row items-center justify-between border border-slate-100"
                       style={{
                         shadowColor: '#0f172a',
