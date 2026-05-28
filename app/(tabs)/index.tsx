@@ -12,7 +12,7 @@ import MapView, { Marker } from 'react-native-maps';
 import { fetchMarkets } from '../../services/overpassService';
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeOutLeft, LinearTransition } from 'react-native-reanimated';
-import { useLocationStore, useListsStore } from '../../store';
+import { useLocationStore, useListsStore, useSettingsStore } from '../../store';
 import { useScrollToTop } from '@react-navigation/native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import AnimatedScreen from '../../components/AnimatedScreen';
@@ -59,7 +59,14 @@ export default function HomeScreen() {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
+  const { distanceUnit } = useSettingsStore();
+
   const formatDistance = (meters: number): string => {
+    if (distanceUnit === 'imperial') {
+      const miles = meters / 1609.34;
+      if (miles < 0.1) return `${Math.round(meters * 3.28084)}ft away`;
+      return `${miles.toFixed(1)}mi away`;
+    }
     if (meters < 1000) return `${Math.round(meters)}m away`;
     return `${(meters / 1000).toFixed(1)}km away`;
   };

@@ -25,8 +25,8 @@ export function useMapSearch<TRegion = any>({
   const [isSearching, setIsSearching] = useState(false);
   
   // Timers to handle debounce and fallback hiding
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-  const fallbackTimer = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
    * Bind this to MapView's onRegionChange

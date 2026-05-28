@@ -45,6 +45,8 @@ import {
   Ruler,
   User,
   Crown,
+  Globe,
+  Users,
 } from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import {
@@ -526,7 +528,7 @@ export default function SettingsScreen() {
           {/* SmartShopper Pro Card */}
           <Animated.View
             layout={LinearTransition.springify()}
-            className="mx-6 mb-8"
+            className="mx-6 mb-6"
           >
             <TouchableOpacity
               activeOpacity={1}
@@ -538,16 +540,29 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </Animated.View>
 
-          {/* ── Subscription ── */}
+          {/* ── Account Options ── */}
           <SettingsGroup delay={50}>
             <SettingsRow
-              icon={<Crown size={20} color="#D4AF37" />}
-              label="Restore Purchases"
-              sublabel="Restore your Pro subscription"
+              icon={<Globe size={20} color="#64748b" />}
+              label="Language"
+              rightElement={
+                <View className="flex-row items-center gap-1.5">
+                  <Text className="text-[13px] font-medium text-slate-400">English</Text>
+                  <ChevronRight size={18} color="#cbd5e1" />
+                </View>
+              }
+              onPress={() => {
+                hapticImpact(ImpactFeedbackStyle.Light);
+              }}
+            />
+            <SettingsRow
+              icon={<Users size={20} color="#64748b" />}
+              label="Upgrade to Family Plan"
+              sublabel="Share Pro with up to 5 members"
               isLast
               onPress={() => {
-                hapticImpact(ImpactFeedbackStyle.Heavy);
-                Alert.alert('Purchases Restored', 'Your Pro subscription has been successfully restored.');
+                hapticImpact(ImpactFeedbackStyle.Light);
+                router.push('/paywall');
               }}
             />
           </SettingsGroup>
@@ -697,6 +712,20 @@ export default function SettingsScreen() {
               label="Open Source Licenses"
               isLast
               onPress={handleOpenSourceLicenses}
+            />
+          </SettingsGroup>
+
+          {/* ── Subscription ── */}
+          <SettingsGroup delay={580}>
+            <SettingsRow
+              icon={<RefreshCw size={20} color="#64748b" />}
+              label="Restore Purchases"
+              sublabel="Restore your Pro subscription"
+              isLast
+              onPress={() => {
+                hapticImpact(ImpactFeedbackStyle.Heavy);
+                Alert.alert('Purchases Restored', 'Your Pro subscription has been successfully restored.');
+              }}
             />
           </SettingsGroup>
 

@@ -13,7 +13,7 @@ import { BlurView } from 'expo-blur';
 import Supercluster, { PointFeature } from 'supercluster';
 import { fetchMarkets } from '../../services/overpassService';
 import { mapCacheManager } from '../../services';
-import { useLocationStore } from '../../store';
+import { useLocationStore, useSettingsStore } from '../../store';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import * as Haptics from 'expo-haptics';
 import MapCluster from '../../components/MapCluster';
@@ -150,6 +150,7 @@ export default function StoresScreen() {
   }, []);
 
   const { locations, addLocation, removeLocation, cachedMarkets, setCachedMarkets, isFetchingMarkets, setIsFetchingMarkets } = useLocationStore();
+  const { distanceUnit } = useSettingsStore();
   const savedShops = locations ?? [];
 
   const markets = cachedMarkets || [];
@@ -290,6 +291,11 @@ export default function StoresScreen() {
   };
 
   const formatDistance = (meters: number): string => {
+    if (distanceUnit === 'imperial') {
+      const miles = meters / 1609.34;
+      if (miles < 0.1) return `${Math.round(meters * 3.28084)}ft away`;
+      return `${miles.toFixed(1)}mi away`;
+    }
     if (meters < 1000) return `${Math.round(meters)}m away`;
     return `${(meters / 1000).toFixed(1)}km away`;
   };

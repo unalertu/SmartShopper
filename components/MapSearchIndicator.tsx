@@ -24,7 +24,7 @@ export function MapSearchIndicator({ isVisible }: MapSearchIndicatorProps) {
   const translateY = useSharedValue(-20); // Starts slightly above for a drop-in effect
 
   const showTimestamp = useRef<number>(0);
-  const hideTimeout = useRef<NodeJS.Timeout | null>(null);
+  const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (isVisible) {
