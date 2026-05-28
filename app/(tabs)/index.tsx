@@ -355,7 +355,7 @@ export default function HomeScreen() {
           <Animated.View layout={LinearTransition.springify()} className="flex-row items-center justify-between mx-6 mb-3 mt-1">
             <View className="flex-row items-center">
               <View className="w-2.5 h-2.5 rounded-full bg-slate-900 mr-2.5" />
-              <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">My Lists</Text>
+              <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">Lists</Text>
             </View>
             <TouchableOpacity
               activeOpacity={0.7}
@@ -482,7 +482,7 @@ export default function HomeScreen() {
           <Animated.View layout={LinearTransition.springify()} className="flex-row items-center justify-between mx-6 mt-4 mb-3">
             <View className="flex-row items-center">
               <View className="w-2.5 h-2.5 rounded-full bg-slate-900 mr-2.5" />
-              <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">My Shops</Text>
+              <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">Shops</Text>
             </View>
             <TouchableOpacity
               activeOpacity={0.7}
