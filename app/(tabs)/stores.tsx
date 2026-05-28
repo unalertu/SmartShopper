@@ -960,43 +960,74 @@ export default function StoresScreen() {
           {/* Header Content moved from CustomHandle */}
           <Animated.View layout={LinearTransition.springify()} className="w-full pt-5 pb-2">
             {selectedShopToSave && !selectedShopToSave.isSaved && (
-              <Animated.View
-                entering={FadeInDown.duration(300).springify()}
-                exiting={FadeOutUp.duration(200)}
-                style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}
-              >
-                <TouchableOpacity
-                  style={[styles.contextSaveBtn, { flex: 1, marginBottom: 0 }]}
-                  activeOpacity={0.8}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    addLocation({
-                      name: selectedShopToSave.name || 'Unknown Store',
-                      address: selectedShopToSave.address || 'Unknown Address',
-                      latitude: selectedShopToSave.latitude,
-                      longitude: selectedShopToSave.longitude,
-                      radius: 500,
-                    });
-                    setSelectedShopToSave(null);
-                  }}
+              <>
+                <Animated.View
+                  entering={FadeInDown.duration(300).springify()}
+                  exiting={FadeOutUp.duration(200)}
+                  layout={LinearTransition.springify()}
+                  style={{ marginBottom: 14 }}
                 >
-                  <Plus size={20} color="#fff" />
-                  <Text style={styles.contextSaveBtnText} numberOfLines={1}>
-                    {selectedShopToSave.name}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.contextDirectionsBtn}
-                  activeOpacity={0.8}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    openDirectionsSheet(selectedShopToSave.latitude, selectedShopToSave.longitude);
-                  }}
+                  <View
+                    className="bg-white rounded-[20px] py-3.5 px-4 flex-row items-center justify-between border border-slate-200/70"
+                    style={{
+                      shadowColor: '#0f172a',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.04,
+                      shadowRadius: 8,
+                      elevation: 2,
+                    }}
+                  >
+                    <View className="flex-row items-center gap-3.5 flex-1">
+                      <View className="w-10 h-10 bg-slate-100/60 rounded-[12px] items-center justify-center">
+                        <Store size={20} color="#475569" />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-[16px] font-bold text-slate-900 tracking-tight" numberOfLines={1}>{selectedShopToSave.name}</Text>
+                        <Text className="text-[13px] font-medium text-slate-500 mt-0.5" numberOfLines={1}>
+                          {userLocation ? formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, selectedShopToSave.latitude, selectedShopToSave.longitude)) : (selectedShopToSave.address || 'Unknown Address')}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </Animated.View>
+                <Animated.View
+                  entering={FadeInDown.duration(300).springify().delay(50)}
+                  exiting={FadeOutUp.duration(200)}
+                  style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}
                 >
-                  <Navigation2 size={18} color="#0f172a" />
-                  <Text style={styles.contextDirectionsBtnText}>Directions</Text>
-                </TouchableOpacity>
-              </Animated.View>
+                  <TouchableOpacity
+                    style={[styles.contextDirectionsBtn, { flex: 1 }]}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      openDirectionsSheet(selectedShopToSave.latitude, selectedShopToSave.longitude);
+                    }}
+                  >
+                    <Navigation2 size={18} color="#0f172a" />
+                    <Text style={styles.contextDirectionsBtnText}>Directions</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.contextSaveBtn, { flex: 1, marginBottom: 0 }]}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      addLocation({
+                        name: selectedShopToSave.name || 'Unknown Store',
+                        address: selectedShopToSave.address || 'Unknown Address',
+                        latitude: selectedShopToSave.latitude,
+                        longitude: selectedShopToSave.longitude,
+                        radius: 500,
+                      });
+                      setSelectedShopToSave(null);
+                    }}
+                  >
+                    <Plus size={20} color="#fff" />
+                    <Text style={styles.contextSaveBtnText} numberOfLines={1}>
+                      {selectedShopToSave.name}
+                    </Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              </>
             )}
             {selectedShopToSave && selectedShopToSave.isSaved && (() => {
               const loc = savedShops.find(s => `saved-${s.id}` === selectedShopToSave.id);
