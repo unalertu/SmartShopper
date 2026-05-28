@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Dimensions, Keyboard, TouchableWithoutFeedback, Linking, ActionSheetIOS } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Store, Plus, ChevronRight, Search, SlidersHorizontal, ShoppingBasket, LocateFixed, Trash2, MapPin, X, Navigation2 } from 'lucide-react-native';
+import { Store, Plus, Search, SlidersHorizontal, ShoppingBasket, LocateFixed, Trash2, MapPin, X, Navigation2, MoreHorizontal } from 'lucide-react-native';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
@@ -981,8 +981,8 @@ export default function StoresScreen() {
                   }}
                 >
                   <Plus size={20} color="#fff" />
-                  <Text style={styles.contextSaveBtnText}>
-                    Save {selectedShopToSave.name}
+                  <Text style={styles.contextSaveBtnText} numberOfLines={1}>
+                    {selectedShopToSave.name}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -999,24 +999,43 @@ export default function StoresScreen() {
               </Animated.View>
             )}
             {selectedShopToSave && selectedShopToSave.isSaved && (() => {
-              const originalId = selectedShopToSave.id.toString().replace('saved-', '');
+              const loc = savedShops.find(s => `saved-${s.id}` === selectedShopToSave.id);
+              if (!loc) return null;
+              const originalId = loc.id;
               return (
+              <>
               <Animated.View
                 entering={FadeInDown.duration(300).springify()}
                 exiting={FadeOutUp.duration(200)}
-                style={{ marginBottom: 16 }}
+                layout={LinearTransition.springify()}
+                style={{ marginBottom: 14 }}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'stretch' }}>
-                  <View
+                <Swipeable
+                  ref={(ref) => {
+                    if (ref) {
+                      swipeableRefs.current.set('context-' + originalId, ref);
+                    } else {
+                      swipeableRefs.current.delete('context-' + originalId);
+                    }
+                  }}
+                  renderRightActions={() => renderRightActions(originalId)}
+                  rightThreshold={40}
+                  overshootRight={false}
+                  friction={2}
+                  onSwipeableWillOpen={() => closeAllSwipeables('context-' + originalId)}
+                >
+                  <TouchableOpacity
                     className="bg-white rounded-[20px] py-3.5 px-4 flex-row items-center justify-between border border-slate-200/70"
                     style={{
-                      flex: 1,
                       shadowColor: '#0f172a',
                       shadowOffset: { width: 0, height: 2 },
                       shadowOpacity: 0.04,
                       shadowRadius: 8,
                       elevation: 2,
-                      marginRight: 10,
+                    }}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      setSelectedShopToSave(null);
                     }}
                   >
                     <View className="flex-row items-center gap-3.5 flex-1">
@@ -1024,50 +1043,81 @@ export default function StoresScreen() {
                         <Store size={20} color="#475569" />
                       </View>
                       <View className="flex-1">
-                        <Text className="text-[16px] font-semibold text-slate-900 tracking-tight" numberOfLines={1}>{selectedShopToSave.name}</Text>
+                        <Text className="text-[16px] font-semibold text-slate-900 tracking-tight" numberOfLines={1}>{loc.name}</Text>
                         <Text className="text-[13px] font-medium text-slate-500 mt-0.5" numberOfLines={1}>
-                          {userLocation ? formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, selectedShopToSave.latitude, selectedShopToSave.longitude)) : (selectedShopToSave.address || 'Saved Shop')}
+                          {userLocation ? formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, loc.latitude, loc.longitude)) : (loc.address || 'Saved Shop')}
                         </Text>
                       </View>
                     </View>
-                  </View>
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      removeLocation(originalId);
-                      setSelectedShopToSave(null);
-                    }}
-                    style={{
-                      backgroundColor: '#FF3B30',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      width: 80,
-                      borderRadius: 20,
-                      shadowColor: '#FF3B30',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.2,
-                      shadowRadius: 6,
-                      elevation: 3,
-                    }}
-                  >
-                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>Delete</Text>
+                    <TouchableOpacity
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      activeOpacity={0.5}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        const options = ['Cancel', 'Directions', 'Remove Saved Shop'];
+                        const cancelButtonIndex = 0;
+                        const destructiveButtonIndex = 2;
+                        ActionSheetIOS.showActionSheetWithOptions(
+                          {
+                            options,
+                            cancelButtonIndex,
+                            destructiveButtonIndex,
+                          },
+                          (index: number) => {
+                            if (index === 1) {
+                              openDirectionsSheet(loc.latitude, loc.longitude);
+                            } else if (index === 2) {
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                              removeLocation(originalId);
+                              swipeableRefs.current.delete(originalId);
+                              swipeableRefs.current.delete('context-' + originalId);
+                              setSelectedShopToSave(null);
+                            }
+                          }
+                        );
+                      }}
+                    >
+                      <MoreHorizontal size={20} color="#94a3b8" />
+                    </TouchableOpacity>
                   </TouchableOpacity>
-                </View>
+                </Swipeable>
+              </Animated.View>
+              <Animated.View
+                entering={FadeInDown.duration(300).springify().delay(50)}
+                exiting={FadeOutUp.duration(200)}
+                style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}
+              >
                 <TouchableOpacity
-                  style={[styles.contextDirectionsBtn, { marginTop: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 12, backgroundColor: '#f1f5f9' }]}
+                  style={[styles.contextDirectionsBtn, { flex: 1 }]}
                   activeOpacity={0.8}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    openDirectionsSheet(selectedShopToSave.latitude, selectedShopToSave.longitude);
+                    openDirectionsSheet(loc.latitude, loc.longitude);
                   }}
                 >
                   <Navigation2 size={18} color="#0f172a" />
                   <Text style={styles.contextDirectionsBtnText}>Directions</Text>
                 </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.contextSaveBtn, { flex: 1, marginBottom: 0, backgroundColor: '#ef4444' }]}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    removeLocation(originalId);
+                    swipeableRefs.current.delete(originalId);
+                    swipeableRefs.current.delete('context-' + originalId);
+                    setSelectedShopToSave(null);
+                  }}
+                >
+                  <Trash2 size={18} color="#fff" />
+                  <Text style={styles.contextSaveBtnText}>Remove</Text>
+                </TouchableOpacity>
               </Animated.View>
+              </>
               );
             })()}
+
             <Animated.View layout={LinearTransition.springify()} className="flex-row items-center mt-2 mb-2">
               <View className="w-2.5 h-2.5 rounded-full bg-slate-900 mr-2.5" />
               <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">My Shops</Text>
@@ -1156,7 +1206,38 @@ export default function StoresScreen() {
                       </Text>
                     </View>
                   </View>
-                  <ChevronRight size={18} color="#94a3b8" />
+                  <TouchableOpacity
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    activeOpacity={0.5}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      const options = ['Cancel', 'Directions', 'Remove Saved Shop'];
+                      const cancelButtonIndex = 0;
+                      const destructiveButtonIndex = 2;
+                      ActionSheetIOS.showActionSheetWithOptions(
+                        {
+                          options,
+                          cancelButtonIndex,
+                          destructiveButtonIndex,
+                        },
+                        (index: number) => {
+                          if (index === 1) {
+                            openDirectionsSheet(loc.latitude, loc.longitude);
+                          } else if (index === 2) {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            removeLocation(loc.id);
+                            swipeableRefs.current.delete(loc.id);
+                            if (selectedShopToSave && (selectedShopToSave.id === loc.id || selectedShopToSave.id === `saved-${loc.id}`)) {
+                              setSelectedShopToSave(null);
+                            }
+                          }
+                        }
+                      );
+                    }}
+                  >
+                    <MoreHorizontal size={20} color="#94a3b8" />
+                  </TouchableOpacity>
                 </TouchableOpacity>
               </Swipeable>
             </Animated.View>
