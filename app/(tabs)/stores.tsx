@@ -872,7 +872,7 @@ export default function StoresScreen() {
           <View style={styles.topNavRow}>
             {/* "Shops" Title */}
             <Animated.View style={[styles.titleContainer, titleAnimatedStyle]}>
-              <Text style={styles.titleText}>Shops</Text>
+              <Text className="text-3xl font-bold text-slate-900">Shops</Text>
             </Animated.View>
 
             {/* Animated Search Bar */}
@@ -1156,7 +1156,7 @@ export default function StoresScreen() {
 
             <Animated.View layout={LinearTransition.springify()} className="flex-row items-center mt-2 mb-2">
               <View className="w-2.5 h-2.5 rounded-full bg-slate-900 mr-2.5" />
-              <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">My Shops</Text>
+              <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">Shops</Text>
             </Animated.View>
           </Animated.View>
           {/* Empty state */}
