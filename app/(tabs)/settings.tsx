@@ -562,7 +562,7 @@ export default function SettingsScreen() {
               isLast
               onPress={() => {
                 hapticImpact(ImpactFeedbackStyle.Light);
-                router.push('/paywall');
+                Alert.alert('Coming Soon', 'The Family Plan will be available in a future update.');
               }}
             />
           </SettingsGroup>
