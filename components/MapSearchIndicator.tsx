@@ -82,7 +82,7 @@ export function MapSearchIndicator({ isVisible }: MapSearchIndicatorProps) {
       style={[
         {
           position: 'absolute',
-          top: Math.max(insets.top, 20) + 56,
+          top: Math.max(insets.top, 20),
           alignSelf: 'center',
           zIndex: 50,
         },
