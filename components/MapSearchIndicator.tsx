@@ -1,11 +1,12 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   Easing,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface MapSearchIndicatorProps {
   /**
@@ -14,7 +15,6 @@ interface MapSearchIndicatorProps {
    */
   isVisible: boolean;
 }
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function MapSearchIndicator({ isVisible }: MapSearchIndicatorProps) {
   const insets = useSafeAreaInsets();
@@ -82,25 +82,43 @@ export function MapSearchIndicator({ isVisible }: MapSearchIndicatorProps) {
       style={[
         {
           position: 'absolute',
-          top: Math.max(insets.top, 20) + 10, // Dynamic top padding below notch
+          top: Math.max(insets.top, 20) + 56,
           alignSelf: 'center',
           zIndex: 50,
-          // Premium shadow
-          elevation: 8,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 12,
         },
         animatedStyle,
       ]}
     >
-      <View className="flex-row items-center bg-white/95 px-5 py-3 rounded-full border border-gray-100">
-        <ActivityIndicator size="small" color="#3b82f6" className="mr-3" />
-        <Text className="text-gray-700 font-medium text-sm tracking-wide">
-          Searching this area...
+      <View style={indicatorStyles.pill}>
+        <ActivityIndicator size="small" color="#64748b" style={{ marginRight: 10 }} />
+        <Text style={indicatorStyles.text}>
+          Searching this area…
         </Text>
       </View>
     </Animated.View>
   );
 }
+
+const indicatorStyles = StyleSheet.create({
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 9999,
+    borderWidth: 0.5,
+    borderColor: 'rgba(226, 232, 240, 0.5)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  text: {
+    color: '#64748b',
+    fontSize: 13,
+    fontWeight: '500',
+    letterSpacing: -0.2,
+  },
+});
