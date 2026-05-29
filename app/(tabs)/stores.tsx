@@ -654,7 +654,20 @@ export default function StoresScreen() {
       <StatusBar style="dark" />
       <MapSearchIndicator isVisible={isFetchingMarkets} />
 
-      {/* Full Screen Background Map */}
+      {/* Full Screen Background Map
+       * ── iOS Stability & Performance Optimizations ──
+       * pitchEnabled={false}    → Locks map to flat 2D view; prevents 3D tilt that
+       *                           causes GPU spikes and react-native-maps crashes on iOS.
+       * rotateEnabled={false}   → Disables rotation gestures; avoids disorienting the
+       *                           user and keeps clustering/bbox math stable.
+       * showsBuildings={false}  → Turns off 3D building extrusions to reduce GPU/memory
+       *                           pressure on dense urban areas.
+       * showsIndoors={false}    → Disables indoor floor-plan rendering to avoid extra
+       *                           map tiles and memory overhead.
+       * showsCompass={false}    → Hides the compass widget since rotation is disabled;
+       *                           keeps the UI clean like delivery/store-style apps.
+       * showsUserLocation={true} → Retained: essential for store proximity UX.
+       */}
       {initialRegion ? (
       <MapView
         ref={mapRef}
@@ -664,6 +677,11 @@ export default function StoresScreen() {
         showsUserLocation={true}
         followsUserLocation={false}
         showsPointsOfInterest={false}
+        pitchEnabled={false}
+        rotateEnabled={false}
+        showsBuildings={false}
+        showsIndoors={false}
+        showsCompass={false}
         onRegionChangeComplete={handleRegionChangeComplete}
         onPanDrag={() => {
           setSelectedShopToSave(null);
