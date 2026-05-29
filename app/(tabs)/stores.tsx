@@ -154,6 +154,8 @@ export default function StoresScreen() {
   const savedShops = locations ?? [];
 
   const markets = cachedMarkets || [];
+  const selectedShopToSave = useLocalUIStore((s) => s.selectedShopToSave);
+  const setSelectedShopToSave = useLocalUIStore((s) => s.setSelectedShopToSave);
 
   const snapPoints = useMemo(() => {
     const HEADER_HEIGHT = 80;       // handle + "Saved Shops" title
@@ -174,20 +176,22 @@ export default function StoresScreen() {
         BOTTOM_PADDING;
     }
 
-    // Convert to a percentage of screen height, clamped between 30% and 90%
-    const maxPercent = Math.min(90, Math.max(30, Math.ceil((contentHeight / SCREEN_HEIGHT) * 100)));
+    // Convert to a percentage of screen height, clamped between 18% and 60%
+    const maxPercent = Math.min(60, Math.max(18, Math.ceil((contentHeight / SCREEN_HEIGHT) * 100)));
 
-    // Build snap points: always start at 30%, add a middle point if useful, then the dynamic max
-    const points: string[] = ['30%'];
-    if (maxPercent > 50) {
-      points.push('50%');
+    // Build snap points as absolute numbers: adjust min height if a shop is selected
+    const minPercent = selectedShopToSave ? 32 : 18;
+    const points: number[] = [SCREEN_HEIGHT * (minPercent / 100)];
+    
+    if (maxPercent > 38 && 38 > minPercent) {
+      points.push(SCREEN_HEIGHT * 0.38);
     }
-    if (maxPercent > 30) {
-      points.push(`${maxPercent}%`);
+    if (maxPercent > minPercent) {
+      points.push(SCREEN_HEIGHT * (maxPercent / 100));
     }
 
-    return points;
-  }, [savedShops.length]);
+    return Array.from(new Set(points)).sort((a, b) => a - b);
+  }, [savedShops.length, selectedShopToSave]);
 
   const animatedPosition = useSharedValue(SCREEN_HEIGHT);
   const animatedLocateStyle = useAnimatedStyle(() => ({
@@ -259,8 +263,6 @@ export default function StoresScreen() {
 
   const [initialRegion, setInitialRegion] = useState<any>(null);
   const [currentRegion, setCurrentRegion] = useState<any>(null);
-  const selectedShopToSave = useLocalUIStore((s) => s.selectedShopToSave);
-  const setSelectedShopToSave = useLocalUIStore((s) => s.setSelectedShopToSave);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
 
   // Clustering state
@@ -952,9 +954,11 @@ export default function StoresScreen() {
         index={Math.min(1, snapPoints.length - 1)}
         animatedPosition={animatedPosition}
         snapPoints={snapPoints}
+        topInset={SCREEN_HEIGHT * 0.4}
         handleComponent={null}
         animateOnMount={true}
         enableOverDrag={true}
+        enablePanDownToClose={false}
         backgroundStyle={{
           borderRadius: 32,
           shadowColor: '#000',
@@ -1320,7 +1324,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     zIndex: 15,
-    backgroundColor: 'rgba(255,255,255,0.82)',
+    backgroundColor: 'rgba(255,255,255,0.95)',
     borderWidth: 0.5,
     borderColor: 'rgba(226,232,240,0.5)',
     shadowColor: '#0f172a',
@@ -1363,7 +1367,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 9999,
-    backgroundColor: 'rgba(255,255,255,0.82)',
+    backgroundColor: 'rgba(255,255,255,0.95)',
     borderWidth: 0.5,
     borderColor: 'rgba(226,232,240,0.5)',
     shadowColor: '#0f172a',
