@@ -95,10 +95,10 @@ function TabItem({
     >
       <Animated.View style={[styles.iconContainer, containerStyle]}>
         <Animated.View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }, inactiveIconStyle]}>
-          <Icon size={24} color="#94a3b8" strokeWidth={1.8} />
+          <Icon size={22} color="#b0b8c4" strokeWidth={1.5} />
         </Animated.View>
         <Animated.View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }, activeIconStyle]}>
-          <Icon size={24} color="#ffffff" strokeWidth={2.4} />
+          <Icon size={22} color="#ffffff" strokeWidth={2.2} />
         </Animated.View>
       </Animated.View>
     </Pressable>
@@ -217,34 +217,40 @@ const styles = StyleSheet.create({
     zIndex: 50,
   },
   navBarBlur: {
-    marginHorizontal: 20,
+    marginHorizontal: 24,
     marginBottom: 10,
     borderRadius: 50,
-    backgroundColor: "#ffffff",
-    shadowColor: "#000",
+    backgroundColor: "rgba(255,255,255,0.98)",
+    borderWidth: 0.5,
+    borderColor: "rgba(0,0,0,0.06)",
+    shadowColor: "#0a0f1e",
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 15,
+    shadowOpacity: 0.18,
+    shadowRadius: 28,
+    elevation: 16,
   },
   navBarInner: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingLeft: 6,
-    paddingRight: 5,
-    paddingVertical: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 50,
   },
 
   // Sliding Indicator
   slidingIndicator: {
     position: "absolute",
-    top: 2,
-    bottom: 2,
+    top: 5,
+    bottom: 5,
     left: 0,
     backgroundColor: "#0f172a",
-    borderRadius: 50,
+    borderRadius: 22,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.40,
+    shadowRadius: 12,
+    elevation: 8,
   },
 
   // Tab item
@@ -252,11 +258,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 4,
+    paddingVertical: 6,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     alignItems: "center",
     justifyContent: "center",
   },
