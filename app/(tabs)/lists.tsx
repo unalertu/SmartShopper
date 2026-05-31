@@ -128,7 +128,7 @@ export default function ListsScreen() {
                 </View>
                 <Text className="text-[22px] font-bold text-slate-900 tracking-tight mb-2">No lists yet?</Text>
                 <Text className="text-[15px] font-medium text-slate-500 text-center px-10 leading-6">
-                  Create your first grocery list and start planning your next shopping trip.
+                  Create your first list and we'll notify you when you are at the supermarket.
                 </Text>
               </View>
             </Animated.View>
