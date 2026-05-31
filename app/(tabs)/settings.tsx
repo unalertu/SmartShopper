@@ -137,8 +137,8 @@ const THEME_LABELS: Record<ThemeOption, string> = {
   dark: 'Dark',
 };
 
-// ─── Pro Profile Card Memoized ────────────────────────────────────────────────
-const ProProfileCard = React.memo(({ animatedStyle }: { animatedStyle: any }) => (
+// ─── Pro Status Card Memoized ────────────────────────────────────────────────
+const ProStatusCard = React.memo(({ animatedStyle }: { animatedStyle: any }) => (
   <Animated.View style={animatedStyle}>
     <View
       className="bg-white border border-slate-100 rounded-3xl p-4 shadow-sm flex-row items-center"
@@ -150,30 +150,25 @@ const ProProfileCard = React.memo(({ animatedStyle }: { animatedStyle: any }) =>
         elevation: 2,
       }}
     >
-      <View className="h-12 w-12 rounded-full bg-slate-100 items-center justify-center mr-4 overflow-hidden">
-        <Image 
-          source={{ uri: 'https://i.pravatar.cc/150?u=arda' }} 
-          style={{ width: '100%', height: '100%' }} 
-          transition={null}
-          cachePolicy="memory-disk"
-        />
+      <View className="h-12 w-12 rounded-full bg-[#D4AF37]/10 items-center justify-center mr-4">
+        <Crown size={24} color="#D4AF37" />
       </View>
       <View className="flex-1 justify-center">
         <View className="flex-row items-center mb-0.5 gap-2">
-          <Text className="text-[17px] font-semibold text-slate-900 tracking-tight">Arda</Text>
+          <Text className="text-[17px] font-semibold text-slate-900 tracking-tight">SmartShopper</Text>
           <View className="bg-[#D4AF37]/10 px-1.5 py-0.5 rounded flex-row items-center border border-[#D4AF37]/20">
             <Text className="text-[#D4AF37] font-bold text-[9px] uppercase tracking-wider">
-              Pro
+              Pro Aktif
             </Text>
           </View>
         </View>
-        <Text className="text-[13px] text-slate-500">test@gmail.com</Text>
+        <Text className="text-[13px] text-slate-500">Tüm premium özellikler açık</Text>
       </View>
       <ChevronRight size={18} color="#cbd5e1" />
     </View>
   </Animated.View>
 ));
-ProProfileCard.displayName = 'ProProfileCard';
+ProStatusCard.displayName = 'ProStatusCard';
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
@@ -536,12 +531,45 @@ export default function SettingsScreen() {
               onPressOut={handleProCardPressOut}
               onPress={handleProCardPress}
             >
-              <ProProfileCard animatedStyle={animatedProCardStyle} />
+              <ProStatusCard animatedStyle={animatedProCardStyle} />
             </TouchableOpacity>
           </Animated.View>
 
-          {/* ── Account Options ── */}
+          {/* ── Subscriptions & Purchases ── */}
           <SettingsGroup delay={50}>
+            <SettingsRow
+              icon={<Crown size={20} color="#D4AF37" />}
+              label="SmartShopper Pro"
+              sublabel="Unlock all premium features"
+              onPress={() => {
+                hapticImpact(ImpactFeedbackStyle.Light);
+                router.push('/paywall');
+              }}
+            />
+            <SettingsRow
+              icon={<Users size={20} color="#64748b" />}
+              label="Upgrade to Family Plan"
+              sublabel="Share Pro with up to 5 members"
+              onPress={() => {
+                hapticImpact(ImpactFeedbackStyle.Light);
+                Alert.alert('Coming Soon', 'The Family Plan will be available in a future update.');
+              }}
+            />
+            <SettingsRow
+              icon={<RefreshCw size={20} color="#64748b" />}
+              label="Restore Purchases"
+              sublabel="Restore your Pro subscription"
+              isLast
+              rightElement={<View />}
+              onPress={() => {
+                hapticImpact(ImpactFeedbackStyle.Heavy);
+                Alert.alert('Purchases Restored', 'Your Pro subscription has been successfully restored.');
+              }}
+            />
+          </SettingsGroup>
+
+          {/* ── General Preferences ── */}
+          <SettingsGroup delay={100}>
             <SettingsRow
               icon={<Globe size={20} color="#64748b" />}
               label="Language"
@@ -553,65 +581,24 @@ export default function SettingsScreen() {
               }
               onPress={() => {
                 hapticImpact(ImpactFeedbackStyle.Light);
+                if (Platform.OS === 'ios') {
+                  Linking.openURL('app-settings:');
+                } else {
+                  Linking.openSettings();
+                }
               }}
             />
             <SettingsRow
-              icon={<Users size={20} color="#64748b" />}
-              label="Upgrade to Family Plan"
-              sublabel="Share Pro with up to 5 members"
-              isLast
-              onPress={() => {
-                hapticImpact(ImpactFeedbackStyle.Light);
-                Alert.alert('Coming Soon', 'The Family Plan will be available in a future update.');
-              }}
-            />
-          </SettingsGroup>
-
-          {/* ── Notifications & Alerts ── */}
-          <SettingsGroup delay={100}>
-            <SettingsRow
-              icon={<Bell size={20} color="#64748b" />}
-              label="Push Notifications"
-              sublabel="Get reminded near stores"
+              icon={<SunMoon size={20} color="#64748b" />}
+              label="Theme"
+              onPress={handleThemePick}
               rightElement={
-                <Switch
-                  value={notificationsEnabled}
-                  onValueChange={handleNotificationToggle}
-                  trackColor={switchTrackColor}
-                  thumbColor="#ffffff"
-                />
-              }
-            />
-
-            <SettingsRow
-              icon={<Vibrate size={20} color="#64748b" />}
-              label="Haptic Feedback"
-              sublabel="Vibrations on interactions"
-              isLast
-              rightElement={
-                <Switch
-                  value={hapticEnabled}
-                  onValueChange={handleHapticToggle}
-                  trackColor={switchTrackColor}
-                  thumbColor="#ffffff"
-                />
-              }
-            />
-          </SettingsGroup>
-
-          {/* ── Location & Map ── */}
-          <SettingsGroup delay={200}>
-            <SettingsRow
-              icon={<Navigation size={20} color="#64748b" />}
-              label="Location Services"
-              sublabel="Background geofencing"
-              rightElement={
-                <Switch
-                  value={locationEnabled}
-                  onValueChange={handleLocationToggle}
-                  trackColor={switchTrackColor}
-                  thumbColor="#ffffff"
-                />
+                <View className="flex-row items-center gap-1.5">
+                  <Text className="text-[13px] font-medium text-slate-400">
+                    {THEME_LABELS[theme]}
+                  </Text>
+                  <ChevronRight size={18} color="#cbd5e1" />
+                </View>
               }
             />
             <SettingsRow
@@ -631,39 +618,52 @@ export default function SettingsScreen() {
             />
           </SettingsGroup>
 
-          {/* ── Theme ── */}
-          <SettingsGroup delay={300}>
+          {/* ── Permissions & Device Settings ── */}
+          <SettingsGroup delay={200}>
             <SettingsRow
-              icon={<SunMoon size={20} color="#64748b" />}
-              label="Theme"
-              isLast
-              onPress={handleThemePick}
+              icon={<Bell size={20} color="#64748b" />}
+              label="Push Notifications"
+              sublabel="Get reminded near stores"
               rightElement={
-                <View className="flex-row items-center gap-1.5">
-                  <Text className="text-[13px] font-medium text-slate-400">
-                    {THEME_LABELS[theme]}
-                  </Text>
-                  <ChevronRight size={18} color="#cbd5e1" />
-                </View>
+                <Switch
+                  value={notificationsEnabled}
+                  onValueChange={handleNotificationToggle}
+                  trackColor={switchTrackColor}
+                  thumbColor="#ffffff"
+                />
+              }
+            />
+            <SettingsRow
+              icon={<Navigation size={20} color="#64748b" />}
+              label="Location Services"
+              sublabel="Background geofencing"
+              rightElement={
+                <Switch
+                  value={locationEnabled}
+                  onValueChange={handleLocationToggle}
+                  trackColor={switchTrackColor}
+                  thumbColor="#ffffff"
+                />
+              }
+            />
+            <SettingsRow
+              icon={<Vibrate size={20} color="#64748b" />}
+              label="Haptic Feedback"
+              sublabel="Vibrations on interactions"
+              isLast
+              rightElement={
+                <Switch
+                  value={hapticEnabled}
+                  onValueChange={handleHapticToggle}
+                  trackColor={switchTrackColor}
+                  thumbColor="#ffffff"
+                />
               }
             />
           </SettingsGroup>
 
-          {/* ── Privacy & Security ── */}
-          <SettingsGroup delay={400}>
-            <SettingsRow
-              icon={<Shield size={20} color="#64748b" />}
-              label="Privacy Policy"
-              isLast
-              onPress={() => {
-                hapticImpact(ImpactFeedbackStyle.Light);
-                Linking.openURL('https://smartshopper.app/privacy');
-              }}
-            />
-          </SettingsGroup>
-
           {/* ── Support & Feedback ── */}
-          <SettingsGroup delay={500}>
+          <SettingsGroup delay={300}>
             <SettingsRow
               icon={<LifeBuoy size={20} color="#64748b" />}
               label="Help Center"
@@ -690,14 +690,15 @@ export default function SettingsScreen() {
             />
           </SettingsGroup>
 
-          {/* ── About ── */}
-          <SettingsGroup delay={550}>
+          {/* ── Legal & About ── */}
+          <SettingsGroup delay={400}>
             <SettingsRow
-              icon={<Info size={20} color="#64748b" />}
-              label="Version"
-              rightElement={
-                <Text className="text-[13px] font-medium text-slate-400">1.0.0</Text>
-              }
+              icon={<Shield size={20} color="#64748b" />}
+              label="Privacy Policy"
+              onPress={() => {
+                hapticImpact(ImpactFeedbackStyle.Light);
+                Linking.openURL('https://smartshopper.app/privacy');
+              }}
             />
             <SettingsRow
               icon={<FileText size={20} color="#64748b" />}
@@ -710,27 +711,20 @@ export default function SettingsScreen() {
             <SettingsRow
               icon={<FileText size={20} color="#64748b" />}
               label="Open Source Licenses"
-              isLast
               onPress={handleOpenSourceLicenses}
             />
-          </SettingsGroup>
-
-          {/* ── Subscription ── */}
-          <SettingsGroup delay={580}>
             <SettingsRow
-              icon={<RefreshCw size={20} color="#64748b" />}
-              label="Restore Purchases"
-              sublabel="Restore your Pro subscription"
+              icon={<Info size={20} color="#64748b" />}
+              label="Version"
               isLast
-              onPress={() => {
-                hapticImpact(ImpactFeedbackStyle.Heavy);
-                Alert.alert('Purchases Restored', 'Your Pro subscription has been successfully restored.');
-              }}
+              rightElement={
+                <Text className="text-[13px] font-medium text-slate-400">1.0.0</Text>
+              }
             />
           </SettingsGroup>
 
           {/* ── Danger Zone ── */}
-          <SettingsGroup delay={600}>
+          <SettingsGroup delay={500}>
             <SettingsRow
               icon={<Trash size={20} color="#ef4444" />}
               label="Reset App"
@@ -740,26 +734,6 @@ export default function SettingsScreen() {
               onPress={handleResetApp}
             />
           </SettingsGroup>
-
-          {/* Log Out */}
-          <Animated.View
-            layout={LinearTransition.springify()}
-            className="mx-6 mb-10 mt-2"
-          >
-            <TouchableOpacity 
-              className="bg-slate-900 h-16 rounded-[24px] justify-center items-center shadow-lg"
-              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 15, elevation: 8 }}
-              onPress={() => {
-                hapticImpact(ImpactFeedbackStyle.Light);
-                Alert.alert('Log Out', 'Are you sure you want to log out?', [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Log Out', style: 'destructive', onPress: () => {} },
-                ]);
-              }}
-            >
-              <Text className="text-white font-bold text-lg">Log Out</Text>
-            </TouchableOpacity>
-          </Animated.View>
 
           {/* Footer */}
           <Animated.View
