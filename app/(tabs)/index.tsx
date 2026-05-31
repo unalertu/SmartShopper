@@ -435,7 +435,7 @@ export default function HomeScreen() {
             </Animated.View>
           ) : (
             <>
-              {shoppingLists.map((list) => (
+              {shoppingLists.slice(0, 3).map((list) => (
                 <Animated.View
                   key={list.id}
                   layout={LinearTransition.springify()}
@@ -481,7 +481,26 @@ export default function HomeScreen() {
                   </Swipeable>
                 </Animated.View>
               ))}
-
+              {shoppingLists.length > 3 && (
+                <Animated.View layout={LinearTransition.springify()}>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.navigate('/lists'); }}
+                    className="mx-6 mb-2 rounded-[20px] py-3.5 px-4 flex-row items-center justify-center border border-slate-200"
+                    style={{
+                      backgroundColor: '#ffffff',
+                      shadowColor: '#0f172a',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.04,
+                      shadowRadius: 8,
+                      elevation: 2,
+                    }}
+                  >
+                    <Text style={{ color: '#475569', fontSize: 14, fontWeight: '600' }}>View All Lists</Text>
+                    <ChevronRight size={16} color="#94a3b8" style={{ marginLeft: 4 }} />
+                  </TouchableOpacity>
+                </Animated.View>
+              )}
             </>
           )}
 
@@ -517,7 +536,7 @@ export default function HomeScreen() {
               </View>
             </Animated.View>
           )}
-          {savedShops.map((shop) => (
+          {savedShops.slice(0, 3).map((shop) => (
             <Animated.View
               key={shop.id}
               layout={LinearTransition.springify()}
@@ -565,6 +584,26 @@ export default function HomeScreen() {
               </Swipeable>
             </Animated.View>
           ))}
+          {savedShops.length > 3 && (
+            <Animated.View layout={LinearTransition.springify()}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.navigate('/stores'); }}
+                className="mx-6 mb-2 rounded-[20px] py-3.5 px-4 flex-row items-center justify-center border border-slate-200"
+                style={{
+                  backgroundColor: '#ffffff',
+                  shadowColor: '#0f172a',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.04,
+                  shadowRadius: 8,
+                  elevation: 2,
+                }}
+              >
+                <Text style={{ color: '#475569', fontSize: 14, fontWeight: '600' }}>View All Shops</Text>
+                <ChevronRight size={16} color="#94a3b8" style={{ marginLeft: 4 }} />
+              </TouchableOpacity>
+            </Animated.View>
+          )}
 
 
 
