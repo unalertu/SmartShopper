@@ -6,6 +6,7 @@ import { BlurView } from 'expo-blur';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
 import ProgressiveBlur from '../../components/ProgressiveBlur';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
@@ -165,7 +166,7 @@ export default function HomeScreen() {
   const [showCreateSheet, setShowCreateSheet] = useState(false);
 
   const handlePresentModalPress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
     setShowCreateSheet(true);
   }, []);
 
@@ -190,7 +191,7 @@ export default function HomeScreen() {
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
           removeList(listId);
           swipeableRefs.current.delete(listId);
         }}
@@ -219,7 +220,7 @@ export default function HomeScreen() {
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
           removeLocation(shopId);
           swipeableShopRefs.current.delete(shopId);
         }}
@@ -276,7 +277,7 @@ export default function HomeScreen() {
             {/* Map Widget Always Visible */}
             <View className="flex-col">
               {/* Upper Tier: Dynamic Map Preview */}
-              <TouchableOpacity activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.navigate('/stores'); }}>
+              <TouchableOpacity activeOpacity={0.8} onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.navigate('/stores'); }}>
                 <View className="w-full h-60 rounded-t-[36px] overflow-hidden" pointerEvents="none">
                   {userLocation ? (
                     <MapView
@@ -317,7 +318,7 @@ export default function HomeScreen() {
               {/* Lower Tier: Info & Action */}
               <TouchableOpacity 
                 activeOpacity={0.8} 
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.navigate('/stores'); }}
+                onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.navigate('/stores'); }}
                 className="flex-row justify-between items-center py-3 px-5"
               >
                 <View className="flex-row items-center gap-3.5">
@@ -393,7 +394,7 @@ export default function HomeScreen() {
                     key={template}
                     activeOpacity={0.7}
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                       addList(template);
                     }}
                     className="bg-white border border-slate-100 rounded-[16px] px-4 py-3 flex-row items-center gap-2"
@@ -435,7 +436,7 @@ export default function HomeScreen() {
                     onSwipeableWillOpen={() => closeAllSwipeables(list.id)}
                   >
                     <TouchableOpacity 
-                      onPress={() => { closeAllSwipeables(); closeAllShopSwipeables(); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/list/${list.id}`); }}
+                      onPress={() => { closeAllSwipeables(); closeAllShopSwipeables(); hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.push(`/list/${list.id}`); }}
                       className="bg-white rounded-[24px] py-3.5 px-4 flex-row items-center justify-between border border-slate-100"
                       style={{
                         shadowColor: '#0f172a',
@@ -463,7 +464,7 @@ export default function HomeScreen() {
                 <Animated.View layout={LinearTransition.springify()}>
                   <TouchableOpacity
                     activeOpacity={0.7}
-                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.navigate('/lists'); }}
+                    onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.navigate('/lists'); }}
                     className="mx-6 mb-2 rounded-[20px] py-3.5 px-4 flex-row items-center justify-center border border-slate-200"
                     style={{
                       backgroundColor: '#ffffff',
@@ -490,7 +491,7 @@ export default function HomeScreen() {
             </View>
             <TouchableOpacity
               activeOpacity={0.7}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/stores'); }}
+              onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Medium); router.push('/stores'); }}
               className="flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5"
               style={{
                 backgroundColor: '#0f172a',
@@ -536,7 +537,7 @@ export default function HomeScreen() {
                 onSwipeableWillOpen={() => closeAllShopSwipeables(shop.id)}
               >
                 <TouchableOpacity 
-                  onPress={() => { closeAllSwipeables(); closeAllShopSwipeables(); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/stores', params: { shopId: shop.id } }); }}
+                  onPress={() => { closeAllSwipeables(); closeAllShopSwipeables(); hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/stores', params: { shopId: shop.id } }); }}
                   className="bg-white rounded-[24px] py-3.5 px-4 flex-row items-center justify-between border border-slate-100"
                   style={{
                     shadowColor: '#0f172a',
@@ -566,7 +567,7 @@ export default function HomeScreen() {
             <Animated.View layout={LinearTransition.springify()}>
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.navigate('/stores'); }}
+                onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.navigate('/stores'); }}
                 className="mx-6 mb-2 rounded-[20px] py-3.5 px-4 flex-row items-center justify-center border border-slate-200"
                 style={{
                   backgroundColor: '#ffffff',
@@ -607,7 +608,7 @@ export default function HomeScreen() {
 
             <View className="absolute inset-0 items-center justify-center z-20">
               <TouchableOpacity 
-                onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                onPress={() => hapticImpact(Haptics.ImpactFeedbackStyle.Light)}
                 className="bg-[#D4AF37] rounded-full px-6 py-3 flex-row items-center gap-2.5"
                 style={{
                   shadowColor: '#D4AF37',
@@ -617,7 +618,7 @@ export default function HomeScreen() {
                   elevation: 5,
                 }}
               >
-                <Crown size={18} color="#1e1e1e" fill="#1e1e1e" />
+                <Sparkles size={18} color="#1e1e1e" fill="#1e1e1e" />
                 <Text className="text-[#1e1e1e] font-bold text-[15px] tracking-wide">Premium</Text>
               </TouchableOpacity>
             </View>

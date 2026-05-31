@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, MoreHorizontal, ShoppingBag, CheckCircle, Check, Clock, Trash2, Plus, Mic, ScanBarcode, Minus, AlignLeft } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
+import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
 import { useListsStore, useShoppingListStore } from '../../store';
 
 export default function ListDetails() {
@@ -65,7 +66,7 @@ export default function ListDetails() {
 
   const handleAddItem = () => {
     if (newItemText.trim().length === 0) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
     addItem(listId, {
       name: newItemText.trim(),
       quantity,
@@ -185,7 +186,7 @@ export default function ListDetails() {
                   {/* Minimal Checkbox */}
                   <TouchableOpacity 
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                       togglePurchased(item.id);
                     }}
                     className="justify-center items-center w-8 h-8"
@@ -215,7 +216,7 @@ export default function ListDetails() {
                 {/* Right Action */}
                 <TouchableOpacity 
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                     removeItem(item.id);
                   }}
                   className="p-2"
@@ -247,7 +248,7 @@ export default function ListDetails() {
       >
         <TouchableOpacity 
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
             setIsAddModalVisible(true);
           }}
           className="bg-slate-900 py-[18px] rounded-full flex-row justify-center items-center shadow-lg"
@@ -298,11 +299,11 @@ export default function ListDetails() {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-6 px-6" contentContainerStyle={{ paddingRight: 48, gap: 10 }}>
                   {/* Quantity */}
                   <View className="bg-slate-100 rounded-full px-3 py-2 flex-row items-center gap-3">
-                    <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setQuantity(prev => Math.max(1, prev - 1)); }}>
+                    <TouchableOpacity onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); setQuantity(prev => Math.max(1, prev - 1)); }}>
                       <Minus size={16} color="#0f172a" strokeWidth={3} />
                     </TouchableOpacity>
                     <Text className="text-base font-bold text-slate-900 min-w-[20px] text-center">{quantity}</Text>
-                    <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setQuantity(prev => prev + 1); }}>
+                    <TouchableOpacity onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); setQuantity(prev => prev + 1); }}>
                       <Plus size={16} color="#0f172a" strokeWidth={3} />
                     </TouchableOpacity>
                   </View>
@@ -314,7 +315,7 @@ export default function ListDetails() {
                       <TouchableOpacity
                         key={unit}
                         onPress={() => {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                           setSelectedUnit(unit);
                         }}
                         className={`px-4 py-2 rounded-full ${isSelected ? 'bg-slate-900' : 'bg-slate-100'}`}
@@ -361,7 +362,7 @@ export default function ListDetails() {
                       <TouchableOpacity 
                         key={index}
                         onPress={() => {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                           setSelectedCategory(cat);
                         }}
                         className={`px-4 py-2 rounded-xl border ${isSelected ? 'bg-slate-900 border-slate-900' : 'bg-transparent border-slate-200'}`}
@@ -381,7 +382,7 @@ export default function ListDetails() {
                     <TouchableOpacity 
                       key={idx}
                       onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                         setNewItemText(suggestion);
                       }}
                       className="bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-[14px] flex-row items-center"

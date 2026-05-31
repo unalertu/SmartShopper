@@ -6,6 +6,7 @@ import { Menu, ChevronRight, Plus, X, ShoppingBasket, Sparkles, ListPlus, Packag
 import AnimatedScreen from '../../components/AnimatedScreen';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeInDown, FadeOutLeft, FadeOutUp, LinearTransition } from 'react-native-reanimated';
 import { useListsStore, useShoppingListStore } from '../../store';
@@ -43,7 +44,7 @@ export default function ListsScreen() {
   const [showAllTemplates, setShowAllTemplates] = useState(false);
 
   const handlePresentModalPress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
     setShowCreateSheet(true);
   }, []);
 
@@ -66,7 +67,7 @@ export default function ListsScreen() {
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
           removeList(listId);
           swipeableRefs.current.delete(listId);
         }}
@@ -143,7 +144,7 @@ export default function ListsScreen() {
                   <TouchableOpacity
                     activeOpacity={0.6}
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                       setShowAllTemplates(!showAllTemplates);
                     }}
                   >
@@ -173,7 +174,7 @@ export default function ListsScreen() {
                           key={template}
                           activeOpacity={0.7}
                           onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                             addList(template);
                           }}
                           className="bg-white border border-slate-100/70 rounded-[12px] px-3.5 py-2 flex-row items-center gap-1.5"
@@ -220,7 +221,7 @@ export default function ListsScreen() {
                     onSwipeableWillOpen={() => closeAllSwipeables(list.id)}
                   >
                     <TouchableOpacity 
-                      onPress={() => { closeAllSwipeables(); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/list/${list.id}`); }}
+                      onPress={() => { closeAllSwipeables(); hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.push(`/list/${list.id}`); }}
                       className="bg-white rounded-[24px] py-3.5 px-4 flex-row items-center justify-between border border-slate-100"
                       style={{
                         shadowColor: '#0f172a',
@@ -340,7 +341,7 @@ export default function ListsScreen() {
                           activeOpacity={0.7}
                           onPress={() => {
                             if (event.listId) {
-                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                               router.push(`/list/${event.listId}`);
                             }
                           }}

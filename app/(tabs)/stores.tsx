@@ -16,6 +16,7 @@ import { mapCacheManager } from '../../services';
 import { useLocationStore, useSettingsStore } from '../../store';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import * as Haptics from 'expo-haptics';
+import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
 import MapCluster from '../../components/MapCluster';
 import StoreMarker from '../../components/StoreMarker';
 import { MapSearchIndicator } from '../../components/MapSearchIndicator';
@@ -220,7 +221,7 @@ export default function StoresScreen() {
         runOnJS(focusSearchInput)();
       }
     });
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
   }, []);
 
   const dismissSearch = useCallback(() => {
@@ -535,7 +536,7 @@ export default function StoresScreen() {
 
   const handleLocateMe = useCallback(async (isInitial = false) => {
     if (!isInitial) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
     }
 
     const fallbackRegion = {
@@ -630,7 +631,7 @@ export default function StoresScreen() {
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
           removeLocation(locId);
           swipeableRefs.current.delete(locId);
           swipeableRefs.current.delete('context-' + locId);
@@ -724,7 +725,7 @@ export default function StoresScreen() {
                 const now = Date.now();
                 if (now - lastTap.current < 400) return; // Increased from 300 to cover animation duration
                 lastTap.current = now;
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                 
                 // Cancel any in-flight callout timer from a previous rapid tap
                 if (calloutTimerRef.current) clearTimeout(calloutTimerRef.current);
@@ -783,7 +784,7 @@ export default function StoresScreen() {
                 forceTrack={false}
                 onPress={(e: any) => {
                   e.stopPropagation();
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                   Keyboard.dismiss();
                   isAnimatingRef.current = true;
                   
@@ -828,7 +829,7 @@ export default function StoresScreen() {
                 const now = Date.now();
                 if (now - lastTap.current < 400) return; // Increased from 300 to cover animation duration
                 lastTap.current = now;
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                 
                 // Cancel any in-flight callout timer from a previous rapid tap
                 if (calloutTimerRef.current) clearTimeout(calloutTimerRef.current);
@@ -1023,7 +1024,7 @@ export default function StoresScreen() {
                     style={[styles.contextDirectionsBtn, { flex: 1 }]}
                     activeOpacity={0.8}
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                       openDirectionsSheet(selectedShopToSave.latitude, selectedShopToSave.longitude);
                     }}
                   >
@@ -1034,7 +1035,7 @@ export default function StoresScreen() {
                     style={[styles.contextSaveBtn, { flex: 1, marginBottom: 0 }]}
                     activeOpacity={0.8}
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                       addLocation({
                         name: selectedShopToSave.name || 'Unknown Store',
                         address: selectedShopToSave.address || 'Unknown Address',
@@ -1110,7 +1111,7 @@ export default function StoresScreen() {
                       activeOpacity={0.5}
                       onPress={(e) => {
                         e.stopPropagation();
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                         const options = ['Cancel', 'Directions', 'Remove Saved Shop'];
                         const cancelButtonIndex = 0;
                         const destructiveButtonIndex = 2;
@@ -1124,7 +1125,7 @@ export default function StoresScreen() {
                             if (index === 1) {
                               openDirectionsSheet(loc.latitude, loc.longitude);
                             } else if (index === 2) {
-                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                              hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
                               removeLocation(originalId);
                               swipeableRefs.current.delete(originalId);
                               swipeableRefs.current.delete('context-' + originalId);
@@ -1148,7 +1149,7 @@ export default function StoresScreen() {
                   style={[styles.contextDirectionsBtn, { flex: 1 }]}
                   activeOpacity={0.8}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                     openDirectionsSheet(loc.latitude, loc.longitude);
                   }}
                 >
@@ -1159,7 +1160,7 @@ export default function StoresScreen() {
                   style={[styles.contextSaveBtn, { flex: 1, marginBottom: 0, backgroundColor: '#F2726F' }]}
                   activeOpacity={0.8}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
                     removeLocation(originalId);
                     swipeableRefs.current.delete(originalId);
                     swipeableRefs.current.delete('context-' + originalId);
@@ -1230,7 +1231,7 @@ export default function StoresScreen() {
                   activeOpacity={0.7}
                   onPress={() => {
                     closeAllSwipeables();
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                     Keyboard.dismiss();
                     isAnimatingRef.current = true;
                     const latitudeDelta = 0.01;
@@ -1270,7 +1271,7 @@ export default function StoresScreen() {
                     activeOpacity={0.5}
                     onPress={(e) => {
                       e.stopPropagation();
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                       const options = ['Cancel', 'Directions', 'Remove Saved Shop'];
                       const cancelButtonIndex = 0;
                       const destructiveButtonIndex = 2;
@@ -1284,7 +1285,7 @@ export default function StoresScreen() {
                           if (index === 1) {
                             openDirectionsSheet(loc.latitude, loc.longitude);
                           } else if (index === 2) {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
                             removeLocation(loc.id);
                             swipeableRefs.current.delete(loc.id);
                             if (selectedShopToSave && (selectedShopToSave.id === loc.id || selectedShopToSave.id === `saved-${loc.id}`)) {

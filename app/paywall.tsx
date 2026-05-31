@@ -4,8 +4,9 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { Crown, Sparkles, Zap, ShieldCheck, X } from 'lucide-react-native';
+import { Sparkles, Zap, ShieldCheck, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { hapticImpact, hapticNotification, hapticSelection } from '../services/haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function PaywallScreen() {
@@ -13,12 +14,12 @@ export default function PaywallScreen() {
   const insets = useSafeAreaInsets();
 
   const handleClose = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
     router.back();
   };
 
   const handleSubscribe = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    hapticNotification(Haptics.NotificationFeedbackType.Success);
     // In a real app, integrate revenuecat or native IAP here
     alert('Subscription flow would start here.');
   };
@@ -78,7 +79,7 @@ export default function PaywallScreen() {
           className="items-center mb-6"
         >
           <View className="h-20 w-20 rounded-full bg-[#D4AF37]/10 items-center justify-center border border-[#D4AF37]/20">
-            <Crown size={40} color="#D4AF37" fill="#D4AF37" />
+            <Sparkles size={40} color="#D4AF37" fill="#D4AF37" />
           </View>
         </Animated.View>
 
@@ -197,7 +198,7 @@ export default function PaywallScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              hapticImpact(Haptics.ImpactFeedbackStyle.Heavy);
               alert('Purchases Restored: Your Pro subscription has been successfully restored.');
             }}
           >

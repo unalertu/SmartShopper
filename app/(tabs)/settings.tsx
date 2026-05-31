@@ -44,7 +44,7 @@ import {
   MapPin,
   Ruler,
   User,
-  Crown,
+  Sparkles,
   Globe,
   Users,
 } from 'lucide-react-native';
@@ -151,7 +151,7 @@ const ProStatusCard = React.memo(({ animatedStyle }: { animatedStyle: any }) => 
       }}
     >
       <View className="h-12 w-12 rounded-full bg-[#D4AF37]/10 items-center justify-center mr-4">
-        <Crown size={24} color="#D4AF37" />
+        <Sparkles size={24} color="#D4AF37" />
       </View>
       <View className="flex-1 justify-center">
         <View className="flex-row items-center mb-0.5 gap-2">
@@ -538,7 +538,7 @@ export default function SettingsScreen() {
           {/* ── Subscriptions & Purchases ── */}
           <SettingsGroup delay={50}>
             <SettingsRow
-              icon={<Crown size={20} color="#D4AF37" />}
+              icon={<Sparkles size={20} color="#D4AF37" />}
               label="SmartShopper Pro"
               sublabel="Unlock all premium features"
               onPress={() => {

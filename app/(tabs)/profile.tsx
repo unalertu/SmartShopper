@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import * as Haptics from 'expo-haptics';
+import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
 import { 
   User, 
   Bell, 
@@ -18,7 +19,7 @@ import {
   FileText,
   Trash,
   Navigation,
-  Crown,
+  Sparkles,
   ShoppingCart,
   MapPin,
   MessageSquare,
@@ -54,7 +55,7 @@ export default function ProfileScreen() {
   }, []);
 
   const handleNotificationToggle = useCallback(async (value: boolean) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
 
     if (value) {
       // User wants to enable — check if permanently denied first
@@ -156,7 +157,7 @@ export default function ProfileScreen() {
         >
           <View className="flex-row items-center">
             <View className="bg-[#D4AF37] h-10 w-10 rounded-full justify-center items-center mr-3">
-              <Crown size={20} color="#1e1e1e" fill="#1e1e1e" />
+              <Sparkles size={20} color="#1e1e1e" fill="#1e1e1e" />
             </View>
             <View>
               <Text className="text-white font-bold text-[15px]">Premium</Text>
@@ -192,7 +193,7 @@ export default function ProfileScreen() {
           <TouchableOpacity 
             className="flex-row justify-between items-center p-4"
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
               router.push('/settings');
             }}
           >
@@ -213,7 +214,7 @@ export default function ProfileScreen() {
           <TouchableOpacity 
             className="flex-row justify-between items-center p-4 border-b border-slate-50"
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
               router.push('/settings');
             }}
           >
@@ -228,7 +229,7 @@ export default function ProfileScreen() {
           <TouchableOpacity 
             className="flex-row justify-between items-center p-4"
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
               router.push('/settings');
             }}
           >
@@ -251,7 +252,7 @@ export default function ProfileScreen() {
           <TouchableOpacity 
             className="flex-row justify-between items-center p-4"
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
               router.push('/settings');
             }}
           >
@@ -272,7 +273,7 @@ export default function ProfileScreen() {
           <TouchableOpacity 
             className="flex-row justify-between items-center p-4 border-b border-slate-50"
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
               router.push('/settings');
             }}
           >
@@ -287,7 +288,7 @@ export default function ProfileScreen() {
           <TouchableOpacity 
             className="flex-row justify-between items-center p-4"
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
               router.push('/settings');
             }}
           >
@@ -308,7 +309,7 @@ export default function ProfileScreen() {
           <TouchableOpacity 
             className="flex-row justify-between items-center p-4 border-b border-slate-50"
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
               router.push('/settings');
             }}
           >
@@ -323,7 +324,7 @@ export default function ProfileScreen() {
           <TouchableOpacity 
             className="flex-row justify-between items-center p-4"
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
               router.push('/settings');
             }}
           >

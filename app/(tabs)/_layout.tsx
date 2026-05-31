@@ -3,7 +3,8 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
-import * as Haptics from "expo-haptics";
+import * as Haptics from 'expo-haptics';
+import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -186,7 +187,7 @@ function CustomTabBar({
                   label={label}
                   onLayout={(e) => handleTabLayout(index, e)}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                     const event = navigation.emit({
                       type: "tabPress",
                       target: route.key,
