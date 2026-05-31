@@ -17,7 +17,7 @@ const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelecte
 
   useEffect(() => {
     Animated.spring(scale, {
-      toValue: isSelected ? 1.25 : 1,
+      toValue: isSelected ? 1.18 : 1,
       friction: 6,
       tension: 120,
       useNativeDriver: true,
@@ -30,14 +30,14 @@ const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelecte
     
     Animated.parallel([
       Animated.spring(scale, {
-        toValue: isSelected ? 1.25 : 1,
-        friction: 6,
-        tension: 180,
+        toValue: isSelected ? 1.18 : 1,
+        friction: 7,
+        tension: 160,
         useNativeDriver: true,
       }),
       Animated.timing(glowOpacity, {
         toValue: isSelected ? 1 : 0,
-        duration: 350,
+        duration: 300,
         useNativeDriver: true,
       })
     ]).start();
@@ -66,16 +66,16 @@ const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelecte
     );
   }
 
-  // ── Unsaved marker: white circle with basket icon ──
+  // ── Unsaved marker: Apple-style white capsule with basket icon ──
   return (
     <View style={styles.wrapper}>
       <Animated.View style={[styles.container, { transform: [{ scale }] }]}>
-        {/* Subtle Glow Layer */}
-        <Animated.View style={[styles.glow, { opacity: glowOpacity, transform: [{ scale: 1.4 }] }, styles.glowUnsaved]} />
+        {/* Selection glow ring */}
+        <Animated.View style={[styles.glowRing, { opacity: glowOpacity }]} />
         
-        {/* Main Pill */}
-        <View style={styles.markerPillUnsaved}>
-          <ShoppingBasket size={18} color="#0f172a" />
+        {/* Main marker capsule */}
+        <View style={styles.markerCapsule}>
+          <ShoppingBasket size={16} color="#0f172a" strokeWidth={2.2} />
         </View>
       </Animated.View>
     </View>
@@ -96,29 +96,31 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 48,
-    height: 48,
+    width: 52,
+    height: 52,
   },
-  glow: {
+  glowRing: {
     position: 'absolute',
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(15, 23, 42, 0.08)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(15, 23, 42, 0.12)',
   },
-  glowUnsaved: {
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-  },
-  markerPillUnsaved: {
-    padding: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#e8ecf1',
+  markerCapsule: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    // Soft, premium shadow
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.10,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
   },
 
   // ── Saved pin styles ──
@@ -139,9 +141,9 @@ const styles = StyleSheet.create({
   },
   pinShadow: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.20,
+    shadowRadius: 8,
     elevation: 5,
   },
 });

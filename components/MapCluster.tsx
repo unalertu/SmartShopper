@@ -14,7 +14,7 @@ const MapCluster: React.FC<MapClusterProps> = React.memo(({ pointCount, onPress 
     Animated.parallel([
       Animated.spring(scale, {
         toValue: 1,
-        friction: 6,
+        friction: 7,
         tension: 120,
         useNativeDriver: true,
       }),
@@ -26,10 +26,16 @@ const MapCluster: React.FC<MapClusterProps> = React.memo(({ pointCount, onPress 
     ]).start();
   }, []);
 
+  // Dynamic size based on count
+  const size = pointCount > 50 ? 44 : pointCount > 20 ? 40 : 36;
+
   return (
     <Animated.View style={[styles.container, { transform: [{ scale }], opacity }]}>
-      <View style={styles.bubble}>
-        <Text style={styles.text}>{pointCount}</Text>
+      {/* Soft outer glow ring */}
+      <View style={[styles.outerRing, { width: size + 8, height: size + 8, borderRadius: (size + 8) / 2 }]} />
+      {/* Main bubble */}
+      <View style={[styles.bubble, { width: size, height: size, borderRadius: size / 2 }]}>
+        <Text style={[styles.text, pointCount > 99 ? { fontSize: 11 } : null]}>{pointCount}</Text>
       </View>
     </Animated.View>
   );
@@ -43,20 +49,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  outerRing: {
+    position: 'absolute',
+    backgroundColor: 'rgba(15, 23, 42, 0.10)',
+  },
   bubble: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(15, 23, 42, 0.90)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: 'rgba(15, 23, 42, 0.88)',
     alignItems: 'center',
     justifyContent: 'center',
+    // Soft premium shadow
     shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.20,
-    shadowRadius: 6,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6,
   },
   text: {
     color: '#ffffff',

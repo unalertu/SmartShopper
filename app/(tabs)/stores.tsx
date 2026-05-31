@@ -57,6 +57,7 @@ const TrackedMarker = React.forwardRef(({ children, forceTrack, ...props }: any,
 });
 TrackedMarker.displayName = 'TrackedMarker';
 
+
 // Helper: show directions action sheet for a shop
 function openDirectionsSheet(latitude: number, longitude: number) {
   const options = ['Cancel', 'Apple Maps', 'Google Maps', 'Yandex Maps'];
@@ -206,7 +207,7 @@ export default function StoresScreen() {
 
   const SEARCH_SPRING = { damping: 22, stiffness: 200, mass: 0.8 };
   const SEARCH_PILL_WIDTH = SCREEN_WIDTH * 0.65;
-  const SEARCH_BUTTON_SIZE = 42;
+  const SEARCH_BUTTON_SIZE = 46;
 
   const focusSearchInput = useCallback(() => {
     searchInputRef.current?.focus();
@@ -1173,9 +1174,11 @@ export default function StoresScreen() {
               );
             })()}
 
-            <Animated.View layout={LinearTransition.springify()} className="flex-row items-center mt-2 mb-2">
-              <View className="w-2.5 h-2.5 rounded-full bg-slate-900 mr-2.5" />
-              <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">Shops</Text>
+            <Animated.View layout={LinearTransition.springify()} style={{ marginTop: 4, marginBottom: 6 }}>
+              <Text style={{ fontSize: 26, fontWeight: '800', letterSpacing: -0.6, color: '#0f172a' }}>Nearby Shops</Text>
+              <Text style={{ fontSize: 14, fontWeight: '500', color: '#94a3b8', marginTop: 2, letterSpacing: -0.1 }}>
+                {markets.length > 0 ? `${markets.length} stores` : 'Searching nearby…'}
+              </Text>
             </Animated.View>
           </Animated.View>
           {/* Empty state */}
@@ -1324,14 +1327,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     zIndex: 15,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    borderWidth: 0.5,
-    borderColor: 'rgba(226,232,240,0.5)',
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 4,
+    backgroundColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    elevation: 6,
     overflow: 'hidden',
   },
   floatingSearchInner: {
@@ -1364,17 +1365,15 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   locateButtonSurface: {
-    width: 44,
-    height: 44,
-    borderRadius: 9999,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    borderWidth: 0.5,
-    borderColor: 'rgba(226,232,240,0.5)',
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 16,
-    elevation: 3,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    elevation: 6,
   },
   locateButton: {
     flex: 1,
