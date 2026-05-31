@@ -14,10 +14,10 @@ import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeOutLeft, LinearTransition } from 'react-native-reanimated';
 import { useLocationStore, useListsStore, useSettingsStore } from '../../store';
 import { useScrollToTop } from '@react-navigation/native';
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import RadarPinIcon from '../../components/RadarPinIcon';
 import StoreMarker from '../../components/StoreMarker';
+import CreateListSheet from '../../components/CreateListSheet';
 
 const getRelativeDate = (timestamp?: number): string => {
   if (!timestamp) return 'today';
@@ -162,38 +162,16 @@ export default function HomeScreen() {
 
   const { lists: shoppingLists, addList, removeList } = useListsStore();
 
-  const newListBottomSheetRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ['35%'], []);
-  const [newListName, setNewListName] = useState('');
+  const [showCreateSheet, setShowCreateSheet] = useState(false);
 
   const handlePresentModalPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    newListBottomSheetRef.current?.present();
+    setShowCreateSheet(true);
   }, []);
 
-  const handleCloseModalPress = useCallback(() => {
-    newListBottomSheetRef.current?.dismiss();
-    setNewListName('');
-  }, []);
-
-  const handleAddList = () => {
-    if (newListName.trim()) {
-      addList(newListName.trim());
-      setNewListName('');
-      newListBottomSheetRef.current?.dismiss();
-    }
-  };
-
-  const renderBackdrop = useCallback(
-    (props: any) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-      />
-    ),
-    []
-  );
+  const handleCreateList = useCallback((name: string) => {
+    addList(name);
+  }, [addList]);
 
   const swipeableRefs = useRef<Map<number, Swipeable>>(new Map());
 
@@ -691,50 +669,11 @@ export default function HomeScreen() {
         </ScrollView>
 
         {/* Bottom Sheet for Adding New List */}
-        <BottomSheetModal
-          ref={newListBottomSheetRef}
-          index={0}
-          snapPoints={snapPoints}
-          backdropComponent={renderBackdrop}
-          enablePanDownToClose={true}
-          handleIndicatorStyle={{ backgroundColor: '#cbd5e1', width: 40 }}
-          backgroundStyle={{ borderRadius: 32 }}
-        >
-          <View className="flex-1 px-6 pt-2 pb-6 bg-white">
-            <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-[20px] font-bold text-slate-900 tracking-tight">Create New List</Text>
-              <TouchableOpacity onPress={handleCloseModalPress} className="bg-slate-100 p-2 rounded-full">
-                <X size={20} color="#64748b" />
-              </TouchableOpacity>
-            </View>
-            <BottomSheetTextInput
-              value={newListName}
-              onChangeText={setNewListName}
-              placeholder="List name (e.g., Grocery, Weekly)..."
-              className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-[16px] text-slate-900 mb-6 font-medium"
-              placeholderTextColor="#94a3b8"
-              autoFocus
-              onSubmitEditing={handleAddList}
-            />
-            <TouchableOpacity
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleAddList(); }}
-              activeOpacity={0.8}
-              style={{
-                backgroundColor: '#0f172a',
-                borderRadius: 16,
-                paddingVertical: 16,
-                alignItems: 'center',
-                shadowColor: '#0f172a',
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.2,
-                shadowRadius: 12,
-                elevation: 4,
-              }}
-            >
-              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Create List</Text>
-            </TouchableOpacity>
-          </View>
-        </BottomSheetModal>
+        <CreateListSheet
+          visible={showCreateSheet}
+          onClose={() => setShowCreateSheet(false)}
+          onCreateList={handleCreateList}
+        />
     </View>
     </AnimatedScreen>
   );
