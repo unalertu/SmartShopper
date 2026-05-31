@@ -93,11 +93,10 @@ export default function ListsScreen() {
           {/* Header */}
           <Animated.View
             layout={LinearTransition.springify()}
-            className="flex-row items-center mx-6 mb-6"
+            className="mx-6 mb-6"
           >
-            <Text className="text-3xl font-bold text-slate-900">
-              Lists
-            </Text>
+            <Text style={{ fontSize: 26, fontWeight: '800', letterSpacing: -0.6, color: '#0f172a' }}>Lists</Text>
+            <Text style={{ fontSize: 14, fontWeight: '500', color: '#94a3b8', marginTop: 2, letterSpacing: -0.1 }}>{shoppingLists.length === 0 ? 'No saved lists' : `${shoppingLists.length} saved list${shoppingLists.length !== 1 ? 's' : ''}`}</Text>
           </Animated.View>
 
           {shoppingLists.length === 0 && (
