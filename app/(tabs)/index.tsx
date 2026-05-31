@@ -13,7 +13,7 @@ import MapView, { Marker } from 'react-native-maps';
 import { fetchMarkets } from '../../services/overpassService';
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeOutLeft, LinearTransition } from 'react-native-reanimated';
-import { useLocationStore, useListsStore, useSettingsStore } from '../../store';
+import { useLocationStore, useListsStore, useSettingsStore, useQuickStartStore } from '../../store';
 import { useScrollToTop } from '@react-navigation/native';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import RadarPinIcon from '../../components/RadarPinIcon';
@@ -42,6 +42,11 @@ export default function HomeScreen() {
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
 
+  const { templates, incrementUsage } = useQuickStartStore();
+  const sortedTemplates = [...templates]
+    .sort((a, b) => b.usageCount - a.usageCount)
+    .map(t => t.name)
+    .slice(0, 4);
   // Shared Zustand store for saved shops (synced with Stores page)
   const { locations: savedShops, removeLocation, cachedMarkets, isFetchingMarkets } = useLocationStore();
 
@@ -389,13 +394,14 @@ export default function HomeScreen() {
                 showsHorizontalScrollIndicator={false} 
                 contentContainerStyle={{ paddingHorizontal: 24, gap: 10, paddingBottom: 10 }}
               >
-                {['Weekly Groceries', 'Dinner Party', 'Breakfast', 'Cleaning Supplies'].map((template) => (
+                {sortedTemplates.map((template) => (
                   <TouchableOpacity
                     key={template}
                     activeOpacity={0.7}
                     onPress={() => {
                       hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                       addList(template);
+                      incrementUsage(template);
                     }}
                     className="bg-white border border-slate-100 rounded-[16px] px-4 py-3 flex-row items-center gap-2"
                     style={{

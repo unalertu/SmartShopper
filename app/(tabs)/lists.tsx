@@ -9,7 +9,7 @@ import * as Haptics from 'expo-haptics';
 import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeInDown, FadeOutLeft, FadeOutUp, LinearTransition } from 'react-native-reanimated';
-import { useListsStore, useShoppingListStore } from '../../store';
+import { useListsStore, useShoppingListStore, useQuickStartStore } from '../../store';
 import { useScrollToTop } from '@react-navigation/native';
 import CreateListSheet from '../../components/CreateListSheet';
 
@@ -39,6 +39,13 @@ export default function ListsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { lists: shoppingLists, addList, removeList } = useListsStore();
+  const { templates, incrementUsage } = useQuickStartStore();
+
+  const sortedTemplates = [...templates].sort((a, b) => b.usageCount - a.usageCount).map(t => t.name);
+  const templateRows = [];
+  for (let i = 0; i < sortedTemplates.length; i += 3) {
+    templateRows.push(sortedTemplates.slice(i, i + 3));
+  }
 
   const [showCreateSheet, setShowCreateSheet] = useState(false);
   const [showAllTemplates, setShowAllTemplates] = useState(false);
@@ -134,24 +141,17 @@ export default function ListsScreen() {
                 <Sparkles size={14} color="#94a3b8" strokeWidth={2} />
                 <Text className="text-[14px] font-bold text-slate-500 tracking-wide uppercase">Quick Start</Text>
               </View>
-              {(() => {
-                const allTemplates = [
-                  ['Weekly Groceries', 'Dinner Party', 'Office Supplies'],
-                  ['Breakfast', 'Cleaning', 'Pet Supplies'],
-                  ['BBQ', 'Snacks', 'Pharmacy', 'Baking'],
-                ];
-                return allTemplates.length > 2 ? (
-                  <TouchableOpacity
-                    activeOpacity={0.6}
-                    onPress={() => {
-                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                      setShowAllTemplates(!showAllTemplates);
-                    }}
-                  >
-                    <Text className="text-[12px] font-semibold text-slate-400">{showAllTemplates ? 'Show Less' : 'See All'}</Text>
-                  </TouchableOpacity>
-                ) : null;
-              })()}
+              {templateRows.length > 2 ? (
+                <TouchableOpacity
+                  activeOpacity={0.6}
+                  onPress={() => {
+                    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                    setShowAllTemplates(!showAllTemplates);
+                  }}
+                >
+                  <Text className="text-[12px] font-semibold text-slate-400">{showAllTemplates ? 'Show Less' : 'See All'}</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
             
             <ScrollView 
@@ -162,12 +162,8 @@ export default function ListsScreen() {
             >
               <View style={{ gap: 8 }}>
                 {(() => {
-                  const rows = [
-                    ['Weekly Groceries', 'Dinner Party', 'Office Supplies'],
-                    ['Breakfast', 'Cleaning', 'Pet Supplies'],
-                    ...(showAllTemplates ? [['BBQ', 'Snacks', 'Pharmacy', 'Baking']] : []),
-                  ];
-                  return rows.map((row, rowIndex) => (
+                  const visibleRows = showAllTemplates ? templateRows : templateRows.slice(0, 2);
+                  return visibleRows.map((row, rowIndex) => (
                     <View key={rowIndex} className="flex-row" style={{ gap: 8 }}>
                       {row.map((template) => (
                         <TouchableOpacity
@@ -176,6 +172,7 @@ export default function ListsScreen() {
                           onPress={() => {
                             hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                             addList(template);
+                            incrementUsage(template);
                           }}
                           className="bg-white border border-slate-100/70 rounded-[12px] px-3.5 py-2 flex-row items-center gap-1.5"
                           style={{
