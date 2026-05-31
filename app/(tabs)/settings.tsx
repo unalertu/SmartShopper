@@ -740,11 +740,11 @@ export default function SettingsScreen() {
             layout={LinearTransition.springify()}
             className="items-center mb-4"
           >
-            <Text className="text-[12px] font-medium text-slate-300 tracking-wide">
-              Made with ❤️ in Istanbul
+            <Text className="text-[12px] font-medium text-slate-300 tracking-wide text-center">
+              Your memory at the supermarket
             </Text>
-            <Text className="text-[11px] font-medium text-slate-300 mt-1">
-              SmartShopper © 2026
+            <Text className="text-[11px] font-medium text-slate-300 mt-1 text-center">
+              Crafted by a solo student developer
             </Text>
           </Animated.View>
         </ScrollView>
