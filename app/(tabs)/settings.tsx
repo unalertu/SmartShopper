@@ -115,7 +115,7 @@ function SettingsGroup({
   return (
     <Animated.View
       layout={LinearTransition.springify()}
-      className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 shadow-sm mx-6"
+      className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 mx-6"
       
     >
       {children}
@@ -132,10 +132,10 @@ const THEME_LABELS: Record<ThemeOption, string> = {
   dark: 'Dark'};
 
 // ─── Pro Status Card Memoized ────────────────────────────────────────────────
-const ProStatusCard = React.memo(({ animatedStyle }: { animatedStyle: any }) => (
+const ProStatusCard = React.memo(({ animatedStyle, isPro }: { animatedStyle: any; isPro: boolean }) => (
   <Animated.View style={animatedStyle}>
     <View
-      className="bg-white border border-slate-100 rounded-3xl p-4 shadow-sm flex-row items-center"
+      className="bg-white border border-slate-100 rounded-3xl p-4 flex-row items-center"
       
     >
       <View className="h-12 w-12 rounded-full bg-[#D4AF37]/10 items-center justify-center mr-4">
@@ -144,13 +144,15 @@ const ProStatusCard = React.memo(({ animatedStyle }: { animatedStyle: any }) => 
       <View className="flex-1 justify-center">
         <View className="flex-row items-center mb-0.5 gap-2">
           <Text className="text-[17px] font-semibold text-slate-900 tracking-tight">SmartShopper</Text>
-          <View className="bg-[#D4AF37]/10 px-1.5 py-0.5 rounded flex-row items-center border border-[#D4AF37]/20">
-            <Text className="text-[#D4AF37] font-bold text-[9px] uppercase tracking-wider">
-              Pro Aktif
+          <View className={`${isPro ? 'bg-[#D4AF37]/10 border-[#D4AF37]/20' : 'bg-slate-100 border-slate-200'} px-1.5 py-0.5 rounded flex-row items-center border`}>
+            <Text className={`${isPro ? 'text-[#D4AF37]' : 'text-slate-400'} font-bold text-[9px] uppercase tracking-wider`}>
+              {isPro ? 'Pro Active' : 'Free'}
             </Text>
           </View>
         </View>
-        <Text className="text-[13px] text-slate-500">Tüm premium özellikler açık</Text>
+        <Text className="text-[13px] text-slate-500">
+          {isPro ? 'Tap to manage your subscription' : 'Upgrade to unlock all features'}
+        </Text>
       </View>
       <ChevronRight size={18} color="#cbd5e1" />
     </View>
@@ -165,6 +167,23 @@ export default function SettingsScreen() {
   useScrollToTop(scrollRef);
   const insets = useSafeAreaInsets();
   const router = useRouter();
+
+  // ── Store selectors ──
+  const { clearAll: clearAllItems } = useShoppingListStore();
+
+  const {
+    notificationsEnabled,
+    hapticEnabled,
+    locationEnabled,
+    distanceUnit,
+    theme,
+    isPro,
+    setNotificationsEnabled,
+    setHapticEnabled,
+    setLocationEnabled,
+    setDistanceUnit,
+    setTheme,
+    resetSettings} = useSettingsStore();
 
   // ── Animated Values for Pro Card ──
   const scale = useSharedValue(1);
@@ -184,24 +203,13 @@ export default function SettingsScreen() {
 
   const handleProCardPress = () => {
     hapticImpact(ImpactFeedbackStyle.Light);
-    router.push('/paywall');
+    if (isPro) {
+      router.push('/pro');
+    } else {
+      router.push('/paywall');
+    }
   };
 
-  // ── Store selectors ──
-  const { clearAll: clearAllItems } = useShoppingListStore();
-
-  const {
-    notificationsEnabled,
-    hapticEnabled,
-    locationEnabled,
-    distanceUnit,
-    theme,
-    setNotificationsEnabled,
-    setHapticEnabled,
-    setLocationEnabled,
-    setDistanceUnit,
-    setTheme,
-    resetSettings} = useSettingsStore();
 
   // ── Sync real notification status ──
   const syncNotificationStatus = useCallback(async () => {
@@ -509,7 +517,7 @@ export default function SettingsScreen() {
               onPressOut={handleProCardPressOut}
               onPress={handleProCardPress}
             >
-              <ProStatusCard animatedStyle={animatedProCardStyle} />
+              <ProStatusCard animatedStyle={animatedProCardStyle} isPro={isPro} />
             </TouchableOpacity>
           </Animated.View>
 
@@ -524,15 +532,27 @@ export default function SettingsScreen() {
                 router.push('/paywall');
               }}
             />
-            <SettingsRow
-              icon={<Users size={20} color="#64748b" />}
-              label="Upgrade to Family Plan"
-              sublabel="Share Pro with up to 5 members"
-              onPress={() => {
-                hapticImpact(ImpactFeedbackStyle.Light);
-                Alert.alert('Coming Soon', 'The Family Plan will be available in a future update.');
-              }}
-            />
+            {isPro ? (
+              <SettingsRow
+                icon={<Users size={20} color="#64748b" />}
+                label="Upgrade to Family Plan"
+                sublabel="Share Pro with up to 5 members"
+                onPress={() => {
+                  hapticImpact(ImpactFeedbackStyle.Light);
+                  Alert.alert('Coming Soon', 'The Family Plan will be available in a future update.');
+                }}
+              />
+            ) : (
+              <SettingsRow
+                icon={<Users size={20} color="#64748b" />}
+                label="Family Plan"
+                sublabel="Coming soon"
+                onPress={() => {
+                  hapticImpact(ImpactFeedbackStyle.Light);
+                  Alert.alert('Coming Soon', 'The Family Plan will be available in a future update.');
+                }}
+              />
+            )}
             <SettingsRow
               icon={<RefreshCw size={20} color="#64748b" />}
               label="Restore Purchases"

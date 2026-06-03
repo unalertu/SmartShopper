@@ -28,6 +28,9 @@ interface SettingsState {
   smartSuggestionsEnabled: boolean;
   autoDeletePurchased: boolean;
 
+  // ── Subscription ──
+  isPro: boolean;
+
   // ── Actions ──
   setNotificationsEnabled: (enabled: boolean) => void;
   setSoundEnabled: (enabled: boolean) => void;
@@ -38,6 +41,7 @@ interface SettingsState {
   setTheme: (theme: ThemeOption) => void;
   setSmartSuggestionsEnabled: (enabled: boolean) => void;
   setAutoDeletePurchased: (enabled: boolean) => void;
+  setIsPro: (enabled: boolean) => void;
   resetSettings: () => void;
 }
 
@@ -52,6 +56,7 @@ const DEFAULT_SETTINGS = {
   theme: "system" as ThemeOption,
   smartSuggestionsEnabled: true,
   autoDeletePurchased: false,
+  isPro: true,
 };
 
 export const useSettingsStore = create<SettingsState>()(
@@ -72,14 +77,21 @@ export const useSettingsStore = create<SettingsState>()(
         set({ smartSuggestionsEnabled: enabled }),
       setAutoDeletePurchased: (enabled) =>
         set({ autoDeletePurchased: enabled }),
+      setIsPro: (enabled) => set({ isPro: enabled }),
       resetSettings: () => set(DEFAULT_SETTINGS),
     }),
     {
       name: "settings-storage",
+      version: 2,
       storage: createJSONStorage(() => AsyncStorage),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
       },
+      merge: (persistedState: any, currentState: any) => ({
+        ...currentState,
+        ...persistedState,
+        isPro: true,
+      }),
     }
   )
 );

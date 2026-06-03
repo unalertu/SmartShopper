@@ -129,6 +129,14 @@ export default function RootLayout() {
                 headerShown: false}}
             />
             <Stack.Screen
+              name="pro"
+              options={{
+                animation: "ios_from_right",
+                gestureEnabled: true,
+                fullScreenGestureEnabled: true,
+                headerShown: false}}
+            />
+            <Stack.Screen
               name="list/[id]"
               options={{
                 animation: "ios_from_right",
