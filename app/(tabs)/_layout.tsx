@@ -96,10 +96,10 @@ function TabItem({
     >
       <Animated.View style={[styles.iconContainer, containerStyle]}>
         <Animated.View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }, inactiveIconStyle]}>
-          <Icon size={22} color="#b0b8c4" strokeWidth={1.5} />
+          <Icon size={19} color="#b0b8c4" strokeWidth={1.5} />
         </Animated.View>
         <Animated.View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }, activeIconStyle]}>
-          <Icon size={22} color="#ffffff" strokeWidth={2.2} />
+          <Icon size={19} color="#ffffff" strokeWidth={2.2} />
         </Animated.View>
       </Animated.View>
     </Pressable>
@@ -262,8 +262,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   iconContainer: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     alignItems: "center",
     justifyContent: "center",
   },

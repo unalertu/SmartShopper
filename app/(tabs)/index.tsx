@@ -38,6 +38,8 @@ export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [nearbyStore, setNearbyStore] = useState<string>('Searching location...');
+  const [nearestShopName, setNearestShopName] = useState<string | null>(null);
+  const [nearestShopDistance, setNearestShopDistance] = useState<string | null>(null);
   const [isNearStore, setIsNearStore] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
@@ -70,11 +72,15 @@ export default function HomeScreen() {
   const formatDistance = (meters: number): string => {
     if (distanceUnit === 'imperial') {
       const miles = meters / 1609.34;
-      if (miles < 0.1) return `${Math.round(meters * 3.28084)}ft away`;
-      return `${miles.toFixed(1)}mi away`;
+      if (miles < 0.1) return `${Math.round(meters * 3.28084)} ft`;
+      return `${miles.toFixed(1)} mi`;
     }
-    if (meters < 1000) return `${Math.round(meters)}m away`;
-    return `${(meters / 1000).toFixed(1)}km away`;
+    if (meters < 1000) return `${Math.round(meters)} m`;
+    return `${(meters / 1000).toFixed(1)} km`;
+  };
+
+  const formatDistanceAway = (meters: number): string => {
+    return formatDistance(meters) + ' away';
   };
 
   useEffect(() => {
@@ -155,13 +161,19 @@ export default function HomeScreen() {
 
       if (minDist < 10000) {
         setNearbyStore(`${nearest.name} is ${formatDistance(minDist)}`);
+        setNearestShopName(nearest.name);
+        setNearestShopDistance(formatDistance(minDist));
         setIsNearStore(true);
       } else {
         setNearbyStore(isFetchingMarkets ? 'Searching nearby...' : 'No stores nearby');
+        setNearestShopName(null);
+        setNearestShopDistance(null);
         setIsNearStore(false);
       }
     } else {
       setNearbyStore(isFetchingMarkets ? 'Searching nearby...' : 'No stores nearby');
+      setNearestShopName(null);
+      setNearestShopDistance(null);
       setIsNearStore(false);
     }
   }, [cachedMarkets, userLocation, isFetchingMarkets]);
@@ -335,7 +347,18 @@ export default function HomeScreen() {
                       active={isNearStore}
                     />
                   </View>
-                  <Text className="text-[15px] font-semibold text-slate-900 tracking-tight">{nearbyStore}</Text>
+                  {nearestShopName ? (
+                    <View>
+                      <Text style={{ fontSize: 12, fontWeight: '500', color: '#94a3b8', letterSpacing: 0.2 }}>Nearest Shop</Text>
+                      <Text style={{ fontSize: 15, fontWeight: '600', color: '#0f172a', letterSpacing: -0.3, marginTop: 1 }} numberOfLines={1}>
+                        {nearestShopName}
+                        <Text style={{ color: '#cbd5e1', fontWeight: '400' }}> · </Text>
+                        <Text style={{ fontSize: 14, fontWeight: '500', color: '#64748b' }}>{nearestShopDistance}</Text>
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text className="text-[15px] font-semibold text-slate-900 tracking-tight">{nearbyStore}</Text>
+                  )}
                 </View>
 
               </TouchableOpacity>
@@ -351,13 +374,16 @@ export default function HomeScreen() {
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={handlePresentModalPress}
-              className="flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5"
               style={{
                 backgroundColor: '#0f172a',
+                width: 30,
+                height: 30,
+                borderRadius: 15,
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <Plus size={14} color="#fff" strokeWidth={2.5} />
-              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Add</Text>
+              <Plus size={13} color="#fff" strokeWidth={2.5} />
             </TouchableOpacity>
           </Animated.View>
           {shoppingLists.length === 0 ? (
@@ -443,25 +469,32 @@ export default function HomeScreen() {
                   >
                     <TouchableOpacity 
                       onPress={() => { closeAllSwipeables(); closeAllShopSwipeables(); hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.push(`/list/${list.id}`); }}
-                      className="bg-white rounded-[24px] py-3.5 px-4 flex-row items-center justify-between border border-slate-100"
+                      className="bg-white rounded-[22px] flex-row items-center justify-between border border-slate-100"
                       style={{
+                        paddingVertical: 10,
+                        paddingHorizontal: 14,
                         shadowColor: '#0f172a',
-                        shadowOffset: { width: 0, height: 8 },
-                        shadowOpacity: 0.03,
-                        shadowRadius: 24,
-                        elevation: 3,
+                        shadowOffset: { width: 0, height: 6 },
+                        shadowOpacity: 0.025,
+                        shadowRadius: 20,
+                        elevation: 2,
                       }}
                     >
-                      <View className="flex-row items-center gap-3.5 flex-1">
-                        <View className="w-10 h-10 bg-slate-100/60 rounded-[12px] items-center justify-center">
-                          <Menu size={20} color="#475569" />
+                      <View className="flex-row items-center gap-3 flex-1">
+                        <View style={{ width: 34, height: 34, backgroundColor: 'rgba(241,245,249,0.6)', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
+                          <Menu size={16} color="#475569" />
                         </View>
                         <View className="flex-1">
-                          <Text className="text-[16px] font-semibold text-slate-900 tracking-tight" numberOfLines={1}>{list.name}</Text>
-                          <Text className="text-[13px] font-medium text-slate-500 mt-0.5" numberOfLines={1}>{list.count} items • Updated {getRelativeDate(list.createdAt)}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Text style={{ fontSize: 15, fontWeight: '600', color: '#0f172a', letterSpacing: -0.3 }} numberOfLines={1}>{list.name}</Text>
+                            <View style={{ backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1.5 }}>
+                              <Text style={{ fontSize: 11, fontWeight: '600', color: '#64748b' }}>{list.count}</Text>
+                            </View>
+                          </View>
+                          <Text style={{ fontSize: 12, fontWeight: '500', color: '#94a3b8', marginTop: 2 }} numberOfLines={1}>Updated {getRelativeDate(list.createdAt)}</Text>
                         </View>
                       </View>
-                      <ChevronRight size={18} color="#94a3b8" />
+                      <ChevronRight size={16} color="#cbd5e1" />
                     </TouchableOpacity>
                   </Swipeable>
                 </Animated.View>
@@ -498,13 +531,16 @@ export default function HomeScreen() {
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Medium); router.push('/stores'); }}
-              className="flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5"
               style={{
                 backgroundColor: '#0f172a',
+                width: 30,
+                height: 30,
+                borderRadius: 15,
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <Plus size={14} color="#fff" strokeWidth={2.5} />
-              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Add</Text>
+              <Plus size={13} color="#fff" strokeWidth={2.5} />
             </TouchableOpacity>
           </Animated.View>
           {savedShops.length === 0 && (
@@ -560,7 +596,7 @@ export default function HomeScreen() {
                     <View className="flex-1">
                       <Text className="text-[16px] font-semibold text-slate-900 tracking-tight" numberOfLines={1}>{shop.name}</Text>
                       <Text className="text-[13px] font-medium text-slate-500 mt-0.5" numberOfLines={1}>
-                        {userLocation ? formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, shop.latitude, shop.longitude)) : (shop.address || 'Saved Shop')}
+                        {userLocation ? formatDistanceAway(haversineDistance(userLocation.latitude, userLocation.longitude, shop.latitude, shop.longitude)) : (shop.address || 'Saved Shop')}
                       </Text>
                     </View>
                   </View>
