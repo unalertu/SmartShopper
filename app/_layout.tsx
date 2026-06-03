@@ -8,6 +8,9 @@ import * as SplashScreen from "expo-splash-screen";
 import "react-native-reanimated";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { enableFreeze } from "react-native-screens";
+
+enableFreeze(false);
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { setupNotifications } from "@/services/notificationService";
@@ -27,7 +30,7 @@ const AppLightTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: '#f8fafc'}};
+    background: '#F2F2F7'}};
 
 export const unstable_settings = {
   anchor: "(tabs)"};
@@ -87,7 +90,7 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#f8fafc' }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#F2F2F7' }}>
       <BottomSheetModalProvider>
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : AppLightTheme}>
           <Stack
@@ -96,7 +99,11 @@ export default function RootLayout() {
               animation: "ios_from_right",
               gestureEnabled: true,
               fullScreenGestureEnabled: true,
-              animationDuration: 350}}
+              animationDuration: 350,
+              // Prevent previous screen from being detached/unmounted during navigation.
+              // This avoids the blank/white screen flash during swipe-back gestures,
+              // especially when the previous screen contains heavy components like MapView.
+              detachPreviousScreen: false}}
           >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen

@@ -25,20 +25,15 @@ export default function AnimatedScreen({ children, style }: AnimatedScreenProps)
 
   useFocusEffect(
     useCallback(() => {
-      // Reset to initial state
+      // Reset to initial state and animate in
       progress.value = 0;
-
-      // Animate in with timing to avoid long spring oscillations that cause blur
       progress.value = withTiming(1, {
         duration: 400,
         easing: Easing.out(Easing.cubic)});
 
-      return () => {
-        // Subtle fade out when leaving
-        progress.value = withTiming(0, {
-          duration: 150,
-          easing: Easing.out(Easing.ease)});
-      };
+      // No cleanup animation — keeping the screen at full opacity prevents
+      // the blank/white flash during interactive swipe-back gestures.
+      // The screen must remain visible while the gesture is in progress.
     }, [])
   );
 
