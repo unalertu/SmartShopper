@@ -948,8 +948,8 @@ export default function StoresScreen() {
         enableOverDrag={true}
         enablePanDownToClose={false}
         backgroundStyle={{
-          borderRadius: 32,
-          backgroundColor: '#f8fafc'
+          borderRadius: 32,
+          backgroundColor: '#F2F2F7'
         }}
       >
 
@@ -974,18 +974,23 @@ export default function StoresScreen() {
                   style={{ marginBottom: 14 }}
                 >
                   <View
-                    className="bg-white rounded-[20px] py-3.5 px-4 flex-row items-center justify-between border border-slate-200/70"
-                    
+                    className="bg-white rounded-[22px] flex-row items-center justify-between"
+                    style={{ paddingVertical: 10, paddingHorizontal: 14 }}
                   >
-                    <View className="flex-row items-center gap-3.5 flex-1">
-                      <View className="w-10 h-10 bg-slate-100/60 rounded-[12px] items-center justify-center">
-                        <Store size={20} color="#475569" />
+                    <View className="flex-row items-center gap-3 flex-1">
+                      <View style={{ width: 34, height: 34, backgroundColor: 'rgba(241,245,249,0.6)', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
+                        <Store size={16} color="#475569" />
                       </View>
                       <View className="flex-1">
-                        <Text className="text-[16px] font-bold text-slate-900 tracking-tight" numberOfLines={1}>{selectedShopToSave.name}</Text>
-                        <Text className="text-[13px] font-medium text-slate-500 mt-0.5" numberOfLines={1}>
-                          {userLocation ? formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, selectedShopToSave.latitude, selectedShopToSave.longitude)) : (selectedShopToSave.address || 'Unknown Address')}
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Text style={{ fontSize: 15, fontWeight: '600', color: '#0f172a', letterSpacing: -0.3 }} numberOfLines={1}>{selectedShopToSave.name}</Text>
+                          {userLocation && (
+                            <View style={{ backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1.5 }}>
+                              <Text style={{ fontSize: 11, fontWeight: '600', color: '#64748b' }}>{formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, selectedShopToSave.latitude, selectedShopToSave.longitude))}</Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text style={{ fontSize: 12, fontWeight: '500', color: '#94a3b8', marginTop: 2 }} numberOfLines={1}>{selectedShopToSave.address || 'Unknown Address'}</Text>
                       </View>
                     </View>
                   </View>
@@ -1055,23 +1060,28 @@ export default function StoresScreen() {
                   onSwipeableWillOpen={() => closeAllSwipeables('context-' + originalId)}
                 >
                   <TouchableOpacity
-                    className="bg-white rounded-[20px] py-3.5 px-4 flex-row items-center justify-between border border-slate-200/70"
-                    
+                    className="bg-white rounded-[22px] flex-row items-center justify-between"
+                    style={{ paddingVertical: 10, paddingHorizontal: 14 }}
                     activeOpacity={0.7}
                     onPress={() => {
                       closeAllSwipeables();
                       setSelectedShopToSave(null);
                     }}
                   >
-                    <View className="flex-row items-center gap-3.5 flex-1">
-                      <View className="w-10 h-10 bg-slate-100/60 rounded-[12px] items-center justify-center">
-                        <Store size={20} color="#475569" />
+                    <View className="flex-row items-center gap-3 flex-1">
+                      <View style={{ width: 34, height: 34, backgroundColor: 'rgba(241,245,249,0.6)', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
+                        <Store size={16} color="#475569" />
                       </View>
                       <View className="flex-1">
-                        <Text className="text-[16px] font-semibold text-slate-900 tracking-tight" numberOfLines={1}>{loc.name}</Text>
-                        <Text className="text-[13px] font-medium text-slate-500 mt-0.5" numberOfLines={1}>
-                          {userLocation ? formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, loc.latitude, loc.longitude)) : (loc.address || 'Saved Shop')}
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Text style={{ fontSize: 15, fontWeight: '600', color: '#0f172a', letterSpacing: -0.3 }} numberOfLines={1}>{loc.name}</Text>
+                          {userLocation && (
+                            <View style={{ backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1.5 }}>
+                              <Text style={{ fontSize: 11, fontWeight: '600', color: '#64748b' }}>{formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, loc.latitude, loc.longitude))}</Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text style={{ fontSize: 12, fontWeight: '500', color: '#94a3b8', marginTop: 2 }} numberOfLines={1}>{loc.address || 'Saved Shop'}</Text>
                       </View>
                     </View>
                     <TouchableOpacity
@@ -1187,8 +1197,8 @@ export default function StoresScreen() {
                 onSwipeableWillOpen={() => closeAllSwipeables(loc.id)}
               >
                 <TouchableOpacity
-                  className="bg-white rounded-[20px] py-3.5 px-4 flex-row items-center justify-between border border-slate-200/70"
-                  
+                  className="bg-white rounded-[22px] flex-row items-center justify-between"
+                  style={{ paddingVertical: 10, paddingHorizontal: 14 }}
                   activeOpacity={0.7}
                   onPress={() => {
                     closeAllSwipeables();
@@ -1215,15 +1225,20 @@ export default function StoresScreen() {
                     }, 550);
                   }}
                 >
-                  <View className="flex-row items-center gap-3.5 flex-1">
-                    <View className="w-10 h-10 bg-slate-100/60 rounded-[12px] items-center justify-center">
-                      <Store size={20} color="#475569" />
+                  <View className="flex-row items-center gap-3 flex-1">
+                    <View style={{ width: 34, height: 34, backgroundColor: 'rgba(241,245,249,0.6)', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
+                      <Store size={16} color="#475569" />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-[16px] font-semibold text-slate-900 tracking-tight" numberOfLines={1}>{loc.name}</Text>
-                      <Text className="text-[13px] font-medium text-slate-500 mt-0.5" numberOfLines={1}>
-                        {userLocation ? formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, loc.latitude, loc.longitude)) : (loc.address || 'Saved Shop')}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={{ fontSize: 15, fontWeight: '600', color: '#0f172a', letterSpacing: -0.3 }} numberOfLines={1}>{loc.name}</Text>
+                        {userLocation && (
+                          <View style={{ backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1.5 }}>
+                            <Text style={{ fontSize: 11, fontWeight: '600', color: '#64748b' }}>{formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, loc.latitude, loc.longitude))}</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={{ fontSize: 12, fontWeight: '500', color: '#94a3b8', marginTop: 2 }} numberOfLines={1}>{loc.address || 'Saved Shop'}</Text>
                     </View>
                   </View>
                   <TouchableOpacity
