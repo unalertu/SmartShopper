@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Flame, Store, ShoppingBag, Crown, Plus, Home, Users, User, Menu, ChevronRight, Radar, BellRing, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings, ScanBarcode, Sparkles } from 'lucide-react-native';
+import { Flame, Store, ShoppingBag, Crown, Plus, Home, Users, User, Menu, ChevronRight, Radar, Bell, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings, ScanBarcode, Sparkles } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
@@ -13,7 +13,7 @@ import MapView, { Marker } from 'react-native-maps';
 import { fetchMarkets } from '../../services/overpassService';
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeOutLeft, LinearTransition } from 'react-native-reanimated';
-import { useLocationStore, useListsStore, useSettingsStore, useQuickStartStore } from '../../store';
+import { useLocationStore, useListsStore, useSettingsStore, useQuickStartStore, useNotificationsStore } from '../../store';
 import { useScrollToTop } from '@react-navigation/native';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import RadarPinIcon from '../../components/RadarPinIcon';
@@ -43,6 +43,8 @@ export default function HomeScreen() {
   const [isNearStore, setIsNearStore] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
+
+  const unreadCount = useNotificationsStore((state) => state.unreadCount());
 
   const { templates, incrementUsage } = useQuickStartStore();
   const sortedTemplates = [...templates]
@@ -275,7 +277,24 @@ export default function HomeScreen() {
             <Image source={require('../../assets/images/app-logo.png')} style={{ width: 36, height: 36, marginLeft: 0, marginTop: 0 }} resizeMode="contain" />
             <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight" style={{ marginTop: 4 }}>Smart Shopper</Text>
           </View>
-
+          
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.push('/notifications'); }}
+            className="w-[42px] h-[42px] bg-white rounded-full items-center justify-center border border-slate-200"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.05,
+              shadowRadius: 8,
+              elevation: 2,
+            }}
+          >
+            <Bell size={20} color="#0f172a" />
+            {unreadCount > 0 && (
+              <View className="absolute top-[10px] right-[12px] w-[9px] h-[9px] bg-red-500 rounded-full border-[1.5px] border-white" />
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* 2. THE MAP WIDGET */}

@@ -151,6 +151,14 @@ export default function RootLayout() {
                 fullScreenGestureEnabled: true,
                 headerShown: false}}
             />
+            <Stack.Screen
+              name="notifications"
+              options={{
+                animation: "ios_from_right",
+                gestureEnabled: true,
+                fullScreenGestureEnabled: true,
+                headerShown: false}}
+            />
           </Stack>
           <StatusBar style={showNotificationPermission ? "light" : "dark"} />
         </ThemeProvider>
