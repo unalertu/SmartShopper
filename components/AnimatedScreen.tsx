@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -22,15 +22,20 @@ interface AnimatedScreenProps {
  */
 export default function AnimatedScreen({ children, style }: AnimatedScreenProps) {
   const progress = useSharedValue(0);
+  const hasAnimated = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
-      // Reset to initial state and animate in
-      progress.value = 0;
-      progress.value = withTiming(1, {
-        duration: 400,
-        easing: Easing.out(Easing.cubic)});
-
+      // Sadece sayfa ilk yüklendiğinde animasyonu çalıştır
+      if (!hasAnimated.current) {
+        progress.value = 0;
+        progress.value = withTiming(1, {
+          duration: 400,
+          easing: Easing.out(Easing.cubic)
+        });
+        hasAnimated.current = true;
+      }
+      
       // No cleanup animation — keeping the screen at full opacity prevents
       // the blank/white flash during interactive swipe-back gestures.
       // The screen must remain visible while the gesture is in progress.
