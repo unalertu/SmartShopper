@@ -212,7 +212,11 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     backgroundColor: "rgba(255,255,255,0.98)",
     borderWidth: 0.5,
-    borderColor: "rgba(0,0,0,0.06)"},
+    borderColor: "rgba(0,0,0,0.06)",
+    shadowColor: "#0a0f1e",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.18,
+    shadowRadius: 28},
   navBarInner: {
     flexDirection: "row",
     alignItems: "center",
@@ -228,7 +232,11 @@ const styles = StyleSheet.create({
     bottom: 5,
     left: 0,
     backgroundColor: "#0f172a",
-    borderRadius: 22},
+    borderRadius: 22,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.40,
+    shadowRadius: 12},
 
   // Tab item
   tabItem: {
@@ -257,7 +265,7 @@ export default function TabLayout() {
       screenOptions={{
         headerTransparent: true,
         headerBackground: () => <GradientBlurBackground />,
-        sceneStyle: { backgroundColor: '#f8fafc' },
+        sceneStyle: { backgroundColor: '#F2F2F7' },
         headerTitle: '',
         headerStyle: { height: 110 }}}
     >

@@ -7,6 +7,7 @@ import MaskedView from "@react-native-masked-view/masked-view";
 export default function GradientBlurBackground() {
   return (
     <MaskedView
+      pointerEvents="none"
       style={StyleSheet.absoluteFill}
       maskElement={
         <LinearGradient

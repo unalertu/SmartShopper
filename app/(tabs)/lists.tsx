@@ -101,10 +101,27 @@ export default function ListsScreen() {
           {/* Header */}
           <Animated.View
             layout={LinearTransition.springify()}
-            className="mx-6 mb-6"
+            className="flex-row items-center justify-between mx-6 mb-6"
+            style={{ zIndex: 10 }}
           >
-            <Text style={{ fontSize: 26, fontWeight: '800', letterSpacing: -0.6, color: '#0f172a' }}>Lists</Text>
-            <Text style={{ fontSize: 14, fontWeight: '500', color: '#94a3b8', marginTop: 2, letterSpacing: -0.1 }}>{shoppingLists.length === 0 ? 'No saved lists' : `${shoppingLists.length} saved list${shoppingLists.length !== 1 ? 's' : ''}`}</Text>
+            <View>
+              <Text style={{ fontSize: 26, fontWeight: '800', letterSpacing: -0.6, color: '#0f172a' }}>Lists</Text>
+              <Text style={{ fontSize: 14, fontWeight: '500', color: '#94a3b8', marginTop: 2, letterSpacing: -0.1 }}>{shoppingLists.length === 0 ? 'No saved lists' : `${shoppingLists.length} saved list${shoppingLists.length !== 1 ? 's' : ''}`}</Text>
+            </View>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={handlePresentModalPress}
+              hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+              style={{
+                backgroundColor: '#0f172a',
+                width: 30,
+                height: 30,
+                borderRadius: 15,
+                alignItems: 'center',
+                justifyContent: 'center'}}
+            >
+              <Plus size={13} color="#fff" strokeWidth={2.5} />
+            </TouchableOpacity>
           </Animated.View>
 
           {shoppingLists.length === 0 && (
