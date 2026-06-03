@@ -6,8 +6,7 @@ import Animated, {
   withTiming,
   withSpring,
   Easing,
-  interpolate,
-} from 'react-native-reanimated';
+  interpolate} from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 
 interface AnimatedScreenProps {
@@ -32,15 +31,13 @@ export default function AnimatedScreen({ children, style }: AnimatedScreenProps)
       // Animate in with timing to avoid long spring oscillations that cause blur
       progress.value = withTiming(1, {
         duration: 400,
-        easing: Easing.out(Easing.cubic),
-      });
+        easing: Easing.out(Easing.cubic)});
 
       return () => {
         // Subtle fade out when leaving
         progress.value = withTiming(0, {
           duration: 150,
-          easing: Easing.out(Easing.ease),
-        });
+          easing: Easing.out(Easing.ease)});
       };
     }, [])
   );
@@ -50,10 +47,8 @@ export default function AnimatedScreen({ children, style }: AnimatedScreenProps)
       opacity: interpolate(progress.value, [0, 1], [0, 1]),
       transform: [
         {
-          translateY: interpolate(progress.value, [0, 1], [8, 0]),
-        },
-      ],
-    };
+          translateY: interpolate(progress.value, [0, 1], [8, 0])},
+      ]};
   });
 
   return (
@@ -65,6 +60,4 @@ export default function AnimatedScreen({ children, style }: AnimatedScreenProps)
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
-});
+    flex: 1}});

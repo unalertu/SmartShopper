@@ -28,22 +28,19 @@ export default function PaywallScreen() {
     {
       title: 'Unlimited Lists & Items',
       description: 'Create as many shopping lists as you need.',
-      icon: <Sparkles size={24} color="#D4AF37" />,
-    },
+      icon: <Sparkles size={24} color="#D4AF37" />},
     {
       title: 'Smart Location Alerts',
       description: 'Get notified exactly when you are near the store.',
-      icon: <Zap size={24} color="#D4AF37" />,
-    },
+      icon: <Zap size={24} color="#D4AF37" />},
     {
       title: 'Cloud Sync & Backup',
       description: 'Never lose your lists. Sync across all your devices.',
-      icon: <ShieldCheck size={24} color="#D4AF37" />,
-    },
+      icon: <ShieldCheck size={24} color="#D4AF37" />},
   ];
 
   return (
-    <View className="flex-1 bg-slate-50">
+    <View className="flex-1 bg-[#F2F2F7]">
       {/* Background Gradient Effect */}
       <LinearGradient
         colors={['rgba(212, 175, 55, 0.1)', 'transparent']}
@@ -69,8 +66,7 @@ export default function PaywallScreen() {
         contentContainerStyle={{
           paddingTop: insets.top + 60,
           paddingBottom: insets.bottom + 120,
-          paddingHorizontal: 24,
-        }}
+          paddingHorizontal: 24}}
         showsVerticalScrollIndicator={false}
       >
         {/* Header Icon */}
@@ -175,7 +171,7 @@ export default function PaywallScreen() {
           onPress={handleSubscribe}
           activeOpacity={0.8}
           className="w-full shadow-sm"
-          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3, borderRadius: 34 }}
+          style={{ borderRadius: 34 }}
         >
           <LinearGradient
             colors={['#D4AF37', '#B38B22']}

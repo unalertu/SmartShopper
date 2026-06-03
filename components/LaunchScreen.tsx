@@ -7,8 +7,7 @@ import Animated, {
   withDelay,
   withSequence,
   runOnJS,
-  Easing,
-} from "react-native-reanimated";
+  Easing} from "react-native-reanimated";
 
 const { width, height } = Dimensions.get("window");
 
@@ -27,12 +26,10 @@ export default function LaunchScreen({ onFinish }: LaunchScreenProps) {
     // 1. Logo fades in and scales up
     logoOpacity.value = withTiming(1, {
       duration: 600,
-      easing: Easing.out(Easing.cubic),
-    });
+      easing: Easing.out(Easing.cubic)});
     logoScale.value = withTiming(1, {
       duration: 700,
-      easing: Easing.out(Easing.back(1.2)),
-    });
+      easing: Easing.out(Easing.back(1.2))});
 
     // 2. Text fades in and slides up (after logo)
     textOpacity.value = withDelay(
@@ -55,17 +52,14 @@ export default function LaunchScreen({ onFinish }: LaunchScreenProps) {
 
   const logoAnimatedStyle = useAnimatedStyle(() => ({
     opacity: logoOpacity.value,
-    transform: [{ scale: logoScale.value }],
-  }));
+    transform: [{ scale: logoScale.value }]}));
 
   const textAnimatedStyle = useAnimatedStyle(() => ({
     opacity: textOpacity.value,
-    transform: [{ translateY: textTranslateY.value }],
-  }));
+    transform: [{ translateY: textTranslateY.value }]}));
 
   const screenAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: screenOpacity.value,
-  }));
+    opacity: screenOpacity.value}));
 
   return (
     <Animated.View style={[styles.container, screenAnimatedStyle]}>
@@ -92,25 +86,18 @@ const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "#ffffff",
-    zIndex: 999,
-    elevation: 999,
-  },
+    zIndex: 999},
   content: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center",
-  },
+    alignItems: "center"},
   logoContainer: {
-    marginBottom: 20,
-  },
+    marginBottom: 20},
   logo: {
     width: 80,
-    height: 80,
-  },
+    height: 80},
   appName: {
     fontSize: 22,
     fontWeight: "600",
     color: "#0f172a",
-    letterSpacing: 0.3,
-  },
-});
+    letterSpacing: 0.3}});

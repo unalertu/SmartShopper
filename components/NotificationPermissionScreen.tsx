@@ -5,8 +5,7 @@ import {
   Pressable,
   StyleSheet,
   Dimensions,
-  Platform,
-} from "react-native";
+  Platform} from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -17,8 +16,7 @@ import Animated, {
   interpolate,
   runOnJS,
   Easing,
-  SharedValue,
-} from "react-native-reanimated";
+  SharedValue} from "react-native-reanimated";
 import { Bell, MapPin, ListChecks, Sparkles } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import * as Notifications from "expo-notifications";
@@ -41,8 +39,7 @@ function BenefitRow({
   Icon,
   title,
   delay,
-  rowProgress,
-}: {
+  rowProgress}: {
   Icon: any;
   title: string;
   delay: number;
@@ -62,8 +59,7 @@ function BenefitRow({
     transform: [
       { translateY: interpolate(itemProgress.value, [0, 1], [16, 0]) },
       { scale: interpolate(itemProgress.value, [0, 1], [0.92, 1]) },
-    ],
-  }));
+    ]}));
 
   return (
     <Animated.View style={[styles.benefitRow, animatedStyle]}>
@@ -76,8 +72,7 @@ function BenefitRow({
 }
 
 export default function NotificationPermissionScreen({
-  onComplete,
-}: NotificationPermissionScreenProps) {
+  onComplete}: NotificationPermissionScreenProps) {
   // ── Animation values ──
   const screenOpacity = useSharedValue(0);
   const bellScale = useSharedValue(0.3);
@@ -99,8 +94,7 @@ export default function NotificationPermissionScreen({
     // Screen fade-in
     screenOpacity.value = withTiming(1, {
       duration: 400,
-      easing: Easing.out(Easing.cubic),
-    });
+      easing: Easing.out(Easing.cubic)});
 
     // Bell icon: scale up with bounce
     bellOpacity.value = withDelay(
@@ -209,9 +203,7 @@ export default function NotificationPermissionScreen({
         shouldPlaySound: true,
         shouldSetBadge: true,
         shouldShowBanner: true,
-        shouldShowList: true,
-      }),
-    });
+        shouldShowList: true})});
 
     // Android notification channel
     if (Platform.OS === "android") {
@@ -220,8 +212,7 @@ export default function NotificationPermissionScreen({
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: "#0a7eff",
-        sound: "default",
-      });
+        sound: "default"});
     }
 
     dismissScreen();
@@ -235,50 +226,41 @@ export default function NotificationPermissionScreen({
 
   // ── Animated styles ──
   const screenAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: screenOpacity.value * exitOpacity.value,
-  }));
+    opacity: screenOpacity.value * exitOpacity.value}));
 
   const bellAnimatedStyle = useAnimatedStyle(() => ({
     opacity: bellOpacity.value,
     transform: [
       { scale: bellScale.value },
       { rotate: `${bellRing.value}deg` },
-    ],
-  }));
+    ]}));
 
   const glowAnimatedStyle = useAnimatedStyle(() => ({
     opacity: interpolate(glowOpacity.value, [0, 1], [0, 0.5]),
-    transform: [{ scale: interpolate(glowOpacity.value, [0, 1], [0.6, 1]) }],
-  }));
+    transform: [{ scale: interpolate(glowOpacity.value, [0, 1], [0.6, 1]) }]}));
 
   const titleAnimatedStyle = useAnimatedStyle(() => ({
     opacity: titleOpacity.value,
-    transform: [{ translateY: titleTranslateY.value }],
-  }));
+    transform: [{ translateY: titleTranslateY.value }]}));
 
   const subtitleAnimatedStyle = useAnimatedStyle(() => ({
     opacity: subtitleOpacity.value,
-    transform: [{ translateY: subtitleTranslateY.value }],
-  }));
+    transform: [{ translateY: subtitleTranslateY.value }]}));
 
   const ctaAnimatedStyle = useAnimatedStyle(() => ({
     opacity: ctaOpacity.value,
-    transform: [{ translateY: ctaTranslateY.value }],
-  }));
+    transform: [{ translateY: ctaTranslateY.value }]}));
 
   const secondaryAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: secondaryOpacity.value,
-  }));
+    opacity: secondaryOpacity.value}));
 
   const footerAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: footerOpacity.value,
-  }));
+    opacity: footerOpacity.value}));
 
   // ── CTA press scale animation ──
   const ctaScale = useSharedValue(1);
   const ctaScaleStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: ctaScale.value }],
-  }));
+    transform: [{ scale: ctaScale.value }]}));
 
   const handleCtaPressIn = useCallback(() => {
     ctaScale.value = withSpring(0.96, SPRING_SNAPPY);
@@ -387,35 +369,29 @@ const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: Colors.surface[900],
-    zIndex: 998,
-    elevation: 998,
-  },
+    zIndex: 998},
   content: {
     flex: 1,
     justifyContent: "space-between",
     paddingHorizontal: 32,
     paddingTop: height * 0.12,
-    paddingBottom: height * 0.06,
-  },
+    paddingBottom: height * 0.06},
 
   // ── Top Section ──
   topSection: {
-    alignItems: "center",
-  },
+    alignItems: "center"},
   bellWrapper: {
     width: 96,
     height: 96,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 32,
-  },
+    marginBottom: 32},
   glowRing: {
     position: "absolute",
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: Colors.primary[500],
-  },
+    backgroundColor: Colors.primary[500]},
   bellContainer: {
     width: 80,
     height: 80,
@@ -424,16 +400,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.12)",
-  },
+    borderColor: "rgba(255, 255, 255, 0.12)"},
   title: {
     fontSize: 30,
     fontWeight: "700",
     color: Colors.white,
     textAlign: "center",
     letterSpacing: -0.5,
-    marginBottom: 12,
-  },
+    marginBottom: 12},
   subtitle: {
     fontSize: 16,
     fontWeight: "400",
@@ -441,14 +415,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 24,
     maxWidth: 300,
-    letterSpacing: 0.1,
-  },
+    letterSpacing: 0.1},
 
   // ── Benefits ──
   benefitsContainer: {
     gap: 14,
-    paddingHorizontal: 4,
-  },
+    paddingHorizontal: 4},
   benefitRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -457,8 +429,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 18,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.06)",
-  },
+    borderColor: "rgba(255, 255, 255, 0.06)"},
   benefitIconContainer: {
     width: 40,
     height: 40,
@@ -466,21 +437,18 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.08)",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 14,
-  },
+    marginRight: 14},
   benefitText: {
     flex: 1,
     fontSize: 15,
     fontWeight: "500",
     color: "rgba(255, 255, 255, 0.85)",
-    letterSpacing: 0.15,
-  },
+    letterSpacing: 0.15},
 
   // ── Bottom Section ──
   bottomSection: {
     alignItems: "center",
-    gap: 6,
-  },
+    gap: 6},
   primaryButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -490,35 +458,24 @@ const styles = StyleSheet.create({
     paddingVertical: 17,
     paddingHorizontal: 32,
     width: "100%",
-    gap: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 6,
-  },
+    gap: 10},
   primaryButtonText: {
     fontSize: 17,
     fontWeight: "600",
     color: Colors.surface[900],
-    letterSpacing: -0.2,
-  },
+    letterSpacing: -0.2},
   secondaryButton: {
     paddingVertical: 14,
-    paddingHorizontal: 24,
-  },
+    paddingHorizontal: 24},
   secondaryButtonText: {
     fontSize: 15,
     fontWeight: "500",
     color: "rgba(255, 255, 255, 0.4)",
-    letterSpacing: 0.1,
-  },
+    letterSpacing: 0.1},
   footerNote: {
     fontSize: 12,
     fontWeight: "400",
     color: "rgba(255, 255, 255, 0.25)",
     textAlign: "center",
     letterSpacing: 0.2,
-    marginTop: 4,
-  },
-});
+    marginTop: 4}});

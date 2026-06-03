@@ -252,7 +252,7 @@ export default function HomeScreen() {
   return (
     // 1. ROOT MUST BE A STANDARD VIEW, NOT SafeAreaView!
     <AnimatedScreen>
-    <View className="flex-1 bg-slate-50"> 
+    <View className="flex-1 bg-[#F2F2F7]"> 
       <StatusBar style="dark" />
 
       {/* 2. THE SCROLLING CONTENT */}
@@ -283,13 +283,7 @@ export default function HomeScreen() {
           <Animated.View 
             layout={LinearTransition.springify()}
             className="mx-6 mt-2 mb-3 rounded-[36px] bg-white border border-slate-100 overflow-hidden"
-            style={{
-              shadowColor: '#0f172a',
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.03,
-              shadowRadius: 24,
-              elevation: 3,
-            }}
+            
           >
             {/* Map Widget Always Visible */}
             <View className="flex-col">
@@ -305,8 +299,7 @@ export default function HomeScreen() {
                         latitude: userLocation.latitude,
                         longitude: userLocation.longitude,
                         latitudeDelta: 0.025,
-                        longitudeDelta: 0.025,
-                      }}
+                        longitudeDelta: 0.025}}
                       scrollEnabled={false}
                       zoomEnabled={false}
                       pitchEnabled={false}
@@ -380,8 +373,7 @@ export default function HomeScreen() {
                 height: 30,
                 borderRadius: 15,
                 alignItems: 'center',
-                justifyContent: 'center',
-              }}
+                justifyContent: 'center'}}
             >
               <Plus size={13} color="#fff" strokeWidth={2.5} />
             </TouchableOpacity>
@@ -430,13 +422,7 @@ export default function HomeScreen() {
                       incrementUsage(template);
                     }}
                     className="bg-white border border-slate-100 rounded-[16px] px-4 py-3 flex-row items-center gap-2"
-                    style={{
-                      shadowColor: '#0f172a',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.03,
-                      shadowRadius: 8,
-                      elevation: 1,
-                    }}
+                    
                   >
                     <Plus size={16} color="#0f172a" strokeWidth={2.5} />
                     <Text className="text-[14px] font-semibold text-slate-700">{template}</Text>
@@ -472,13 +458,7 @@ export default function HomeScreen() {
                       className="bg-white rounded-[22px] flex-row items-center justify-between border border-slate-100"
                       style={{
                         paddingVertical: 10,
-                        paddingHorizontal: 14,
-                        shadowColor: '#0f172a',
-                        shadowOffset: { width: 0, height: 6 },
-                        shadowOpacity: 0.025,
-                        shadowRadius: 20,
-                        elevation: 2,
-                      }}
+                        paddingHorizontal: 14}}
                     >
                       <View className="flex-row items-center gap-3 flex-1">
                         <View style={{ width: 34, height: 34, backgroundColor: 'rgba(241,245,249,0.6)', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
@@ -506,13 +486,7 @@ export default function HomeScreen() {
                     onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.navigate('/lists'); }}
                     className="mx-6 mb-2 rounded-[20px] py-3.5 px-4 flex-row items-center justify-center border border-slate-200"
                     style={{
-                      backgroundColor: '#ffffff',
-                      shadowColor: '#0f172a',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.04,
-                      shadowRadius: 8,
-                      elevation: 2,
-                    }}
+                      backgroundColor: '#ffffff'}}
                   >
                     <Text style={{ color: '#475569', fontSize: 14, fontWeight: '600' }}>View All Lists</Text>
                     <ChevronRight size={16} color="#94a3b8" style={{ marginLeft: 4 }} />
@@ -537,8 +511,7 @@ export default function HomeScreen() {
                 height: 30,
                 borderRadius: 15,
                 alignItems: 'center',
-                justifyContent: 'center',
-              }}
+                justifyContent: 'center'}}
             >
               <Plus size={13} color="#fff" strokeWidth={2.5} />
             </TouchableOpacity>
@@ -549,7 +522,7 @@ export default function HomeScreen() {
                 className="rounded-[28px] p-6 items-center border border-dashed border-slate-200"
                 style={{ backgroundColor: '#f8fafc' }}
               >
-                <View className="bg-white border border-slate-100 w-14 h-14 rounded-full items-center justify-center mb-4" style={{ shadowColor: '#0f172a', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 2 }}>
+                <View className="bg-white border border-slate-100 w-14 h-14 rounded-full items-center justify-center mb-4" >
                   <Store size={24} color="#94a3b8" />
                 </View>
                 <Text className="text-[16px] font-semibold text-slate-600 tracking-tight">No saved shops yet</Text>
@@ -581,13 +554,7 @@ export default function HomeScreen() {
                 <TouchableOpacity 
                   onPress={() => { closeAllSwipeables(); closeAllShopSwipeables(); hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/stores', params: { shopId: shop.id } }); }}
                   className="bg-white rounded-[24px] py-3.5 px-4 flex-row items-center justify-between border border-slate-100"
-                  style={{
-                    shadowColor: '#0f172a',
-                    shadowOffset: { width: 0, height: 8 },
-                    shadowOpacity: 0.03,
-                    shadowRadius: 24,
-                    elevation: 3,
-                  }}
+                  
                 >
                   <View className="flex-row items-center gap-3.5 flex-1">
                     <View className="w-10 h-10 bg-slate-100/60 rounded-[12px] items-center justify-center">
@@ -612,13 +579,7 @@ export default function HomeScreen() {
                 onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.navigate('/stores'); }}
                 className="mx-6 mb-2 rounded-[20px] py-3.5 px-4 flex-row items-center justify-center border border-slate-200"
                 style={{
-                  backgroundColor: '#ffffff',
-                  shadowColor: '#0f172a',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.04,
-                  shadowRadius: 8,
-                  elevation: 2,
-                }}
+                  backgroundColor: '#ffffff'}}
               >
                 <Text style={{ color: '#475569', fontSize: 14, fontWeight: '600' }}>View All Shops</Text>
                 <ChevronRight size={16} color="#94a3b8" style={{ marginLeft: 4 }} />
@@ -632,13 +593,7 @@ export default function HomeScreen() {
           <Animated.View 
             layout={LinearTransition.springify()}
             className="mx-6 mt-8 bg-white rounded-[36px] p-8 min-h-[180px] relative overflow-hidden border border-slate-100"
-            style={{
-              shadowColor: '#0f172a',
-              shadowOffset: { width: 0, height: 12 },
-              shadowOpacity: 0.03,
-              shadowRadius: 32,
-              elevation: 4,
-            }}
+            
           >
             <Text className="text-[18px] font-bold text-slate-900 tracking-tight z-10">Categories</Text>
             
@@ -652,13 +607,7 @@ export default function HomeScreen() {
               <TouchableOpacity 
                 onPress={() => hapticImpact(Haptics.ImpactFeedbackStyle.Light)}
                 className="bg-[#D4AF37] rounded-full px-6 py-3 flex-row items-center gap-2.5"
-                style={{
-                  shadowColor: '#D4AF37',
-                  shadowOffset: { width: 0, height: 6 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 12,
-                  elevation: 5,
-                }}
+                
               >
                 <Sparkles size={18} color="#1e1e1e" fill="#1e1e1e" />
                 <Text className="text-[#1e1e1e] font-bold text-[15px] tracking-wide">Premium</Text>
@@ -681,23 +630,11 @@ export default function HomeScreen() {
           <Animated.View 
             layout={LinearTransition.springify()}
             className="mx-6 bg-white rounded-[36px] p-8 items-center border border-slate-100"
-            style={{
-              shadowColor: '#0f172a',
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.02,
-              shadowRadius: 24,
-              elevation: 3,
-            }}
+            
           >
             <View 
               className="bg-white rounded-[24px] w-[90%] p-5 flex-row items-center gap-4 border border-slate-50"
-              style={{
-                shadowColor: '#0f172a',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.03,
-                shadowRadius: 16,
-                elevation: 2,
-              }}
+              
             >
               <View className="w-[52px] h-[52px] rounded-full bg-slate-50 items-center justify-center border border-slate-100">
                  <Text style={{fontSize: 24}}>🥗</Text>

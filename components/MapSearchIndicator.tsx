@@ -4,8 +4,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  Easing,
-} from 'react-native-reanimated';
+  Easing} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface MapSearchIndicatorProps {
@@ -34,23 +33,19 @@ export function MapSearchIndicator({ isVisible }: MapSearchIndicatorProps) {
       // Fade in and slide down
       opacity.value = withTiming(1, {
         duration: 300,
-        easing: Easing.out(Easing.ease),
-      });
+        easing: Easing.out(Easing.ease)});
       translateY.value = withTiming(0, {
         duration: 300,
-        easing: Easing.out(Easing.ease),
-      });
+        easing: Easing.out(Easing.ease)});
     } else {
       const hideAnimation = () => {
         // Fade out and slide up
         opacity.value = withTiming(0, {
           duration: 300,
-          easing: Easing.in(Easing.ease),
-        });
+          easing: Easing.in(Easing.ease)});
         translateY.value = withTiming(-20, {
           duration: 300,
-          easing: Easing.in(Easing.ease),
-        });
+          easing: Easing.in(Easing.ease)});
       };
 
       const timeVisible = Date.now() - showTimestamp.current;
@@ -73,8 +68,7 @@ export function MapSearchIndicator({ isVisible }: MapSearchIndicatorProps) {
       opacity: opacity.value,
       transform: [{ translateY: translateY.value }],
       // Ignore touch events when hidden to not block the map
-      pointerEvents: opacity.value === 0 ? 'none' : 'auto',
-    };
+      pointerEvents: opacity.value === 0 ? 'none' : 'auto'};
   });
 
   return (
@@ -84,8 +78,7 @@ export function MapSearchIndicator({ isVisible }: MapSearchIndicatorProps) {
           position: 'absolute',
           top: Math.max(insets.top, 20),
           alignSelf: 'center',
-          zIndex: 50,
-        },
+          zIndex: 50},
         animatedStyle,
       ]}
     >
@@ -108,17 +101,9 @@ const indicatorStyles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 9999,
     borderWidth: 0.5,
-    borderColor: 'rgba(226, 232, 240, 0.5)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.10,
-    shadowRadius: 10,
-    elevation: 6,
-  },
+    borderColor: 'rgba(226, 232, 240, 0.5)'},
   text: {
     color: '#64748b',
     fontSize: 13,
     fontWeight: '500',
-    letterSpacing: -0.2,
-  },
-});
+    letterSpacing: -0.2}});

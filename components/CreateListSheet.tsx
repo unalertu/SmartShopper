@@ -7,8 +7,7 @@ import {
   Keyboard,
   Platform,
   KeyboardAvoidingView,
-  StyleSheet,
-} from 'react-native';
+  StyleSheet} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -18,8 +17,7 @@ import Animated, {
   interpolate,
   interpolateColor,
   Extrapolation,
-  Easing,
-} from 'react-native-reanimated';
+  Easing} from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -44,8 +42,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export default function CreateListSheet({
   visible,
   onClose,
-  onCreateList,
-}: CreateListSheetProps) {
+  onCreateList}: CreateListSheetProps) {
   const insets = useSafeAreaInsets();
 
   // Shared values
@@ -68,8 +65,7 @@ export default function CreateListSheet({
   useEffect(() => {
     btnActive.value = withTiming(hasText ? 1 : 0, {
       duration: 180,
-      easing: Easing.out(Easing.cubic),
-    });
+      easing: Easing.out(Easing.cubic)});
   }, [hasText]);
 
   // ── Open ──
@@ -79,8 +75,7 @@ export default function CreateListSheet({
     scale.value = withSpring(1, SPRING_OPEN);
     backdropOpacity.value = withTiming(1, {
       duration: 280,
-      easing: Easing.out(Easing.cubic),
-    });
+      easing: Easing.out(Easing.cubic)});
     setTimeout(() => inputRef.current?.focus(), 300);
   }, []);
 
@@ -95,8 +90,7 @@ export default function CreateListSheet({
     scale.value = withTiming(0.92, { duration: 220 });
     backdropOpacity.value = withTiming(0, {
       duration: 220,
-      easing: Easing.in(Easing.cubic),
-    });
+      easing: Easing.in(Easing.cubic)});
   }, [closing]);
 
   const onDone = useCallback(() => {
@@ -156,24 +150,21 @@ export default function CreateListSheet({
       [0, PILL_HEIGHT * 0.9],
       [1, 0.4],
       Extrapolation.CLAMP,
-    ),
-  }));
+    )}));
 
   const backdropAnim = useAnimatedStyle(() => ({
     opacity: backdropOpacity.value,
     pointerEvents:
       backdropOpacity.value > 0.01
         ? ('auto' as const)
-        : ('none' as const),
-  }));
+        : ('none' as const)}));
 
   const inputBorder = useAnimatedStyle(() => ({
     borderColor: interpolateColor(
       inputFocusAnim.value,
       [0, 1],
       ['#e8ecf0', '#0a7eff'],
-    ),
-  }));
+    )}));
 
   const btnBg = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
@@ -181,16 +172,14 @@ export default function CreateListSheet({
       [0, 1],
       ['#eaeff4', '#0f172a'],
     ),
-    transform: [{ scale: btnScale.value }],
-  }));
+    transform: [{ scale: btnScale.value }]}));
 
   const btnText = useAnimatedStyle(() => ({
     color: interpolateColor(
       btnActive.value,
       [0, 1],
       ['#a0aec0', '#ffffff'],
-    ),
-  }));
+    )}));
 
   if (!visible) return null;
 
@@ -259,14 +248,12 @@ export default function CreateListSheet({
                 onPressIn={() => {
                   btnScale.value = withSpring(0.92, {
                     damping: 14,
-                    stiffness: 280,
-                  });
+                    stiffness: 280});
                 }}
                 onPressOut={() => {
                   btnScale.value = withSpring(1, {
                     damping: 14,
-                    stiffness: 280,
-                  });
+                    stiffness: 280});
                 }}
                 style={[styles.createBtn, btnBg, hasText && styles.createBtnShadow]}
               >
@@ -286,13 +273,11 @@ export default function CreateListSheet({
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.3)',
-  },
+    backgroundColor: 'rgba(15, 23, 42, 0.3)'},
 
   kavWrap: {
     flex: 1,
-    justifyContent: 'flex-end',
-  },
+    justifyContent: 'flex-end'},
 
   // ── Floating pill card ──
   pill: {
@@ -303,25 +288,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingBottom: 18,
     // Shadow
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.14,
-    shadowRadius: 28,
-    elevation: 24,
+
   },
 
   // Handle
   handleRow: {
     alignItems: 'center',
     paddingTop: 10,
-    paddingBottom: 2,
-  },
+    paddingBottom: 2},
   handle: {
     width: 34,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#dfe4ea',
-  },
+    backgroundColor: '#dfe4ea'},
 
   // Header
   header: {
@@ -329,43 +308,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 12,
-    paddingBottom: 14,
-  },
+    paddingBottom: 14},
   title: {
     fontSize: 17,
     fontWeight: '700',
     color: '#0f172a',
-    letterSpacing: -0.35,
-  },
+    letterSpacing: -0.35},
   closeBtn: {
     width: 28,
     height: 28,
     borderRadius: 14,
     backgroundColor: '#f1f5f9',
     alignItems: 'center',
-    justifyContent: 'center',
-  },
+    justifyContent: 'center'},
 
   // Input + Button in one row
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-  },
+    gap: 10},
   inputWrap: {
     flex: 1,
     borderWidth: 1.5,
     borderRadius: 14,
-    backgroundColor: '#f8fafc',
-  },
+    backgroundColor: '#f8fafc'},
   input: {
     paddingHorizontal: 14,
     paddingVertical: Platform.OS === 'ios' ? 13 : 11,
     fontSize: 15,
     fontWeight: '500',
     color: '#0f172a',
-    letterSpacing: -0.1,
-  },
+    letterSpacing: -0.1},
 
   // Create button
   createBtn: {
@@ -373,18 +346,11 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     paddingHorizontal: 18,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
+    justifyContent: 'center'},
   createBtnShadow: {
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+
   },
   createBtnLabel: {
     fontSize: 14,
     fontWeight: '700',
-    letterSpacing: 0.05,
-  },
-});
+    letterSpacing: 0.05}});

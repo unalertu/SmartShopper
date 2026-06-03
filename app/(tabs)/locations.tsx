@@ -20,8 +20,7 @@ export default function LocationsScreen() {
         {
           text: "Remove",
           style: "destructive",
-          onPress: () => removeLocation(id),
-        },
+          onPress: () => removeLocation(id)},
       ]
     );
   };
@@ -67,13 +66,7 @@ export default function LocationsScreen() {
               key={location.id}
               entering={FadeInDown.duration(400).delay(index * 60)}
               className="bg-white rounded-2xl p-4 mb-3 shadow-sm"
-              style={{
-                shadowColor: Colors.surface[900],
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.06,
-                shadowRadius: 8,
-                elevation: 2,
-              }}
+              
             >
               <View className="flex-row items-center">
                 <View
@@ -81,8 +74,7 @@ export default function LocationsScreen() {
                   style={{
                     backgroundColor: location.isActive
                       ? Colors.primary[100]
-                      : Colors.surface[100],
-                  }}
+                      : Colors.surface[100]}}
                 >
                   <MapPin
                     size={24}
@@ -113,8 +105,7 @@ export default function LocationsScreen() {
                     onValueChange={() => toggleActive(location.id)}
                     trackColor={{
                       false: Colors.surface[200],
-                      true: Colors.primary[200],
-                    }}
+                      true: Colors.primary[200]}}
                     thumbColor={
                       location.isActive
                         ? Colors.primary[500]
@@ -138,13 +129,7 @@ export default function LocationsScreen() {
       <Pressable
         onPress={() => router.push("/add-location")}
         className="absolute bottom-28 right-6 w-14 h-14 rounded-full bg-primary-500 items-center justify-center shadow-lg"
-        style={{
-          shadowColor: Colors.primary[500],
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 8,
-        }}
+        
       >
         <Plus size={28} color="#ffffff" strokeWidth={2.5} />
       </Pressable>

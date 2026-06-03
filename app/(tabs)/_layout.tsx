@@ -11,8 +11,7 @@ import Animated, {
   withSpring,
   withTiming,
   interpolate,
-  Easing,
-} from "react-native-reanimated";
+  Easing} from "react-native-reanimated";
 import {
   Home,
   MapPin,
@@ -22,8 +21,7 @@ import {
   X,
   PlusCircle,
   CheckCircle,
-  ScanBarcode,
-} from "lucide-react-native";
+  ScanBarcode} from "lucide-react-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import GradientBlurBackground from "../../components/GradientBlurBackground";
 
@@ -36,8 +34,7 @@ const TAB_CONFIG: Record<string, { label: string; Icon: any }> = {
   index:   { label: "Home",     Icon: Home },
   stores:  { label: "Shops",    Icon: MapPin },
   lists:   { label: "Lists",    Icon: Menu },
-  settings: { label: "Settings", Icon: Settings },
-};
+  settings: { label: "Settings", Icon: Settings }};
 
 // ── Animated Tab Item ──
 function TabItem({
@@ -47,8 +44,7 @@ function TabItem({
   Icon,
   label,
   onPress,
-  onLayout,
-}: {
+  onLayout}: {
   routeKey: string;
   routeName: string;
   isFocused: boolean;
@@ -65,14 +61,11 @@ function TabItem({
   }, [isFocused]);
 
   const activeIconStyle = useAnimatedStyle(() => ({
-    opacity: activeProgress.value,
-  }));
+    opacity: activeProgress.value}));
   const inactiveIconStyle = useAnimatedStyle(() => ({
-    opacity: 1 - activeProgress.value,
-  }));
+    opacity: 1 - activeProgress.value}));
   const containerStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+    transform: [{ scale: scale.value }]}));
 
   const handlePressIn = useCallback(() => {
     scale.value = withSpring(0.88, SPRING_CONFIG);
@@ -110,8 +103,7 @@ function TabItem({
 function CustomTabBar({
   state,
   navigation,
-  insets,
-}: BottomTabBarProps & {
+  insets}: BottomTabBarProps & {
   insets: any;
 }) {
   const [tabDimensions, setTabDimensions] = useState<{ x: number; width: number }[]>([]);
@@ -137,8 +129,7 @@ function CustomTabBar({
 
   const indicatorStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: indicatorX.value }],
-    width: indicatorWidth.value,
-  }));
+    width: indicatorWidth.value}));
 
   return (
     <>
@@ -191,8 +182,7 @@ function CustomTabBar({
                     const event = navigation.emit({
                       type: "tabPress",
                       target: route.key,
-                      canPreventDefault: true,
-                    });
+                      canPreventDefault: true});
                     if (!isFocused && !event.defaultPrevented) {
                       navigation.navigate(route.name);
                     }
@@ -215,29 +205,21 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex: 50,
-  },
+    zIndex: 50},
   navBarBlur: {
     marginHorizontal: 24,
     marginBottom: 10,
     borderRadius: 50,
     backgroundColor: "rgba(255,255,255,0.98)",
     borderWidth: 0.5,
-    borderColor: "rgba(0,0,0,0.06)",
-    shadowColor: "#0a0f1e",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.18,
-    shadowRadius: 28,
-    elevation: 16,
-  },
+    borderColor: "rgba(0,0,0,0.06)"},
   navBarInner: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 50,
-  },
+    borderRadius: 50},
 
   // Sliding Indicator
   slidingIndicator: {
@@ -246,29 +228,19 @@ const styles = StyleSheet.create({
     bottom: 5,
     left: 0,
     backgroundColor: "#0f172a",
-    borderRadius: 22,
-    shadowColor: "#0f172a",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.40,
-    shadowRadius: 12,
-    elevation: 8,
-  },
+    borderRadius: 22},
 
   // Tab item
   tabItem: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 6,
-  },
+    paddingVertical: 6},
   iconContainer: {
     width: 32,
     height: 32,
     alignItems: "center",
-    justifyContent: "center",
-  },
-
-});
+    justifyContent: "center"}});
 
 // ── Tab Layout ──
 export default function TabLayout() {
@@ -287,8 +259,7 @@ export default function TabLayout() {
         headerBackground: () => <GradientBlurBackground />,
         sceneStyle: { backgroundColor: '#f8fafc' },
         headerTitle: '',
-        headerStyle: { height: 110 },
-      }}
+        headerStyle: { height: 110 }}}
     >
       <Tabs.Screen name="index" options={{ title: "Home" }} />
       <Tabs.Screen name="stores" options={{ title: "Shops", headerShown: false }} />

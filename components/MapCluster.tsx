@@ -16,13 +16,11 @@ const MapCluster: React.FC<MapClusterProps> = React.memo(({ pointCount, onPress 
         toValue: 1,
         friction: 7,
         tension: 120,
-        useNativeDriver: true,
-      }),
+        useNativeDriver: true}),
       Animated.timing(opacity, {
         toValue: 1,
         duration: 280,
-        useNativeDriver: true,
-      })
+        useNativeDriver: true})
     ]).start();
   }, []);
 
@@ -47,31 +45,23 @@ const MapCluster: React.FC<MapClusterProps> = React.memo(({ pointCount, onPress 
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    justifyContent: 'center',
-  },
+    justifyContent: 'center'},
   outerRing: {
     position: 'absolute',
-    backgroundColor: 'rgba(15, 23, 42, 0.10)',
-  },
+    backgroundColor: 'rgba(15, 23, 42, 0.10)'},
   bubble: {
     backgroundColor: 'rgba(15, 23, 42, 0.88)',
     alignItems: 'center',
     justifyContent: 'center',
     // Soft premium shadow
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 6,
+
   },
   text: {
     color: '#ffffff',
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: -0.3,
-    fontVariant: ['tabular-nums'],
-  },
-});
+    fontVariant: ['tabular-nums']}});
 MapCluster.displayName = 'MapCluster';
 
 export default MapCluster;

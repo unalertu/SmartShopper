@@ -47,8 +47,7 @@ export default function ListDetails() {
       toValue: newItemText.length > 0 ? 1 : 0.95,
       friction: 6,
       tension: 120,
-      useNativeDriver: true,
-    }).start();
+      useNativeDriver: true}).start();
   }, [newItemText]);
 
   const categories = ['General', '🍎 Fruits', '🥛 Dairy', '🍞 Bakery', '🥩 Meat', '🧼 Cleaning'];
@@ -71,8 +70,7 @@ export default function ListDetails() {
       name: newItemText.trim(),
       quantity,
       unit: selectedUnit,
-      category: selectedCategory,
-    });
+      category: selectedCategory});
     resetModalState();
     setIsAddModalVisible(false);
   };
@@ -100,7 +98,7 @@ export default function ListDetails() {
   const isButtonActive = newItemText.trim().length > 0;
 
   return (
-    <View className="flex-1 bg-slate-50">
+    <View className="flex-1 bg-[#F2F2F7]">
       <Stack.Screen options={{ headerShown: false }} />
       <StatusBar style="dark" />
 
@@ -140,7 +138,7 @@ export default function ListDetails() {
           {/* Card 1 */}
           <View 
             className="flex-1 bg-white border border-slate-100 rounded-[24px] py-6 px-4 items-center justify-center" 
-            style={{ shadowColor: '#0f172a', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.03, shadowRadius: 24, elevation: 3 }}
+            
           >
             <View className="bg-slate-900/5 p-3 rounded-full mb-4">
               <ShoppingBag size={20} color="#0f172a" />
@@ -152,7 +150,7 @@ export default function ListDetails() {
           {/* Card 2 */}
           <View 
             className="flex-1 bg-white border border-slate-100 rounded-[24px] py-6 px-4 items-center justify-center" 
-            style={{ shadowColor: '#0f172a', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.03, shadowRadius: 24, elevation: 3 }}
+            
           >
             <View className="bg-green-500/10 p-3 rounded-full mb-4">
               <Check size={20} color="#22c55e" strokeWidth={2.5} />
@@ -164,7 +162,7 @@ export default function ListDetails() {
           {/* Card 3 */}
           <View 
             className="flex-1 bg-white border border-slate-100 rounded-[24px] py-6 px-4 items-center justify-center" 
-            style={{ shadowColor: '#0f172a', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.03, shadowRadius: 24, elevation: 3 }}
+            
           >
             <View className="bg-orange-500/10 p-3 rounded-full mb-4">
               <Clock size={20} color="#f97316" />
@@ -177,7 +175,7 @@ export default function ListDetails() {
         {/* 4. The Shopping Items */}
         <View 
           className="mx-6 bg-white rounded-[24px] border border-slate-100 px-5 py-2 mb-8" 
-          style={{ shadowColor: '#0f172a', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.03, shadowRadius: 24, elevation: 3 }}
+          
         >
           {items.map((item, index) => (
             <View key={item.id}>
@@ -252,7 +250,7 @@ export default function ListDetails() {
             setIsAddModalVisible(true);
           }}
           className="bg-slate-900 py-[18px] rounded-full flex-row justify-center items-center shadow-lg"
-          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 16, elevation: 10 }}
+          
         >
           <Text className="text-white font-extrabold text-[17px] tracking-wide">Add New Item</Text>
         </TouchableOpacity>

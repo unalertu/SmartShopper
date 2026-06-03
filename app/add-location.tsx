@@ -7,8 +7,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
-} from "react-native";
+  ActivityIndicator} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
@@ -16,8 +15,7 @@ import {
   Check,
   Crosshair,
   Minus,
-  Plus,
-} from "lucide-react-native";
+  Plus} from "lucide-react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useLocationStore } from "@/store";
 import { getCurrentLocation } from "@/services/locationService";
@@ -59,8 +57,7 @@ export default function AddLocationScreen() {
       address: address.trim(),
       latitude: Number(latitude),
       longitude: Number(longitude),
-      radius,
-    });
+      radius});
     router.back();
   };
 
@@ -115,13 +112,7 @@ export default function AddLocationScreen() {
               placeholderTextColor={Colors.surface[300]}
               autoFocus
               className="bg-white rounded-2xl px-4 py-4 text-base text-surface-900 shadow-sm"
-              style={{
-                shadowColor: Colors.surface[900],
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.04,
-                shadowRadius: 4,
-                elevation: 1,
-              }}
+              
             />
           </Animated.View>
 
@@ -139,13 +130,7 @@ export default function AddLocationScreen() {
               placeholder="e.g., 123 Main Street"
               placeholderTextColor={Colors.surface[300]}
               className="bg-white rounded-2xl px-4 py-4 text-base text-surface-900 shadow-sm"
-              style={{
-                shadowColor: Colors.surface[900],
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.04,
-                shadowRadius: 4,
-                elevation: 1,
-              }}
+              
             />
           </Animated.View>
 
@@ -193,13 +178,7 @@ export default function AddLocationScreen() {
                   placeholderTextColor={Colors.surface[300]}
                   keyboardType="numeric"
                   className="bg-white rounded-2xl px-4 py-4 text-base text-surface-900 shadow-sm"
-                  style={{
-                    shadowColor: Colors.surface[900],
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.04,
-                    shadowRadius: 4,
-                    elevation: 1,
-                  }}
+                  
                 />
               </View>
               <View className="flex-1">
@@ -210,13 +189,7 @@ export default function AddLocationScreen() {
                   placeholderTextColor={Colors.surface[300]}
                   keyboardType="numeric"
                   className="bg-white rounded-2xl px-4 py-4 text-base text-surface-900 shadow-sm"
-                  style={{
-                    shadowColor: Colors.surface[900],
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.04,
-                    shadowRadius: 4,
-                    elevation: 1,
-                  }}
+                  
                 />
               </View>
             </View>
@@ -232,13 +205,7 @@ export default function AddLocationScreen() {
             </Text>
             <View
               className="bg-white rounded-2xl p-4 shadow-sm"
-              style={{
-                shadowColor: Colors.surface[900],
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.04,
-                shadowRadius: 4,
-                elevation: 1,
-              }}
+              
             >
               <View className="flex-row items-center justify-between">
                 <Pressable

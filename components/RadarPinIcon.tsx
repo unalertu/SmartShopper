@@ -8,8 +8,7 @@ import Animated, {
   withDelay,
   Easing,
   interpolate,
-  type SharedValue,
-} from 'react-native-reanimated';
+  type SharedValue} from 'react-native-reanimated';
 import { MapPin } from 'lucide-react-native';
 
 interface RadarPinIconProps {
@@ -27,8 +26,7 @@ export default function RadarPinIcon({
   size = 28,
   pinColor = '#334155',
   pulseColor = '#3b82f6',
-  active = true,
-}: RadarPinIconProps) {
+  active = true}: RadarPinIconProps) {
   // Each ring gets its own shared value for staggered pulses
   const ring1 = useSharedValue(0);
   const ring2 = useSharedValue(0);
@@ -85,8 +83,7 @@ export default function RadarPinIcon({
         borderColor: pulseColor,
         backgroundColor: 'transparent',
         transform: [{ scale }],
-        opacity,
-      };
+        opacity};
     });
 
   const ring1Style = useRingStyle(ring1);
@@ -118,8 +115,7 @@ export default function RadarPinIcon({
             height: size * 0.9,
             borderRadius: size * 0.45,
             backgroundColor: pulseColor,
-            opacity: active ? 0.12 : 0,
-          },
+            opacity: active ? 0.12 : 0},
         ]}
       />
 
@@ -132,9 +128,6 @@ export default function RadarPinIcon({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    justifyContent: 'center',
-  },
+    justifyContent: 'center'},
   glow: {
-    position: 'absolute',
-  },
-});
+    position: 'absolute'}});

@@ -20,8 +20,7 @@ const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelecte
       toValue: isSelected ? 1.18 : 1,
       friction: 6,
       tension: 120,
-      useNativeDriver: true,
-    }).start();
+      useNativeDriver: true}).start();
     isMounted.current = true;
   }, []);
 
@@ -33,13 +32,11 @@ const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelecte
         toValue: isSelected ? 1.18 : 1,
         friction: 7,
         tension: 160,
-        useNativeDriver: true,
-      }),
+        useNativeDriver: true}),
       Animated.timing(glowOpacity, {
         toValue: isSelected ? 1 : 0,
         duration: 300,
-        useNativeDriver: true,
-      })
+        useNativeDriver: true})
     ]).start();
   }, [isSelected]);
 
@@ -89,16 +86,14 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
+    justifyContent: 'center'},
 
   // ── Unsaved marker styles ──
   container: {
     alignItems: 'center',
     justifyContent: 'center',
     width: 52,
-    height: 52,
-  },
+    height: 52},
   glowRing: {
     position: 'absolute',
     width: 44,
@@ -106,8 +101,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     backgroundColor: 'rgba(15, 23, 42, 0.08)',
     borderWidth: 1.5,
-    borderColor: 'rgba(15, 23, 42, 0.12)',
-  },
+    borderColor: 'rgba(15, 23, 42, 0.12)'},
   markerCapsule: {
     width: 36,
     height: 36,
@@ -116,11 +110,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     // Soft, premium shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
+
   },
 
   // ── Saved pin styles ──
@@ -128,8 +118,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: 48,
-    height: 48,
-  },
+    height: 48},
   pinGlow: {
     position: 'absolute',
     width: 26,
@@ -137,16 +126,10 @@ const styles = StyleSheet.create({
     borderRadius: 13,
     backgroundColor: 'rgba(242, 114, 111, 0.25)',
     top: 7,
-    left: 11,
-  },
+    left: 11},
   pinShadow: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.20,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-});
+
+  }});
 StoreMarker.displayName = 'StoreMarker';
 
 export default StoreMarker;

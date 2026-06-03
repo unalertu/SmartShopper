@@ -69,8 +69,7 @@ function openDirectionsSheet(latitude: number, longitude: number) {
       options,
       cancelButtonIndex,
       title: 'Get Directions',
-      message: 'Choose a maps application',
-    },
+      message: 'Choose a maps application'},
     async (index: number) => {
       if (index === cancelButtonIndex) return;
 
@@ -197,8 +196,7 @@ export default function StoresScreen() {
 
   const animatedPosition = useSharedValue(SCREEN_HEIGHT);
   const animatedLocateStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: animatedPosition.value - 66 }],
-  }));
+    transform: [{ translateY: animatedPosition.value - 66 }]}));
 
   // ── Floating search button animation state ──
   const searchInputRef = useRef<TextInput>(null);
@@ -237,31 +235,26 @@ export default function StoresScreen() {
   const floatingSearchStyle = useAnimatedStyle(() => ({
     width: interpolate(searchExpand.value, [0, 1], [SEARCH_BUTTON_SIZE, SEARCH_PILL_WIDTH]),
     height: interpolate(searchExpand.value, [0, 1], [SEARCH_BUTTON_SIZE, 44]),
-    borderRadius: interpolate(searchExpand.value, [0, 1], [SEARCH_BUTTON_SIZE / 2, 22]),
-  }));
+    borderRadius: interpolate(searchExpand.value, [0, 1], [SEARCH_BUTTON_SIZE / 2, 22])}));
 
   // Search input container opacity
   const searchInputOpacityStyle = useAnimatedStyle(() => ({
     opacity: interpolate(searchExpand.value, [0.4, 1], [0, 1]),
-    flex: 1,
-  }));
+    flex: 1}));
 
   // Search icon position shift
   const searchIconStyle = useAnimatedStyle(() => ({
-    marginRight: interpolate(searchExpand.value, [0, 1], [0, 10]),
-  }));
+    marginRight: interpolate(searchExpand.value, [0, 1], [0, 10])}));
 
   // Map blur overlay animated style
   const mapBlurAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(searchExpand.value, [0, 1], [0, 1]),
-  }));
+    opacity: interpolate(searchExpand.value, [0, 1], [0, 1])}));
 
   // Bottom sheet push-down animated style
   const bottomSheetPushStyle = useAnimatedStyle(() => ({
     transform: [
       { translateY: interpolate(searchExpand.value, [0, 1], [0, 40]) },
-    ],
-  }));
+    ]}));
 
   const [initialRegion, setInitialRegion] = useState<any>(null);
   const [currentRegion, setCurrentRegion] = useState<any>(null);
@@ -270,8 +263,7 @@ export default function StoresScreen() {
   // Clustering state
   const superclusterRef = useRef(new Supercluster({
     radius: 45,
-    maxZoom: 16,
-  }));
+    maxZoom: 16}));
   const [clusters, setClusters] = useState<any[]>([]);
 
   // Haversine formula
@@ -490,8 +482,7 @@ export default function StoresScreen() {
           latitude: adjustedLatitude,
           longitude: shopToSelect.longitude,
           latitudeDelta: latDelta,
-          longitudeDelta: lonDelta,
-        }, 500);
+          longitudeDelta: lonDelta}, 500);
 
         if (calloutTimerRef.current) clearTimeout(calloutTimerRef.current);
         calloutTimerRef.current = setTimeout(() => {
@@ -543,8 +534,7 @@ export default function StoresScreen() {
       latitude: 41.0082,
       longitude: 28.9784,
       latitudeDelta: 0.015,
-      longitudeDelta: 0.015,
-    };
+      longitudeDelta: 0.015};
 
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -572,8 +562,7 @@ export default function StoresScreen() {
         latitude: adjustedLatitude,
         longitude: actualLongitude,
         latitudeDelta,
-        longitudeDelta,
-      };
+        longitudeDelta};
 
       if (isInitial) {
         setInitialRegion(newRegion);
@@ -743,8 +732,7 @@ export default function StoresScreen() {
                   latitude: adjustedLatitude,
                   longitude,
                   latitudeDelta: latDelta,
-                  longitudeDelta: lonDelta,
-                }, 350);
+                  longitudeDelta: lonDelta}, 350);
 
                 // Mount the callout slightly faster to reduce delay
                 calloutTimerRef.current = setTimeout(() => {
@@ -796,8 +784,7 @@ export default function StoresScreen() {
                     latitude,
                     longitude,
                     latitudeDelta,
-                    longitudeDelta,
-                  }, 350);
+                    longitudeDelta}, 350);
                 }}
               >
                 <MapCluster pointCount={pointCount} onPress={() => {}} />
@@ -847,8 +834,7 @@ export default function StoresScreen() {
                   latitude: adjustedLatitude,
                   longitude,
                   latitudeDelta: latDelta,
-                  longitudeDelta: lonDelta,
-                }, 350);
+                  longitudeDelta: lonDelta}, 350);
 
                 // Mount the callout slightly faster to reduce delay
                 calloutTimerRef.current = setTimeout(() => {
@@ -962,12 +948,7 @@ export default function StoresScreen() {
         enableOverDrag={true}
         enablePanDownToClose={false}
         backgroundStyle={{
-          borderRadius: 32,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -6 },
-          shadowOpacity: 0.03,
-          shadowRadius: 20,
-          elevation: 10,
+          borderRadius: 32,
           backgroundColor: '#f8fafc'
         }}
       >
@@ -994,13 +975,7 @@ export default function StoresScreen() {
                 >
                   <View
                     className="bg-white rounded-[20px] py-3.5 px-4 flex-row items-center justify-between border border-slate-200/70"
-                    style={{
-                      shadowColor: '#0f172a',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.04,
-                      shadowRadius: 8,
-                      elevation: 2,
-                    }}
+                    
                   >
                     <View className="flex-row items-center gap-3.5 flex-1">
                       <View className="w-10 h-10 bg-slate-100/60 rounded-[12px] items-center justify-center">
@@ -1041,8 +1016,7 @@ export default function StoresScreen() {
                         address: selectedShopToSave.address || 'Unknown Address',
                         latitude: selectedShopToSave.latitude,
                         longitude: selectedShopToSave.longitude,
-                        radius: 500,
-                      });
+                        radius: 500});
                       setSelectedShopToSave(null);
                     }}
                   >
@@ -1082,13 +1056,7 @@ export default function StoresScreen() {
                 >
                   <TouchableOpacity
                     className="bg-white rounded-[20px] py-3.5 px-4 flex-row items-center justify-between border border-slate-200/70"
-                    style={{
-                      shadowColor: '#0f172a',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.04,
-                      shadowRadius: 8,
-                      elevation: 2,
-                    }}
+                    
                     activeOpacity={0.7}
                     onPress={() => {
                       closeAllSwipeables();
@@ -1119,8 +1087,7 @@ export default function StoresScreen() {
                           {
                             options,
                             cancelButtonIndex,
-                            destructiveButtonIndex,
-                          },
+                            destructiveButtonIndex},
                           (index: number) => {
                             if (index === 1) {
                               openDirectionsSheet(loc.latitude, loc.longitude);
@@ -1221,13 +1188,7 @@ export default function StoresScreen() {
               >
                 <TouchableOpacity
                   className="bg-white rounded-[20px] py-3.5 px-4 flex-row items-center justify-between border border-slate-200/70"
-                  style={{
-                    shadowColor: '#0f172a',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.04,
-                    shadowRadius: 8,
-                    elevation: 2,
-                  }}
+                  
                   activeOpacity={0.7}
                   onPress={() => {
                     closeAllSwipeables();
@@ -1241,8 +1202,7 @@ export default function StoresScreen() {
                       latitude: adjustedLatitude,
                       longitude: loc.longitude,
                       latitudeDelta,
-                      longitudeDelta,
-                    };
+                      longitudeDelta};
                     mapRef.current?.animateToRegion(region, 500);
                     bottomSheetRef.current?.snapToIndex(0);
 
@@ -1279,8 +1239,7 @@ export default function StoresScreen() {
                         {
                           options,
                           cancelButtonIndex,
-                          destructiveButtonIndex,
-                        },
+                          destructiveButtonIndex},
                         (index: number) => {
                           if (index === 1) {
                             openDirectionsSheet(loc.latitude, loc.longitude);
@@ -1322,65 +1281,47 @@ export default function StoresScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
+    backgroundColor: '#fff'},
   floatingSearchBtn: {
     position: 'absolute',
     right: 16,
     zIndex: 15,
-    backgroundColor: '#ffffff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.14,
-    shadowRadius: 12,
-    elevation: 6,
-    overflow: 'hidden',
-  },
+    backgroundColor: '#ffffff',
+    overflow: 'hidden'},
   floatingSearchInner: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 12,
-  },
+    paddingHorizontal: 12},
   floatingSearchInput: {
     flex: 1,
     fontSize: 15,
     fontWeight: '400',
     color: '#0f172a',
     height: '100%',
-    letterSpacing: -0.2,
-  },
+    letterSpacing: -0.2},
   clearButton: {
     width: 18,
     height: 18,
     borderRadius: 9,
     backgroundColor: '#cbd5e1',
     alignItems: 'center',
-    justifyContent: 'center',
-  },
+    justifyContent: 'center'},
   locateButtonContainer: {
     position: 'absolute',
     top: 0,
     right: 16,
-    zIndex: 10,
-  },
+    zIndex: 10},
   locateButtonSurface: {
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: '#ffffff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.14,
-    shadowRadius: 12,
-    elevation: 6,
-  },
+    backgroundColor: '#ffffff'},
   locateButton: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-  },
+    alignItems: 'center'},
 
   /* ── Map marker ────────────────────────── */
   markerPill: {
@@ -1388,24 +1329,16 @@ const styles = StyleSheet.create({
     padding: 7,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 3,
-  },
+    borderColor: '#e2e8f0'},
   markerPillSaved: {
     backgroundColor: '#0f172a',
-    borderColor: '#0f172a',
-  },
+    borderColor: '#0f172a'},
 
   /* ── Empty state ───────────────────────── */
   emptyState: {
     alignItems: 'center',
     paddingVertical: 40,
-    paddingHorizontal: 20,
-  },
+    paddingHorizontal: 20},
   emptyIcon: {
     width: 72,
     height: 72,
@@ -1415,21 +1348,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(226,232,240,0.8)',
-  },
+    borderColor: 'rgba(226,232,240,0.8)'},
   emptyTitle: {
     fontSize: 17,
     fontWeight: '700',
     color: '#64748b',
-    marginBottom: 6,
-  },
+    marginBottom: 6},
   emptySub: {
     fontSize: 14,
     fontWeight: '500',
     color: '#94a3b8',
     textAlign: 'center',
-    lineHeight: 20,
-  },
+    lineHeight: 20},
 
   /* ── Saved shop card extras ────────────── */
   shopIcon: {
@@ -1440,15 +1370,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#f1f5f9',
-  },
+    borderColor: '#f1f5f9'},
 
   /* ── Swipe-to-delete action ────────────── */
   swipeDeleteAction: {
     justifyContent: 'center',
     alignItems: 'flex-end',
-    marginBottom: 14,
-  },
+    marginBottom: 14},
   swipeDeleteInner: {
     backgroundColor: '#ef4444',
     justifyContent: 'center',
@@ -1457,19 +1385,12 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 20,
     marginLeft: 8,
-    gap: 4,
-    shadowColor: '#ef4444',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 3,
-  },
+    gap: 4},
   swipeDeleteText: {
     color: '#fff',
     fontSize: 12,
     fontWeight: '700',
-    letterSpacing: 0.3,
-  },
+    letterSpacing: 0.3},
 
   /* ── Hint / Placeholder Card ─────────── */
   hintCard: {
@@ -1480,14 +1401,12 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingVertical: 32,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
+    justifyContent: 'center'},
   hintText: {
     fontSize: 14,
     fontWeight: '500',
     color: '#BDBDBD',
-    marginTop: 10,
-  },
+    marginTop: 10},
 
   /* ── Context save button ───────────────── */
   contextSaveBtn: {
@@ -1499,18 +1418,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    gap: 8,
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 3,
-  },
+    gap: 8},
   contextSaveBtnText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '700',
-  },
+    fontWeight: '700'},
   contextDirectionsBtn: {
     backgroundColor: '#ffffff',
     borderRadius: 20,
@@ -1521,55 +1433,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
+    borderColor: '#e2e8f0'},
   contextDirectionsBtnText: {
     color: '#0f172a',
     fontSize: 14,
-    fontWeight: '700',
-  },
+    fontWeight: '700'},
 
   /* ── Marker Callout Tooltip ──────────── */
   calloutContainer: {
     alignItems: 'center',
     minWidth: 60,
-    maxWidth: 200,
-  },
+    maxWidth: 200},
   calloutBubble: {
     borderRadius: 12,
     paddingVertical: 8,
-    paddingHorizontal: 14,
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 5,
-  },
+    paddingHorizontal: 14},
   calloutBubbleUnsaved: {
     backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
+    borderColor: '#e2e8f0'},
   calloutBubbleSaved: {
-    backgroundColor: '#F2726F',
-  },
+    backgroundColor: '#F2726F'},
   calloutText: {
     fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.3,
-    textAlign: 'center',
-  },
+    textAlign: 'center'},
   calloutTextUnsaved: {
-    color: '#0f172a',
-  },
+    color: '#0f172a'},
   calloutTextSaved: {
-    color: '#ffffff',
-  },
+    color: '#ffffff'},
   calloutArrow: {
     width: 0,
     height: 0,
@@ -1580,13 +1473,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 8,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    marginTop: -1,
-  },
+    marginTop: -1},
   calloutArrowUnsaved: {
     borderTopColor: '#ffffff',
-    marginTop: -2,
-  },
+    marginTop: -2},
   calloutArrowSaved: {
-    borderTopColor: '#F2726F',
-  },
-});
+    borderTopColor: '#F2726F'}});

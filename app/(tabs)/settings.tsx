@@ -9,8 +9,7 @@ import {
   Linking,
   Platform,
   AppState,
-  Share,
-} from 'react-native';
+  Share} from 'react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -46,15 +45,13 @@ import {
   User,
   Sparkles,
   Globe,
-  Users,
-} from 'lucide-react-native';
+  Users} from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import {
   useShoppingListStore,
   useLocationStore,
   useListsStore,
-  useSettingsStore,
-} from '../../store';
+  useSettingsStore} from '../../store';
 import type { ThemeOption } from '../../store';
 import { hapticImpact, hapticNotification } from '../../services/haptics';
 import * as Haptics from 'expo-haptics';
@@ -70,8 +67,7 @@ function SettingsRow({
   onPress,
   isDanger,
   rightElement,
-  isLast,
-}: {
+  isLast}: {
   icon: React.ReactNode;
   iconBgColor?: string;
   label: string;
@@ -111,8 +107,7 @@ function SettingsRow({
 
 function SettingsGroup({
   children,
-  delay = 0,
-}: {
+  delay = 0}: {
   title?: string;
   children: React.ReactNode;
   delay?: number;
@@ -121,7 +116,7 @@ function SettingsGroup({
     <Animated.View
       layout={LinearTransition.springify()}
       className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 shadow-sm mx-6"
-      style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 }}
+      
     >
       {children}
     </Animated.View>
@@ -134,21 +129,14 @@ function SettingsGroup({
 const THEME_LABELS: Record<ThemeOption, string> = {
   system: 'System',
   light: 'Light',
-  dark: 'Dark',
-};
+  dark: 'Dark'};
 
 // ─── Pro Status Card Memoized ────────────────────────────────────────────────
 const ProStatusCard = React.memo(({ animatedStyle }: { animatedStyle: any }) => (
   <Animated.View style={animatedStyle}>
     <View
       className="bg-white border border-slate-100 rounded-3xl p-4 shadow-sm flex-row items-center"
-      style={{
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 2,
-      }}
+      
     >
       <View className="h-12 w-12 rounded-full bg-[#D4AF37]/10 items-center justify-center mr-4">
         <Sparkles size={24} color="#D4AF37" />
@@ -183,8 +171,7 @@ export default function SettingsScreen() {
 
   const animatedProCardStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ scale: scale.value }],
-    };
+      transform: [{ scale: scale.value }]};
   });
 
   const handleProCardPressIn = () => {
@@ -214,8 +201,7 @@ export default function SettingsScreen() {
     setLocationEnabled,
     setDistanceUnit,
     setTheme,
-    resetSettings,
-  } = useSettingsStore();
+    resetSettings} = useSettingsStore();
 
   // ── Sync real notification status ──
   const syncNotificationStatus = useCallback(async () => {
@@ -279,8 +265,7 @@ export default function SettingsScreen() {
                     } else {
                       Linking.openSettings();
                     }
-                  },
-                },
+                  }},
               ]
             );
             return;
@@ -307,8 +292,7 @@ export default function SettingsScreen() {
                   } else {
                     Linking.openSettings();
                   }
-                },
-              },
+                }},
             ]
           );
         }
@@ -341,8 +325,7 @@ export default function SettingsScreen() {
                     } else {
                       Linking.openSettings();
                     }
-                  },
-                },
+                  }},
               ]
             );
             return;
@@ -370,8 +353,7 @@ export default function SettingsScreen() {
                   } else {
                     Linking.openSettings();
                   }
-                },
-              },
+                }},
             ]
           );
         }
@@ -397,8 +379,7 @@ export default function SettingsScreen() {
         onPress: () => {
           hapticImpact(ImpactFeedbackStyle.Light);
           setTheme(opt);
-        },
-      })),
+        }})),
       { text: 'Cancel', style: 'cancel' as const },
     ]);
   }, [theme, setTheme]);
@@ -433,12 +414,10 @@ export default function SettingsScreen() {
                     });
                     resetSettings();
                     hapticNotification(NotificationFeedbackType.Warning);
-                  },
-                },
+                  }},
               ]
             );
-          },
-        },
+          }},
       ]
     );
   }, [clearAllItems, resetSettings]);
@@ -448,8 +427,7 @@ export default function SettingsScreen() {
     try {
       await Share.share({
         message:
-          '📱 Check out SmartShopper — a smart shopping list app that reminds you near stores!\nhttps://smartshopper.app',
-      });
+          '📱 Check out SmartShopper — a smart shopping list app that reminds you near stores!\nhttps://smartshopper.app'});
     } catch {
       // User cancelled or share failed
     }
@@ -501,7 +479,7 @@ export default function SettingsScreen() {
 
   return (
     <AnimatedScreen>
-      <View className="flex-1 bg-slate-50">
+      <View className="flex-1 bg-[#F2F2F7]">
         <StatusBar style="dark" />
 
         <ScrollView

@@ -88,7 +88,7 @@ export default function ListsScreen() {
 
   return (
     <AnimatedScreen>
-      <View className="flex-1 bg-slate-50">
+      <View className="flex-1 bg-[#F2F2F7]">
         <StatusBar style="dark" />
         
         <ScrollView 
@@ -116,13 +116,7 @@ export default function ListsScreen() {
               {/* Empty State Hero */}
               <View className="items-center justify-center py-6">
                 <View className="w-24 h-24 bg-slate-100 rounded-full items-center justify-center mb-5 border-[6px] border-white"
-                  style={{
-                    shadowColor: '#0f172a',
-                    shadowOffset: { width: 0, height: 8 },
-                    shadowOpacity: 0.05,
-                    shadowRadius: 16,
-                    elevation: 2,
-                  }}
+                  
                 >
                   <ShoppingBasket size={36} color="#0f172a" strokeWidth={1.5} />
                 </View>
@@ -175,13 +169,7 @@ export default function ListsScreen() {
                             incrementUsage(template);
                           }}
                           className="bg-white border border-slate-100/70 rounded-[12px] px-3.5 py-2 flex-row items-center gap-1.5"
-                          style={{
-                            shadowColor: '#0f172a',
-                            shadowOffset: { width: 0, height: 1 },
-                            shadowOpacity: 0.015,
-                            shadowRadius: 4,
-                            elevation: 1,
-                          }}
+                          
                         >
                           <Plus size={13} color="#94a3b8" strokeWidth={2.5} />
                           <Text className="text-[13px] font-medium text-slate-600">{template}</Text>
@@ -220,13 +208,7 @@ export default function ListsScreen() {
                     <TouchableOpacity 
                       onPress={() => { closeAllSwipeables(); hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.push(`/list/${list.id}`); }}
                       className="bg-white rounded-[24px] py-3.5 px-4 flex-row items-center justify-between border border-slate-100"
-                      style={{
-                        shadowColor: '#0f172a',
-                        shadowOffset: { width: 0, height: 8 },
-                        shadowOpacity: 0.03,
-                        shadowRadius: 24,
-                        elevation: 3,
-                      }}
+                      
                     >
                       <View className="flex-row items-center gap-3.5 flex-1">
                         <View className="w-10 h-10 bg-slate-100/60 rounded-[12px] items-center justify-center">
@@ -265,8 +247,7 @@ export default function ListsScreen() {
                   title: list.name,
                   subtitle: 'List created',
                   timestamp: list.createdAt,
-                  listId: list.id,
-                });
+                  listId: list.id});
               }
             });
 
@@ -280,8 +261,7 @@ export default function ListsScreen() {
                 title: item.name,
                 subtitle: parentList ? `Added to ${parentList.name}` : 'Item added',
                 timestamp: item.createdAt,
-                listId: item.listId,
-              });
+                listId: item.listId});
             });
 
             // Sort by most recent first and take top 6
@@ -315,13 +295,7 @@ export default function ListsScreen() {
                 </View>
 
                 {recentEvents.length === 0 ? (
-                  <View className="bg-white rounded-[20px] p-5 border border-slate-100 items-center" style={{
-                    shadowColor: '#0f172a',
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.02,
-                    shadowRadius: 12,
-                    elevation: 1,
-                  }}>
+                  <View className="bg-white rounded-[20px] p-5 border border-slate-100 items-center" >
                     <View className="w-10 h-10 bg-slate-50 rounded-full items-center justify-center mb-2.5">
                       <Clock size={18} color="#cbd5e1" strokeWidth={1.5} />
                     </View>
@@ -343,13 +317,7 @@ export default function ListsScreen() {
                             }
                           }}
                           className="bg-white rounded-[14px] px-3 py-2.5 flex-row items-center border border-slate-100/60"
-                          style={{
-                            shadowColor: '#0f172a',
-                            shadowOffset: { width: 0, height: 1 },
-                            shadowOpacity: 0.015,
-                            shadowRadius: 6,
-                            elevation: 1,
-                          }}
+                          
                         >
                           <View className={`w-7 h-7 ${getIconBg(event.type)} rounded-[8px] items-center justify-center mr-2.5`}>
                             {getActivityIcon(event.type)}
@@ -380,13 +348,7 @@ export default function ListsScreen() {
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 8,
-                shadowColor: '#0f172a',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.1,
-                shadowRadius: 12,
-                elevation: 3,
-              }}
+                gap: 8}}
             >
               <Plus size={20} color="#fff" strokeWidth={2.5} />
               <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600', letterSpacing: 0.2 }}>Create New List</Text>

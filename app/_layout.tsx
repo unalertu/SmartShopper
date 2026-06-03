@@ -13,8 +13,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { setupNotifications } from "@/services/notificationService";
 import LaunchScreen from "@/components/LaunchScreen";
 import NotificationPermissionScreen, {
-  shouldShowNotificationPermission,
-} from "@/components/NotificationPermissionScreen";
+  shouldShowNotificationPermission} from "@/components/NotificationPermissionScreen";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { useShoppingListStore } from "@/store/useShoppingListStore";
 
@@ -28,13 +27,10 @@ const AppLightTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: '#f8fafc',
-  },
-};
+    background: '#f8fafc'}};
 
 export const unstable_settings = {
-  anchor: "(tabs)",
-};
+  anchor: "(tabs)"};
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -64,8 +60,7 @@ export default function RootLayout() {
 
     if (expiredIds.length > 0) {
       useShoppingListStore.setState((state) => ({
-        items: state.items.filter((item) => !expiredIds.includes(item.id)),
-      }));
+        items: state.items.filter((item) => !expiredIds.includes(item.id))}));
     }
   }, []);
 
@@ -101,8 +96,7 @@ export default function RootLayout() {
               animation: "ios_from_right",
               gestureEnabled: true,
               fullScreenGestureEnabled: true,
-              animationDuration: 350,
-            }}
+              animationDuration: 350}}
           >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen
@@ -113,8 +107,7 @@ export default function RootLayout() {
                 gestureEnabled: true,
                 fullScreenGestureEnabled: true,
                 title: "Add Item",
-                headerShown: false,
-              }}
+                headerShown: false}}
             />
             <Stack.Screen
               name="add-location"
@@ -124,8 +117,7 @@ export default function RootLayout() {
                 gestureEnabled: true,
                 fullScreenGestureEnabled: true,
                 title: "Add Location",
-                headerShown: false,
-              }}
+                headerShown: false}}
             />
             <Stack.Screen
               name="paywall"
@@ -134,8 +126,7 @@ export default function RootLayout() {
                 animation: "fade",
                 gestureEnabled: true,
                 fullScreenGestureEnabled: true,
-                headerShown: false,
-              }}
+                headerShown: false}}
             />
             <Stack.Screen
               name="list/[id]"
@@ -143,8 +134,7 @@ export default function RootLayout() {
                 animation: "ios_from_right",
                 gestureEnabled: true,
                 fullScreenGestureEnabled: true,
-                headerShown: false,
-              }}
+                headerShown: false}}
             />
           </Stack>
           <StatusBar style={showNotificationPermission ? "light" : "dark"} />

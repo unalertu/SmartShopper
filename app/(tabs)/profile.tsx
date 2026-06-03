@@ -24,8 +24,7 @@ import {
   MapPin,
   MessageSquare,
   Info,
-  Lock,
-} from 'lucide-react-native';
+  Lock} from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import NotificationPermissionScreen from '../../components/NotificationPermissionScreen';
 import { useSettingsStore } from '../../store/useSettingsStore';
@@ -76,8 +75,7 @@ export default function ProfileScreen() {
                 } else {
                   Linking.openSettings();
                 }
-              },
-            },
+              }},
           ]
         );
         return;
@@ -100,8 +98,7 @@ export default function ProfileScreen() {
               } else {
                 Linking.openSettings();
               }
-            },
-          },
+            }},
         ]
       );
     }
@@ -132,7 +129,7 @@ export default function ProfileScreen() {
         {/* Account */}
         <View 
           className="bg-white border border-slate-100 rounded-3xl p-4 mb-4 flex-row items-center shadow-sm"
-          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }}
+          
         >
           <View className="bg-slate-100 h-16 w-16 rounded-full justify-center items-center mr-4 overflow-hidden">
             <Image 
@@ -152,7 +149,7 @@ export default function ProfileScreen() {
         {/* Premium */}
         <TouchableOpacity 
           className="bg-slate-900 rounded-3xl p-4 mb-6 flex-row items-center justify-between shadow-sm"
-          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 4 }}
+          
           activeOpacity={0.8}
         >
           <View className="flex-row items-center">
@@ -172,7 +169,7 @@ export default function ProfileScreen() {
         {/* Card 1: Notifications & Location */}
         <View 
           className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 shadow-sm"
-          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 }}
+          
         >
           {/* Notifications */}
           <View className="flex-row justify-between items-center p-4 border-b border-slate-50">
@@ -208,7 +205,7 @@ export default function ProfileScreen() {
         {/* Card 2: Shopping Preferences & Appearance */}
         <View 
           className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 shadow-sm"
-          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 }}
+          
         >
           {/* Shopping Preferences */}
           <TouchableOpacity 
@@ -247,7 +244,7 @@ export default function ProfileScreen() {
         {/* Card 3: Privacy & Data */}
         <View 
           className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 shadow-sm"
-          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 }}
+          
         >
           <TouchableOpacity 
             className="flex-row justify-between items-center p-4"
@@ -267,7 +264,7 @@ export default function ProfileScreen() {
         {/* Card 4: Help & Support, Feedback */}
         <View 
           className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 shadow-sm"
-          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 }}
+          
         >
           {/* Help & Support */}
           <TouchableOpacity 
@@ -303,7 +300,7 @@ export default function ProfileScreen() {
         {/* Card 5: Legal & About */}
         <View 
           className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 shadow-sm"
-          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 }}
+          
         >
           {/* Legal */}
           <TouchableOpacity 
@@ -342,7 +339,7 @@ export default function ProfileScreen() {
         {/* Log Out */}
         <TouchableOpacity 
           className="bg-slate-900 h-16 rounded-[24px] justify-center items-center shadow-lg mt-2 mb-10"
-          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 15, elevation: 8 }}
+          
         >
           <Text className="text-white font-bold text-lg">Log Out</Text>
         </TouchableOpacity>

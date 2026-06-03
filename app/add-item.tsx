@@ -6,8 +6,7 @@ import {
   Pressable,
   ScrollView,
   KeyboardAvoidingView,
-  Platform,
-} from "react-native";
+  Platform} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { X, Minus, Plus, Check } from "lucide-react-native";
@@ -32,8 +31,7 @@ export default function AddItemScreen() {
       name: name.trim(),
       quantity,
       unit: selectedUnit,
-      category: selectedCategory,
-    });
+      category: selectedCategory});
     router.back();
   };
 
@@ -78,12 +76,7 @@ export default function AddItemScreen() {
               }`}
               style={
                 isFocused
-                  ? {
-                      shadowColor: Colors.primary[500],
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 12,
-                      elevation: 4,
+                  ? {
                     }
                   : undefined
               }
