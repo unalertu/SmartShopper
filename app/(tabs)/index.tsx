@@ -553,21 +553,29 @@ export default function HomeScreen() {
               >
                 <TouchableOpacity 
                   onPress={() => { closeAllSwipeables(); closeAllShopSwipeables(); hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: '/stores', params: { shopId: shop.id } }); }}
-                  className="bg-white rounded-[24px] py-3.5 px-4 flex-row items-center justify-between border border-slate-100"
-                  
+                  className="bg-white rounded-[22px] flex-row items-center justify-between border border-slate-100"
+                  style={{
+                    paddingVertical: 10,
+                    paddingHorizontal: 14,
+                  }}
                 >
-                  <View className="flex-row items-center gap-3.5 flex-1">
-                    <View className="w-10 h-10 bg-slate-100/60 rounded-[12px] items-center justify-center">
-                      <Store size={20} color="#475569" />
+                  <View className="flex-row items-center gap-3 flex-1">
+                    <View style={{ width: 34, height: 34, backgroundColor: 'rgba(241,245,249,0.6)', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
+                      <Store size={16} color="#475569" />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-[16px] font-semibold text-slate-900 tracking-tight" numberOfLines={1}>{shop.name}</Text>
-                      <Text className="text-[13px] font-medium text-slate-500 mt-0.5" numberOfLines={1}>
-                        {userLocation ? formatDistanceAway(haversineDistance(userLocation.latitude, userLocation.longitude, shop.latitude, shop.longitude)) : (shop.address || 'Saved Shop')}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={{ fontSize: 15, fontWeight: '600', color: '#0f172a', letterSpacing: -0.3 }} numberOfLines={1}>{shop.name}</Text>
+                        {userLocation && (
+                          <View style={{ backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1.5 }}>
+                            <Text style={{ fontSize: 11, fontWeight: '600', color: '#64748b' }}>{formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, shop.latitude, shop.longitude))}</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={{ fontSize: 12, fontWeight: '500', color: '#94a3b8', marginTop: 2 }} numberOfLines={1}>{shop.address || 'Saved Shop'}</Text>
                     </View>
                   </View>
-                  <ChevronRight size={18} color="#94a3b8" />
+                  <ChevronRight size={16} color="#cbd5e1" />
                 </TouchableOpacity>
               </Swipeable>
             </Animated.View>
