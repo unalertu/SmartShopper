@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { FREE_TIER, getMaxLists } from '@/constants/tierConfig';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Flame, Store, ShoppingBag, Crown, Plus, Home, Users, User, Menu, ChevronRight, Radar, Bell, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings, ScanBarcode, Sparkles } from 'lucide-react-native';
+import { Flame, Store, ShoppingBag, Crown, Plus, Home, Users, User, Menu, ChevronRight, Radar, Bell, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings, ScanBarcode, Sparkles, Sun, Snowflake, Leaf, Lightbulb } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
@@ -14,7 +14,7 @@ import MapView, { Marker } from 'react-native-maps';
 import { fetchMarkets } from '../../services/overpassService';
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeOutLeft, LinearTransition } from 'react-native-reanimated';
-import { useLocationStore, useListsStore, useSettingsStore, useQuickStartStore, useNotificationsStore } from '../../store';
+import { useLocationStore, useListsStore, useSettingsStore, useQuickStartStore, useNotificationsStore, useShoppingListStore } from '../../store';
 import { useScrollToTop } from '@react-navigation/native';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import RadarPinIcon from '../../components/RadarPinIcon';
@@ -265,6 +265,116 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
     );
+  };
+
+  // Dynamic Recommendations Logic
+  const currentHour = new Date().getHours();
+  let timeContextList = "Evening Groceries";
+  if (currentHour >= 5 && currentHour < 12) timeContextList = "Morning Coffee Run";
+  else if (currentHour >= 12 && currentHour < 17) timeContextList = "Afternoon Snack";
+  else if (currentHour >= 17 && currentHour < 21) timeContextList = "Dinner Prep";
+
+  const suggestedShop = savedShops.length > 0 ? savedShops[0] : null;
+
+  // Seasonal Logic
+  const currentMonth = new Date().getMonth();
+  let seasonalTitle = "Winter Warmers";
+  let seasonalItems = ["Hot Chocolate", "Tea", "Marshmallows", "Soup"];
+  let SeasonalIcon = Snowflake;
+  if (currentMonth >= 2 && currentMonth <= 4) { // Spring
+    seasonalTitle = "Spring Cleaning";
+    seasonalItems = ["Trash Bags", "Sponges", "Window Cleaner", "Paper Towels"];
+    SeasonalIcon = Sparkles;
+  } else if (currentMonth >= 5 && currentMonth <= 7) { // Summer
+    seasonalTitle = "Summer BBQ";
+    seasonalItems = ["Burgers", "Hot Dogs", "Charcoal", "Soda"];
+    SeasonalIcon = Sun;
+  } else if (currentMonth >= 8 && currentMonth <= 10) { // Autumn
+    seasonalTitle = "Autumn Comforts";
+    seasonalItems = ["Pumpkins", "Cinnamon", "Apples", "Baking Flour"];
+    SeasonalIcon = Leaf;
+  }
+
+  const handleCreateSuggestedList = (name: string) => {
+    if (!canCreateList(isPro)) {
+      Alert.alert(
+        'List Limit Reached',
+        isPro
+          ? `You've reached the maximum of ${getMaxLists(isPro)} shopping lists.`
+          : `You've reached the free limit of ${FREE_TIER.maxLists} shopping lists. Upgrade to Pro for unlimited lists.`,
+        isPro
+          ? [{ text: 'OK' }]
+          : [
+              { text: 'OK', style: 'cancel' },
+              { text: 'Upgrade to Pro', onPress: () => router.push('/paywall') },
+            ]
+      );
+      return;
+    }
+    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+    const listId = addList(name);
+
+    if (name === "Most Purchased") {
+      const allItems = useShoppingListStore.getState().items;
+      const frequency: Record<string, { count: number, item: any }> = {};
+      
+      allItems.forEach((item: any) => {
+        if (item.isPurchased) {
+          const nameKey = item.name.trim().toLowerCase();
+          if (!frequency[nameKey]) {
+            frequency[nameKey] = { count: 0, item };
+          }
+          frequency[nameKey].count += 1;
+        }
+      });
+      
+      const sortedNames = Object.keys(frequency).sort((a, b) => frequency[b].count - frequency[a].count);
+      const topItems = sortedNames.slice(0, 10).map(key => frequency[key].item);
+      
+      topItems.forEach((item: any) => {
+        useShoppingListStore.getState().addItem(listId, {
+          name: item.name,
+          quantity: item.quantity,
+          unit: item.unit,
+          category: item.category
+        });
+      });
+    } else if (name === seasonalTitle) {
+      seasonalItems.forEach(itemName => {
+        useShoppingListStore.getState().addItem(listId, {
+          name: itemName,
+          quantity: 1,
+          unit: "unit",
+          category: "Other"
+        });
+      });
+    } else if (name === "Did you forget?") {
+      const allItems = useShoppingListStore.getState().items;
+      const unpurchased = allItems.filter((i: any) => !i.isPurchased);
+      unpurchased.sort((a: any, b: any) => a.createdAt - b.createdAt);
+      
+      const uniqueNames = new Set<string>();
+      const topForgot = [];
+      for (const item of unpurchased) {
+        const lowerName = item.name.trim().toLowerCase();
+        if (!uniqueNames.has(lowerName)) {
+          uniqueNames.add(lowerName);
+          topForgot.push(item);
+        }
+        if (topForgot.length >= 8) break;
+      }
+      
+      topForgot.forEach((item: any) => {
+        useShoppingListStore.getState().addItem(listId, {
+          name: item.name,
+          quantity: item.quantity,
+          unit: item.unit,
+          category: item.category
+        });
+      });
+    }
+
+    incrementUsage(name);
   };
 
   return (
@@ -646,64 +756,110 @@ export default function HomeScreen() {
           )}
 
 
-
-          {/* 5. Secondary "Premium" Card */}
-          <Animated.View 
-            layout={LinearTransition.springify()}
-            className="mx-6 mt-8 bg-white rounded-[36px] p-8 min-h-[180px] relative overflow-hidden border border-slate-100"
-            
-          >
-            <Text className="text-[18px] font-bold text-slate-900 tracking-tight z-10">Categories</Text>
-            
-            {/* Blurred background circles simulation */}
-            <View className="absolute inset-0 items-center justify-center opacity-30">
-              <View className="w-32 h-32 bg-red-100 rounded-full blur-3xl absolute -left-10 opacity-70" />
-              <View className="w-40 h-40 bg-blue-100 rounded-full blur-3xl absolute -right-10 opacity-70" />
+          {/* 5. Suggestions Section */}
+          <Animated.View layout={LinearTransition.springify()} className="mt-6 mb-8">
+            <View className="px-6 mb-4">
+              <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">Recommended for You</Text>
+              <Text className="text-[14px] font-medium text-slate-500 mt-1">Smart suggestions based on your routines & visits</Text>
             </View>
+            <View className="px-6 gap-3 pb-4">
+              {/* 1. Shop Card (Most Visited or Nearest) */}
+              {(suggestedShop || nearestShopName) && (
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => { 
+                    hapticImpact(Haptics.ImpactFeedbackStyle.Light); 
+                    if (suggestedShop) {
+                      router.push({ pathname: '/stores', params: { shopId: suggestedShop.id } }); 
+                    } else {
+                      router.push('/stores');
+                    }
+                  }}
+                  className="bg-white border border-slate-200 rounded-[20px] px-5 py-4 flex-row items-center gap-4 w-full"
+                  style={{
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.04,
+                    shadowRadius: 8,
+                    elevation: 2,
+                  }}
+                >
+                  <View className="w-10 h-10 rounded-full bg-indigo-50 items-center justify-center">
+                    <Store size={20} color="#6366f1" strokeWidth={2.5} />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-[13px] font-semibold text-slate-500">{suggestedShop ? "Frequently visited" : "Nearest to you"}</Text>
+                    <Text className="text-[16px] font-bold text-slate-900 mt-0.5">{suggestedShop ? suggestedShop.name : nearestShopName}</Text>
+                  </View>
+                  <ChevronRight size={20} color="#cbd5e1" />
+                </TouchableOpacity>
+              )}
 
-            <View className="absolute inset-0 items-center justify-center z-20">
-              <TouchableOpacity 
-                onPress={() => hapticImpact(Haptics.ImpactFeedbackStyle.Light)}
-                className="bg-[#D4AF37] rounded-full px-6 py-3 flex-row items-center gap-2.5"
-                
-              >
-                <Sparkles size={18} color="#1e1e1e" fill="#1e1e1e" />
-                <Text className="text-[#1e1e1e] font-bold text-[15px] tracking-wide">Premium</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-          
-          {/* Pagination dots */}
-          <Animated.View layout={LinearTransition.springify()} className="flex-row justify-center mt-6 gap-2.5">
-            <View className="w-2 h-2 rounded-full bg-slate-900" />
-            <View className="w-2 h-2 rounded-full bg-slate-200" />
-            <View className="w-2 h-2 rounded-full bg-slate-200" />
-          </Animated.View>
+              {/* Grid Row for Time-based and Restock */}
+              <View className="flex-row gap-3">
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => handleCreateSuggestedList(timeContextList)}
+                  className="flex-1 bg-blue-50 border border-blue-100 rounded-[20px] p-4 flex-col gap-3"
+                >
+                  <View className="w-9 h-9 rounded-full bg-blue-100 items-center justify-center">
+                    <Flame size={18} color="#3b82f6" strokeWidth={2.5} />
+                  </View>
+                  <View>
+                    <Text className="text-[12px] font-semibold text-blue-500">Quick Start</Text>
+                    <Text className="text-[15px] font-bold text-blue-900 leading-tight mt-0.5">{timeContextList}</Text>
+                  </View>
+                </TouchableOpacity>
 
-          {/* 6. "Recently Uploaded" Section */}
-          <Animated.View layout={LinearTransition.springify()}>
-            <Text className="text-[22px] font-extrabold tracking-tight mx-6 mt-10 mb-4 text-slate-900">Recently uploaded</Text>
-          </Animated.View>
-          
-          <Animated.View 
-            layout={LinearTransition.springify()}
-            className="mx-6 bg-white rounded-[36px] p-8 items-center border border-slate-100"
-            
-          >
-            <View 
-              className="bg-white rounded-[24px] w-[90%] p-5 flex-row items-center gap-4 border border-slate-50"
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => handleCreateSuggestedList("Most Purchased")}
+                  className="flex-1 bg-emerald-50 border border-emerald-100 rounded-[20px] p-4 flex-col gap-3"
+                >
+                  <View className="w-9 h-9 rounded-full bg-emerald-100 items-center justify-center">
+                    <ShoppingBag size={18} color="#10b981" strokeWidth={2.5} />
+                  </View>
+                  <View>
+                    <Text className="text-[12px] font-semibold text-emerald-600">Weekly</Text>
+                    <Text className="text-[15px] font-bold text-emerald-900 leading-tight mt-0.5">Most Purchased</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+              {/* Grid Row 2 for Did You Forget and Seasonal */}
+              <View className="flex-row gap-3">
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => handleCreateSuggestedList("Did you forget?")}
+                  className="flex-1 bg-amber-50 border border-amber-100 rounded-[20px] p-4 flex-col gap-3"
+                >
+                  <View className="w-9 h-9 rounded-full bg-amber-100 items-center justify-center">
+                    <Lightbulb size={18} color="#d97706" strokeWidth={2.5} />
+                  </View>
+                  <View>
+                    <Text className="text-[12px] font-semibold text-amber-600">Pending Items</Text>
+                    <Text className="text-[15px] font-bold text-amber-900 leading-tight mt-0.5">Did you forget?</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => handleCreateSuggestedList(seasonalTitle)}
+                  className="flex-1 bg-rose-50 border border-rose-100 rounded-[20px] p-4 flex-col gap-3"
+                >
+                  <View className="w-9 h-9 rounded-full bg-rose-100 items-center justify-center">
+                    <SeasonalIcon size={18} color="#e11d48" strokeWidth={2.5} />
+                  </View>
+                  <View>
+                    <Text className="text-[12px] font-semibold text-rose-500">Seasonal</Text>
+                    <Text className="text-[15px] font-bold text-rose-900 leading-tight mt-0.5">{seasonalTitle}</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
               
-            >
-              <View className="w-[52px] h-[52px] rounded-full bg-slate-50 items-center justify-center border border-slate-100">
-                 <Text style={{fontSize: 24}}>🥗</Text>
-              </View>
-              <View className="flex-1 gap-3">
-                <View className="w-32 h-2.5 bg-slate-100 rounded-full" />
-                <View className="w-20 h-2.5 bg-slate-100 rounded-full" />
-              </View>
             </View>
-            <Text className="text-slate-500 text-[15px] font-medium tracking-wide mt-8">Tap + to add your first shopping list</Text>
           </Animated.View>
+
         </ScrollView>
 
         {/* Bottom Sheet for Adding New List */}

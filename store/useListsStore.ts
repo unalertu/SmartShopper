@@ -12,7 +12,7 @@ export interface ShoppingList {
 
 interface ListsStoreState {
   lists: ShoppingList[];
-  addList: (name: string) => void;
+  addList: (name: string) => number;
   removeList: (id: number) => void;
   updateListCount: (id: number, count: number) => void;
 
@@ -36,13 +36,16 @@ export const useListsStore = create<ListsStoreState>()(
         { id: 2, name: "Kendi ihtiyaçlarım", count: 12, createdAt: Date.now() - 86400000 }, 
         { id: 3, name: "Buse'ye alınacaklar", count: 2, createdAt: Date.now() - 172800000 }
       ],
-      addList: (name) =>
+      addList: (name) => {
+        const newId = Date.now();
         set((state) => ({
           lists: [
-            { id: Date.now(), name, count: 0, createdAt: Date.now() },
+            { id: newId, name, count: 0, createdAt: Date.now() },
             ...state.lists,
           ],
-        })),
+        }));
+        return newId;
+      },
       removeList: (id) =>
         set((state) => ({
           lists: state.lists.filter((list) => list.id !== id),
