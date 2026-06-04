@@ -161,11 +161,8 @@ export default function StoresScreen() {
   const setSelectedShopToSave = useLocalUIStore((s) => s.setSelectedShopToSave);
 
   const snapPoints = useMemo(() => {
-    // Return a fixed array of exactly 3 elements to prevent bottom-sheet out-of-bounds crashes
-    // when dynamically adding/removing items.
-    const minPercent = selectedShopToSave ? '32%' : '18%';
-    return [minPercent, '38%', '60%'];
-  }, [selectedShopToSave]);
+    return ['15%', '40%', '70%'];
+  }, []);
 
   const animatedPosition = useSharedValue(SCREEN_HEIGHT);
   const animatedLocateStyle = useAnimatedStyle(() => ({
@@ -912,13 +909,13 @@ export default function StoresScreen() {
       <Animated.View style={[{ flex: 1, position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 2 }, bottomSheetPushStyle]} pointerEvents="box-none">
       <BottomSheet
         ref={bottomSheetRef}
-        index={Math.min(1, snapPoints.length - 1)}
+        index={1}
         animatedPosition={animatedPosition}
-        snapPoints={snapPoints}
-        topInset={SCREEN_HEIGHT * 0.4}
+        snapPoints={['15%', '40%', '70%']}
+        topInset={SCREEN_HEIGHT * 0.3}
         handleComponent={null}
         animateOnMount={true}
-        enableOverDrag={true}
+        enableOverDrag={false}
         enablePanDownToClose={false}
         backgroundStyle={{
           borderRadius: 32,
