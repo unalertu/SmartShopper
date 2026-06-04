@@ -271,17 +271,17 @@ export default function HomeScreen() {
         {/* SCROLLING HEADER CONTENT */}
         <View 
           className="px-6 flex-row justify-between items-center"
-          style={{ paddingTop: insets.top + 16, paddingBottom: 20 }}
+          style={{ paddingTop: insets.top + 16, paddingBottom: 4 }}
         >
-          <View className="flex-row items-center gap-2">
-            <Image source={require('../../assets/images/app-logo.png')} style={{ width: 36, height: 36, marginLeft: 0, marginTop: 0 }} resizeMode="contain" />
+          <View className="flex-row items-center gap-0">
+            <Image source={require('../../assets/images/app-logo.png')} style={{ width: 110, height: 110, marginLeft: -24, marginRight: -16, marginTop: -37, marginBottom: -37 }} resizeMode="contain" />
             <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight" style={{ marginTop: 4 }}>GeoCart</Text>
           </View>
           
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.push('/notifications'); }}
-            className="w-[42px] h-[42px] bg-white rounded-full items-center justify-center border border-slate-200"
+            className="w-[42px] h-[42px] bg-white rounded-full items-center justify-center"
             style={{
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 2 },
