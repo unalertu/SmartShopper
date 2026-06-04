@@ -1,10 +1,15 @@
 /**
  * Location service utilities.
- * Background geofencing will be integrated here after the core UI is done.
+ * Background geofencing with tier-aware soft limits.
+ * 
+ * IMPORTANT: Background notifications are NEVER disabled for free users.
+ * Free users get up to 5 nearby-store alerts per day, prioritizing the closest store.
+ * Pro users have no daily limits and can alert for all nearby stores.
  */
 
 import * as Location from "expo-location";
 import * as TaskManager from "expo-task-manager";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { geoEngine } from "./geoEngine";
 import { notificationEngine } from "./notificationEngine";
 
@@ -36,6 +41,23 @@ export const getCurrentLocation =
 
 export const BACKGROUND_LOCATION_TASK = "background-location-task";
 
+/**
+ * Read isPro from the persisted settings store in AsyncStorage.
+ * Used in background tasks where Zustand hooks aren't available.
+ */
+const getIsProFromStorage = async (): Promise<boolean> => {
+  try {
+    const data = await AsyncStorage.getItem("settings-storage");
+    if (data) {
+      const parsed = JSON.parse(data);
+      return parsed?.state?.isPro === true;
+    }
+  } catch (e) {
+    console.error("getIsProFromStorage error", e);
+  }
+  return false;
+};
+
 TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
   if (error) {
     console.error("Background Location Error:", error);
@@ -47,17 +69,37 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
       const location = locations[0];
       const { latitude, longitude } = location.coords;
       
+      const isPro = await getIsProFromStorage();
       const nearbyStores = await geoEngine.getNearbyStores(latitude, longitude);
+      
       if (nearbyStores.length > 0) {
         const hasItems = await geoEngine.hasUnpurchasedItems();
         if (hasItems) {
-          for (const store of nearbyStores) {
-            const canSend = await notificationEngine.canSendStoreNotification(store.id);
+          // Check if we can still send nearby alerts today
+          const canSendNearby = await notificationEngine.canSendNearbyAlert(isPro);
+          if (!canSendNearby) return;
+
+          if (isPro) {
+            // Pro: alert for all nearby stores (respecting per-store cooldowns)
+            for (const store of nearbyStores) {
+              const canSend = await notificationEngine.canSendStoreNotification(store.id);
+              if (canSend) {
+                await notificationEngine.dispatchNearbyAlert(
+                  `You're near ${store.name}`,
+                  `You have unpurchased items on your lists. Don't forget to shop at ${store.name}!`,
+                  true
+                );
+              }
+            }
+          } else {
+            // Free: prioritize the closest relevant store only
+            const closestStore = nearbyStores[0]; // getNearbyStores returns sorted by distance
+            const canSend = await notificationEngine.canSendStoreNotification(closestStore.id);
             if (canSend) {
-              await notificationEngine.dispatchLocalNotification(
-                `You're near ${store.name}`,
-                `You have unpurchased items on your lists. Don't forget to shop at ${store.name}!`,
-                "store_nearby"
+              await notificationEngine.dispatchNearbyAlert(
+                `You're near ${closestStore.name}`,
+                `You have unpurchased items on your lists. Don't forget to shop at ${closestStore.name}!`,
+                false
               );
             }
           }

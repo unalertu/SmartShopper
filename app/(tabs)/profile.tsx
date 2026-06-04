@@ -32,7 +32,7 @@ import { useSettingsStore } from '../../store/useSettingsStore';
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { notificationsEnabled, setNotificationsEnabled, theme } = useSettingsStore();
+  const { notificationsEnabled, setNotificationsEnabled, theme, isPro } = useSettingsStore();
   const [showPermissionScreen, setShowPermissionScreen] = useState(false);
 
   // Check notification permission on mount + whenever app returns from background
@@ -132,12 +132,16 @@ export default function ProfileScreen() {
           
         >
           <View className="bg-slate-100 h-16 w-16 rounded-full justify-center items-center mr-4 overflow-hidden">
-            <Image 
-              source={{ uri: 'https://i.pravatar.cc/150?u=arda' }} 
-              style={{ width: '100%', height: '100%' }} 
-              transition={null} 
-              cachePolicy="memory-disk"
-            />
+            {isPro ? (
+              <Image 
+                source={{ uri: 'https://i.pravatar.cc/150?u=arda' }} 
+                style={{ width: '100%', height: '100%' }} 
+                transition={null} 
+                cachePolicy="memory-disk"
+              />
+            ) : (
+              <User size={32} color="#94a3b8" />
+            )}
           </View>
           <View className="flex-col flex-1 justify-center">
             <Text className="text-lg font-bold text-slate-900 mb-0.5">Arda</Text>

@@ -21,6 +21,8 @@ import MapCluster from '../../components/MapCluster';
 import StoreMarker from '../../components/StoreMarker';
 import { MapSearchIndicator } from '../../components/MapSearchIndicator';
 import { create } from 'zustand';
+import { Alert } from 'react-native';
+import { FREE_TIER, getMaxSavedStores } from '@/constants/tierConfig';
 
 interface LocalUIState {
   selectedShopToSave: any | null;
@@ -150,8 +152,8 @@ export default function StoresScreen() {
     };
   }, []);
 
-  const { locations, addLocation, removeLocation, cachedMarkets, setCachedMarkets, isFetchingMarkets, setIsFetchingMarkets } = useLocationStore();
-  const { distanceUnit } = useSettingsStore();
+  const { locations, addLocation, removeLocation, cachedMarkets, setCachedMarkets, isFetchingMarkets, setIsFetchingMarkets, canAddLocation } = useLocationStore();
+  const { distanceUnit, isPro } = useSettingsStore();
   const savedShops = locations ?? [];
 
   const markets = cachedMarkets || [];
@@ -159,40 +161,11 @@ export default function StoresScreen() {
   const setSelectedShopToSave = useLocalUIStore((s) => s.setSelectedShopToSave);
 
   const snapPoints = useMemo(() => {
-    const HEADER_HEIGHT = 80;       // handle + "Saved Shops" title
-    const CARD_HEIGHT = 82;         // each shop card (~54 icon + padding + margin)
-    const HINT_CARD_HEIGHT = 100;   // placeholder hint card
-    const EMPTY_STATE_HEIGHT = 170; // empty-state block
-    const BOTTOM_PADDING = 32;      // breathing room at the bottom
-
-    let contentHeight: number;
-
-    if (savedShops.length === 0) {
-      contentHeight = HEADER_HEIGHT + EMPTY_STATE_HEIGHT + BOTTOM_PADDING;
-    } else {
-      contentHeight =
-        HEADER_HEIGHT +
-        savedShops.length * CARD_HEIGHT +
-        (savedShops.length < 3 ? HINT_CARD_HEIGHT : 0) +
-        BOTTOM_PADDING;
-    }
-
-    // Convert to a percentage of screen height, clamped between 18% and 60%
-    const maxPercent = Math.min(60, Math.max(18, Math.ceil((contentHeight / SCREEN_HEIGHT) * 100)));
-
-    // Build snap points as absolute numbers: adjust min height if a shop is selected
-    const minPercent = selectedShopToSave ? 32 : 18;
-    const points: number[] = [SCREEN_HEIGHT * (minPercent / 100)];
-    
-    if (maxPercent > 38 && 38 > minPercent) {
-      points.push(SCREEN_HEIGHT * 0.38);
-    }
-    if (maxPercent > minPercent) {
-      points.push(SCREEN_HEIGHT * (maxPercent / 100));
-    }
-
-    return Array.from(new Set(points)).sort((a, b) => a - b);
-  }, [savedShops.length, selectedShopToSave]);
+    // Return a fixed array of exactly 3 elements to prevent bottom-sheet out-of-bounds crashes
+    // when dynamically adding/removing items.
+    const minPercent = selectedShopToSave ? '32%' : '18%';
+    return [minPercent, '38%', '60%'];
+  }, [selectedShopToSave]);
 
   const animatedPosition = useSharedValue(SCREEN_HEIGHT);
   const animatedLocateStyle = useAnimatedStyle(() => ({
@@ -1016,6 +989,25 @@ export default function StoresScreen() {
                     activeOpacity={0.8}
                     onPress={() => {
                       hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                      if (!canAddLocation(isPro)) {
+                        const maxStores = getMaxSavedStores(isPro);
+                        Alert.alert(
+                          'Store Limit Reached',
+                          isPro
+                            ? `You've reached the maximum of ${maxStores} saved stores (iOS geofence limit).`
+                            : `You've reached the free limit of ${FREE_TIER.maxSavedStores} saved stores. Upgrade to Pro for up to 20 saved stores.`,
+                          isPro
+                            ? [{ text: 'OK' }]
+                            : [
+                                { text: 'OK', style: 'cancel' },
+                                {
+                                  text: 'Upgrade to Pro',
+                                  onPress: () => router.push('/paywall'),
+                                },
+                              ]
+                        );
+                        return;
+                      }
                       addLocation({
                         name: selectedShopToSave.name || 'Unknown Store',
                         address: selectedShopToSave.address || 'Unknown Address',

@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, TouchableWithoutFeedback, Platform, Animated, Keyboard, Alert } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
+import { FREE_TIER, getMaxItemsPerList } from '@/constants/tierConfig';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, MoreHorizontal, ShoppingBag, CheckCircle, Check, Clock, Trash2, Plus, Mic, ScanBarcode, Minus, AlignLeft } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
 import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
-import { useListsStore, useShoppingListStore } from '../../store';
+import { useListsStore, useShoppingListStore, useSettingsStore } from '../../store';
 
 export default function ListDetails() {
   const { id } = useLocalSearchParams();
@@ -38,6 +39,9 @@ export default function ListDetails() {
   const addItem = useShoppingListStore((state) => state.addItem);
   const togglePurchased = useShoppingListStore((state) => state.togglePurchased);
   const removeItem = useShoppingListStore((state) => state.removeItem);
+  const canAddItemToList = useShoppingListStore((state) => state.canAddItemToList);
+  
+  const { isPro } = useSettingsStore();
 
   const completedCount = items.filter(item => item.isPurchased).length;
   const remainingCount = items.length - completedCount;
@@ -65,6 +69,27 @@ export default function ListDetails() {
 
   const handleAddItem = () => {
     if (newItemText.trim().length === 0) return;
+    
+    if (!canAddItemToList(listId, isPro)) {
+      Alert.alert(
+        'Item Limit Reached',
+        isPro
+          ? `You've reached the maximum of ${getMaxItemsPerList(isPro)} items per list.`
+          : `You've reached the free limit of ${FREE_TIER.maxItemsPerList} items per list. Upgrade to Pro for up to 500 items.`,
+        isPro
+          ? [{ text: 'OK' }]
+          : [
+              { text: 'OK', style: 'cancel' },
+              { text: 'Upgrade to Pro', onPress: () => {
+                  setIsAddModalVisible(false);
+                  router.push('/paywall');
+                }
+              },
+            ]
+      );
+      return;
+    }
+
     hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
     addItem(listId, {
       name: newItemText.trim(),

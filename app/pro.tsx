@@ -26,6 +26,12 @@ import {
   CreditCard,
   CalendarDays,
   ExternalLink,
+  MapPin,
+  Bell,
+  Clock,
+  SlidersHorizontal,
+  List,
+  PackagePlus,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { hapticImpact } from '../services/haptics';
@@ -104,29 +110,49 @@ export default function ProScreen() {
 
   const features = [
     {
-      icon: <Infinity size={20} color="#D4AF37" />,
-      title: 'Unlimited Lists & Items',
-      description: 'No limits on how many lists you can create',
+      icon: <List size={20} color="#D4AF37" />,
+      title: 'Unlimited Shopping Lists',
+      description: 'Create as many lists as you need',
+    },
+    {
+      icon: <PackagePlus size={20} color="#D4AF37" />,
+      title: '500 Items Per List',
+      description: 'Add up to 500 items per list',
+    },
+    {
+      icon: <MapPin size={20} color="#D4AF37" />,
+      title: '20 Saved Stores',
+      description: 'Save up to 20 stores with geofence alerts',
+    },
+    {
+      icon: <Bell size={20} color="#D4AF37" />,
+      title: 'Unlimited Smart Alerts',
+      description: 'No daily notification cap',
     },
     {
       icon: <Zap size={20} color="#D4AF37" />,
-      title: 'Smart Location Alerts',
-      description: 'Get notified when you are near a store',
+      title: 'Custom Geofence Radius',
+      description: 'Adjustable from 50m to 1000m',
     },
     {
-      icon: <Cloud size={20} color="#D4AF37" />,
-      title: 'Cloud Sync & Backup',
-      description: 'Sync across all your devices seamlessly',
+      icon: <Clock size={20} color="#D4AF37" />,
+      title: 'Quiet Hours & Schedules',
+      description: 'Mute notifications and schedule alerts',
+    },
+    {
+      icon: <Sparkles size={20} color="#D4AF37" />,
+      title: 'Smart Notification Rules',
+      description: 'AI-powered alert filtering and priority',
+    },
+    {
+      icon: <SlidersHorizontal size={20} color="#D4AF37" />,
+      title: 'Advanced Notification Controls',
+      description: 'Full control over notification behavior',
     },
     {
       icon: <ShieldCheck size={20} color="#D4AF37" />,
-      title: 'Priority Support',
-      description: 'Get help faster with priority access',
-    },
-    {
-      icon: <Users size={20} color="#D4AF37" />,
-      title: 'Family Sharing (Coming Soon)',
-      description: 'Share Pro with up to 5 family members',
+      title: 'Future Premium Features',
+      description: 'Get every new premium feature as it launches',
     },
   ];
 
@@ -185,7 +211,7 @@ export default function ProScreen() {
           >
             <ChevronLeft size={22} color="#0f172a" />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold text-slate-900">SmartShopper Pro</Text>
+          <Text className="text-2xl font-bold text-slate-900">GeoCart Pro</Text>
         </Animated.View>
 
         {/* Status Card */}
@@ -300,7 +326,7 @@ export default function ProScreen() {
           className="items-center mt-2 mb-4"
         >
           <Text className="text-[12px] text-slate-300 text-center">
-            Thank you for supporting SmartShopper ✨
+            Thank you for supporting GeoCart ✨
           </Text>
         </Animated.View>
       </ScrollView>

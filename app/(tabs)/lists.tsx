@@ -1,5 +1,6 @@
 import React, { useRef, useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { FREE_TIER, getMaxLists } from '@/constants/tierConfig';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Menu, ChevronRight, Plus, X, ShoppingBasket, Sparkles, ListPlus, PackagePlus, Clock, Activity } from 'lucide-react-native';
@@ -9,7 +10,7 @@ import * as Haptics from 'expo-haptics';
 import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeInDown, FadeOutLeft, FadeOutUp, LinearTransition } from 'react-native-reanimated';
-import { useListsStore, useShoppingListStore, useQuickStartStore } from '../../store';
+import { useListsStore, useShoppingListStore, useQuickStartStore, useSettingsStore } from '../../store';
 import { useScrollToTop } from '@react-navigation/native';
 import CreateListSheet from '../../components/CreateListSheet';
 
@@ -38,8 +39,9 @@ export default function ListsScreen() {
   useScrollToTop(mergedScrollRef);
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { lists: shoppingLists, addList, removeList } = useListsStore();
+  const { lists: shoppingLists, addList, removeList, canCreateList } = useListsStore();
   const { templates, incrementUsage } = useQuickStartStore();
+  const { isPro } = useSettingsStore();
 
   const sortedTemplates = [...templates].sort((a, b) => b.usageCount - a.usageCount).map(t => t.name);
   const templateRows = [];
@@ -51,9 +53,24 @@ export default function ListsScreen() {
   const [showAllTemplates, setShowAllTemplates] = useState(false);
 
   const handlePresentModalPress = useCallback(() => {
+    if (!canCreateList(isPro)) {
+      Alert.alert(
+        'List Limit Reached',
+        isPro
+          ? `You've reached the maximum of ${getMaxLists(isPro)} shopping lists.`
+          : `You've reached the free limit of ${FREE_TIER.maxLists} shopping lists. Upgrade to Pro for unlimited lists.`,
+        isPro
+          ? [{ text: 'OK' }]
+          : [
+              { text: 'OK', style: 'cancel' },
+              { text: 'Upgrade to Pro', onPress: () => router.push('/paywall') },
+            ]
+      );
+      return;
+    }
     hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
     setShowCreateSheet(true);
-  }, []);
+  }, [canCreateList, isPro, router]);
 
   const handleCreateList = useCallback((name: string) => {
     addList(name);
@@ -181,6 +198,21 @@ export default function ListsScreen() {
                           key={template}
                           activeOpacity={0.7}
                           onPress={() => {
+                            if (!canCreateList(isPro)) {
+                              Alert.alert(
+                                'List Limit Reached',
+                                isPro
+                                  ? `You've reached the maximum of ${getMaxLists(isPro)} shopping lists.`
+                                  : `You've reached the free limit of ${FREE_TIER.maxLists} shopping lists. Upgrade to Pro for unlimited lists.`,
+                                isPro
+                                  ? [{ text: 'OK' }]
+                                  : [
+                                      { text: 'OK', style: 'cancel' },
+                                      { text: 'Upgrade to Pro', onPress: () => router.push('/paywall') },
+                                    ]
+                              );
+                              return;
+                            }
                             hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                             addList(template);
                             incrementUsage(template);

@@ -31,13 +31,24 @@ export const geoEngine = {
     return false;
   },
 
-  getNearbyStores: async (lat: number, lon: number): Promise<SavedLocation[]> => {
+  /**
+   * Get nearby stores sorted by distance (closest first).
+   * Returns only active locations within their geofence radius.
+   */
+  getNearbyStores: async (lat: number, lon: number): Promise<(SavedLocation & { distance: number })[]> => {
     const locations = await geoEngine.getLocations();
     const activeLocations = locations.filter((loc: SavedLocation) => loc.isActive);
     
-    return activeLocations.filter((loc: SavedLocation) => {
-      const distance = getDistance(lat, lon, loc.latitude, loc.longitude);
-      return distance <= loc.radius;
-    });
+    const nearbyWithDistance = activeLocations
+      .map((loc: SavedLocation) => {
+        const distance = getDistance(lat, lon, loc.latitude, loc.longitude);
+        return { ...loc, distance };
+      })
+      .filter((loc) => loc.distance <= loc.radius);
+
+    // Sort by distance (closest first) for tier-aware prioritization
+    nearbyWithDistance.sort((a, b) => a.distance - b.distance);
+
+    return nearbyWithDistance;
   }
 };

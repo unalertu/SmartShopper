@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getMaxLists } from '@/constants/tierConfig';
 
 export interface ShoppingList {
   id: number;
@@ -14,11 +15,22 @@ interface ListsStoreState {
   addList: (name: string) => void;
   removeList: (id: number) => void;
   updateListCount: (id: number, count: number) => void;
+
+  /**
+   * Check if the user can create a new list.
+   * Free users: max 5 lists. Pro users: max 50 lists.
+   */
+  canCreateList: (isPro: boolean) => boolean;
+
+  /**
+   * Returns the current number of lists.
+   */
+  getListCount: () => number;
 }
 
 export const useListsStore = create<ListsStoreState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       lists: [
         { id: 1, name: "Ahmet için alınacaklar", count: 4, createdAt: Date.now() }, 
         { id: 2, name: "Kendi ihtiyaçlarım", count: 12, createdAt: Date.now() - 86400000 }, 
@@ -41,6 +53,14 @@ export const useListsStore = create<ListsStoreState>()(
             list.id === id ? { ...list, count } : list
           ),
         })),
+
+      canCreateList: (isPro: boolean) => {
+        const currentCount = get().lists.length;
+        const max = getMaxLists(isPro);
+        return currentCount < max;
+      },
+
+      getListCount: () => get().lists.length,
     }),
     {
       name: "lists-storage",

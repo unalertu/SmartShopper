@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import { FREE_TIER, getMaxLists } from '@/constants/tierConfig';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Flame, Store, ShoppingBag, Crown, Plus, Home, Users, User, Menu, ChevronRight, Radar, Bell, MapPin, X, PlusCircle, MapPinPlus, CheckCircle, Settings, ScanBarcode, Sparkles } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
@@ -69,7 +70,7 @@ export default function HomeScreen() {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
-  const { distanceUnit } = useSettingsStore();
+  const { distanceUnit, isPro } = useSettingsStore();
 
   const formatDistance = (meters: number): string => {
     if (distanceUnit === 'imperial') {
@@ -180,14 +181,29 @@ export default function HomeScreen() {
     }
   }, [cachedMarkets, userLocation, isFetchingMarkets]);
 
-  const { lists: shoppingLists, addList, removeList } = useListsStore();
+  const { lists: shoppingLists, addList, removeList, canCreateList } = useListsStore();
 
   const [showCreateSheet, setShowCreateSheet] = useState(false);
 
   const handlePresentModalPress = useCallback(() => {
+    if (!canCreateList(isPro)) {
+      Alert.alert(
+        'List Limit Reached',
+        isPro
+          ? `You've reached the maximum of ${getMaxLists(isPro)} shopping lists.`
+          : `You've reached the free limit of ${FREE_TIER.maxLists} shopping lists. Upgrade to Pro for unlimited lists.`,
+        isPro
+          ? [{ text: 'OK' }]
+          : [
+              { text: 'OK', style: 'cancel' },
+              { text: 'Upgrade to Pro', onPress: () => router.push('/paywall') },
+            ]
+      );
+      return;
+    }
     hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
     setShowCreateSheet(true);
-  }, []);
+  }, [canCreateList, isPro, router]);
 
   const handleCreateList = useCallback((name: string) => {
     addList(name);
@@ -274,7 +290,7 @@ export default function HomeScreen() {
           style={{ paddingTop: insets.top + 16, paddingBottom: 4 }}
         >
           <View className="flex-row items-center gap-0">
-            <Image source={require('../../assets/images/app-logo.png')} style={{ width: 110, height: 110, marginLeft: -24, marginRight: -16, marginTop: -37, marginBottom: -37 }} resizeMode="contain" />
+            <Image source={require('../../assets/images/app-logo.png')} style={{ width: 110, height: 110, marginLeft: -24, marginRight: -28, marginTop: -37, marginBottom: -37 }} resizeMode="contain" />
             <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight" style={{ marginTop: 4 }}>GeoCart</Text>
           </View>
           
@@ -436,6 +452,21 @@ export default function HomeScreen() {
                     key={template}
                     activeOpacity={0.7}
                     onPress={() => {
+                      if (!canCreateList(isPro)) {
+                        Alert.alert(
+                          'List Limit Reached',
+                          isPro
+                            ? `You've reached the maximum of ${getMaxLists(isPro)} shopping lists.`
+                            : `You've reached the free limit of ${FREE_TIER.maxLists} shopping lists. Upgrade to Pro for unlimited lists.`,
+                          isPro
+                            ? [{ text: 'OK' }]
+                            : [
+                                { text: 'OK', style: 'cancel' },
+                                { text: 'Upgrade to Pro', onPress: () => router.push('/paywall') },
+                              ]
+                        );
+                        return;
+                      }
                       hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                       addList(template);
                       incrementUsage(template);

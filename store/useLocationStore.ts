@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getMaxSavedStores } from "../constants/tierConfig";
 
 export interface SavedLocation {
   id: string;
@@ -20,6 +21,18 @@ interface LocationStoreState {
   updateLocation: (id: string, updates: Partial<SavedLocation>) => void;
   toggleActive: (id: string) => void;
   getActiveLocations: () => SavedLocation[];
+
+  /**
+   * Check if the user can add a new saved store.
+   * Free users: max 3 stores. Pro users: max 20 stores.
+   */
+  canAddLocation: (isPro: boolean) => boolean;
+
+  /**
+   * Returns the current number of saved stores.
+   */
+  getSavedStoreCount: () => number;
+
   cachedMarkets: any[];
   setCachedMarkets: (markets: any[]) => void;
   isFetchingMarkets: boolean;
@@ -78,6 +91,14 @@ export const useLocationStore = create<LocationStoreState>()(
 
       getActiveLocations: () =>
         get().locations.filter((loc) => loc.isActive),
+
+      canAddLocation: (isPro: boolean) => {
+        const currentCount = get().locations.length;
+        const max = getMaxSavedStores(isPro);
+        return currentCount < max;
+      },
+
+      getSavedStoreCount: () => get().locations.length,
     }),
     {
       name: "location-storage",

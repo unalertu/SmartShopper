@@ -4,7 +4,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { Sparkles, Zap, ShieldCheck, X } from 'lucide-react-native';
+import { Sparkles, Zap, ShieldCheck, X, MapPin, Bell, Clock, SlidersHorizontal, List, PackagePlus } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { hapticImpact, hapticNotification, hapticSelection } from '../services/haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,16 +26,40 @@ export default function PaywallScreen() {
 
   const features = [
     {
-      title: 'Unlimited Lists & Items',
-      description: 'Create as many shopping lists as you need.',
-      icon: <Sparkles size={24} color="#D4AF37" />},
+      title: 'Unlimited Shopping Lists',
+      description: 'Create as many lists as you need. Free: 5 lists.',
+      icon: <List size={24} color="#D4AF37" />},
     {
-      title: 'Smart Location Alerts',
-      description: 'Get notified exactly when you are near the store.',
+      title: '500 Items Per List',
+      description: 'Add up to 500 items per list. Free: 25 items.',
+      icon: <PackagePlus size={24} color="#D4AF37" />},
+    {
+      title: '20 Saved Stores',
+      description: 'Save up to 20 stores with geofence alerts. Free: 3 stores.',
+      icon: <MapPin size={24} color="#D4AF37" />},
+    {
+      title: 'Unlimited Smart Alerts',
+      description: 'No daily notification limits. Free: 5 per day.',
+      icon: <Bell size={24} color="#D4AF37" />},
+    {
+      title: 'Custom Geofence Radius',
+      description: 'Adjust radius from 50m to 1000m. Free: fixed 100m.',
       icon: <Zap size={24} color="#D4AF37" />},
     {
-      title: 'Cloud Sync & Backup',
-      description: 'Never lose your lists. Sync across all your devices.',
+      title: 'Quiet Hours & Schedules',
+      description: 'Mute notifications during set hours and schedule alerts.',
+      icon: <Clock size={24} color="#D4AF37" />},
+    {
+      title: 'Smart Notification Rules',
+      description: 'AI-powered alert filtering, priority alerts, and grouping.',
+      icon: <Sparkles size={24} color="#D4AF37" />},
+    {
+      title: 'Advanced Notification Controls',
+      description: 'Full control over notification behavior and preferences.',
+      icon: <SlidersHorizontal size={24} color="#D4AF37" />},
+    {
+      title: 'Future Premium Features',
+      description: 'Get every new premium feature as it launches.',
       icon: <ShieldCheck size={24} color="#D4AF37" />},
   ];
 
@@ -85,7 +109,7 @@ export default function PaywallScreen() {
           className="items-center mb-2"
         >
           <Text className="text-3xl font-extrabold text-slate-900 text-center">
-            Unlock SmartShopper <Text className="text-[#D4AF37]">Pro</Text>
+            Unlock GeoCart <Text className="text-[#D4AF37]">Pro</Text>
           </Text>
         </Animated.View>
 
@@ -95,7 +119,7 @@ export default function PaywallScreen() {
           className="items-center mb-10"
         >
           <Text className="text-base text-slate-500 text-center px-4 leading-6">
-            Get the most out of your shopping with powerful AI features and unlimited usage.
+            Supercharge your shopping experience with more stores, unlimited alerts, and full notification control.
           </Text>
         </Animated.View>
 
@@ -105,7 +129,7 @@ export default function PaywallScreen() {
             <Animated.View
               key={index}
               entering={FadeInDown.duration(600)
-                .delay(300 + index * 100)
+                .delay(300 + index * 80)
                 .springify()}
             >
               <View
@@ -135,7 +159,7 @@ export default function PaywallScreen() {
 
         {/* Pricing Card */}
         <Animated.View
-          entering={FadeInDown.duration(600).delay(700).springify()}
+          entering={FadeInDown.duration(600).delay(900).springify()}
           className="mb-8"
         >
           <LinearGradient
@@ -163,7 +187,7 @@ export default function PaywallScreen() {
 
       {/* Fixed Bottom CTA */}
       <Animated.View
-        entering={FadeIn.duration(800).delay(900)}
+        entering={FadeIn.duration(800).delay(1100)}
         className="absolute bottom-0 w-full px-6 bg-white border-t border-slate-100"
         style={{ paddingBottom: Math.max(insets.bottom, 24), paddingTop: 16 }}
       >

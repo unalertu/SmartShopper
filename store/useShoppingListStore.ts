@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useListsStore } from "./useListsStore";
+import { getMaxItemsPerList } from '@/constants/tierConfig';
 
 export interface ShoppingItem {
   id: string;
@@ -23,6 +24,17 @@ interface ShoppingListState {
   clearPurchased: (listId?: number) => void;
   clearAll: (listId?: number) => void;
   getUnpurchasedCount: (listId?: number) => number;
+
+  /**
+   * Check if an item can be added to a specific list.
+   * Free users: max 25 items/list. Pro users: max 500 items/list.
+   */
+  canAddItemToList: (listId: number, isPro: boolean) => boolean;
+
+  /**
+   * Returns the current item count for a specific list.
+   */
+  getItemCountForList: (listId: number) => number;
 }
 
 const generateId = () =>
@@ -89,6 +101,15 @@ export const useShoppingListStore = create<ShoppingListState>()(
         get().items.filter((item) => 
           listId ? (item.listId === listId && !item.isPurchased) : !item.isPurchased
         ).length,
+
+      canAddItemToList: (listId: number, isPro: boolean) => {
+        const currentCount = get().items.filter(i => i.listId === listId).length;
+        const max = getMaxItemsPerList(isPro);
+        return currentCount < max;
+      },
+
+      getItemCountForList: (listId: number) =>
+        get().items.filter(i => i.listId === listId).length,
     }),
     {
       name: "shopping-list-storage",

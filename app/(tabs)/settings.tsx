@@ -523,15 +523,17 @@ export default function SettingsScreen() {
 
           {/* ── Subscriptions & Purchases ── */}
           <SettingsGroup delay={50}>
-            <SettingsRow
-              icon={<Sparkles size={20} color="#D4AF37" />}
-              label="GeoCart Pro"
-              sublabel="Unlock all premium features"
-              onPress={() => {
-                hapticImpact(ImpactFeedbackStyle.Light);
-                router.push('/paywall');
-              }}
-            />
+            {!isPro && (
+              <SettingsRow
+                icon={<Sparkles size={20} color="#D4AF37" />}
+                label="GeoCart Pro"
+                sublabel="Unlock all premium features"
+                onPress={() => {
+                  hapticImpact(ImpactFeedbackStyle.Light);
+                  router.push('/paywall');
+                }}
+              />
+            )}
             {isPro ? (
               <SettingsRow
                 icon={<Users size={20} color="#64748b" />}
@@ -633,7 +635,7 @@ export default function SettingsScreen() {
             />
             <SettingsRow
               icon={<SlidersHorizontal size={20} color="#64748b" />}
-              label="Notification Preferences"
+              label="Map & Notifications"
               sublabel="Customize alerts and sounds"
               onPress={() => {
                 hapticImpact(ImpactFeedbackStyle.Light);

@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, ScrollView, Switch, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Switch, TouchableOpacity, Alert } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { LinearTransition } from 'react-native-reanimated';
-import { MapPin, List, Bell, Vibrate, Battery, ExternalLink, ChevronLeft } from 'lucide-react-native';
+import { MapPin, List, Bell, Vibrate, Battery, ExternalLink, ChevronLeft, Lock, Sparkles, Clock, Calendar, Zap, SlidersHorizontal } from 'lucide-react-native';
 import { useSettingsStore } from '../store';
 import { hapticImpact } from '../services/haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
@@ -14,36 +14,69 @@ function SettingsRow({
   label,
   sublabel,
   rightElement,
-  isLast
+  isLast,
+  isProOnly,
+  isLocked,
+  onLockedPress
 }: {
   icon: React.ReactNode;
   label: string;
   sublabel?: string;
   rightElement?: React.ReactNode;
   isLast?: boolean;
+  isProOnly?: boolean;
+  isLocked?: boolean;
+  onLockedPress?: () => void;
 }) {
-  return (
-    <View className={`flex-row justify-between items-center p-4 ${!isLast ? 'border-b border-slate-50' : ''}`}>
+  const content = (
+    <View className={`flex-row justify-between items-center p-4 ${!isLast ? 'border-b border-slate-50' : ''}`}
+      style={isLocked ? { opacity: 0.5 } : undefined}
+    >
       <View className="flex-row items-center flex-1 pr-4">
         {icon}
         <View className="ml-3 flex-shrink">
-          <Text className="text-[15px] font-medium text-slate-900">{label}</Text>
+          <View className="flex-row items-center gap-2">
+            <Text className="text-[15px] font-medium text-slate-900">{label}</Text>
+            {isProOnly && (
+              <View className="flex-row items-center gap-0.5 bg-[#D4AF37]/10 px-1.5 py-0.5 rounded border border-[#D4AF37]/20">
+                <Lock size={8} color="#D4AF37" />
+                <Text className="text-[8px] font-bold text-[#D4AF37] uppercase tracking-wider">Pro</Text>
+              </View>
+            )}
+          </View>
           {sublabel && <Text className="text-[12px] text-slate-400 mt-0.5">{sublabel}</Text>}
         </View>
       </View>
       <View className="flex-row items-center gap-1.5">{rightElement}</View>
     </View>
   );
+
+  if (isLocked && onLockedPress) {
+    return (
+      <TouchableOpacity activeOpacity={0.6} onPress={onLockedPress}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  return content;
 }
 
-function SettingsGroup({ children }: { children: React.ReactNode }) {
+function SettingsGroup({ children, title }: { children: React.ReactNode; title?: string }) {
   return (
-    <Animated.View
-      layout={LinearTransition.springify()}
-      className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 mx-6"
-    >
-      {children}
-    </Animated.View>
+    <>
+      {title && (
+        <View className="mx-8 mb-2">
+          <Text className="text-[13px] font-semibold text-slate-400 uppercase tracking-wider">{title}</Text>
+        </View>
+      )}
+      <Animated.View
+        layout={LinearTransition.springify()}
+        className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 mx-6"
+      >
+        {children}
+      </Animated.View>
+    </>
   );
 }
 
@@ -52,6 +85,7 @@ export default function NotificationPreferencesScreen() {
   const router = useRouter();
   
   const {
+    isPro,
     savedStoresOnly,
     shoppingListReminders,
     backgroundNotifications,
@@ -71,6 +105,21 @@ export default function NotificationPreferencesScreen() {
   const handleToggle = (setter: (val: boolean) => void) => (val: boolean) => {
     hapticImpact(ImpactFeedbackStyle.Light);
     setter(val);
+  };
+
+  const handleProUpsell = (featureName: string) => {
+    hapticImpact(ImpactFeedbackStyle.Light);
+    Alert.alert(
+      'Pro Feature',
+      `${featureName} is available with GeoCart Pro. Upgrade to unlock advanced notification controls.`,
+      [
+        { text: 'OK', style: 'cancel' },
+        {
+          text: 'Upgrade to Pro',
+          onPress: () => router.push('/paywall'),
+        },
+      ]
+    );
   };
 
   return (
@@ -97,7 +146,8 @@ export default function NotificationPreferencesScreen() {
       </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40, paddingTop: 20 }} showsVerticalScrollIndicator={false}>
-        <SettingsGroup>
+        {/* Basic Notification Settings — Available to all users */}
+        <SettingsGroup title="Notification Settings">
           <SettingsRow
             icon={<MapPin size={20} color="#64748b" />}
             label="Saved Stores Only"
@@ -178,6 +228,121 @@ export default function NotificationPreferencesScreen() {
             }
           />
         </SettingsGroup>
+
+        {/* Advanced Notification Settings — Pro Only */}
+        <SettingsGroup title="Advanced">
+          <SettingsRow
+            icon={<Clock size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
+            label="Quiet Hours"
+            sublabel="Mute notifications during set hours"
+            isProOnly={!isPro}
+            isLocked={!isPro}
+            onLockedPress={() => handleProUpsell('Quiet Hours')}
+            rightElement={
+              isPro ? (
+                <Switch
+                  value={false}
+                  onValueChange={() => {}}
+                  trackColor={switchTrackColor}
+                  thumbColor="#ffffff"
+                />
+              ) : undefined
+            }
+          />
+          <SettingsRow
+            icon={<Calendar size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
+            label="Notification Schedules"
+            sublabel="Set specific times for notifications"
+            isProOnly={!isPro}
+            isLocked={!isPro}
+            onLockedPress={() => handleProUpsell('Notification Schedules')}
+            rightElement={
+              isPro ? (
+                <Switch
+                  value={false}
+                  onValueChange={() => {}}
+                  trackColor={switchTrackColor}
+                  thumbColor="#ffffff"
+                />
+              ) : undefined
+            }
+          />
+          <SettingsRow
+            icon={<Zap size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
+            label="Priority Alerts"
+            sublabel="High-priority notifications for key stores"
+            isProOnly={!isPro}
+            isLocked={!isPro}
+            onLockedPress={() => handleProUpsell('Priority Alerts')}
+            rightElement={
+              isPro ? (
+                <Switch
+                  value={false}
+                  onValueChange={() => {}}
+                  trackColor={switchTrackColor}
+                  thumbColor="#ffffff"
+                />
+              ) : undefined
+            }
+          />
+          <SettingsRow
+            icon={<Sparkles size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
+            label="Smart Notification Rules"
+            sublabel="AI-powered alert filtering and grouping"
+            isProOnly={!isPro}
+            isLocked={!isPro}
+            onLockedPress={() => handleProUpsell('Smart Notification Rules')}
+            rightElement={
+              isPro ? (
+                <Switch
+                  value={false}
+                  onValueChange={() => {}}
+                  trackColor={switchTrackColor}
+                  thumbColor="#ffffff"
+                />
+              ) : undefined
+            }
+          />
+          <SettingsRow
+            icon={<SlidersHorizontal size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
+            label="Advanced Notification Settings"
+            sublabel="Full control over notification behavior"
+            isLast
+            isProOnly={!isPro}
+            isLocked={!isPro}
+            onLockedPress={() => handleProUpsell('Advanced Notification Settings')}
+            rightElement={
+              isPro ? (
+                <Switch
+                  value={false}
+                  onValueChange={() => {}}
+                  trackColor={switchTrackColor}
+                  thumbColor="#ffffff"
+                />
+              ) : undefined
+            }
+          />
+        </SettingsGroup>
+
+        {/* Upgrade Banner for Free Users */}
+        {!isPro && (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              hapticImpact(ImpactFeedbackStyle.Light);
+              router.push('/paywall');
+            }}
+            className="mx-6 mb-6 bg-[#D4AF37]/5 border border-[#D4AF37]/15 rounded-3xl p-4 flex-row items-center"
+          >
+            <View className="h-10 w-10 rounded-2xl bg-[#D4AF37]/10 items-center justify-center mr-3 border border-[#D4AF37]/20">
+              <Sparkles size={20} color="#D4AF37" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-[14px] font-semibold text-slate-900">Unlock Advanced Controls</Text>
+              <Text className="text-[12px] text-slate-400 mt-0.5">Upgrade to Pro for full notification customization</Text>
+            </View>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </View>
   );
