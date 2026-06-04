@@ -19,6 +19,8 @@ import NotificationPermissionScreen, {
   shouldShowNotificationPermission} from "@/components/NotificationPermissionScreen";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { useShoppingListStore } from "@/store/useShoppingListStore";
+import { notificationEngine } from "@/services/notificationEngine";
+import { startBackgroundLocationTracking } from "@/services/locationService";
 
 // Prevent splash screen auto-hide
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -69,6 +71,12 @@ export default function RootLayout() {
 
   const handleLaunchFinish = useCallback(async () => {
     setShowLaunchScreen(false);
+
+    // Check and send welcome notification safely (persisted check)
+    await notificationEngine.checkAndSendWelcome();
+    
+    // Attempt to start background location tracking
+    await startBackgroundLocationTracking();
 
     // Check if we should show the notification pre-permission screen
     const shouldShow = await shouldShowNotificationPermission();

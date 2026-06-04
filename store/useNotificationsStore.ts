@@ -11,43 +11,9 @@ export interface AppNotification {
   read: boolean;
 }
 
-const SAMPLE_NOTIFICATIONS: AppNotification[] = [
-  {
-    id: '1',
-    type: 'store_nearby',
-    title: 'You\'re near Migros',
-    body: 'You have 3 items on your "Weekly Groceries" list. Don\'t forget to shop!',
-    time: '2 min ago',
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'list_reminder',
-    title: 'List Reminder',
-    body: 'Your "Essentials" list hasn\'t been updated in 5 days.',
-    time: '1 hr ago',
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'location_permission',
-    title: 'Enable Location Services',
-    body: 'SmartShopper needs location access to alert you when you\'re near your saved stores.',
-    time: '3 hrs ago',
-    read: false,
-  },
-  {
-    id: '4',
-    type: 'welcome',
-    title: 'Welcome to SmartShopper!',
-    body: 'Start by creating your first shopping list and saving your favorite stores.',
-    time: 'Yesterday',
-    read: true,
-  },
-];
-
 interface NotificationsStoreState {
   notifications: AppNotification[];
+  addNotification: (notification: AppNotification) => void;
   removeNotification: (id: string) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
@@ -58,7 +24,11 @@ interface NotificationsStoreState {
 export const useNotificationsStore = create<NotificationsStoreState>()(
   persist(
     (set, get) => ({
-      notifications: SAMPLE_NOTIFICATIONS,
+      notifications: [],
+      addNotification: (notification) =>
+        set((state) => ({
+          notifications: [notification, ...state.notifications],
+        })),
       removeNotification: (id) =>
         set((state) => ({
           notifications: state.notifications.filter((n) => n.id !== id),
@@ -77,7 +47,7 @@ export const useNotificationsStore = create<NotificationsStoreState>()(
       unreadCount: () => get().notifications.filter((n) => !n.read).length,
     }),
     {
-      name: "notifications-storage-v2",
+      name: "notifications-storage-v3",
       storage: createJSONStorage(() => AsyncStorage),
     }
   )

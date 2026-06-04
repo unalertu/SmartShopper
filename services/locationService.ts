@@ -4,6 +4,9 @@
  */
 
 import * as Location from "expo-location";
+import * as TaskManager from "expo-task-manager";
+import { geoEngine } from "./geoEngine";
+import { notificationEngine } from "./notificationEngine";
 
 export const requestLocationPermissions = async (): Promise<boolean> => {
   const { status: foreground } =
@@ -28,6 +31,60 @@ export const getCurrentLocation =
       return null;
     }
   };
+
+
+
+export const BACKGROUND_LOCATION_TASK = "background-location-task";
+
+TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
+  if (error) {
+    console.error("Background Location Error:", error);
+    return;
+  }
+  if (data) {
+    const { locations } = data as any;
+    if (locations && locations.length > 0) {
+      const location = locations[0];
+      const { latitude, longitude } = location.coords;
+      
+      const nearbyStores = await geoEngine.getNearbyStores(latitude, longitude);
+      if (nearbyStores.length > 0) {
+        const hasItems = await geoEngine.hasUnpurchasedItems();
+        if (hasItems) {
+          for (const store of nearbyStores) {
+            const canSend = await notificationEngine.canSendStoreNotification(store.id);
+            if (canSend) {
+              await notificationEngine.dispatchLocalNotification(
+                `You're near ${store.name}`,
+                `You have unpurchased items on your lists. Don't forget to shop at ${store.name}!`,
+                "store_nearby"
+              );
+            }
+          }
+        }
+      }
+    }
+  }
+});
+
+export const startBackgroundLocationTracking = async () => {
+  try {
+    const hasStarted = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+    if (!hasStarted) {
+      const { status } = await Location.getBackgroundPermissionsAsync();
+      if (status === "granted") {
+        await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
+          accuracy: Location.Accuracy.Balanced,
+          timeInterval: 60000,
+          distanceInterval: 100,
+          showsBackgroundLocationIndicator: true,
+        });
+      }
+    }
+  } catch (e) {
+    console.warn("Failed to start background tracking (possibly denied mode fallback):", e);
+  }
+};
 
 /**
  * Calculate haversine distance between two coordinates in meters.
