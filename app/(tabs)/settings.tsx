@@ -143,7 +143,7 @@ const ProStatusCard = React.memo(({ animatedStyle, isPro }: { animatedStyle: any
       </View>
       <View className="flex-1 justify-center">
         <View className="flex-row items-center mb-0.5 gap-2">
-          <Text className="text-[17px] font-semibold text-slate-900 tracking-tight">SmartShopper</Text>
+          <Text className="text-[17px] font-semibold text-slate-900 tracking-tight">GeoCart</Text>
           <View className={`${isPro ? 'bg-[#D4AF37]/10 border-[#D4AF37]/20' : 'bg-slate-100 border-slate-200'} px-1.5 py-0.5 rounded flex-row items-center border`}>
             <Text className={`${isPro ? 'text-[#D4AF37]' : 'text-slate-400'} font-bold text-[9px] uppercase tracking-wider`}>
               {isPro ? 'Pro Active' : 'Free'}
@@ -435,7 +435,7 @@ export default function SettingsScreen() {
     try {
       await Share.share({
         message:
-          '📱 Check out SmartShopper — a smart shopping list app that reminds you near stores!\nhttps://smartshopper.app'});
+          '📱 Check out GeoCart — a smart shopping list app that reminds you near stores!\nhttps://geocart.app'});
     } catch {
       // User cancelled or share failed
     }
@@ -443,7 +443,7 @@ export default function SettingsScreen() {
 
   const handleSendFeedback = useCallback(() => {
     hapticImpact(ImpactFeedbackStyle.Light);
-    Linking.openURL('mailto:feedback@smartshopper.app?subject=SmartShopper%20Feedback');
+    Linking.openURL('mailto:feedback@geocart.app?subject=GeoCart%20Feedback');
   }, []);
 
   const handleRateApp = useCallback(() => {
@@ -451,19 +451,19 @@ export default function SettingsScreen() {
     // Placeholder App Store URL
     const storeUrl =
       Platform.OS === 'ios'
-        ? 'https://apps.apple.com/app/smartshopper/id0000000000'
-        : 'https://play.google.com/store/apps/details?id=com.smartshopper.app';
+        ? 'https://apps.apple.com/app/geocart/id0000000000'
+        : 'https://play.google.com/store/apps/details?id=com.geocart.app';
     Linking.openURL(storeUrl);
   }, []);
 
   const handleHelpCenter = useCallback(() => {
     hapticImpact(ImpactFeedbackStyle.Light);
-    Linking.openURL('https://smartshopper.app/help');
+    Linking.openURL('https://geocart.app/help');
   }, []);
 
   const handleOpenSourceLicenses = useCallback(() => {
     hapticImpact(ImpactFeedbackStyle.Light);
-    Linking.openURL('https://smartshopper.app/licenses');
+    Linking.openURL('https://geocart.app/licenses');
   }, []);
 
   const toggleWithHaptic = useCallback(
@@ -506,7 +506,7 @@ export default function SettingsScreen() {
             </Text>
           </Animated.View>
 
-          {/* SmartShopper Pro Card */}
+          {/* GeoCart Pro Card */}
           <Animated.View
             layout={LinearTransition.springify()}
             className="mx-6 mb-6"
@@ -525,7 +525,7 @@ export default function SettingsScreen() {
           <SettingsGroup delay={50}>
             <SettingsRow
               icon={<Sparkles size={20} color="#D4AF37" />}
-              label="SmartShopper Pro"
+              label="GeoCart Pro"
               sublabel="Unlock all premium features"
               onPress={() => {
                 hapticImpact(ImpactFeedbackStyle.Light);
@@ -632,6 +632,15 @@ export default function SettingsScreen() {
               }
             />
             <SettingsRow
+              icon={<SlidersHorizontal size={20} color="#64748b" />}
+              label="Notification Preferences"
+              sublabel="Customize alerts and sounds"
+              onPress={() => {
+                hapticImpact(ImpactFeedbackStyle.Light);
+                router.push('/notification-preferences');
+              }}
+            />
+            <SettingsRow
               icon={<Navigation size={20} color="#64748b" />}
               label="Location Services"
               sublabel="Background geofencing"
@@ -676,7 +685,7 @@ export default function SettingsScreen() {
             />
             <SettingsRow
               icon={<Star size={20} color="#64748b" />}
-              label="Rate SmartShopper"
+              label="Rate GeoCart"
               sublabel="Leave a review on the App Store"
               onPress={handleRateApp}
             />
@@ -695,7 +704,7 @@ export default function SettingsScreen() {
               label="Privacy Policy"
               onPress={() => {
                 hapticImpact(ImpactFeedbackStyle.Light);
-                Linking.openURL('https://smartshopper.app/privacy');
+                Linking.openURL('https://geocart.app/privacy');
               }}
             />
             <SettingsRow
@@ -703,7 +712,7 @@ export default function SettingsScreen() {
               label="Terms of Service"
               onPress={() => {
                 hapticImpact(ImpactFeedbackStyle.Light);
-                Linking.openURL('https://smartshopper.app/terms');
+                Linking.openURL('https://geocart.app/terms');
               }}
             />
             <SettingsRow

@@ -353,24 +353,7 @@ export default function ListsScreen() {
             );
           })()}
 
-          <Animated.View layout={LinearTransition.springify()} className="mx-6 mt-5 mb-4">
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={handlePresentModalPress}
-              style={{
-                backgroundColor: '#0f172a',
-                borderRadius: 16,
-                paddingVertical: 14,
-                paddingHorizontal: 18,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8}}
-            >
-              <Plus size={20} color="#fff" strokeWidth={2.5} />
-              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600', letterSpacing: 0.2 }}>Create New List</Text>
-            </TouchableOpacity>
-          </Animated.View>
+
         </ScrollView>
 
         {/* Bottom Sheet for Adding New List */}

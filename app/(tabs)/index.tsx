@@ -275,7 +275,7 @@ export default function HomeScreen() {
         >
           <View className="flex-row items-center gap-2">
             <Image source={require('../../assets/images/app-logo.png')} style={{ width: 36, height: 36, marginLeft: 0, marginTop: 0 }} resizeMode="contain" />
-            <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight" style={{ marginTop: 4 }}>Smart Shopper</Text>
+            <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight" style={{ marginTop: 4 }}>GeoCart</Text>
           </View>
           
           <TouchableOpacity
