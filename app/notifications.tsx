@@ -15,10 +15,11 @@ import {
   Bell,
   BellOff,
   ShoppingBag,
-  Tag,
+  AlertTriangle,
   MapPin,
   Sparkles,
   CheckCheck,
+  Settings,
 } from 'lucide-react-native';
 import Animated, {
   FadeInDown,
@@ -40,8 +41,8 @@ function getNotificationIcon(type: AppNotification['type']) {
       return <MapPin size={20} color="#22c55e" />;
     case 'list_reminder':
       return <ShoppingBag size={20} color="#3b82f6" />;
-    case 'deal':
-      return <Tag size={20} color="#f59e0b" />;
+    case 'location_permission':
+      return <AlertTriangle size={20} color="#f59e0b" />;
     case 'welcome':
       return <Sparkles size={20} color="#8b5cf6" />;
   }
@@ -53,7 +54,7 @@ function getNotificationIconBg(type: AppNotification['type']) {
       return 'rgba(34, 197, 94, 0.1)';
     case 'list_reminder':
       return 'rgba(59, 130, 246, 0.1)';
-    case 'deal':
+    case 'location_permission':
       return 'rgba(245, 158, 11, 0.1)';
     case 'welcome':
       return 'rgba(139, 92, 246, 0.1)';
@@ -186,41 +187,47 @@ export default function NotificationsScreen() {
     <View className="flex-1 bg-[#F2F2F7]">
       <StatusBar style="dark" />
 
+      <View style={{ paddingTop: insets.top }} className="px-4 pb-2 flex-row items-center justify-between">
+        <View className="flex-row items-center">
+          <TouchableOpacity
+            onPress={() => {
+              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+              router.back();
+            }}
+            className="h-10 w-10 bg-white items-center justify-center rounded-full shadow-sm ml-2"
+          >
+            <ChevronLeft size={24} color="#0f172a" />
+          </TouchableOpacity>
+          <Text className="text-xl font-semibold text-slate-900 ml-4">Notifications</Text>
+        </View>
+
+        <View className="flex-row items-center gap-2 mr-2">
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={handleMarkAllRead}
+            className="h-10 w-10 bg-white items-center justify-center rounded-full shadow-sm"
+          >
+            <CheckCheck size={20} color="#3b82f6" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/notification-preferences');
+            }}
+            className="h-10 w-10 bg-white items-center justify-center rounded-full shadow-sm"
+          >
+            <Settings size={20} color="#0f172a" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: insets.bottom + 40, paddingTop: insets.top + 8 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 40, paddingTop: 20 }}
         showsVerticalScrollIndicator={false}
         onScrollBeginDrag={() => closeAllSwipeables()}
       >
-        {/* Header */}
-        <Animated.View
-          entering={FadeInDown.duration(400).springify()}
-          className="flex-row items-center justify-between mx-6 mb-6"
-        >
-          <View className="flex-row items-center">
-            <TouchableOpacity
-              onPress={() => {
-                hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                router.back();
-              }}
-              className="mr-3 h-10 w-10 rounded-full bg-white border border-slate-100 items-center justify-center"
-            >
-              <ChevronLeft size={22} color="#0f172a" />
-            </TouchableOpacity>
-            <Text className="text-2xl font-bold text-slate-900">Notifications</Text>
-          </View>
-
-          {unreadCount > 0 && (
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={handleMarkAllRead}
-              className="flex-row items-center gap-1.5"
-            >
-              <CheckCheck size={16} color="#3b82f6" />
-              <Text className="text-[13px] font-semibold text-blue-500">Read All</Text>
-            </TouchableOpacity>
-          )}
-        </Animated.View>
 
         {/* Subtitle */}
         <Animated.View

@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface AppNotification {
   id: string;
-  type: 'store_nearby' | 'list_reminder' | 'deal' | 'welcome';
+  type: 'store_nearby' | 'list_reminder' | 'location_permission' | 'welcome';
   title: string;
   body: string;
   time: string;
@@ -30,11 +30,11 @@ const SAMPLE_NOTIFICATIONS: AppNotification[] = [
   },
   {
     id: '3',
-    type: 'deal',
-    title: 'Price Drop Alert',
-    body: 'Items on your list are on sale at nearby stores. Check it out!',
+    type: 'location_permission',
+    title: 'Enable Location Services',
+    body: 'SmartShopper needs location access to alert you when you\'re near your saved stores.',
     time: '3 hrs ago',
-    read: true,
+    read: false,
   },
   {
     id: '4',
@@ -77,7 +77,7 @@ export const useNotificationsStore = create<NotificationsStoreState>()(
       unreadCount: () => get().notifications.filter((n) => !n.read).length,
     }),
     {
-      name: "notifications-storage",
+      name: "notifications-storage-v2",
       storage: createJSONStorage(() => AsyncStorage),
     }
   )
