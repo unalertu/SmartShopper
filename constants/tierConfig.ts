@@ -13,6 +13,7 @@ export const FREE_TIER = {
   maxItemsPerList: 25,
   maxNotificationsPerDay: 5,
   maxNearbyAlertsPerDay: 5,
+  maxMutedShops: 5,
   fixedGeofenceRadius: 100, // meters
   canCustomizeGeofenceRadius: false,
   canCustomizeNotifications: false,
@@ -29,6 +30,7 @@ export const PRO_TIER = {
   maxItemsPerList: 500,
   maxNotificationsPerDay: Infinity,
   maxNearbyAlertsPerDay: Infinity,
+  maxMutedShops: Infinity,
   minGeofenceRadius: 50, // meters
   maxGeofenceRadius: 1000, // meters
   canCustomizeGeofenceRadius: true,
@@ -74,4 +76,10 @@ export const getMaxLists = (isPro: boolean): number =>
  */
 export const getMaxItemsPerList = (isPro: boolean): number => // forced reload
   isPro ? PRO_TIER.maxItemsPerList : FREE_TIER.maxItemsPerList;
+
+/**
+ * Returns the max muted shops for the given tier.
+ */
+export const getMaxMutedShops = (isPro: boolean): number =>
+  isPro ? PRO_TIER.maxMutedShops : FREE_TIER.maxMutedShops;
 

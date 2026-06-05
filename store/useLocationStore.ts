@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getMaxSavedStores } from "../constants/tierConfig";
+import { getMaxSavedStores, FREE_TIER, PRO_TIER } from "../constants/tierConfig";
 
 export interface SavedLocation {
   id: string;
@@ -34,6 +34,16 @@ interface LocationStoreState {
    * Returns the current number of saved stores.
    */
   getSavedStoreCount: () => number;
+
+  /**
+   * Check if the user can mute another shop.
+   */
+  canMuteShop: (isPro: boolean) => boolean;
+
+  /**
+   * Returns the current number of muted shops (saved and unsaved).
+   */
+  getMutedShopCount: () => number;
 
   cachedMarkets: any[];
   setCachedMarkets: (markets: any[]) => void;
@@ -112,6 +122,19 @@ export const useLocationStore = create<LocationStoreState>()(
       },
 
       getSavedStoreCount: () => get().locations.length,
+
+      canMuteShop: (isPro: boolean) => {
+        const currentCount = get().getMutedShopCount();
+        const max = isPro ? PRO_TIER.maxMutedShops : FREE_TIER.maxMutedShops;
+        return currentCount < max;
+      },
+
+      getMutedShopCount: () => {
+        const state = get();
+        const mutedSaved = state.locations.filter((loc) => !loc.isActive).length;
+        const mutedUnsaved = state.mutedUnsavedShops.length;
+        return mutedSaved + mutedUnsaved;
+      },
     }),
     {
       name: "location-storage",

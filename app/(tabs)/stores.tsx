@@ -152,7 +152,7 @@ export default function StoresScreen() {
     };
   }, []);
 
-  const { locations, addLocation, removeLocation, cachedMarkets, setCachedMarkets, isFetchingMarkets, setIsFetchingMarkets, canAddLocation, mutedUnsavedShops, toggleMuteUnsavedShop } = useLocationStore();
+  const { locations, addLocation, removeLocation, cachedMarkets, setCachedMarkets, isFetchingMarkets, setIsFetchingMarkets, canAddLocation, mutedUnsavedShops, toggleMuteUnsavedShop, canMuteShop } = useLocationStore();
   const { distanceUnit, isPro } = useSettingsStore();
   const savedShops = locations ?? [];
 
@@ -986,6 +986,20 @@ export default function StoresScreen() {
                         },
                         (index: number) => {
                           if (index === 1) {
+                            if (!isMuted && !canMuteShop(isPro)) {
+                              Alert.alert(
+                                'Mute Limit Reached',
+                                `You've reached the free limit of ${FREE_TIER.maxMutedShops} muted shops. Upgrade to Pro for unlimited muted shops.`,
+                                [
+                                  { text: 'OK', style: 'cancel' },
+                                  {
+                                    text: 'Upgrade to Pro',
+                                    onPress: () => router.push('/paywall'),
+                                  },
+                                ]
+                              );
+                              return;
+                            }
                             toggleMuteUnsavedShop(selectedShopToSave.id);
                             hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
                           } else if (index === 2) {
@@ -1117,6 +1131,20 @@ export default function StoresScreen() {
                           },
                           (index: number) => {
                             if (index === 1) {
+                              if (!isMuted && !canMuteShop(isPro)) {
+                                Alert.alert(
+                                  'Mute Limit Reached',
+                                  `You've reached the free limit of ${FREE_TIER.maxMutedShops} muted shops. Upgrade to Pro for unlimited muted shops.`,
+                                  [
+                                    { text: 'OK', style: 'cancel' },
+                                    {
+                                      text: 'Upgrade to Pro',
+                                      onPress: () => router.push('/paywall'),
+                                    },
+                                  ]
+                                );
+                                return;
+                              }
                               useLocationStore.getState().toggleActive(originalId);
                               hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
                             } else if (index === 2) {
@@ -1152,6 +1180,20 @@ export default function StoresScreen() {
                       },
                       (index: number) => {
                         if (index === 1) {
+                          if (!isMuted && !canMuteShop(isPro)) {
+                            Alert.alert(
+                              'Mute Limit Reached',
+                              `You've reached the free limit of ${FREE_TIER.maxMutedShops} muted shops. Upgrade to Pro for unlimited muted shops.`,
+                              [
+                                { text: 'OK', style: 'cancel' },
+                                {
+                                  text: 'Upgrade to Pro',
+                                  onPress: () => router.push('/paywall'),
+                                },
+                              ]
+                            );
+                            return;
+                          }
                           useLocationStore.getState().toggleActive(originalId);
                           hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
                         } else if (index === 2) {
@@ -1299,6 +1341,20 @@ export default function StoresScreen() {
                         },
                         (index: number) => {
                           if (index === 1) {
+                            if (!isMuted && !canMuteShop(isPro)) {
+                              Alert.alert(
+                                'Mute Limit Reached',
+                                `You've reached the free limit of ${FREE_TIER.maxMutedShops} muted shops. Upgrade to Pro for unlimited muted shops.`,
+                                [
+                                  { text: 'OK', style: 'cancel' },
+                                  {
+                                    text: 'Upgrade to Pro',
+                                    onPress: () => router.push('/paywall'),
+                                  },
+                                ]
+                              );
+                              return;
+                            }
                             useLocationStore.getState().toggleActive(loc.id);
                             hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
                           } else if (index === 2) {
