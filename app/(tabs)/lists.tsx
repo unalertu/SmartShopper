@@ -193,7 +193,13 @@ export default function ListsScreen() {
                 {(() => {
                   const visibleRows = showAllTemplates ? templateRows : templateRows.slice(0, 2);
                   return visibleRows.map((row, rowIndex) => (
-                    <View key={rowIndex} className="flex-row" style={{ gap: 8 }}>
+                    <Animated.View 
+                      key={rowIndex} 
+                      className="flex-row" 
+                      style={{ gap: 8 }}
+                      entering={FadeInDown.delay(rowIndex * 60).duration(300)}
+                      layout={LinearTransition.springify()}
+                    >
                       {row.map((template) => (
                         <TouchableOpacity
                           key={template}
@@ -225,7 +231,7 @@ export default function ListsScreen() {
                           <Text className="text-[13px] font-medium text-slate-600">{template}</Text>
                         </TouchableOpacity>
                       ))}
-                    </View>
+                    </Animated.View>
                   ));
                 })()}
               </View>
