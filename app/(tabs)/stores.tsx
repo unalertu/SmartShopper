@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Dimensions, Keyboard, TouchableWithoutFeedback, Linking, ActionSheetIOS } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Store, Plus, Search, ShoppingBasket, LocateFixed, Trash2, MapPin, X, Navigation2, MoreHorizontal, Bell, BellOff } from 'lucide-react-native';
+import { Store, Plus, Search, ShoppingBasket, LocateFixed, Trash2, MapPin, X, Navigation2, MoreHorizontal, Bell, BellOff, Settings } from 'lucide-react-native';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
@@ -225,6 +225,12 @@ export default function StoresScreen() {
     transform: [
       { translateY: interpolate(searchExpand.value, [0, 1], [0, 40]) },
     ]}));
+
+  // Settings wheel animated style
+  const settingsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(searchExpand.value, [0, 0.5], [1, 0]),
+    transform: [{ translateX: interpolate(searchExpand.value, [0, 1], [0, 20]) }]
+  }));
 
   const [initialRegion, setInitialRegion] = useState<any>(null);
   const [currentRegion, setCurrentRegion] = useState<any>(null);
@@ -843,6 +849,24 @@ export default function StoresScreen() {
         </BlurView>
       </Animated.View>
 
+      {/* ── Settings Wheel Button ── */}
+      <Animated.View
+        style={[
+          styles.floatingSettingsBtn,
+          { top: Math.max(20, insets.top) },
+          settingsAnimatedStyle,
+        ]}
+        pointerEvents={isSearchFocused ? 'none' : 'auto'}
+      >
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => router.push('/settings')}
+          style={styles.floatingSettingsInner}
+        >
+          <Settings size={20} color="#475569" strokeWidth={2.5} />
+        </TouchableOpacity>
+      </Animated.View>
+
       {/* ── Floating Search Button / Pill ── */}
       <Animated.View
         style={[
@@ -1393,10 +1417,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff'},
   floatingSearchBtn: {
     position: 'absolute',
-    right: 16,
+    right: 74,
     zIndex: 15,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#ffffff',
     overflow: 'hidden'},
+  floatingSettingsBtn: {
+    position: 'absolute',
+    right: 16,
+    zIndex: 14,
+    backgroundColor: '#ffffff',
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 1,
+    borderColor: 'rgba(241,245,249,0.8)'},
+  floatingSettingsInner: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center'},
   floatingSearchInner: {
     flex: 1,
     flexDirection: 'row',
