@@ -51,6 +51,7 @@ export default function ListsScreen() {
 
   const [showCreateSheet, setShowCreateSheet] = useState(false);
   const [showAllTemplates, setShowAllTemplates] = useState(false);
+  const [showAllActivities, setShowAllActivities] = useState(false);
 
   const handlePresentModalPress = useCallback(() => {
     if (!canCreateList(isPro)) {
@@ -320,9 +321,9 @@ export default function ListsScreen() {
                 listId: item.listId});
             });
 
-            // Sort by most recent first and take top 6
+            // Sort by most recent first
             activityEvents.sort((a, b) => b.timestamp - a.timestamp);
-            const recentEvents = activityEvents.slice(0, 6);
+            const recentEvents = showAllActivities ? activityEvents : activityEvents.slice(0, 5);
 
             const getActivityIcon = (type: string) => {
               switch (type) {
@@ -345,9 +346,22 @@ export default function ListsScreen() {
 
             return (
               <Animated.View layout={LinearTransition.springify()} className="px-6 mt-6 mb-2">
-                <View className="flex-row items-center gap-1.5 mb-3">
-                  <Activity size={14} color="#94a3b8" strokeWidth={2} />
-                  <Text className="text-[14px] font-bold text-slate-500 tracking-wide uppercase">Recent Activity</Text>
+                <View className="flex-row items-center justify-between mb-3">
+                  <View className="flex-row items-center gap-1.5">
+                    <Activity size={14} color="#94a3b8" strokeWidth={2} />
+                    <Text className="text-[14px] font-bold text-slate-500 tracking-wide uppercase">Recent Activity</Text>
+                  </View>
+                  {activityEvents.length > 5 ? (
+                    <TouchableOpacity
+                      activeOpacity={0.6}
+                      onPress={() => {
+                        hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                        setShowAllActivities(!showAllActivities);
+                      }}
+                    >
+                      <Text className="text-[12px] font-semibold text-slate-400">{showAllActivities ? 'Show Less' : 'View All'}</Text>
+                    </TouchableOpacity>
+                  ) : null}
                 </View>
 
                 {recentEvents.length === 0 ? (

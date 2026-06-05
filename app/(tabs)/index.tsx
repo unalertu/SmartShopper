@@ -397,11 +397,11 @@ export default function HomeScreen() {
         {/* SCROLLING HEADER CONTENT */}
         <View 
           className="px-6 flex-row justify-between items-center"
-          style={{ paddingTop: insets.top + 16, paddingBottom: 4 }}
+          style={{ paddingTop: insets.top + 8, paddingBottom: 4 }}
         >
           <View className="flex-row items-center gap-0">
-            <Image source={require('../../assets/images/app-logo.png')} style={{ width: 110, height: 110, marginLeft: -24, marginRight: -28, marginTop: -37, marginBottom: -37 }} resizeMode="contain" />
-            <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight" style={{ marginTop: 4 }}>GeoCart</Text>
+            <Image source={require('../../assets/images/app-logo.png')} style={{ width: 110, height: 110, marginLeft: -24, marginRight: -32, marginTop: -37, marginBottom: -37 }} resizeMode="contain" />
+            <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight">GeoCart</Text>
           </View>
           
           <TouchableOpacity
@@ -509,19 +509,29 @@ export default function HomeScreen() {
               <Text style={{ fontSize: 26, fontWeight: '800', letterSpacing: -0.6, color: '#0f172a' }}>Lists</Text>
               <Text style={{ fontSize: 14, fontWeight: '500', color: '#94a3b8', marginTop: 2, letterSpacing: -0.1 }}>{shoppingLists.length === 0 ? 'No saved lists' : `${shoppingLists.length} saved list${shoppingLists.length !== 1 ? 's' : ''}`}</Text>
             </View>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={handlePresentModalPress}
-              style={{
-                backgroundColor: '#0f172a',
-                width: 30,
-                height: 30,
-                borderRadius: 15,
-                alignItems: 'center',
-                justifyContent: 'center'}}
-            >
-              <Plus size={13} color="#fff" strokeWidth={2.5} />
-            </TouchableOpacity>
+            <View className="flex-row items-center gap-3">
+              {shoppingLists.length > 3 && (
+                <TouchableOpacity
+                  activeOpacity={0.6}
+                  onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.navigate('/lists'); }}
+                >
+                  <Text className="text-[12px] font-semibold text-slate-400">View All</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handlePresentModalPress}
+                style={{
+                  backgroundColor: '#0f172a',
+                  width: 30,
+                  height: 30,
+                  borderRadius: 15,
+                  alignItems: 'center',
+                  justifyContent: 'center'}}
+              >
+                <Plus size={13} color="#fff" strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
           </Animated.View>
           {shoppingLists.length === 0 ? (
             <Animated.View layout={LinearTransition.springify()} className="mb-3 mt-1">
@@ -639,20 +649,7 @@ export default function HomeScreen() {
                   </Swipeable>
                 </Animated.View>
               ))}
-              {shoppingLists.length > 3 && (
-                <Animated.View layout={LinearTransition.springify()}>
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.navigate('/lists'); }}
-                    className="mx-6 mb-2 rounded-[20px] py-3.5 px-4 flex-row items-center justify-center border border-slate-200"
-                    style={{
-                      backgroundColor: '#ffffff'}}
-                  >
-                    <Text style={{ color: '#475569', fontSize: 14, fontWeight: '600' }}>View All Lists</Text>
-                    <ChevronRight size={16} color="#94a3b8" style={{ marginLeft: 4 }} />
-                  </TouchableOpacity>
-                </Animated.View>
-              )}
+
             </>
           )}
 
@@ -662,19 +659,29 @@ export default function HomeScreen() {
               <Text style={{ fontSize: 26, fontWeight: '800', letterSpacing: -0.6, color: '#0f172a' }}>Shops</Text>
               <Text style={{ fontSize: 14, fontWeight: '500', color: '#94a3b8', marginTop: 2, letterSpacing: -0.1 }}>{savedShops.length === 0 ? 'No saved shops' : `${savedShops.length} saved shop${savedShops.length !== 1 ? 's' : ''}`}</Text>
             </View>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Medium); router.push('/stores'); }}
-              style={{
-                backgroundColor: '#0f172a',
-                width: 30,
-                height: 30,
-                borderRadius: 15,
-                alignItems: 'center',
-                justifyContent: 'center'}}
-            >
-              <Plus size={13} color="#fff" strokeWidth={2.5} />
-            </TouchableOpacity>
+            <View className="flex-row items-center gap-3">
+              {savedShops.length > 3 && (
+                <TouchableOpacity
+                  activeOpacity={0.6}
+                  onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.navigate('/stores'); }}
+                >
+                  <Text className="text-[12px] font-semibold text-slate-400">View All</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Medium); router.push('/stores'); }}
+                style={{
+                  backgroundColor: '#0f172a',
+                  width: 30,
+                  height: 30,
+                  borderRadius: 15,
+                  alignItems: 'center',
+                  justifyContent: 'center'}}
+              >
+                <Plus size={13} color="#fff" strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
           </Animated.View>
           {savedShops.length === 0 && (
             <Animated.View layout={LinearTransition.springify()} className="mx-6 mb-4">
@@ -740,20 +747,7 @@ export default function HomeScreen() {
               </Swipeable>
             </Animated.View>
           ))}
-          {savedShops.length > 3 && (
-            <Animated.View layout={LinearTransition.springify()}>
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.navigate('/stores'); }}
-                className="mx-6 mb-2 rounded-[20px] py-3.5 px-4 flex-row items-center justify-center border border-slate-200"
-                style={{
-                  backgroundColor: '#ffffff'}}
-              >
-                <Text style={{ color: '#475569', fontSize: 14, fontWeight: '600' }}>View All Shops</Text>
-                <ChevronRight size={16} color="#94a3b8" style={{ marginLeft: 4 }} />
-              </TouchableOpacity>
-            </Animated.View>
-          )}
+
 
 
           {/* 5. Suggestions Section */}
