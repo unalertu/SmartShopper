@@ -1079,10 +1079,7 @@ export default function StoresScreen() {
                       setSelectedShopToSave(null);
                     }}
                   >
-                    <Plus size={20} color="#fff" />
-                    <Text style={styles.contextSaveBtnText} numberOfLines={1}>
-                      {selectedShopToSave.name}
-                    </Text>
+                    <Plus size={24} color="#fff" />
                   </TouchableOpacity>
                 </Animated.View>
               </>

@@ -106,7 +106,7 @@ export const useSettingsStore = create<SettingsState>()(
       setAutoDeletePurchased: (enabled) =>
         set({ autoDeletePurchased: enabled }),
       setIsPro: (enabled) => set({ isPro: enabled }),
-      resetSettings: () => set(DEFAULT_SETTINGS),
+      resetSettings: () => set((state) => ({ ...DEFAULT_SETTINGS, isPro: state.isPro })),
     }),
     {
       name: "settings-storage",

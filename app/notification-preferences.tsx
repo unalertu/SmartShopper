@@ -4,7 +4,7 @@ import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { LinearTransition } from 'react-native-reanimated';
-import { MapPin, List, Bell, Vibrate, Battery, ExternalLink, ChevronLeft, Lock, Sparkles, Clock, Calendar, Zap, SlidersHorizontal } from 'lucide-react-native';
+import { MapPin, List, Vibrate, ChevronLeft, Lock, Sparkles, Clock, Calendar, Zap, SlidersHorizontal } from 'lucide-react-native';
 import { useSettingsStore } from '../store';
 import { hapticImpact } from '../services/haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
@@ -88,16 +88,10 @@ export default function NotificationPreferencesScreen() {
     isPro,
     savedStoresOnly,
     shoppingListReminders,
-    backgroundNotifications,
     hapticEnabled,
-    lowPowerMode,
-    autoOpenNearbyList,
     setSavedStoresOnly,
     setShoppingListReminders,
-    setBackgroundNotifications,
-    setHapticEnabled,
-    setLowPowerMode,
-    setAutoOpenNearbyList
+    setHapticEnabled
   } = useSettingsStore();
 
   const switchTrackColor = { false: '#e2e8f0', true: '#0f172a' };
@@ -109,17 +103,7 @@ export default function NotificationPreferencesScreen() {
 
   const handleProUpsell = (featureName: string) => {
     hapticImpact(ImpactFeedbackStyle.Light);
-    Alert.alert(
-      'Pro Feature',
-      `${featureName} is available with GeoCart Pro. Upgrade to unlock advanced notification controls.`,
-      [
-        { text: 'OK', style: 'cancel' },
-        {
-          text: 'Upgrade to Pro',
-          onPress: () => router.push('/paywall'),
-        },
-      ]
-    );
+    router.push('/paywall');
   };
 
   return (
@@ -175,53 +159,14 @@ export default function NotificationPreferencesScreen() {
             }
           />
           <SettingsRow
-            icon={<Bell size={20} color="#64748b" />}
-            label="Background Notifications"
-            sublabel="Receive notifications when app is closed"
-            rightElement={
-              <Switch
-                value={backgroundNotifications}
-                onValueChange={handleToggle(setBackgroundNotifications)}
-                trackColor={switchTrackColor}
-                thumbColor="#ffffff"
-              />
-            }
-          />
-          <SettingsRow
             icon={<Vibrate size={20} color="#64748b" />}
-            label="Haptic Feedback"
-            sublabel="Vibrate when a notification arrives"
+            label="Notification Haptics"
+            sublabel="Vibrate on incoming alerts"
+            isLast
             rightElement={
               <Switch
                 value={hapticEnabled}
                 onValueChange={handleToggle(setHapticEnabled)}
-                trackColor={switchTrackColor}
-                thumbColor="#ffffff"
-              />
-            }
-          />
-          <SettingsRow
-            icon={<Battery size={20} color="#64748b" />}
-            label="Low Power Mode"
-            sublabel="Reduce background checks to save battery"
-            rightElement={
-              <Switch
-                value={lowPowerMode}
-                onValueChange={handleToggle(setLowPowerMode)}
-                trackColor={switchTrackColor}
-                thumbColor="#ffffff"
-              />
-            }
-          />
-          <SettingsRow
-            icon={<ExternalLink size={20} color="#64748b" />}
-            label="Auto Open Nearby List"
-            sublabel="Open list directly from notification tap"
-            isLast
-            rightElement={
-              <Switch
-                value={autoOpenNearbyList}
-                onValueChange={handleToggle(setAutoOpenNearbyList)}
                 trackColor={switchTrackColor}
                 thumbColor="#ffffff"
               />

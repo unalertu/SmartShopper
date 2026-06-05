@@ -29,7 +29,7 @@ import {
   SlidersHorizontal,
   Shield,
   FileText,
-  Trash,
+  RotateCcw,
   Trash2,
   LifeBuoy,
   Star,
@@ -51,7 +51,8 @@ import {
   useShoppingListStore,
   useLocationStore,
   useListsStore,
-  useSettingsStore} from '../../store';
+  useSettingsStore,
+  useNotificationsStore} from '../../store';
 import type { ThemeOption } from '../../store';
 import { hapticImpact, hapticNotification } from '../../services/haptics';
 import * as Haptics from 'expo-haptics';
@@ -395,37 +396,34 @@ export default function SettingsScreen() {
   const handleResetApp = useCallback(() => {
     hapticImpact(ImpactFeedbackStyle.Heavy);
     Alert.alert(
-      'Reset App',
-      'This will permanently delete ALL your data — lists, items, saved locations, and settings. This action cannot be undone.',
+      'Are you sure?',
+      'This will permanently delete:\n\n• Saved Lists\n• Saved Shops\n• Notifications\n• Preferences\n\nThis action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Reset Everything',
+          text: 'Reset',
           style: 'destructive',
           onPress: () => {
-            Alert.alert(
-              'Are you absolutely sure?',
-              'All data will be lost forever.',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Yes, Reset',
-                  style: 'destructive',
-                  onPress: () => {
-                    // Clear all stores
-                    clearAllItems();
-                    useListsStore.getState().lists.forEach((list) => {
-                      useListsStore.getState().removeList(list.id);
-                    });
-                    useLocationStore.getState().locations.forEach((loc) => {
-                      useLocationStore.getState().removeLocation(loc.id);
-                    });
-                    resetSettings();
-                    hapticNotification(NotificationFeedbackType.Warning);
-                  }},
-              ]
-            );
-          }},
+            // Clear all shopping items
+            clearAllItems();
+            // Clear all lists
+            const listsState = useListsStore.getState();
+            listsState.lists.forEach((list) => {
+              listsState.removeList(list.id);
+            });
+            // Clear all saved locations & cached markets
+            const locState = useLocationStore.getState();
+            locState.locations.forEach((loc) => {
+              locState.removeLocation(loc.id);
+            });
+            locState.setCachedMarkets([]);
+            // Clear all notifications
+            useNotificationsStore.getState().clearAll();
+            // Reset settings (preserves isPro)
+            resetSettings();
+            hapticNotification(NotificationFeedbackType.Warning);
+          },
+        },
       ]
     );
   }, [clearAllItems, resetSettings]);
@@ -736,9 +734,9 @@ export default function SettingsScreen() {
           {/* ── Danger Zone ── */}
           <SettingsGroup delay={500}>
             <SettingsRow
-              icon={<Trash size={20} color="#ef4444" />}
-              label="Reset App"
-              sublabel="Delete all data and start fresh"
+              icon={<RotateCcw size={20} color="#ef4444" />}
+              label="Reset App Data"
+              sublabel="Delete all saved lists, shops, notifications and preferences"
               isDanger
               isLast
               onPress={handleResetApp}
