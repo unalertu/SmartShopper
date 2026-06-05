@@ -112,7 +112,7 @@ export default function ListsScreen() {
         <ScrollView 
           ref={scrollRef}
           className="flex-1"
-          contentContainerStyle={{ paddingBottom: 150, paddingTop: insets.top + 8 }} 
+          contentContainerStyle={{ paddingBottom: 120, paddingTop: insets.top + 8 }} 
           showsVerticalScrollIndicator={false}
           onScrollBeginDrag={() => closeAllSwipeables()}
         >
@@ -168,7 +168,7 @@ export default function ListsScreen() {
             <View className="flex-row items-center justify-between mb-3 px-6">
               <View className="flex-row items-center gap-1.5">
                 <Sparkles size={14} color="#94a3b8" strokeWidth={2} />
-                <Text className="text-[14px] font-bold text-slate-500 tracking-wide uppercase">Quick Start</Text>
+                <Text className="text-[14px] font-bold text-slate-500 tracking-wide">Quick Start</Text>
               </View>
               {templateRows.length > 2 ? (
                 <TouchableOpacity
@@ -231,6 +231,10 @@ export default function ListsScreen() {
               </View>
             </ScrollView>
           </Animated.View>
+
+          {shoppingLists.length > 0 && (
+            <Animated.View layout={LinearTransition.springify()} className="h-[3px] bg-slate-200 mx-16 mb-5 rounded-full" />
+          )}
 
           <Animated.View layout={LinearTransition.springify()}>
             {shoppingLists.map((list, index) => (
@@ -349,7 +353,7 @@ export default function ListsScreen() {
                 <View className="flex-row items-center justify-between mb-3">
                   <View className="flex-row items-center gap-1.5">
                     <Activity size={14} color="#94a3b8" strokeWidth={2} />
-                    <Text className="text-[14px] font-bold text-slate-500 tracking-wide uppercase">Recent Activity</Text>
+                    <Text className="text-[14px] font-bold text-slate-500 tracking-wide">Recent Activity</Text>
                   </View>
                   {activityEvents.length > 5 ? (
                     <TouchableOpacity
