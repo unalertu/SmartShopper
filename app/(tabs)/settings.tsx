@@ -620,19 +620,6 @@ export default function SettingsScreen() {
           {/* ── Permissions & Device Settings ── */}
           <SettingsGroup delay={200}>
             <SettingsRow
-              icon={<Bell size={20} color="#64748b" />}
-              label="Push Notifications"
-              sublabel="Get reminded near stores"
-              rightElement={
-                <Switch
-                  value={notificationsEnabled}
-                  onValueChange={handleNotificationToggle}
-                  trackColor={switchTrackColor}
-                  thumbColor="#ffffff"
-                />
-              }
-            />
-            <SettingsRow
               icon={<SlidersHorizontal size={20} color="#64748b" />}
               label="Map & Notifications"
               sublabel="Customize map and alerts"
@@ -658,11 +645,24 @@ export default function SettingsScreen() {
               icon={<Vibrate size={20} color="#64748b" />}
               label="Haptic Feedback"
               sublabel="Vibrations on interactions"
-              isLast
               rightElement={
                 <Switch
                   value={hapticEnabled}
                   onValueChange={handleHapticToggle}
+                  trackColor={switchTrackColor}
+                  thumbColor="#ffffff"
+                />
+              }
+            />
+            <SettingsRow
+              icon={<Bell size={20} color="#64748b" />}
+              label="Push Notifications"
+              sublabel="Get reminded near stores"
+              isLast
+              rightElement={
+                <Switch
+                  value={notificationsEnabled}
+                  onValueChange={handleNotificationToggle}
                   trackColor={switchTrackColor}
                   thumbColor="#ffffff"
                 />

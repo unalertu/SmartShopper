@@ -13,7 +13,6 @@ import { hapticImpact } from '../services/haptics';
 import {
   ChevronLeft,
   Bell,
-  BellOff,
   ShoppingBag,
   AlertTriangle,
   MapPin,
@@ -247,18 +246,18 @@ export default function NotificationsScreen() {
         {notifications.length === 0 && (
           <Animated.View
             entering={FadeInDown.duration(500).delay(100).springify()}
-            className="mx-6 mt-8 rounded-[28px] p-8 items-center border border-dashed border-slate-200"
-            style={{ backgroundColor: '#f8fafc' }}
+            className="mt-2 flex-1"
           >
-            <View className="bg-white border border-slate-100 w-14 h-14 rounded-full items-center justify-center mb-4">
-              <BellOff size={24} color="#94a3b8" />
+            {/* Empty State Hero */}
+            <View className="items-center justify-center py-6">
+              <View className="w-24 h-24 bg-slate-100 rounded-full items-center justify-center mb-5 border-[6px] border-white">
+                <Bell size={36} color="#0f172a" strokeWidth={1.5} />
+              </View>
+              <Text className="text-[22px] font-bold text-slate-900 tracking-tight mb-2">No notifications yet</Text>
+              <Text className="text-[15px] font-medium text-slate-500 text-center px-10 leading-6">
+                We'll notify you when you're near a saved store or when there are updates to your lists.
+              </Text>
             </View>
-            <Text className="text-[16px] font-semibold text-slate-600 tracking-tight">
-              No Notifications
-            </Text>
-            <Text className="text-[14px] font-medium text-slate-400 mt-1.5 text-center px-4">
-              We'll notify you when you're near a saved store or when there are updates to your lists.
-            </Text>
           </Animated.View>
         )}
 
