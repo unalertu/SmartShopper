@@ -161,7 +161,7 @@ export default function StoresScreen() {
   const setSelectedShopToSave = useLocalUIStore((s) => s.setSelectedShopToSave);
 
   const snapPoints = useMemo(() => {
-    return ['15%', '40%', '70%'];
+    return [200, '40%', '70%'];
   }, []);
 
   const animatedPosition = useSharedValue(SCREEN_HEIGHT);
@@ -935,12 +935,13 @@ export default function StoresScreen() {
         ref={bottomSheetRef}
         index={1}
         animatedPosition={animatedPosition}
-        snapPoints={['15%', '40%', '70%']}
+        snapPoints={snapPoints}
         topInset={SCREEN_HEIGHT * 0.3}
-        handleComponent={null}
         animateOnMount={true}
         enableOverDrag={false}
+        overDragResistanceFactor={0}
         enablePanDownToClose={false}
+        handleStyle={{ paddingBottom: 4, paddingTop: 12 }}
         backgroundStyle={{
           borderRadius: 32,
           backgroundColor: '#F2F2F7'
@@ -949,6 +950,7 @@ export default function StoresScreen() {
 
         <BottomSheetScrollView
           ref={bottomSheetScrollRef}
+          bounces={false}
           contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -958,7 +960,7 @@ export default function StoresScreen() {
           }}
         >
           {/* Header Content moved from CustomHandle */}
-          <Animated.View layout={LinearTransition.springify()} className="w-full pt-5 pb-2">
+          <Animated.View layout={LinearTransition.springify()} className="w-full pt-0 pb-2">
             {selectedShopToSave && !selectedShopToSave.isSaved && (
               <>
                 <Animated.View
@@ -1256,7 +1258,7 @@ export default function StoresScreen() {
               );
             })()}
 
-            <Animated.View layout={LinearTransition.springify()} style={{ marginTop: 4, marginBottom: 6 }}>
+            <Animated.View layout={LinearTransition.springify()} style={{ marginTop: 0, marginBottom: 6 }}>
               <Text style={{ fontSize: 26, fontWeight: '800', letterSpacing: -0.6, color: '#0f172a' }}>Shops</Text>
               <Text style={{ fontSize: 14, fontWeight: '500', color: '#94a3b8', marginTop: 2, letterSpacing: -0.1 }}>
                 {markets.length > 0 ? `${markets.length} stores` : 'Searching nearby…'}
