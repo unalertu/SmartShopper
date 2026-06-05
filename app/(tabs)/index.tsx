@@ -515,7 +515,7 @@ export default function HomeScreen() {
                   activeOpacity={0.6}
                   onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.navigate('/lists'); }}
                 >
-                  <Text className="text-[12px] font-semibold text-slate-400">View All</Text>
+                  <Text className="text-[12px] font-semibold text-slate-400">See All</Text>
                 </TouchableOpacity>
               )}
               <TouchableOpacity
@@ -665,7 +665,7 @@ export default function HomeScreen() {
                   activeOpacity={0.6}
                   onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.navigate('/stores'); }}
                 >
-                  <Text className="text-[12px] font-semibold text-slate-400">View All</Text>
+                  <Text className="text-[12px] font-semibold text-slate-400">See All</Text>
                 </TouchableOpacity>
               )}
               <TouchableOpacity

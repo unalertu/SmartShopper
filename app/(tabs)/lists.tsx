@@ -178,7 +178,7 @@ export default function ListsScreen() {
                     setShowAllTemplates(!showAllTemplates);
                   }}
                 >
-                  <Text className="text-[12px] font-semibold text-slate-400">{showAllTemplates ? 'Show Less' : 'See All'}</Text>
+                  <Text className="text-[12px] font-semibold text-slate-400">{showAllTemplates ? 'See Less' : 'See All'}</Text>
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -363,7 +363,7 @@ export default function ListsScreen() {
                         setShowAllActivities(!showAllActivities);
                       }}
                     >
-                      <Text className="text-[12px] font-semibold text-slate-400">{showAllActivities ? 'Show Less' : 'View All'}</Text>
+                      <Text className="text-[12px] font-semibold text-slate-400">{showAllActivities ? 'See Less' : 'See All'}</Text>
                     </TouchableOpacity>
                   ) : null}
                 </View>
