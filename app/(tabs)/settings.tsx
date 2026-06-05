@@ -636,7 +636,7 @@ export default function SettingsScreen() {
             <SettingsRow
               icon={<SlidersHorizontal size={20} color="#64748b" />}
               label="Map & Notifications"
-              sublabel="Customize alerts and sounds"
+              sublabel="Customize map and alerts"
               onPress={() => {
                 hapticImpact(ImpactFeedbackStyle.Light);
                 router.push('/notification-preferences');

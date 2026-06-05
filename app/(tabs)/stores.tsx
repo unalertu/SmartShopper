@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Dimensions, Keyboard, TouchableWithoutFeedback, Linking, ActionSheetIOS } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Store, Plus, Search, ShoppingBasket, LocateFixed, Trash2, MapPin, X, Navigation2, MoreHorizontal } from 'lucide-react-native';
+import { Store, Plus, Search, ShoppingBasket, LocateFixed, Trash2, MapPin, X, Navigation2, MoreHorizontal, Bell, BellOff } from 'lucide-react-native';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
@@ -152,7 +152,7 @@ export default function StoresScreen() {
     };
   }, []);
 
-  const { locations, addLocation, removeLocation, cachedMarkets, setCachedMarkets, isFetchingMarkets, setIsFetchingMarkets, canAddLocation } = useLocationStore();
+  const { locations, addLocation, removeLocation, cachedMarkets, setCachedMarkets, isFetchingMarkets, setIsFetchingMarkets, canAddLocation, mutedUnsavedShops, toggleMuteUnsavedShop } = useLocationStore();
   const { distanceUnit, isPro } = useSettingsStore();
   const savedShops = locations ?? [];
 
@@ -715,7 +715,7 @@ export default function StoresScreen() {
                 }
               }}
             >
-              <StoreMarker isSaved={isSaved} isSelected={isSelected} />
+              <StoreMarker isSaved={isSaved} isSelected={isSelected} isMuted={!shop.isActive} />
               {readyCalloutId === shopId && (
                 <Callout tooltip onPress={() => {}}>
                   <View style={styles.calloutContainer} pointerEvents="none">
@@ -812,7 +812,7 @@ export default function StoresScreen() {
                 }, 200);
               }}
             >
-              <StoreMarker isSaved={isSaved} isSelected={isSelected} />
+              <StoreMarker isSaved={isSaved} isSelected={isSelected} isMuted={mutedUnsavedShops.includes(properties.id)} />
               {readyCalloutId === properties.id && (
                 <Callout tooltip onPress={() => {}}>
                   <View style={styles.calloutContainer} pointerEvents="none">
@@ -971,6 +971,33 @@ export default function StoresScreen() {
                   style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}
                 >
                   <TouchableOpacity
+                    style={[styles.contextDirectionsBtn, { paddingHorizontal: 0, width: 52 }]}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                      const isMuted = mutedUnsavedShops.includes(selectedShopToSave.id);
+                      const muteOption = isMuted ? 'Unmute Notifications' : 'Mute Notifications';
+                      const options = ['Cancel', muteOption, 'View Store Details'];
+                      const cancelButtonIndex = 0;
+                      ActionSheetIOS.showActionSheetWithOptions(
+                        {
+                          options,
+                          cancelButtonIndex,
+                        },
+                        (index: number) => {
+                          if (index === 1) {
+                            toggleMuteUnsavedShop(selectedShopToSave.id);
+                            hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
+                          } else if (index === 2) {
+                            Alert.alert('Store Details', 'Coming soon');
+                          }
+                        }
+                      );
+                    }}
+                  >
+                    <MoreHorizontal size={20} color="#0f172a" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
                     style={[styles.contextDirectionsBtn, { flex: 1 }]}
                     activeOpacity={0.8}
                     onPress={() => {
@@ -979,7 +1006,7 @@ export default function StoresScreen() {
                     }}
                   >
                     <Navigation2 size={18} color="#0f172a" />
-                    <Text style={styles.contextDirectionsBtnText}>Directions</Text>
+                    <Text style={styles.contextDirectionsBtnText} numberOfLines={1}>Directions</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.contextSaveBtn, { flex: 1, marginBottom: 0 }]}
@@ -1079,23 +1106,21 @@ export default function StoresScreen() {
                       onPress={(e) => {
                         e.stopPropagation();
                         hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                        const options = ['Cancel', 'Directions', 'Remove Saved Shop'];
+                        const isMuted = !loc.isActive;
+                        const muteOption = isMuted ? 'Unmute Notifications' : 'Mute Notifications';
+                        const options = ['Cancel', muteOption, 'View Store Details'];
                         const cancelButtonIndex = 0;
-                        const destructiveButtonIndex = 2;
                         ActionSheetIOS.showActionSheetWithOptions(
                           {
                             options,
                             cancelButtonIndex,
-                            destructiveButtonIndex},
+                          },
                           (index: number) => {
                             if (index === 1) {
-                              openDirectionsSheet(loc.latitude, loc.longitude);
-                            } else if (index === 2) {
+                              useLocationStore.getState().toggleActive(originalId);
                               hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
-                              removeLocation(originalId);
-                              swipeableRefs.current.delete(originalId);
-                              swipeableRefs.current.delete('context-' + originalId);
-                              setSelectedShopToSave(null);
+                            } else if (index === 2) {
+                              Alert.alert('Store Details', 'Coming soon');
                             }
                           }
                         );
@@ -1112,6 +1137,33 @@ export default function StoresScreen() {
                 style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}
               >
                 <TouchableOpacity
+                  style={[styles.contextDirectionsBtn, { paddingHorizontal: 0, width: 52 }]}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                    const isMuted = !loc.isActive;
+                    const muteOption = isMuted ? 'Unmute Notifications' : 'Mute Notifications';
+                    const options = ['Cancel', muteOption, 'View Store Details'];
+                    const cancelButtonIndex = 0;
+                    ActionSheetIOS.showActionSheetWithOptions(
+                      {
+                        options,
+                        cancelButtonIndex,
+                      },
+                      (index: number) => {
+                        if (index === 1) {
+                          useLocationStore.getState().toggleActive(originalId);
+                          hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
+                        } else if (index === 2) {
+                          Alert.alert('Store Details', 'Coming soon');
+                        }
+                      }
+                    );
+                  }}
+                >
+                  <MoreHorizontal size={20} color="#0f172a" />
+                </TouchableOpacity>
+                <TouchableOpacity
                   style={[styles.contextDirectionsBtn, { flex: 1 }]}
                   activeOpacity={0.8}
                   onPress={() => {
@@ -1120,7 +1172,7 @@ export default function StoresScreen() {
                   }}
                 >
                   <Navigation2 size={18} color="#0f172a" />
-                  <Text style={styles.contextDirectionsBtnText}>Directions</Text>
+                  <Text style={styles.contextDirectionsBtnText} numberOfLines={1}>Directions</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.contextSaveBtn, { flex: 1, marginBottom: 0, backgroundColor: '#F2726F' }]}
@@ -1236,24 +1288,21 @@ export default function StoresScreen() {
                     onPress={(e) => {
                       e.stopPropagation();
                       hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                      const options = ['Cancel', 'Directions', 'Remove Saved Shop'];
+                      const isMuted = !loc.isActive;
+                      const muteOption = isMuted ? 'Unmute Notifications' : 'Mute Notifications';
+                      const options = ['Cancel', muteOption, 'View Store Details'];
                       const cancelButtonIndex = 0;
-                      const destructiveButtonIndex = 2;
                       ActionSheetIOS.showActionSheetWithOptions(
                         {
                           options,
                           cancelButtonIndex,
-                          destructiveButtonIndex},
+                        },
                         (index: number) => {
                           if (index === 1) {
-                            openDirectionsSheet(loc.latitude, loc.longitude);
-                          } else if (index === 2) {
+                            useLocationStore.getState().toggleActive(loc.id);
                             hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
-                            removeLocation(loc.id);
-                            swipeableRefs.current.delete(loc.id);
-                            if (selectedShopToSave && (selectedShopToSave.id === loc.id || selectedShopToSave.id === `saved-${loc.id}`)) {
-                              setSelectedShopToSave(null);
-                            }
+                          } else if (index === 2) {
+                            Alert.alert('Store Details', 'Coming soon');
                           }
                         }
                       );

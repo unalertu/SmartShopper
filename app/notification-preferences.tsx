@@ -142,7 +142,7 @@ export default function NotificationPreferencesScreen() {
         >
           <ChevronLeft size={24} color="#0f172a" />
         </TouchableOpacity>
-        <Text className="text-xl font-semibold text-slate-900 ml-4">Notification Preferences</Text>
+        <Text className="text-xl font-semibold text-slate-900 ml-4">Map & Notifications</Text>
       </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40, paddingTop: 20 }} showsVerticalScrollIndicator={false}>

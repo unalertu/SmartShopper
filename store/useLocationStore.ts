@@ -21,6 +21,8 @@ interface LocationStoreState {
   updateLocation: (id: string, updates: Partial<SavedLocation>) => void;
   toggleActive: (id: string) => void;
   getActiveLocations: () => SavedLocation[];
+  mutedUnsavedShops: string[];
+  toggleMuteUnsavedShop: (id: string) => void;
 
   /**
    * Check if the user can add a new saved store.
@@ -47,6 +49,7 @@ export const useLocationStore = create<LocationStoreState>()(
   persist(
     (set, get) => ({
       locations: [],
+      mutedUnsavedShops: [],
       cachedMarkets: [],
       isFetchingMarkets: false,
       fetchingRegionCenter: null,
@@ -91,6 +94,16 @@ export const useLocationStore = create<LocationStoreState>()(
 
       getActiveLocations: () =>
         get().locations.filter((loc) => loc.isActive),
+
+      toggleMuteUnsavedShop: (id) =>
+        set((state) => {
+          const isMuted = state.mutedUnsavedShops.includes(id);
+          return {
+            mutedUnsavedShops: isMuted
+              ? state.mutedUnsavedShops.filter((mId) => mId !== id)
+              : [...state.mutedUnsavedShops, id],
+          };
+        }),
 
       canAddLocation: (isPro: boolean) => {
         const currentCount = get().locations.length;
