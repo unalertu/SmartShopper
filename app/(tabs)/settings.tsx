@@ -138,12 +138,12 @@ const ProStatusCard = React.memo(({ animatedStyle, isPro }: { animatedStyle: any
       className="bg-white border border-slate-100 rounded-3xl p-4 flex-row items-center"
       
     >
-      <View className="h-12 w-12 rounded-full bg-[#D4AF37]/10 items-center justify-center mr-4">
-        <Sparkles size={24} color="#D4AF37" />
+      <View className="h-12 w-12 rounded-full bg-slate-100 items-center justify-center mr-4">
+        <User size={24} color="#64748b" />
       </View>
       <View className="flex-1 justify-center">
         <View className="flex-row items-center mb-0.5 gap-2">
-          <Text className="text-[17px] font-semibold text-slate-900 tracking-tight">GeoCart</Text>
+          <Text className="text-[17px] font-semibold text-slate-900 tracking-tight">Your Plan</Text>
           <View className={`${isPro ? 'bg-[#D4AF37]/10 border-[#D4AF37]/20' : 'bg-slate-100 border-slate-200'} px-1.5 py-0.5 rounded flex-row items-center border`}>
             <Text className={`${isPro ? 'text-[#D4AF37]' : 'text-slate-400'} font-bold text-[9px] uppercase tracking-wider`}>
               {isPro ? 'Pro Active' : 'Free'}
@@ -534,6 +534,7 @@ export default function SettingsScreen() {
                 }}
               />
             )}
+
             {isPro ? (
               <SettingsRow
                 icon={<Users size={20} color="#64748b" />}
