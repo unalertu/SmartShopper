@@ -753,8 +753,8 @@ export default function HomeScreen() {
           {/* 5. Suggestions Section */}
           <Animated.View layout={LinearTransition.springify()} className="mt-6 mb-8">
             <View className="px-6 mb-4">
-              <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">Recommended for You</Text>
-              <Text className="text-[14px] font-medium text-slate-500 mt-1">Smart suggestions based on your routines & visits</Text>
+              <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">Suggestions</Text>
+              <Text className="text-[14px] font-medium text-slate-500 mt-1">Based on your shopping habits</Text>
             </View>
             <View className="px-6 gap-3 pb-4">
               {/* 1. Shop Card (Most Visited or Nearest) */}
@@ -769,23 +769,16 @@ export default function HomeScreen() {
                       router.push('/stores');
                     }
                   }}
-                  className="bg-white border border-slate-200 rounded-[20px] px-5 py-4 flex-row items-center gap-4 w-full"
-                  style={{
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.04,
-                    shadowRadius: 8,
-                    elevation: 2,
-                  }}
+                  className="bg-violet-50 border border-violet-100 rounded-[20px] px-4 py-4 flex-row items-center gap-3 w-full"
                 >
-                  <View className="w-10 h-10 rounded-full bg-indigo-50 items-center justify-center">
-                    <Store size={20} color="#6366f1" strokeWidth={2.5} />
+                  <View className="w-9 h-9 rounded-full bg-violet-100 items-center justify-center">
+                    <Store size={18} color="#8b5cf6" strokeWidth={2.5} />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-[13px] font-semibold text-slate-500">{suggestedShop ? "Frequently visited" : "Nearest to you"}</Text>
-                    <Text className="text-[16px] font-bold text-slate-900 mt-0.5">{suggestedShop ? suggestedShop.name : nearestShopName}</Text>
+                    <Text className="text-[12px] font-semibold text-violet-500">{suggestedShop ? "Frequently visited" : "Nearest to you"}</Text>
+                    <Text className="text-[15px] font-bold text-violet-900 leading-tight mt-0.5">{suggestedShop ? suggestedShop.name : nearestShopName}</Text>
                   </View>
-                  <ChevronRight size={20} color="#cbd5e1" />
+                  <ChevronRight size={18} color="#c4b5fd" />
                 </TouchableOpacity>
               )}
 
