@@ -466,8 +466,10 @@ export default function StoresScreen() {
         }, 300);
 
         if (bottomSheetRef.current) {
-           bottomSheetRef.current.snapToIndex(0);
+           bottomSheetRef.current.snapToIndex(1);
         }
+        // Scroll content to top so the preview is fully visible
+        bottomSheetScrollRef.current?.scrollTo({ y: 0, animated: true });
       }
     }
   }, [params.shopId, savedShops.length]);
@@ -487,6 +489,16 @@ export default function StoresScreen() {
           marker.hideCallout();
         }
       });
+    }
+  }, [selectedShopToSave]);
+
+  // Force reset scroll position + bottom sheet snap whenever selected shop changes
+  useEffect(() => {
+    if (selectedShopToSave) {
+      // Reset scroll to top immediately (no animation to avoid visual jump)
+      bottomSheetScrollRef.current?.scrollTo({ y: 0, animated: false });
+      // Expand to medium snap point so preview + shops title + first card are visible
+      bottomSheetRef.current?.snapToIndex(1);
     }
   }, [selectedShopToSave]);
 
@@ -715,10 +727,12 @@ export default function StoresScreen() {
                   setReadyCalloutId(shopId);
                 }, 200);
 
-                // Ensure the bottom sheet is partially open to show the context card
+                // Expand the bottom sheet to medium snap point to show the context card
                 if (bottomSheetRef.current) {
-                   bottomSheetRef.current.snapToIndex(0);
+                   bottomSheetRef.current.snapToIndex(1);
                 }
+                // Scroll content to top so the preview is fully visible
+                bottomSheetScrollRef.current?.scrollTo({ y: 0, animated: true });
               }}
             >
               <StoreMarker isSaved={isSaved} isSelected={isSelected} isMuted={!shop.isActive} />
@@ -816,6 +830,13 @@ export default function StoresScreen() {
                 calloutTimerRef.current = setTimeout(() => {
                   setReadyCalloutId(properties.id);
                 }, 200);
+
+                // Expand the bottom sheet to medium snap point to show the context card
+                if (bottomSheetRef.current) {
+                   bottomSheetRef.current.snapToIndex(1);
+                }
+                // Scroll content to top so the preview is fully visible
+                bottomSheetScrollRef.current?.scrollTo({ y: 0, animated: true });
               }}
             >
               <StoreMarker isSaved={isSaved} isSelected={isSelected} isMuted={mutedUnsavedShops.includes(properties.id)} />
@@ -939,7 +960,7 @@ export default function StoresScreen() {
         topInset={SCREEN_HEIGHT * 0.3}
         animateOnMount={true}
         enableOverDrag={false}
-        overDragResistanceFactor={0}
+        enableDynamicSizing={false}
         enablePanDownToClose={false}
         handleStyle={{ paddingBottom: 4, paddingTop: 12 }}
         backgroundStyle={{
@@ -951,7 +972,7 @@ export default function StoresScreen() {
         <BottomSheetScrollView
           ref={bottomSheetScrollRef}
           bounces={false}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 120 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           onScrollBeginDrag={() => {
@@ -960,7 +981,7 @@ export default function StoresScreen() {
           }}
         >
           {/* Header Content moved from CustomHandle */}
-          <Animated.View layout={LinearTransition.springify()} className="w-full pt-0 pb-2">
+          <Animated.View layout={LinearTransition.springify()} className="w-full pt-3 pb-2">
             {selectedShopToSave && !selectedShopToSave.isSaved && (
               <>
                 <Animated.View
@@ -1320,7 +1341,9 @@ export default function StoresScreen() {
                       latitudeDelta,
                       longitudeDelta};
                     mapRef.current?.animateToRegion(region, 500);
-                    bottomSheetRef.current?.snapToIndex(0);
+                    bottomSheetRef.current?.snapToIndex(1);
+                    // Scroll content to top so the preview is fully visible
+                    bottomSheetScrollRef.current?.scrollTo({ y: 0, animated: true });
 
                     // Select this shop and show its callout after animation settles
                     const savedId = `saved-${loc.id}`;

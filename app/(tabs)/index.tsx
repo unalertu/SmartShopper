@@ -387,7 +387,7 @@ export default function HomeScreen() {
       <ScrollView 
         ref={scrollRef}
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 150 }} 
+        contentContainerStyle={{ paddingBottom: 120 }} 
         showsVerticalScrollIndicator={false}
         onScrollBeginDrag={() => {
           closeAllSwipeables();
