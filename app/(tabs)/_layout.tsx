@@ -144,9 +144,9 @@ function CustomTabBar({
     const scrollY = tabBarScrollY.value;
     return {
       transform: [
-        { scale: interpolate(scrollY, [0, 150], [1, 0.92], Extrapolation.CLAMP) },
+        { scale: interpolate(scrollY, [0, 120], [1, 0.92], Extrapolation.CLAMP) },
       ],
-      opacity: interpolate(scrollY, [0, 150], [1, 0.9], Extrapolation.CLAMP),
+      opacity: interpolate(scrollY, [0, 120], [1, 0.9], Extrapolation.CLAMP),
     };
   });
 
