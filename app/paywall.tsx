@@ -141,9 +141,10 @@ export default function PaywallScreen() {
       </View>
 
       <ScrollView
+        className="flex-1"
         contentContainerStyle={{
           paddingTop: insets.top + 56,
-          paddingBottom: insets.bottom + 140,
+          paddingBottom: insets.bottom + 190,
           paddingHorizontal: 24,
         }}
         showsVerticalScrollIndicator={false}

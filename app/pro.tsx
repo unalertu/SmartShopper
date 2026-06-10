@@ -153,8 +153,9 @@ export default function ProScreen() {
       </View>
 
       <ScrollView
+        className="flex-1"
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 40,
+          paddingBottom: insets.bottom + 200,
           paddingTop: insets.top + 60,
           paddingHorizontal: 24,
         }}
