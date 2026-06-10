@@ -2,7 +2,6 @@ import React, { useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   Switch,
   Alert,
@@ -19,6 +18,7 @@ import * as Location from 'expo-location';
 import { useScrollToTop } from '@react-navigation/native';
 
 import Animated, { FadeInDown, LinearTransition, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { useTabBarScrollHandler } from '../../hooks/useTabBarScroll';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Bell,
@@ -164,8 +164,9 @@ ProStatusCard.displayName = 'ProStatusCard';
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function SettingsScreen() {
-  const scrollRef = useRef<ScrollView>(null);
-  useScrollToTop(scrollRef);
+  const scrollRef = useRef<Animated.ScrollView>(null);
+  useScrollToTop(scrollRef as any);
+  const scrollHandler = useTabBarScrollHandler();
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -488,11 +489,13 @@ export default function SettingsScreen() {
       <View className="flex-1 bg-[#F2F2F7]">
         <StatusBar style="dark" />
 
-        <ScrollView
+        <Animated.ScrollView
           ref={scrollRef}
           className="flex-1"
           contentContainerStyle={{ paddingBottom: 150, paddingTop: insets.top + 8 }}
           showsVerticalScrollIndicator={false}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
         >
           {/* Header */}
           <Animated.View
@@ -755,7 +758,7 @@ export default function SettingsScreen() {
               Crafted by a solo student developer
             </Text>
           </Animated.View>
-        </ScrollView>
+        </Animated.ScrollView>
       </View>
     </AnimatedScreen>
   );

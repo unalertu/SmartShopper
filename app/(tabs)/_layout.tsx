@@ -11,7 +11,10 @@ import Animated, {
   withSpring,
   withTiming,
   interpolate,
+  Extrapolation,
+  runOnUI,
   Easing} from "react-native-reanimated";
+import { tabBarScrollY, resetTabBarScroll } from '../../hooks/useTabBarScroll';
 import {
   Home,
   MapPin,
@@ -120,6 +123,11 @@ function CustomTabBar({
   const indicatorX = useSharedValue(0);
   const indicatorWidth = useSharedValue(0);
 
+  // Reset scrollY when switching tabs
+  useEffect(() => {
+    runOnUI(resetTabBarScroll)();
+  }, [state.index]);
+
   useEffect(() => {
     if (tabDimensions[state.index]) {
       indicatorX.value = withSpring(tabDimensions[state.index].x, SPRING_GENTLE);
@@ -131,13 +139,25 @@ function CustomTabBar({
     transform: [{ translateX: indicatorX.value }],
     width: indicatorWidth.value}));
 
+  // ── Scroll-reactive animated style ──
+  const scrollAnimatedStyle = useAnimatedStyle(() => {
+    const scrollY = tabBarScrollY.value;
+    return {
+      transform: [
+        { scale: interpolate(scrollY, [0, 150], [1, 0.92], Extrapolation.CLAMP) },
+      ],
+      opacity: interpolate(scrollY, [0, 150], [1, 0.9], Extrapolation.CLAMP),
+    };
+  });
+
   return (
     <>
       {/* ── Navigation Bar Container ── */}
-      <View
+      <Animated.View
         style={[
           styles.bottomContainer,
           { paddingBottom: insets.bottom > 0 ? insets.bottom - 12 : 6 },
+          scrollAnimatedStyle,
         ]}
         pointerEvents="box-none"
       >
@@ -192,7 +212,7 @@ function CustomTabBar({
             })}
           </View>
         </Pressable>
-      </View>
+      </Animated.View>
     </>
   );
 }
@@ -208,7 +228,7 @@ const styles = StyleSheet.create({
     zIndex: 50},
   navBarBlur: {
     marginHorizontal: 24,
-    marginBottom: 10,
+    marginBottom: 4,
     borderRadius: 50,
     backgroundColor: "rgba(255,255,255,0.98)",
     borderWidth: 0.5,
@@ -222,7 +242,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 8,
     borderRadius: 50},
 
   // Sliding Indicator

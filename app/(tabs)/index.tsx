@@ -14,6 +14,7 @@ import MapView, { Marker } from 'react-native-maps';
 import { fetchMarkets } from '../../services/overpassService';
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeOutLeft, LinearTransition } from 'react-native-reanimated';
+import { useTabBarScrollHandler } from '../../hooks/useTabBarScroll';
 import { useLocationStore, useListsStore, useSettingsStore, useQuickStartStore, useNotificationsStore, useShoppingListStore } from '../../store';
 import { useScrollToTop } from '@react-navigation/native';
 import AnimatedScreen from '../../components/AnimatedScreen';
@@ -34,8 +35,9 @@ const getRelativeDate = (timestamp?: number): string => {
 };
 
 export default function HomeScreen() {
-  const scrollRef = useRef<ScrollView>(null);
-  useScrollToTop(scrollRef);
+  const scrollRef = useRef<Animated.ScrollView>(null);
+  useScrollToTop(scrollRef as any);
+  const scrollHandler = useTabBarScrollHandler();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [nearbyStore, setNearbyStore] = useState<string>('Searching location...');
@@ -384,11 +386,13 @@ export default function HomeScreen() {
       <StatusBar style="dark" />
 
       {/* 2. THE SCROLLING CONTENT */}
-      <ScrollView 
+      <Animated.ScrollView 
         ref={scrollRef}
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 120 }} 
         showsVerticalScrollIndicator={false}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         onScrollBeginDrag={() => {
           closeAllSwipeables();
           closeAllShopSwipeables();
@@ -847,7 +851,7 @@ export default function HomeScreen() {
             </View>
           </Animated.View>
 
-        </ScrollView>
+        </Animated.ScrollView>
 
         {/* Bottom Sheet for Adding New List */}
         <CreateListSheet

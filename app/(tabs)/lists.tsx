@@ -10,6 +10,7 @@ import * as Haptics from 'expo-haptics';
 import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeInDown, FadeOutLeft, FadeOutUp, LinearTransition } from 'react-native-reanimated';
+import { useTabBarScrollHandler } from '../../hooks/useTabBarScroll';
 import { useListsStore, useShoppingListStore, useQuickStartStore, useSettingsStore } from '../../store';
 import { useScrollToTop } from '@react-navigation/native';
 import CreateListSheet from '../../components/CreateListSheet';
@@ -27,8 +28,9 @@ const getRelativeDate = (timestamp?: number): string => {
 };
 
 export default function ListsScreen() {
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<Animated.ScrollView>(null);
   const quickStartScrollRef = useRef<ScrollView>(null);
+  const scrollHandler = useTabBarScrollHandler();
   
   const mergedScrollRef = useRef({
     scrollTo: (options: any) => {
@@ -109,11 +111,13 @@ export default function ListsScreen() {
       <View className="flex-1 bg-[#F2F2F7]">
         <StatusBar style="dark" />
         
-        <ScrollView 
+        <Animated.ScrollView 
           ref={scrollRef}
           className="flex-1"
           contentContainerStyle={{ paddingBottom: 120, paddingTop: insets.top + 8 }} 
           showsVerticalScrollIndicator={false}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
           onScrollBeginDrag={() => closeAllSwipeables()}
         >
           {/* Header */}
@@ -417,7 +421,7 @@ export default function ListsScreen() {
           })()}
 
 
-        </ScrollView>
+        </Animated.ScrollView>
 
         {/* Bottom Sheet for Adding New List */}
         <CreateListSheet
