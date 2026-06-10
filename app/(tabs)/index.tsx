@@ -751,7 +751,7 @@ export default function HomeScreen() {
 
 
           {/* 5. Suggestions Section */}
-          <Animated.View layout={LinearTransition.springify()} className="mt-6 mb-8">
+          <Animated.View layout={LinearTransition.springify()} className="mt-6 mb-2">
             <View className="px-6 mb-4">
               <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">Suggestions</Text>
               <Text className="text-[14px] font-medium text-slate-500 mt-1">Based on your shopping habits</Text>
