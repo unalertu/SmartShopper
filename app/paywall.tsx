@@ -1,17 +1,93 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { Sparkles, Zap, ShieldCheck, X, MapPin, Bell, Clock, SlidersHorizontal, List, PackagePlus } from 'lucide-react-native';
+import {
+  Sparkles,
+  Zap,
+  ShieldCheck,
+  X,
+  MapPin,
+  Bell,
+  Clock,
+  SlidersHorizontal,
+  List,
+  PackagePlus,
+  Crown,
+  Check,
+} from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { hapticImpact, hapticNotification, hapticSelection } from '../services/haptics';
+import { hapticImpact, hapticNotification } from '../services/haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// ─── Feature Row (compact) ─────────────────────────────────────────────────────
+
+function FeatureRow({ icon, title, delay }: { icon: React.ReactNode; title: string; delay: number }) {
+  return (
+    <Animated.View
+      entering={FadeInDown.duration(400).delay(delay).springify()}
+      className="flex-row items-center py-3"
+    >
+      <View className="h-8 w-8 rounded-xl bg-[#D4AF37]/10 items-center justify-center mr-3">
+        {icon}
+      </View>
+      <Text className="text-[15px] font-medium text-slate-800 flex-1">{title}</Text>
+      <Check size={16} color="#D4AF37" strokeWidth={3} />
+    </Animated.View>
+  );
+}
+
+// ─── Plan Option ───────────────────────────────────────────────────────────────
+
+function PlanOption({
+  label,
+  price,
+  period,
+  subtitle,
+  isSelected,
+  onPress,
+  badge,
+}: {
+  label: string;
+  price: string;
+  period: string;
+  subtitle: string;
+  isSelected: boolean;
+  onPress: () => void;
+  badge?: string;
+}) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      className={`flex-1 p-4 rounded-2xl border-2 ${
+        isSelected ? 'border-[#D4AF37] bg-[#D4AF37]/5' : 'border-slate-100 bg-white'
+      }`}
+    >
+      {badge && (
+        <View className="absolute -top-2.5 right-3 bg-[#D4AF37] px-2.5 py-0.5 rounded-full">
+          <Text className="text-[9px] font-bold text-white uppercase tracking-wider">{badge}</Text>
+        </View>
+      )}
+      <Text className={`text-[11px] font-semibold uppercase tracking-wider mb-1.5 ${
+        isSelected ? 'text-[#D4AF37]' : 'text-slate-400'
+      }`}>{label}</Text>
+      <View className="flex-row items-end mb-0.5">
+        <Text className={`text-2xl font-black ${isSelected ? 'text-slate-900' : 'text-slate-700'}`}>{price}</Text>
+        <Text className="text-slate-400 text-xs mb-0.5 ml-0.5">/{period}</Text>
+      </View>
+      <Text className="text-slate-400 text-[11px]">{subtitle}</Text>
+    </TouchableOpacity>
+  );
+}
+
+// ─── Main Screen ───────────────────────────────────────────────────────────────
 
 export default function PaywallScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [selectedPlan, setSelectedPlan] = useState<'yearly' | 'monthly'>('yearly');
 
   const handleClose = () => {
     hapticImpact(Haptics.ImpactFeedbackStyle.Light);
@@ -25,51 +101,24 @@ export default function PaywallScreen() {
   };
 
   const features = [
-    {
-      title: 'Unlimited Shopping Lists',
-      description: 'Create as many lists as you need. Free: 5 lists.',
-      icon: <List size={24} color="#D4AF37" />},
-    {
-      title: '500 Items Per List',
-      description: 'Add up to 500 items per list. Free: 25 items.',
-      icon: <PackagePlus size={24} color="#D4AF37" />},
-    {
-      title: '20 Saved Stores',
-      description: 'Save up to 20 stores with geofence alerts. Free: 3 stores.',
-      icon: <MapPin size={24} color="#D4AF37" />},
-    {
-      title: 'Unlimited Smart Alerts',
-      description: 'No daily notification limits. Free: 5 per day.',
-      icon: <Bell size={24} color="#D4AF37" />},
-    {
-      title: 'Custom Geofence Radius',
-      description: 'Adjust radius from 50m to 1000m. Free: fixed 100m.',
-      icon: <Zap size={24} color="#D4AF37" />},
-    {
-      title: 'Quiet Hours & Schedules',
-      description: 'Mute notifications during set hours and schedule alerts.',
-      icon: <Clock size={24} color="#D4AF37" />},
-    {
-      title: 'Smart Notification Rules',
-      description: 'AI-powered alert filtering, priority alerts, and grouping.',
-      icon: <Sparkles size={24} color="#D4AF37" />},
-    {
-      title: 'Advanced Notification Controls',
-      description: 'Full control over notification behavior and preferences.',
-      icon: <SlidersHorizontal size={24} color="#D4AF37" />},
-    {
-      title: 'Future Premium Features',
-      description: 'Get every new premium feature as it launches.',
-      icon: <ShieldCheck size={24} color="#D4AF37" />},
+    { icon: <List size={16} color="#D4AF37" />, title: 'Unlimited Shopping Lists' },
+    { icon: <PackagePlus size={16} color="#D4AF37" />, title: '500 Items Per List' },
+    { icon: <MapPin size={16} color="#D4AF37" />, title: '20 Saved Stores' },
+    { icon: <Bell size={16} color="#D4AF37" />, title: 'Unlimited Smart Alerts' },
+    { icon: <Zap size={16} color="#D4AF37" />, title: 'Custom Geofence Radius' },
+    { icon: <Clock size={16} color="#D4AF37" />, title: 'Quiet Hours & Schedules' },
+    { icon: <Sparkles size={16} color="#D4AF37" />, title: 'Smart Notification Rules' },
+    { icon: <SlidersHorizontal size={16} color="#D4AF37" />, title: 'Advanced Controls' },
+    { icon: <ShieldCheck size={16} color="#D4AF37" />, title: 'All Future Features' },
   ];
 
   return (
     <View className="flex-1 bg-[#F2F2F7]">
-      {/* Background Gradient Effect */}
+      {/* Subtle top glow */}
       <LinearGradient
-        colors={['rgba(212, 175, 55, 0.1)', 'transparent']}
+        colors={['rgba(212, 175, 55, 0.06)', 'transparent']}
         start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 0.4 }}
+        end={{ x: 0.5, y: 0.5 }}
         className="absolute w-full h-full"
       />
 
@@ -82,147 +131,165 @@ export default function PaywallScreen() {
           onPress={handleClose}
           className="h-8 w-8 rounded-full bg-slate-200/80 items-center justify-center"
         >
-          <X size={20} color="#64748b" />
+          <X size={18} color="#64748b" />
         </TouchableOpacity>
       </View>
 
       <ScrollView
         contentContainerStyle={{
-          paddingTop: insets.top + 60,
-          paddingBottom: insets.bottom + 120,
-          paddingHorizontal: 24}}
+          paddingTop: insets.top + 56,
+          paddingBottom: insets.bottom + 140,
+          paddingHorizontal: 24,
+        }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header Icon */}
+        {/* Hero Icon */}
         <Animated.View
-          entering={FadeInDown.duration(600).springify()}
-          className="items-center mb-6"
+          entering={FadeInDown.duration(500).springify()}
+          className="items-center mb-5"
         >
-          <View className="h-20 w-20 rounded-full bg-[#D4AF37]/10 items-center justify-center border border-[#D4AF37]/20">
-            <Sparkles size={40} color="#D4AF37" fill="#D4AF37" />
+          <View className="h-20 w-20 rounded-full items-center justify-center">
+            <LinearGradient
+              colors={['rgba(212, 175, 55, 0.15)', 'rgba(212, 175, 55, 0.03)']}
+              className="absolute w-full h-full rounded-full"
+            />
+            <Crown size={36} color="#D4AF37" />
           </View>
         </Animated.View>
 
         {/* Title */}
         <Animated.View
-          entering={FadeInDown.duration(600).delay(100).springify()}
+          entering={FadeInDown.duration(500).delay(80).springify()}
           className="items-center mb-2"
         >
-          <Text className="text-3xl font-extrabold text-slate-900 text-center">
-            Unlock GeoCart <Text className="text-[#D4AF37]">Pro</Text>
+          <Text className="text-[28px] font-extrabold text-slate-900 text-center tracking-tight">
+            Upgrade to <Text className="text-[#D4AF37]">Pro</Text>
           </Text>
         </Animated.View>
 
         {/* Subtitle */}
         <Animated.View
-          entering={FadeInDown.duration(600).delay(200).springify()}
-          className="items-center mb-10"
+          entering={FadeInDown.duration(500).delay(150).springify()}
+          className="items-center mb-8"
         >
-          <Text className="text-base text-slate-500 text-center px-4 leading-6">
-            Supercharge your shopping experience with more stores, unlimited alerts, and full notification control.
+          <Text className="text-[15px] text-slate-400 text-center leading-[22px] px-2">
+            Unlock the full potential of GeoCart with{'\n'}unlimited lists, stores, and smart alerts.
           </Text>
         </Animated.View>
 
-        {/* Features */}
-        <View className="gap-4 mb-10">
-          {features.map((feature, index) => (
-            <Animated.View
-              key={index}
-              entering={FadeInDown.duration(600)
-                .delay(300 + index * 80)
-                .springify()}
-            >
-              <View
-                className="flex-row items-center p-4 rounded-3xl border border-slate-200 bg-white/60"
-                style={{ overflow: 'hidden' }}
-              >
-                <BlurView
-                  intensity={Platform.OS === 'ios' ? 20 : 60}
-                  tint="light"
-                  className="absolute w-full h-full"
-                />
-                <View className="h-12 w-12 rounded-2xl bg-[#D4AF37]/10 items-center justify-center mr-4 border border-[#D4AF37]/20">
-                  {feature.icon}
-                </View>
-                <View className="flex-1">
-                  <Text className="text-slate-900 font-bold text-base mb-1">
-                    {feature.title}
-                  </Text>
-                  <Text className="text-slate-500 text-sm">
-                    {feature.description}
-                  </Text>
-                </View>
-              </View>
-            </Animated.View>
-          ))}
-        </View>
-
-        {/* Pricing Card */}
+        {/* Features Card */}
         <Animated.View
-          entering={FadeInDown.duration(600).delay(900).springify()}
-          className="mb-8"
+          entering={FadeInDown.duration(500).delay(220).springify()}
+          className="bg-white border border-slate-100 rounded-3xl px-5 py-2 mb-6"
         >
-          <LinearGradient
-            colors={['#D4AF37', '#997a15']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            className="p-[2px]"
-            style={{ borderRadius: 24 }}
-          >
-            <View className="bg-white p-5 items-center" style={{ borderRadius: 22 }}>
-              <Text className="text-[#D4AF37] font-bold text-sm tracking-widest uppercase mb-2">
-                Yearly Plan
-              </Text>
-              <View className="flex-row items-end mb-1">
-                <Text className="text-4xl font-black text-slate-900">$29.99</Text>
-                <Text className="text-slate-500 text-base mb-1 ml-1">/year</Text>
-              </View>
-              <Text className="text-slate-500 text-sm mt-1">
-                Just $2.50 per month. Cancel anytime.
-              </Text>
+          {features.map((feature, index) => (
+            <View
+              key={index}
+              className={index < features.length - 1 ? 'border-b border-slate-50' : ''}
+            >
+              <FeatureRow
+                icon={feature.icon}
+                title={feature.title}
+                delay={280 + index * 40}
+              />
             </View>
-          </LinearGradient>
+          ))}
+        </Animated.View>
+
+        {/* Plan Selector */}
+        <Animated.View
+          entering={FadeInDown.duration(500).delay(600).springify()}
+          className="flex-row gap-3 mb-4"
+        >
+          <PlanOption
+            label="Yearly"
+            price="$29.99"
+            period="year"
+            subtitle="$2.50/mo · Save 58%"
+            isSelected={selectedPlan === 'yearly'}
+            onPress={() => {
+              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+              setSelectedPlan('yearly');
+            }}
+            badge="Best Value"
+          />
+          <PlanOption
+            label="Monthly"
+            price="$5.99"
+            period="month"
+            subtitle="Billed monthly"
+            isSelected={selectedPlan === 'monthly'}
+            onPress={() => {
+              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+              setSelectedPlan('monthly');
+            }}
+          />
+        </Animated.View>
+
+        {/* Trial note */}
+        <Animated.View
+          entering={FadeInDown.duration(500).delay(680).springify()}
+          className="items-center mb-2"
+        >
+          <Text className="text-[12px] text-slate-400 text-center">
+            Start with a 7-day free trial · Cancel anytime
+          </Text>
         </Animated.View>
       </ScrollView>
 
       {/* Fixed Bottom CTA */}
       <Animated.View
-        entering={FadeIn.duration(800).delay(1100)}
-        className="absolute bottom-0 w-full px-6 bg-white border-t border-slate-100"
+        entering={FadeIn.duration(600).delay(800)}
+        className="absolute bottom-0 w-full px-6 bg-[#F2F2F7]"
         style={{ paddingBottom: Math.max(insets.bottom, 24), paddingTop: 16 }}
       >
+        {/* Subtle fade overlay behind CTA */}
+        <LinearGradient
+          colors={['transparent', '#F2F2F7']}
+          className="absolute -top-8 left-0 right-0 h-8"
+        />
         <TouchableOpacity
           onPress={handleSubscribe}
-          activeOpacity={0.8}
-          className="w-full shadow-sm"
-          style={{ borderRadius: 34 }}
+          activeOpacity={0.85}
+          className="w-full"
+          style={{ borderRadius: 30 }}
         >
           <LinearGradient
             colors={['#D4AF37', '#B38B22']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             className="w-full"
-            style={{ paddingVertical: 18, borderRadius: 34, alignItems: 'center', justifyContent: 'center' }}
+            style={{
+              paddingVertical: 17,
+              borderRadius: 30,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            <Text className="text-[#1e1e1e] font-bold" style={{ fontSize: 18, lineHeight: 24, textAlign: 'center' }}>
-              Start 7-Day Free Trial
+            <Text
+              className="text-white font-bold"
+              style={{ fontSize: 17, lineHeight: 22, textAlign: 'center' }}
+            >
+              Start Free Trial
             </Text>
           </LinearGradient>
         </TouchableOpacity>
-        <View className="flex-row justify-center mt-4 gap-4">
+        <View className="flex-row justify-center mt-3.5 gap-4">
           <TouchableOpacity>
-            <Text className="text-slate-400 text-xs">Terms of Service</Text>
+            <Text className="text-slate-500 text-[11px] font-medium">Terms</Text>
           </TouchableOpacity>
+          <Text className="text-slate-400 text-[11px]">·</Text>
           <TouchableOpacity>
-            <Text className="text-slate-400 text-xs">Privacy Policy</Text>
+            <Text className="text-slate-500 text-[11px] font-medium">Privacy</Text>
           </TouchableOpacity>
+          <Text className="text-slate-400 text-[11px]">·</Text>
           <TouchableOpacity
             onPress={() => {
               hapticImpact(Haptics.ImpactFeedbackStyle.Heavy);
               alert('Purchases Restored: Your Pro subscription has been successfully restored.');
             }}
           >
-            <Text className="text-slate-400 text-xs">Restore</Text>
+            <Text className="text-slate-500 text-[11px] font-medium">Restore</Text>
           </TouchableOpacity>
         </View>
       </Animated.View>

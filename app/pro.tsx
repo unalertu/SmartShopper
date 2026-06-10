@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -19,11 +19,6 @@ import {
   Crown,
   Zap,
   ShieldCheck,
-  Users,
-  Cloud,
-  Infinity,
-  CheckCircle2,
-  CreditCard,
   CalendarDays,
   ExternalLink,
   MapPin,
@@ -32,37 +27,25 @@ import {
   SlidersHorizontal,
   List,
   PackagePlus,
+  Check,
+  CreditCard,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { hapticImpact } from '../services/haptics';
-import { useSettingsStore } from '../store';
 
-// ─── Feature Item ──────────────────────────────────────────────────────────────
+// ─── Feature Row (compact) ─────────────────────────────────────────────────────
 
-function FeatureItem({
-  icon,
-  title,
-  description,
-  delay,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  delay: number;
-}) {
+function FeatureRow({ icon, title, delay }: { icon: React.ReactNode; title: string; delay: number }) {
   return (
     <Animated.View
-      entering={FadeInDown.duration(500).delay(delay).springify()}
-      className="flex-row items-center p-4"
+      entering={FadeInDown.duration(400).delay(delay).springify()}
+      className="flex-row items-center py-3"
     >
-      <View className="h-10 w-10 rounded-2xl bg-[#D4AF37]/10 items-center justify-center mr-4 border border-[#D4AF37]/20">
+      <View className="h-8 w-8 rounded-xl bg-[#D4AF37]/10 items-center justify-center mr-3">
         {icon}
       </View>
-      <View className="flex-1">
-        <Text className="text-[15px] font-semibold text-slate-900">{title}</Text>
-        <Text className="text-[12px] text-slate-400 mt-0.5">{description}</Text>
-      </View>
-      <CheckCircle2 size={18} color="#D4AF37" />
+      <Text className="text-[15px] font-medium text-slate-800 flex-1">{title}</Text>
+      <Check size={16} color="#D4AF37" strokeWidth={3} />
     </Animated.View>
   );
 }
@@ -86,7 +69,7 @@ function ManagementRow({
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={onPress ? 0.6 : 1}
-      className={`flex-row justify-between items-center p-4 ${!isLast ? 'border-b border-slate-50' : ''}`}
+      className={`flex-row justify-between items-center py-3 px-1 ${!isLast ? 'border-b border-slate-50' : ''}`}
     >
       <View className="flex-row items-center flex-1 pr-4">
         {icon}
@@ -109,51 +92,15 @@ export default function ProScreen() {
   const insets = useSafeAreaInsets();
 
   const features = [
-    {
-      icon: <List size={20} color="#D4AF37" />,
-      title: 'Unlimited Shopping Lists',
-      description: 'Create as many lists as you need',
-    },
-    {
-      icon: <PackagePlus size={20} color="#D4AF37" />,
-      title: '500 Items Per List',
-      description: 'Add up to 500 items per list',
-    },
-    {
-      icon: <MapPin size={20} color="#D4AF37" />,
-      title: '20 Saved Stores',
-      description: 'Save up to 20 stores with geofence alerts',
-    },
-    {
-      icon: <Bell size={20} color="#D4AF37" />,
-      title: 'Unlimited Smart Alerts',
-      description: 'No daily notification cap',
-    },
-    {
-      icon: <Zap size={20} color="#D4AF37" />,
-      title: 'Custom Geofence Radius',
-      description: 'Adjustable from 50m to 1000m',
-    },
-    {
-      icon: <Clock size={20} color="#D4AF37" />,
-      title: 'Quiet Hours & Schedules',
-      description: 'Mute notifications and schedule alerts',
-    },
-    {
-      icon: <Sparkles size={20} color="#D4AF37" />,
-      title: 'Smart Notification Rules',
-      description: 'AI-powered alert filtering and priority',
-    },
-    {
-      icon: <SlidersHorizontal size={20} color="#D4AF37" />,
-      title: 'Advanced Notification Controls',
-      description: 'Full control over notification behavior',
-    },
-    {
-      icon: <ShieldCheck size={20} color="#D4AF37" />,
-      title: 'Future Premium Features',
-      description: 'Get every new premium feature as it launches',
-    },
+    { icon: <List size={16} color="#D4AF37" />, title: 'Unlimited Shopping Lists' },
+    { icon: <PackagePlus size={16} color="#D4AF37" />, title: '500 Items Per List' },
+    { icon: <MapPin size={16} color="#D4AF37" />, title: '20 Saved Stores' },
+    { icon: <Bell size={16} color="#D4AF37" />, title: 'Unlimited Smart Alerts' },
+    { icon: <Zap size={16} color="#D4AF37" />, title: 'Custom Geofence Radius' },
+    { icon: <Clock size={16} color="#D4AF37" />, title: 'Quiet Hours & Schedules' },
+    { icon: <Sparkles size={16} color="#D4AF37" />, title: 'Smart Notification Rules' },
+    { icon: <SlidersHorizontal size={16} color="#D4AF37" />, title: 'Advanced Controls' },
+    { icon: <ShieldCheck size={16} color="#D4AF37" />, title: 'All Future Features' },
   ];
 
   const handleManageSubscription = () => {
@@ -182,42 +129,52 @@ export default function ProScreen() {
 
   return (
     <View className="flex-1 bg-[#F2F2F7]">
-      {/* Background Gradient */}
+      {/* Background Gradient Effect */}
       <LinearGradient
-        colors={['rgba(212, 175, 55, 0.08)', 'transparent']}
+        colors={['rgba(212, 175, 55, 0.06)', 'transparent']}
         start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 0.35 }}
+        end={{ x: 0.5, y: 0.5 }}
         className="absolute w-full h-full"
       />
+
+      {/* Header Back Button */}
+      <View
+        className="absolute z-10 w-full flex-row"
+        style={{ paddingTop: Math.max(insets.top, 20), paddingLeft: 20 }}
+      >
+        <TouchableOpacity
+          onPress={() => {
+            hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+            router.back();
+          }}
+          className="h-8 w-8 rounded-full bg-slate-200/80 items-center justify-center"
+        >
+          <ChevronLeft size={20} color="#64748b" />
+        </TouchableOpacity>
+      </View>
 
       <ScrollView
         contentContainerStyle={{
           paddingBottom: insets.bottom + 40,
-          paddingTop: insets.top + 8,
+          paddingTop: insets.top + 60,
+          paddingHorizontal: 24,
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
+        {/* Title */}
         <Animated.View
           entering={FadeInDown.duration(400).springify()}
-          className="flex-row items-center mx-6 mb-6"
+          className="items-center mb-6"
         >
-          <TouchableOpacity
-            onPress={() => {
-              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-              router.back();
-            }}
-            className="mr-3 h-10 w-10 rounded-full bg-white border border-slate-100 items-center justify-center"
-          >
-            <ChevronLeft size={22} color="#0f172a" />
-          </TouchableOpacity>
-          <Text className="text-2xl font-bold text-slate-900">GeoCart Pro</Text>
+          <Text className="text-3xl font-extrabold text-slate-900">
+            GeoCart <Text className="text-[#D4AF37]">Pro</Text>
+          </Text>
         </Animated.View>
 
         {/* Status Card */}
         <Animated.View
           entering={FadeInDown.duration(500).delay(100).springify()}
-          className="mx-6 mb-6"
+          className="mb-8"
         >
           <LinearGradient
             colors={['#D4AF37', '#B38B22']}
@@ -256,7 +213,7 @@ export default function ProScreen() {
         {/* Included Features */}
         <Animated.View
           entering={FadeInDown.duration(500).delay(200).springify()}
-          className="mx-6 mb-2"
+          className="mb-2"
         >
           <Text className="text-[13px] font-semibold text-slate-400 uppercase tracking-wider ml-2 mb-2">
             Included Features
@@ -265,18 +222,17 @@ export default function ProScreen() {
 
         <Animated.View
           entering={FadeInDown.duration(500).delay(250).springify()}
-          className="bg-white border border-slate-100 rounded-3xl mx-6 mb-6 p-2"
+          className="bg-white border border-slate-100 rounded-3xl mb-8 px-5 py-2"
         >
           {features.map((feature, index) => (
             <View
               key={index}
               className={index < features.length - 1 ? 'border-b border-slate-50' : ''}
             >
-              <FeatureItem
+              <FeatureRow
                 icon={feature.icon}
                 title={feature.title}
-                description={feature.description}
-                delay={300 + index * 60}
+                delay={300 + index * 40}
               />
             </View>
           ))}
@@ -285,7 +241,7 @@ export default function ProScreen() {
         {/* Manage Subscription */}
         <Animated.View
           entering={FadeInDown.duration(500).delay(500).springify()}
-          className="mx-6 mb-2"
+          className="mb-2"
         >
           <Text className="text-[13px] font-semibold text-slate-400 uppercase tracking-wider ml-2 mb-2">
             Manage
@@ -294,7 +250,7 @@ export default function ProScreen() {
 
         <Animated.View
           entering={FadeInDown.duration(500).delay(550).springify()}
-          className="bg-white border border-slate-100 rounded-3xl mx-6 mb-6 p-2"
+          className="bg-white border border-slate-100 rounded-3xl mb-8 px-4 py-2"
         >
           <ManagementRow
             icon={<CreditCard size={20} color="#64748b" />}
