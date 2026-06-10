@@ -511,7 +511,6 @@ export default function HomeScreen() {
           <Animated.View layout={LinearTransition.springify()} className="flex-row items-center justify-between mx-6 mb-3 mt-1">
             <View>
               <Text style={{ fontSize: 26, fontWeight: '800', letterSpacing: -0.6, color: '#0f172a' }}>Lists</Text>
-              <Text style={{ fontSize: 14, fontWeight: '500', color: '#94a3b8', marginTop: 2, letterSpacing: -0.1 }}>{shoppingLists.length === 0 ? 'No saved lists' : `${shoppingLists.length} saved list${shoppingLists.length !== 1 ? 's' : ''}`}</Text>
             </View>
             <View className="flex-row items-center gap-3">
               {shoppingLists.length > 3 && (
@@ -661,7 +660,6 @@ export default function HomeScreen() {
           <Animated.View layout={LinearTransition.springify()} className="flex-row items-center justify-between mx-6 mt-4 mb-3">
             <View>
               <Text style={{ fontSize: 26, fontWeight: '800', letterSpacing: -0.6, color: '#0f172a' }}>Shops</Text>
-              <Text style={{ fontSize: 14, fontWeight: '500', color: '#94a3b8', marginTop: 2, letterSpacing: -0.1 }}>{savedShops.length === 0 ? 'No saved shops' : `${savedShops.length} saved shop${savedShops.length !== 1 ? 's' : ''}`}</Text>
             </View>
             <View className="flex-row items-center gap-3">
               {savedShops.length > 3 && (

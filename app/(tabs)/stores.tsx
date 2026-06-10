@@ -1279,10 +1279,10 @@ export default function StoresScreen() {
               );
             })()}
 
-            <Animated.View layout={LinearTransition.springify()} style={{ marginTop: 0, marginBottom: 6 }}>
-              <Text style={{ fontSize: 26, fontWeight: '800', letterSpacing: -0.6, color: '#0f172a' }}>Shops</Text>
-              <Text style={{ fontSize: 14, fontWeight: '500', color: '#94a3b8', marginTop: 2, letterSpacing: -0.1 }}>
-                {markets.length > 0 ? `${markets.length} stores` : 'Searching nearby…'}
+            <Animated.View layout={LinearTransition.springify()} style={{ marginTop: 0, marginBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontSize: 26, fontWeight: '800', letterSpacing: -0.6, color: '#0f172a' }}>Saved Shops</Text>
+              <Text style={{ fontSize: 14, fontWeight: '500', color: '#94a3b8', letterSpacing: -0.1 }}>
+                {savedShops.length} {savedShops.length === 1 ? 'shop' : 'shops'}
               </Text>
             </Animated.View>
           </Animated.View>
