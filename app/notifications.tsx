@@ -229,18 +229,18 @@ export default function NotificationsScreen() {
       >
 
         {/* Subtitle */}
-        <Animated.View
-          entering={FadeInDown.duration(500).delay(50).springify()}
-          className="mx-8 mb-4"
-        >
-          <Text className="text-[13px] font-medium text-slate-400">
-            {notifications.length === 0
-              ? 'All caught up!'
-              : unreadCount > 0
-              ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`
-              : `${notifications.length} notification${notifications.length !== 1 ? 's' : ''}`}
-          </Text>
-        </Animated.View>
+        {notifications.length > 0 && (
+          <Animated.View
+            entering={FadeInDown.duration(500).delay(50).springify()}
+            className="mx-8 mb-4"
+          >
+            <Text className="text-[13px] font-medium text-slate-400">
+              {unreadCount > 0
+                ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`
+                : `${notifications.length} notification${notifications.length !== 1 ? 's' : ''}`}
+            </Text>
+          </Animated.View>
+        )}
 
         {/* Empty State */}
         {notifications.length === 0 && (
@@ -250,7 +250,7 @@ export default function NotificationsScreen() {
           >
             {/* Empty State Hero */}
             <View className="items-center justify-center py-6">
-              <View className="w-24 h-24 bg-slate-100 rounded-full items-center justify-center mb-5 border-[6px] border-white">
+              <View className="mb-5">
                 <Bell size={36} color="#0f172a" strokeWidth={1.5} />
               </View>
               <Text className="text-[22px] font-bold text-slate-900 tracking-tight mb-2">No notifications yet</Text>
