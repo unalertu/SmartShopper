@@ -61,13 +61,13 @@ function PlanOption({
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.7}
-      className={`flex-1 p-4 rounded-2xl border-2 ${
-        isSelected ? 'border-[#D4AF37] bg-[#D4AF37]/5' : 'border-slate-100 bg-white'
+      className={`flex-1 p-4 rounded-2xl border-2 bg-white ${
+        isSelected ? 'border-[#D4AF37]' : 'border-slate-100'
       }`}
     >
       {badge && (
-        <View className="absolute -top-2.5 right-3 bg-[#D4AF37] px-2.5 py-0.5 rounded-full">
-          <Text className="text-[9px] font-bold text-white uppercase tracking-wider">{badge}</Text>
+        <View className="absolute -top-4 right-2 bg-[#D4AF37] px-3 py-1 rounded-full">
+          <Text className="text-[13px] font-bold text-white uppercase tracking-wider">{badge}</Text>
         </View>
       )}
       <Text className={`text-[11px] font-semibold uppercase tracking-wider mb-1.5 ${
@@ -88,6 +88,12 @@ export default function PaywallScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [selectedPlan, setSelectedPlan] = useState<'yearly' | 'monthly'>('yearly');
+
+  // Pricing Logic
+  const monthlyPrice = 1.99;
+  const yearlyPrice = 19.99;
+  const savingsPercent = Math.round((1 - (yearlyPrice / (monthlyPrice * 12))) * 100);
+  const monthlyEquivalent = (yearlyPrice / 12).toFixed(2);
 
   const handleClose = () => {
     hapticImpact(Haptics.ImpactFeedbackStyle.Light);
@@ -195,45 +201,7 @@ export default function PaywallScreen() {
           ))}
         </Animated.View>
 
-        {/* Plan Selector */}
-        <Animated.View
-          entering={FadeInDown.duration(500).delay(600).springify()}
-          className="flex-row gap-3 mb-4"
-        >
-          <PlanOption
-            label="Yearly"
-            price="$29.99"
-            period="year"
-            subtitle="$2.50/mo · Save 58%"
-            isSelected={selectedPlan === 'yearly'}
-            onPress={() => {
-              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-              setSelectedPlan('yearly');
-            }}
-            badge="Best Value"
-          />
-          <PlanOption
-            label="Monthly"
-            price="$5.99"
-            period="month"
-            subtitle="Billed monthly"
-            isSelected={selectedPlan === 'monthly'}
-            onPress={() => {
-              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-              setSelectedPlan('monthly');
-            }}
-          />
-        </Animated.View>
 
-        {/* Trial note */}
-        <Animated.View
-          entering={FadeInDown.duration(500).delay(680).springify()}
-          className="items-center mb-2"
-        >
-          <Text className="text-[12px] text-slate-400 text-center">
-            Start with a 7-day free trial · Cancel anytime
-          </Text>
-        </Animated.View>
       </ScrollView>
 
       {/* Fixed Bottom CTA */}
@@ -247,6 +215,32 @@ export default function PaywallScreen() {
           colors={['transparent', '#F2F2F7']}
           className="absolute -top-8 left-0 right-0 h-8"
         />
+        <View className="flex-row gap-3 w-full mb-4">
+          <PlanOption
+            label="Monthly"
+            price={`$${monthlyPrice}`}
+            period="month"
+            subtitle="Billed monthly"
+            isSelected={selectedPlan === 'monthly'}
+            onPress={() => {
+              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+              setSelectedPlan('monthly');
+            }}
+          />
+          <PlanOption
+            label="Yearly"
+            price={`$${yearlyPrice}`}
+            period="year"
+            subtitle={`$${monthlyEquivalent}/mo · Save ${savingsPercent}%`}
+            isSelected={selectedPlan === 'yearly'}
+            onPress={() => {
+              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+              setSelectedPlan('yearly');
+            }}
+            badge={`Save ${savingsPercent}%`}
+          />
+        </View>
+
         <TouchableOpacity
           onPress={handleSubscribe}
           activeOpacity={0.85}
@@ -259,17 +253,14 @@ export default function PaywallScreen() {
             end={{ x: 1, y: 0 }}
             className="w-full"
             style={{
-              paddingVertical: 17,
+              paddingVertical: 18,
               borderRadius: 30,
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Text
-              className="text-white font-bold"
-              style={{ fontSize: 17, lineHeight: 22, textAlign: 'center' }}
-            >
-              Start Free Trial
+            <Text className="text-white font-bold" style={{ fontSize: 17 }}>
+              Continue with {selectedPlan === 'yearly' ? 'Yearly' : 'Monthly'}
             </Text>
           </LinearGradient>
         </TouchableOpacity>
