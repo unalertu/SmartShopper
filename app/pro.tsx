@@ -95,10 +95,9 @@ export default function ProScreen() {
     { icon: <List size={16} color="#D4AF37" />, title: 'Unlimited Shopping Lists' },
     { icon: <PackagePlus size={16} color="#D4AF37" />, title: '500 Items Per List' },
     { icon: <MapPin size={16} color="#D4AF37" />, title: '20 Saved Stores' },
-    { icon: <Bell size={16} color="#D4AF37" />, title: 'Unlimited Smart Alerts' },
+    { icon: <Bell size={16} color="#D4AF37" />, title: 'Unlimited Notifications' },
     { icon: <Zap size={16} color="#D4AF37" />, title: 'Custom Geofence Radius' },
     { icon: <Clock size={16} color="#D4AF37" />, title: 'Quiet Hours & Schedules' },
-    { icon: <Sparkles size={16} color="#D4AF37" />, title: 'Smart Notification Rules' },
     { icon: <SlidersHorizontal size={16} color="#D4AF37" />, title: 'Advanced Controls' },
     { icon: <ShieldCheck size={16} color="#D4AF37" />, title: 'All Future Features' },
   ];
@@ -184,7 +183,7 @@ export default function ProScreen() {
           >
             <View className="flex-row items-center mb-4" style={{ paddingHorizontal: 6 }}>
               <View className="h-14 w-14 rounded-2xl bg-white/20 items-center justify-center mr-4">
-                <Crown size={28} color="#FFFFFF" />
+                <Sparkles size={28} color="#FFFFFF" />
               </View>
               <View className="flex-1">
                 <View className="flex-row items-center gap-2 mb-1.5">

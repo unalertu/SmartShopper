@@ -104,10 +104,9 @@ export default function PaywallScreen() {
     { icon: <List size={16} color="#D4AF37" />, title: 'Unlimited Shopping Lists' },
     { icon: <PackagePlus size={16} color="#D4AF37" />, title: '500 Items Per List' },
     { icon: <MapPin size={16} color="#D4AF37" />, title: '20 Saved Stores' },
-    { icon: <Bell size={16} color="#D4AF37" />, title: 'Unlimited Smart Alerts' },
+    { icon: <Bell size={16} color="#D4AF37" />, title: 'Unlimited Notifications' },
     { icon: <Zap size={16} color="#D4AF37" />, title: 'Custom Geofence Radius' },
     { icon: <Clock size={16} color="#D4AF37" />, title: 'Quiet Hours & Schedules' },
-    { icon: <Sparkles size={16} color="#D4AF37" />, title: 'Smart Notification Rules' },
     { icon: <SlidersHorizontal size={16} color="#D4AF37" />, title: 'Advanced Controls' },
     { icon: <ShieldCheck size={16} color="#D4AF37" />, title: 'All Future Features' },
   ];
@@ -153,7 +152,7 @@ export default function PaywallScreen() {
               colors={['rgba(212, 175, 55, 0.15)', 'rgba(212, 175, 55, 0.03)']}
               className="absolute w-full h-full rounded-full"
             />
-            <Crown size={36} color="#D4AF37" />
+            <Sparkles size={36} color="#D4AF37" />
           </View>
         </Animated.View>
 
