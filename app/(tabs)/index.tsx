@@ -827,17 +827,19 @@ export default function HomeScreen() {
                     <Store size={18} color="#8b5cf6" strokeWidth={2.5} />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-[12px] font-semibold text-violet-500">{suggestedShop ? "Frequently visited" : "Nearest to you"}</Text>
-                    <Text className="text-[15px] font-bold text-violet-900 leading-tight mt-0.5">{suggestedShop ? suggestedShop.name : nearestShopName}</Text>
-                    {suggestedShop ? (
-                      <Text style={{ fontSize: 12, fontWeight: '500', color: '#8b5cf6', marginTop: 2 }} numberOfLines={1}>
-                        {suggestedShop.address === 'Unknown Address' ? 'Finding address...' : (suggestedShop.address || 'Saved Shop')}
-                      </Text>
-                    ) : nearestShopDistance ? (
-                      <Text style={{ fontSize: 12, fontWeight: '500', color: '#8b5cf6', marginTop: 2 }} numberOfLines={1}>
-                        {nearestShopDistance} away
-                      </Text>
-                    ) : null}
+                    <Text className="text-[15px] font-bold text-violet-900 leading-tight">{suggestedShop ? "Frequently visited" : "Nearest to you"}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                      <Text className="text-[13px] font-medium text-violet-700" numberOfLines={1} style={{ flexShrink: 1 }}>{suggestedShop ? suggestedShop.name : nearestShopName}</Text>
+                      {suggestedShop ? (
+                        <Text style={{ fontSize: 12, fontWeight: '500', color: '#8b5cf6', marginLeft: 6, flexShrink: 1 }} numberOfLines={1}>
+                          • {suggestedShop.address === 'Unknown Address' ? 'Finding address...' : (suggestedShop.address || 'Saved Shop')}
+                        </Text>
+                      ) : nearestShopDistance ? (
+                        <Text style={{ fontSize: 12, fontWeight: '500', color: '#8b5cf6', marginLeft: 6, flexShrink: 1 }} numberOfLines={1}>
+                          • {nearestShopDistance} away
+                        </Text>
+                      ) : null}
+                    </View>
                   </View>
                   <ChevronRight size={18} color="#c4b5fd" />
                 </TouchableOpacity>
