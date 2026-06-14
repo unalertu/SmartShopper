@@ -459,7 +459,7 @@ export default function HomeScreen() {
           style={{ paddingTop: insets.top + 8, paddingBottom: 4 }}
         >
           <View className="flex-row items-center gap-0">
-            <Image source={require('../../assets/images/app-logo.png')} style={{ width: 110, height: 110, marginLeft: -27, marginRight: -32, marginTop: -37, marginBottom: -37 }} resizeMode="contain" />
+            <Image source={require('../../assets/images/app-logo.png')} style={{ width: 90, height: 90, marginLeft: -17, marginRight: -22, marginTop: -27, marginBottom: -27 }} resizeMode="contain" />
             <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight">GeoCart</Text>
           </View>
           
