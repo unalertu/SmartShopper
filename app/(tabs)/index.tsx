@@ -510,17 +510,9 @@ export default function HomeScreen() {
           {/* 3. My Lists Section */}
           <Animated.View layout={LinearTransition.springify()} className="flex-row items-center justify-between mx-6 mb-3 mt-1">
             <View>
-              <Text style={{ fontSize: 26, fontWeight: '800', letterSpacing: -0.6, color: '#0f172a' }}>Lists</Text>
+              <Text style={{ fontSize: 22, fontWeight: '800', letterSpacing: -0.6, color: '#0f172a' }}>Lists</Text>
             </View>
             <View className="flex-row items-center gap-3">
-              {shoppingLists.length > 3 && (
-                <TouchableOpacity
-                  activeOpacity={0.6}
-                  onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.navigate('/lists'); }}
-                >
-                  <Text className="text-[12px] font-semibold text-slate-400">See All</Text>
-                </TouchableOpacity>
-              )}
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={handlePresentModalPress}
@@ -659,17 +651,9 @@ export default function HomeScreen() {
           {/* 4. My Shops Section */}
           <Animated.View layout={LinearTransition.springify()} className="flex-row items-center justify-between mx-6 mt-4 mb-3">
             <View>
-              <Text style={{ fontSize: 26, fontWeight: '800', letterSpacing: -0.6, color: '#0f172a' }}>Shops</Text>
+              <Text style={{ fontSize: 22, fontWeight: '800', letterSpacing: -0.6, color: '#0f172a' }}>Shops</Text>
             </View>
             <View className="flex-row items-center gap-3">
-              {savedShops.length > 3 && (
-                <TouchableOpacity
-                  activeOpacity={0.6}
-                  onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.navigate('/stores'); }}
-                >
-                  <Text className="text-[12px] font-semibold text-slate-400">See All</Text>
-                </TouchableOpacity>
-              )}
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Medium); router.push('/stores'); }}
