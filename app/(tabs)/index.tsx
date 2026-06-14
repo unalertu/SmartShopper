@@ -49,6 +49,16 @@ export default function HomeScreen() {
 
   const unreadCount = useNotificationsStore((state) => state.unreadCount());
 
+  const allShoppingItems = useShoppingListStore((state: any) => state.items);
+  const forgottenCount = useMemo(() => {
+    const unpurchased = allShoppingItems.filter((i: any) => !i.isPurchased);
+    const uniqueNames = new Set<string>();
+    for (const item of unpurchased) {
+      uniqueNames.add(item.name.trim().toLowerCase());
+    }
+    return uniqueNames.size;
+  }, [allShoppingItems]);
+
   const { templates, incrementUsage } = useQuickStartStore();
   const sortedTemplates = [...templates]
     .sort((a, b) => b.usageCount - a.usageCount)
@@ -843,10 +853,9 @@ export default function HomeScreen() {
                   <ShoppingBag size={18} color="#10b981" strokeWidth={2.5} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-[12px] font-semibold text-emerald-600">Weekly Routine</Text>
-                  <Text className="text-[15px] font-bold text-emerald-900 leading-tight mt-0.5">Most Purchased Items</Text>
+                  <Text className="text-[15px] font-bold text-emerald-900 leading-tight">Most Purchased Items</Text>
                 </View>
-                <Plus size={18} color="#34d399" strokeWidth={2.5} />
+                <ChevronRight size={18} color="#34d399" strokeWidth={2.5} />
               </TouchableOpacity>
 
               {/* Did you forget High-Value Card */}
@@ -859,10 +868,12 @@ export default function HomeScreen() {
                   <Lightbulb size={18} color="#d97706" strokeWidth={2.5} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-[12px] font-semibold text-amber-600">Pending Items</Text>
-                  <Text className="text-[15px] font-bold text-amber-900 leading-tight mt-0.5">Did you forget?</Text>
+                  <Text className="text-[15px] font-bold text-amber-900 leading-tight">Did you forget?</Text>
+                  {forgottenCount > 0 && (
+                    <Text className="text-[13px] font-medium text-amber-700 mt-0.5">{forgottenCount} {forgottenCount === 1 ? 'item' : 'items'}</Text>
+                  )}
                 </View>
-                <Plus size={18} color="#fbbf24" strokeWidth={2.5} />
+                <ChevronRight size={18} color="#fbbf24" strokeWidth={2.5} />
               </TouchableOpacity>
 
               {/* Seasonal High-Value Card */}
@@ -875,10 +886,9 @@ export default function HomeScreen() {
                   <SeasonalIcon size={18} color="#e11d48" strokeWidth={2.5} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-[12px] font-semibold text-rose-500">Seasonal</Text>
-                  <Text className="text-[15px] font-bold text-rose-900 leading-tight mt-0.5">{seasonalTitle}</Text>
+                  <Text className="text-[15px] font-bold text-rose-900 leading-tight">{seasonalTitle}</Text>
                 </View>
-                <Plus size={18} color="#fb7185" strokeWidth={2.5} />
+                <ChevronRight size={18} color="#fb7185" strokeWidth={2.5} />
               </TouchableOpacity>
               
             </View>

@@ -45,7 +45,8 @@ import {
   User,
   Sparkles,
   Globe,
-  Users} from 'lucide-react-native';
+  Users,
+  Calendar} from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import {
   useShoppingListStore,
@@ -557,6 +558,15 @@ export default function SettingsScreen() {
                 }}
               />
             )}
+            <SettingsRow
+              icon={<Calendar size={20} color="#64748b" />}
+              label="Calendar & Reminders"
+              sublabel="Coming in future updates"
+              onPress={() => {
+                hapticImpact(ImpactFeedbackStyle.Light);
+                Alert.alert('Coming Soon', 'Calendar and reminders integration will be available in future updates.');
+              }}
+            />
             <SettingsRow
               icon={<RefreshCw size={20} color="#64748b" />}
               label="Restore Purchases"
