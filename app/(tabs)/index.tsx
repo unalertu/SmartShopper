@@ -21,6 +21,7 @@ import AnimatedScreen from '../../components/AnimatedScreen';
 import RadarPinIcon from '../../components/RadarPinIcon';
 import StoreMarker from '../../components/StoreMarker';
 import CreateListSheet from '../../components/CreateListSheet';
+import { getSuggestionCard, SuggestionCard } from '@/constants/events';
 
 const getRelativeDate = (timestamp?: number): string => {
   if (!timestamp) return 'today';
@@ -46,6 +47,8 @@ export default function HomeScreen() {
   const [isNearStore, setIsNearStore] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
+
+  const suggestionCard = useMemo(() => getSuggestionCard(), []);
 
   const unreadCount = useNotificationsStore((state) => state.unreadCount());
 
@@ -349,25 +352,6 @@ export default function HomeScreen() {
 
   const suggestedShop = savedShops.length > 0 ? savedShops[0] : null;
 
-  // Seasonal Logic
-  const currentMonth = new Date().getMonth();
-  let seasonalTitle = "Winter Warmers";
-  let seasonalItems = ["Hot Chocolate", "Tea", "Marshmallows", "Soup"];
-  let SeasonalIcon = Snowflake;
-  if (currentMonth >= 2 && currentMonth <= 4) { // Spring
-    seasonalTitle = "Spring Cleaning";
-    seasonalItems = ["Trash Bags", "Sponges", "Window Cleaner", "Paper Towels"];
-    SeasonalIcon = Sparkles;
-  } else if (currentMonth >= 5 && currentMonth <= 7) { // Summer
-    seasonalTitle = "Summer BBQ";
-    seasonalItems = ["Burgers", "Hot Dogs", "Charcoal", "Soda"];
-    SeasonalIcon = Sun;
-  } else if (currentMonth >= 8 && currentMonth <= 10) { // Autumn
-    seasonalTitle = "Autumn Comforts";
-    seasonalItems = ["Pumpkins", "Cinnamon", "Apples", "Baking Flour"];
-    SeasonalIcon = Leaf;
-  }
-
   const handleCreateSuggestedList = (name: string) => {
     if (!canCreateList(isPro)) {
       Alert.alert(
@@ -412,8 +396,8 @@ export default function HomeScreen() {
           category: item.category
         });
       });
-    } else if (name === seasonalTitle) {
-      seasonalItems.forEach(itemName => {
+    } else if (suggestionCard && name === suggestionCard.name) {
+      suggestionCard.items.forEach(itemName => {
         useShoppingListStore.getState().addItem(listId, {
           name: itemName,
           quantity: 1,
@@ -878,17 +862,22 @@ export default function HomeScreen() {
                 <ChevronRight size={18} color="#fbbf24" strokeWidth={2.5} />
               </TouchableOpacity>
 
-              {/* Seasonal High-Value Card */}
+              {/* Suggestion Card: Event countdown or Seasonal */}
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={() => handleCreateSuggestedList(seasonalTitle)}
+                onPress={() => handleCreateSuggestedList(suggestionCard.name)}
                 className="bg-rose-50 border border-rose-100 rounded-[20px] px-4 py-4 flex-row items-center gap-3 w-full"
               >
                 <View className="w-9 h-9 rounded-full bg-rose-100 items-center justify-center">
-                  <SeasonalIcon size={18} color="#e11d48" strokeWidth={2.5} />
+                  <suggestionCard.icon size={18} color="#e11d48" strokeWidth={2.5} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-[15px] font-bold text-rose-900 leading-tight">{seasonalTitle}</Text>
+                  <Text className="text-[15px] font-bold text-rose-900 leading-tight">{suggestionCard.name}</Text>
+                  {suggestionCard.type === 'event' && suggestionCard.daysLeft !== undefined && (
+                    <Text className="text-[13px] font-medium text-rose-700 mt-0.5">
+                      {suggestionCard.daysLeft === 0 ? 'Today' : `${suggestionCard.daysLeft} ${suggestionCard.daysLeft === 1 ? 'day' : 'days'} left`}
+                    </Text>
+                  )}
                 </View>
                 <ChevronRight size={18} color="#fb7185" strokeWidth={2.5} />
               </TouchableOpacity>
