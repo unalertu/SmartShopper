@@ -55,7 +55,68 @@ export default function HomeScreen() {
     .map(t => t.name)
     .slice(0, 4);
   // Shared Zustand store for saved shops (synced with Stores page)
-  const { locations: savedShops, removeLocation, cachedMarkets, isFetchingMarkets } = useLocationStore();
+  const { locations: savedShops, removeLocation, updateLocation, cachedMarkets, isFetchingMarkets } = useLocationStore();
+
+  const checkedShops = useRef(new Set<string>());
+
+  // Fetch real addresses for shops saved with "Unknown Address" or raw format
+  useEffect(() => {
+    savedShops.forEach(async (shop) => {
+      if (checkedShops.current.has(shop.id)) return;
+
+      // Re-fetch if it's unknown, contains numbers, or doesn't have a comma (to upgrade old single-word addresses)
+      const needsUpdate = !shop.address || shop.address === 'Unknown Address' || /\d/.test(shop.address) || !shop.address.includes(',');
+      
+      if (needsUpdate) {
+        checkedShops.current.add(shop.id);
+        try {
+          const result = await Location.reverseGeocodeAsync({
+            latitude: shop.latitude,
+            longitude: shop.longitude
+          });
+          if (result && result.length > 0) {
+            const loc = result[0];
+            
+            // Collect all area-based descriptors (excluding street)
+            const candidates = [
+              loc.neighborhood,
+              loc.district,
+              loc.subregion,
+              loc.city
+            ].filter(Boolean) as string[];
+
+            // Remove duplicates and any parts containing numbers
+            const cleanCandidates = Array.from(new Set(candidates)).filter(c => !/\d/.test(c));
+
+            let cleanAddress = '';
+            if (cleanCandidates.length >= 2) {
+              cleanAddress = `${cleanCandidates[0]}, ${cleanCandidates[1]}`;
+            } else if (cleanCandidates.length === 1) {
+              cleanAddress = cleanCandidates[0];
+            }
+
+            // If forced to fall back to street, aggressively strip out numbers like '45A', 'Block 5', etc.
+            if (!cleanAddress) {
+              let fallback = loc.street || loc.name || 'Nearby Store';
+              fallback = fallback.replace(/\b\d+[a-zA-Z]*\b/g, '')
+                                 .replace(/Block\s*\d+/gi, '')
+                                 .replace(/Unit\s*\d+/gi, '')
+                                 .replace(/,\s*/g, ' ')
+                                 .replace(/\s+/g, ' ')
+                                 .trim();
+              cleanAddress = fallback.length > 2 ? fallback : 'Nearby Store';
+            }
+            
+            if (cleanAddress && cleanAddress !== shop.address) {
+              updateLocation(shop.id, { address: cleanAddress });
+            }
+          }
+        } catch (error) {
+          console.warn('Reverse geocode error for shop:', shop.name, error);
+        }
+      }
+    });
+  }, [savedShops, updateLocation]);
 
   // Haversine formula — returns distance in meters between two lat/lng points
   const haversineDistance = (
@@ -411,19 +472,14 @@ export default function HomeScreen() {
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.push('/notifications'); }}
-            className="w-[42px] h-[42px] bg-white rounded-full items-center justify-center"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.05,
-              shadowRadius: 8,
-              elevation: 2,
-            }}
+            style={{ padding: 8, marginRight: -8 }}
           >
-            <Bell size={20} color="#0f172a" />
-            {unreadCount > 0 && (
-              <View className="absolute top-[10px] right-[12px] w-[9px] h-[9px] bg-red-500 rounded-full border-[1.5px] border-white" />
-            )}
+            <View>
+              <Bell size={24} color="#0f172a" />
+              {unreadCount > 0 && (
+                <View style={{ position: 'absolute', top: -1, right: -1, width: 10, height: 10, backgroundColor: '#ef4444', borderRadius: 5, borderWidth: 1.5, borderColor: '#F2F2F7' }} />
+              )}
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -438,7 +494,7 @@ export default function HomeScreen() {
             <View className="flex-col">
               {/* Upper Tier: Dynamic Map Preview */}
               <TouchableOpacity activeOpacity={0.8} onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.navigate('/stores'); }}>
-                <View className="w-full h-60 rounded-t-[36px] overflow-hidden" pointerEvents="none">
+                <View className="w-full h-48 rounded-t-[36px] overflow-hidden" pointerEvents="none">
                   {userLocation ? (
                     <MapView
                       style={{ width: '100%', height: '100%' }}
@@ -725,7 +781,7 @@ export default function HomeScreen() {
                           </View>
                         )}
                       </View>
-                      <Text style={{ fontSize: 12, fontWeight: '500', color: '#94a3b8', marginTop: 2 }} numberOfLines={1}>{shop.address || 'Saved Shop'}</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '500', color: '#94a3b8', marginTop: 2 }} numberOfLines={1}>{shop.address === 'Unknown Address' ? 'Finding address...' : (shop.address || 'Saved Shop')}</Text>
                     </View>
                   </View>
                   <ChevronRight size={16} color="#cbd5e1" />
@@ -763,72 +819,67 @@ export default function HomeScreen() {
                   <View className="flex-1">
                     <Text className="text-[12px] font-semibold text-violet-500">{suggestedShop ? "Frequently visited" : "Nearest to you"}</Text>
                     <Text className="text-[15px] font-bold text-violet-900 leading-tight mt-0.5">{suggestedShop ? suggestedShop.name : nearestShopName}</Text>
+                    {suggestedShop ? (
+                      <Text style={{ fontSize: 12, fontWeight: '500', color: '#8b5cf6', marginTop: 2 }} numberOfLines={1}>
+                        {suggestedShop.address === 'Unknown Address' ? 'Finding address...' : (suggestedShop.address || 'Saved Shop')}
+                      </Text>
+                    ) : nearestShopDistance ? (
+                      <Text style={{ fontSize: 12, fontWeight: '500', color: '#8b5cf6', marginTop: 2 }} numberOfLines={1}>
+                        {nearestShopDistance} away
+                      </Text>
+                    ) : null}
                   </View>
                   <ChevronRight size={18} color="#c4b5fd" />
                 </TouchableOpacity>
               )}
 
-              {/* Grid Row for Time-based and Restock */}
-              <View className="flex-row gap-3">
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() => handleCreateSuggestedList(timeContextList)}
-                  className="flex-1 bg-blue-50 border border-blue-100 rounded-[20px] p-4 flex-col gap-3"
-                >
-                  <View className="w-9 h-9 rounded-full bg-blue-100 items-center justify-center">
-                    <Flame size={18} color="#3b82f6" strokeWidth={2.5} />
-                  </View>
-                  <View>
-                    <Text className="text-[12px] font-semibold text-blue-500">Quick Start</Text>
-                    <Text className="text-[15px] font-bold text-blue-900 leading-tight mt-0.5">{timeContextList}</Text>
-                  </View>
-                </TouchableOpacity>
+              {/* Most Purchased High-Value Card */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => handleCreateSuggestedList("Most Purchased")}
+                className="bg-emerald-50 border border-emerald-100 rounded-[20px] px-4 py-4 flex-row items-center gap-3 w-full"
+              >
+                <View className="w-9 h-9 rounded-full bg-emerald-100 items-center justify-center">
+                  <ShoppingBag size={18} color="#10b981" strokeWidth={2.5} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-[12px] font-semibold text-emerald-600">Weekly Routine</Text>
+                  <Text className="text-[15px] font-bold text-emerald-900 leading-tight mt-0.5">Most Purchased Items</Text>
+                </View>
+                <Plus size={18} color="#34d399" strokeWidth={2.5} />
+              </TouchableOpacity>
 
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() => handleCreateSuggestedList("Most Purchased")}
-                  className="flex-1 bg-emerald-50 border border-emerald-100 rounded-[20px] p-4 flex-col gap-3"
-                >
-                  <View className="w-9 h-9 rounded-full bg-emerald-100 items-center justify-center">
-                    <ShoppingBag size={18} color="#10b981" strokeWidth={2.5} />
-                  </View>
-                  <View>
-                    <Text className="text-[12px] font-semibold text-emerald-600">Weekly</Text>
-                    <Text className="text-[15px] font-bold text-emerald-900 leading-tight mt-0.5">Most Purchased</Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
+              {/* Did you forget High-Value Card */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => handleCreateSuggestedList("Did you forget?")}
+                className="bg-amber-50 border border-amber-100 rounded-[20px] px-4 py-4 flex-row items-center gap-3 w-full"
+              >
+                <View className="w-9 h-9 rounded-full bg-amber-100 items-center justify-center">
+                  <Lightbulb size={18} color="#d97706" strokeWidth={2.5} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-[12px] font-semibold text-amber-600">Pending Items</Text>
+                  <Text className="text-[15px] font-bold text-amber-900 leading-tight mt-0.5">Did you forget?</Text>
+                </View>
+                <Plus size={18} color="#fbbf24" strokeWidth={2.5} />
+              </TouchableOpacity>
 
-              {/* Grid Row 2 for Did You Forget and Seasonal */}
-              <View className="flex-row gap-3">
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() => handleCreateSuggestedList("Did you forget?")}
-                  className="flex-1 bg-amber-50 border border-amber-100 rounded-[20px] p-4 flex-col gap-3"
-                >
-                  <View className="w-9 h-9 rounded-full bg-amber-100 items-center justify-center">
-                    <Lightbulb size={18} color="#d97706" strokeWidth={2.5} />
-                  </View>
-                  <View>
-                    <Text className="text-[12px] font-semibold text-amber-600">Pending Items</Text>
-                    <Text className="text-[15px] font-bold text-amber-900 leading-tight mt-0.5">Did you forget?</Text>
-                  </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() => handleCreateSuggestedList(seasonalTitle)}
-                  className="flex-1 bg-rose-50 border border-rose-100 rounded-[20px] p-4 flex-col gap-3"
-                >
-                  <View className="w-9 h-9 rounded-full bg-rose-100 items-center justify-center">
-                    <SeasonalIcon size={18} color="#e11d48" strokeWidth={2.5} />
-                  </View>
-                  <View>
-                    <Text className="text-[12px] font-semibold text-rose-500">Seasonal</Text>
-                    <Text className="text-[15px] font-bold text-rose-900 leading-tight mt-0.5">{seasonalTitle}</Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
+              {/* Seasonal High-Value Card */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => handleCreateSuggestedList(seasonalTitle)}
+                className="bg-rose-50 border border-rose-100 rounded-[20px] px-4 py-4 flex-row items-center gap-3 w-full"
+              >
+                <View className="w-9 h-9 rounded-full bg-rose-100 items-center justify-center">
+                  <SeasonalIcon size={18} color="#e11d48" strokeWidth={2.5} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-[12px] font-semibold text-rose-500">Seasonal</Text>
+                  <Text className="text-[15px] font-bold text-rose-900 leading-tight mt-0.5">{seasonalTitle}</Text>
+                </View>
+                <Plus size={18} color="#fb7185" strokeWidth={2.5} />
+              </TouchableOpacity>
               
             </View>
           </Animated.View>
