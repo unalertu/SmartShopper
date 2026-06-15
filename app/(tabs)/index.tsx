@@ -460,7 +460,7 @@ export default function HomeScreen() {
         >
           <View className="flex-row items-center gap-0">
             <Image source={require('../../assets/images/app-logo.png')} style={{ width: 90, height: 90, marginLeft: -17, marginRight: -22, marginTop: -27, marginBottom: -27 }} resizeMode="contain" />
-            <Text className="text-[26px] font-extrabold text-slate-900 tracking-tight">GeoCart</Text>
+            <Text style={{ fontSize: 36, fontWeight: '700', letterSpacing: -0.8, color: '#0f172a' }}>GeoCart</Text>
           </View>
           
           <TouchableOpacity
@@ -560,7 +560,7 @@ export default function HomeScreen() {
           {/* 3. My Lists Section */}
           <Animated.View layout={LinearTransition.springify()} className="flex-row items-center justify-between mx-6 mb-3 mt-1">
             <View>
-              <Text style={{ fontSize: 22, fontWeight: '800', letterSpacing: -0.6, color: '#0f172a' }}>Lists</Text>
+              <Text style={{ fontSize: 28, fontWeight: '600', letterSpacing: -0.6, color: '#0f172a' }}>Lists</Text>
             </View>
             <View className="flex-row items-center gap-3">
               <TouchableOpacity
@@ -681,12 +681,12 @@ export default function HomeScreen() {
                         </View>
                         <View className="flex-1">
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            <Text style={{ fontSize: 15, fontWeight: '600', color: '#0f172a', letterSpacing: -0.3 }} numberOfLines={1}>{list.name}</Text>
+                            <Text style={{ fontSize: 16, fontWeight: '600', color: '#0f172a', letterSpacing: -0.3 }} numberOfLines={1}>{list.name}</Text>
                             <View style={{ backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1.5 }}>
                               <Text style={{ fontSize: 11, fontWeight: '600', color: '#64748b' }}>{list.count}</Text>
                             </View>
                           </View>
-                          <Text style={{ fontSize: 12, fontWeight: '500', color: '#94a3b8', marginTop: 2 }} numberOfLines={1}>Updated {getRelativeDate(list.createdAt)}</Text>
+                          <Text style={{ fontSize: 14, fontWeight: '400', color: '#64748b', marginTop: 2 }} numberOfLines={1}>Updated {getRelativeDate(list.createdAt)}</Text>
                         </View>
                       </View>
                       <ChevronRight size={16} color="#cbd5e1" />
@@ -701,7 +701,7 @@ export default function HomeScreen() {
           {/* 4. My Shops Section */}
           <Animated.View layout={LinearTransition.springify()} className="flex-row items-center justify-between mx-6 mt-4 mb-3">
             <View>
-              <Text style={{ fontSize: 22, fontWeight: '800', letterSpacing: -0.6, color: '#0f172a' }}>Shops</Text>
+              <Text style={{ fontSize: 28, fontWeight: '600', letterSpacing: -0.6, color: '#0f172a' }}>Shops</Text>
             </View>
             <View className="flex-row items-center gap-3">
               <TouchableOpacity
@@ -768,14 +768,14 @@ export default function HomeScreen() {
                     </View>
                     <View className="flex-1">
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Text style={{ fontSize: 15, fontWeight: '600', color: '#0f172a', letterSpacing: -0.3 }} numberOfLines={1}>{shop.name}</Text>
+                        <Text style={{ fontSize: 16, fontWeight: '600', color: '#0f172a', letterSpacing: -0.3 }} numberOfLines={1}>{shop.name}</Text>
                         {userLocation && (
                           <View style={{ backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1.5 }}>
-                            <Text style={{ fontSize: 11, fontWeight: '600', color: '#64748b' }}>{formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, shop.latitude, shop.longitude))}</Text>
+                            <Text style={{ fontSize: 13, fontWeight: '500', color: '#64748b' }}>{formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, shop.latitude, shop.longitude))}</Text>
                           </View>
                         )}
                       </View>
-                      <Text style={{ fontSize: 12, fontWeight: '500', color: '#94a3b8', marginTop: 2 }} numberOfLines={1}>{shop.address === 'Unknown Address' ? 'Finding address...' : (shop.address || 'Saved Shop')}</Text>
+                      <Text style={{ fontSize: 14, fontWeight: '400', color: '#64748b', marginTop: 2 }} numberOfLines={1}>{shop.address === 'Unknown Address' ? 'Finding address...' : (shop.address || 'Saved Shop')}</Text>
                     </View>
                   </View>
                   <ChevronRight size={16} color="#cbd5e1" />
@@ -789,8 +789,8 @@ export default function HomeScreen() {
           {/* 5. Suggestions Section */}
           <Animated.View layout={LinearTransition.springify()} className="mt-6 mb-2">
             <View className="px-6 mb-4">
-              <Text className="text-[22px] font-extrabold tracking-tight text-slate-900">Suggestions</Text>
-              <Text className="text-[14px] font-medium text-slate-500 mt-1">Based on your shopping habits</Text>
+              <Text style={{ fontSize: 28, fontWeight: '600', letterSpacing: -0.6, color: '#0f172a' }}>Suggestions</Text>
+              <Text style={{ fontSize: 14, fontWeight: '400', color: '#64748b', marginTop: 4 }}>Based on your shopping habits</Text>
             </View>
             <View className="px-6 gap-3 pb-4">
               {/* 1. Shop Card (Most Visited or Nearest) */}
