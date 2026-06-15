@@ -598,69 +598,10 @@ export default function HomeScreen() {
           {shoppingLists.length === 0 ? (
             <Animated.View layout={LinearTransition.springify()} className="mb-3 mt-1">
               {/* Inline Empty State */}
-              <View className="px-6 mb-4 flex-row items-center justify-between">
-                <View className="flex-row items-center gap-3">
-                  <View className="w-10 h-10 bg-slate-100/60 rounded-[10px] items-center justify-center">
-                    <ShoppingBag size={18} color="#64748b" />
-                  </View>
-                  <View>
-                    <Text className="text-[16px] font-semibold text-slate-900 tracking-tight">No lists yet</Text>
-                    <Text className="text-[13px] font-medium text-slate-500 mt-0.5">Create your first list</Text>
-                  </View>
-                </View>
-                
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={handlePresentModalPress}
-                  className="bg-slate-100 rounded-full px-3.5 py-2 flex-row items-center gap-1.5"
-                >
-                  <Plus size={14} color="#0f172a" strokeWidth={2.5} />
-                  <Text className="text-[#0f172a] text-[13px] font-bold">New List</Text>
-                </TouchableOpacity>
+              <View className="px-6 py-5 items-center justify-center">
+                <Text className="text-[16px] font-semibold text-slate-900 tracking-tight">No lists yet</Text>
+                <Text className="text-[13px] font-medium text-slate-400 mt-1">Create your first list</Text>
               </View>
-
-              {/* Quick Start Suggestions */}
-              <View className="flex-row items-center mb-3 px-6">
-                <Text className="text-[15px] font-medium text-slate-500 tracking-tight">Suggestions</Text>
-              </View>
-              
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false} 
-                contentContainerStyle={{ paddingHorizontal: 24, gap: 10, paddingBottom: 10 }}
-              >
-                {sortedTemplates.map((template) => (
-                  <TouchableOpacity
-                    key={template}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      if (!canCreateList(isPro)) {
-                        Alert.alert(
-                          'List Limit Reached',
-                          isPro
-                            ? `You've reached the maximum of ${getMaxLists(isPro)} shopping lists.`
-                            : `You've reached the free limit of ${FREE_TIER.maxLists} shopping lists. Upgrade to Pro for unlimited lists.`,
-                          isPro
-                            ? [{ text: 'OK' }]
-                            : [
-                                { text: 'OK', style: 'cancel' },
-                                { text: 'Upgrade to Pro', onPress: () => router.push('/paywall') },
-                              ]
-                        );
-                        return;
-                      }
-                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                      addList(template);
-                      incrementUsage(template);
-                    }}
-                    className="bg-white border border-slate-100 rounded-[16px] px-4 py-3 flex-row items-center gap-2"
-                    
-                  >
-                    <Plus size={16} color="#0f172a" strokeWidth={2.5} />
-                    <Text className="text-[14px] font-semibold text-slate-700">{template}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
             </Animated.View>
           ) : (
             <>
@@ -737,16 +678,10 @@ export default function HomeScreen() {
             </View>
           </Animated.View>
           {savedShops.length === 0 && (
-            <Animated.View layout={LinearTransition.springify()} className="mx-6 mb-4">
-              <View
-                className="rounded-[28px] p-6 items-center border border-dashed border-slate-200"
-                style={{ backgroundColor: '#f8fafc' }}
-              >
-                <View className="bg-white border border-slate-100 w-14 h-14 rounded-full items-center justify-center mb-4" >
-                  <Store size={24} color="#94a3b8" />
-                </View>
-                <Text className="text-[16px] font-semibold text-slate-600 tracking-tight">No saved shops yet</Text>
-                <Text className="text-[14px] font-medium text-slate-400 mt-1.5 text-center px-4">Tap Add to save favorite locations from the map</Text>
+            <Animated.View layout={LinearTransition.springify()} className="mb-3 mt-1">
+              <View className="px-6 py-5 items-center justify-center">
+                <Text className="text-[16px] font-semibold text-slate-900 tracking-tight">No saved shops yet</Text>
+                <Text className="text-[13px] font-medium text-slate-400 mt-1">Save shops from map</Text>
               </View>
             </Animated.View>
           )}
