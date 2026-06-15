@@ -1224,7 +1224,7 @@ export default function StoresScreen() {
 
             <Animated.View layout={LinearTransition.springify()} style={{ marginTop: 0, marginBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text style={{ fontSize: 28, fontWeight: '600', letterSpacing: -0.6, color: '#0f172a' }}>Saved Shops</Text>
-              <Text style={{ fontSize: 14, fontWeight: '500', color: '#94a3b8', letterSpacing: -0.1 }}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#64748b', letterSpacing: -0.1 }}>
                 {savedShops.length === 0 ? 'No shops' : `${savedShops.length} ${savedShops.length === 1 ? 'shop' : 'shops'}`}
               </Text>
             </Animated.View>
@@ -1361,11 +1361,10 @@ export default function StoresScreen() {
             );
           })}
 
-          {/* Hint/Placeholder Card — shown when fewer than 3 shops saved */}
+          {/* Hint/Placeholder Text — shown when fewer than 3 shops saved */}
           {savedShops.length > 0 && savedShops.length < 3 && (
-            <View style={styles.hintCard}>
-              <MapPin size={28} color="#BDBDBD" />
-              <Text style={styles.hintText}>Tap a map marker to add more shops</Text>
+            <View style={{ alignItems: 'center', marginVertical: 24 }}>
+              <Text style={{ fontSize: 14, fontWeight: '500', color: '#BDBDBD' }}>Tap a map marker to add more shops</Text>
             </View>
           )}
         </BottomSheetScrollView>
