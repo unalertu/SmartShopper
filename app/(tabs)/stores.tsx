@@ -1290,7 +1290,7 @@ export default function StoresScreen() {
           {savedShops.length === 0 && (
             <View style={styles.emptyState}>
               <View style={styles.emptyIcon}>
-                <Store size={26} color="#cbd5e1" strokeWidth={1.5} />
+                <Store size={26} color="#475569" strokeWidth={1.5} />
               </View>
               <Text style={styles.emptyTitle}>No saved shops yet</Text>
               <Text style={styles.emptySub}>Tap a shop marker to save it</Text>
@@ -1506,18 +1506,19 @@ const styles = StyleSheet.create({
   /* ── Empty state ───────────────────────── */
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingTop: 10,
+    paddingBottom: 100,
     paddingHorizontal: 20},
   emptyIcon: {
     width: 60,
     height: 60,
     borderRadius: 9999,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F8F9FB',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#f1f5f9'},
+    borderColor: '#E5E7EB'},
   emptyTitle: {
     fontSize: 16,
     fontWeight: '600',
