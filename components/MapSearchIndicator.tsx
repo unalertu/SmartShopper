@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -83,10 +83,7 @@ export function MapSearchIndicator({ isVisible }: MapSearchIndicatorProps) {
       ]}
     >
       <View style={indicatorStyles.pill}>
-        <ActivityIndicator size="small" color="#64748b" style={{ marginRight: 10 }} />
-        <Text style={indicatorStyles.text}>
-          Searching this area…
-        </Text>
+        <ActivityIndicator size="small" color="#64748b" />
       </View>
     </Animated.View>
   );
@@ -96,14 +93,10 @@ const indicatorStyles = StyleSheet.create({
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 9999,
-    borderWidth: 0.5,
-    borderColor: 'rgba(226, 232, 240, 0.5)'},
-  text: {
-    color: '#64748b',
-    fontSize: 13,
-    fontWeight: '500',
-    letterSpacing: -0.2}});
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 1,
+    borderColor: 'rgba(241,245,249,0.8)'}});

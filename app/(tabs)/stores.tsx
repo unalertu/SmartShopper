@@ -858,17 +858,7 @@ export default function StoresScreen() {
         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#f8fafc' }]} />
       )}
 
-      {/* ── Animated Search Blur Overlay ── */}
-      <Animated.View
-        pointerEvents={isSearchFocused ? 'auto' : 'none'}
-        style={[StyleSheet.absoluteFillObject, { zIndex: 5 }, mapBlurAnimatedStyle]}
-      >
-        <BlurView intensity={18} tint="light" style={[StyleSheet.absoluteFillObject]}>
-          <TouchableWithoutFeedback onPress={dismissSearch}>
-            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(248,250,252,0.3)' }]} />
-          </TouchableWithoutFeedback>
-        </BlurView>
-      </Animated.View>
+
 
       {/* ── Settings Wheel Button ── */}
       <Animated.View
@@ -888,54 +878,7 @@ export default function StoresScreen() {
         </TouchableOpacity>
       </Animated.View>
 
-      {/* ── Floating Search Button / Pill ── */}
-      <Animated.View
-        style={[
-          styles.floatingSearchBtn,
-          { top: Math.max(20, insets.top) },
-          floatingSearchStyle,
-        ]}
-      >
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={isSearchFocused ? undefined : handleSearchTap}
-          style={styles.floatingSearchInner}
-        >
-          <Animated.View style={searchIconStyle}>
-            <Search size={18} color="#475569" strokeWidth={2.5} />
-          </Animated.View>
-          {isSearchFocused && (
-            <Animated.View style={[{ flexDirection: 'row', alignItems: 'center' }, searchInputOpacityStyle]}>
-              <TextInput
-                ref={searchInputRef}
-                style={styles.floatingSearchInput}
-                placeholder="Search shops nearby..."
-                placeholderTextColor="#94a3b8"
-                value={searchText}
-                onChangeText={setSearchText}
-                returnKeyType="search"
-              />
-              {searchText.length > 0 && (
-                <TouchableOpacity
-                  onPress={() => setSearchText('')}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <View style={styles.clearButton}>
-                    <X size={10} color="#64748b" strokeWidth={3} />
-                  </View>
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                onPress={dismissSearch}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                style={{ marginLeft: 8 }}
-              >
-                <X size={16} color="#94a3b8" strokeWidth={2} />
-              </TouchableOpacity>
-            </Animated.View>
-          )}
-        </TouchableOpacity>
-      </Animated.View>
+
 
       {/* Locate Me Button */}
       <Animated.View style={[styles.locateButtonContainer, animatedLocateStyle]}>
