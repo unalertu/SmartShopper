@@ -62,6 +62,23 @@ export default function HomeScreen() {
     return uniqueNames.size;
   }, [allShoppingItems]);
 
+  const topPurchasedNames = useMemo(() => {
+    const frequency: Record<string, number> = {};
+    allShoppingItems.forEach((item: any) => {
+      if (item.isPurchased && item.name) {
+        const nameKey = item.name.trim();
+        if (nameKey) {
+          frequency[nameKey] = (frequency[nameKey] || 0) + 1;
+        }
+      }
+    });
+    return Object.entries(frequency)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(entry => entry[0])
+      .join(', ');
+  }, [allShoppingItems]);
+
   const { templates, incrementUsage } = useQuickStartStore();
   const sortedTemplates = [...templates]
     .sort((a, b) => b.usageCount - a.usageCount)
@@ -829,21 +846,6 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               )}
 
-              {/* Most Purchased High-Value Card */}
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => handleCreateSuggestedList("Most Purchased")}
-                className="bg-emerald-50 border border-emerald-100 rounded-[20px] px-4 py-4 flex-row items-center gap-3 w-full"
-              >
-                <View className="w-9 h-9 rounded-full bg-emerald-100 items-center justify-center">
-                  <ShoppingBag size={18} color="#10b981" strokeWidth={2.5} />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-[15px] font-bold text-emerald-900 leading-tight">Most Purchased Items</Text>
-                </View>
-                <ChevronRight size={18} color="#34d399" strokeWidth={2.5} />
-              </TouchableOpacity>
-
               {/* Did you forget High-Value Card */}
               <TouchableOpacity
                 activeOpacity={0.7}
@@ -860,6 +862,24 @@ export default function HomeScreen() {
                   )}
                 </View>
                 <ChevronRight size={18} color="#fbbf24" strokeWidth={2.5} />
+              </TouchableOpacity>
+
+              {/* Most Purchased High-Value Card */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => handleCreateSuggestedList("Most Purchased")}
+                className="bg-emerald-50 border border-emerald-100 rounded-[20px] px-4 py-4 flex-row items-center gap-3 w-full"
+              >
+                <View className="w-9 h-9 rounded-full bg-emerald-100 items-center justify-center">
+                  <ShoppingBag size={18} color="#10b981" strokeWidth={2.5} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-[15px] font-bold text-emerald-900 leading-tight">Most Purchased Items</Text>
+                  {topPurchasedNames ? (
+                    <Text className="text-[13px] font-medium text-emerald-700 mt-0.5" numberOfLines={1}>{topPurchasedNames}</Text>
+                  ) : null}
+                </View>
+                <ChevronRight size={18} color="#34d399" strokeWidth={2.5} />
               </TouchableOpacity>
 
               {/* Suggestion Card: Event countdown or Seasonal */}
