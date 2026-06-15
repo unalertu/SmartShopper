@@ -51,7 +51,7 @@ const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelecte
 
           {/* Custom SVG pin shape */}
           <View style={styles.pinShadow}>
-            <Svg width={24} height={28} viewBox="0 0 24 28">
+            <Svg width={22} height={26} viewBox="0 0 24 28">
               <Path
                 d="M12 27 C12 27 2 19 2 11 C2 5.48 6.48 1 12 1 C17.52 1 22 5.48 22 11 C22 19 12 27 12 27 Z"
                 fill={isMuted ? "#94a3b8" : "#F2726F"}
@@ -78,7 +78,7 @@ const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelecte
         
         {/* Main marker capsule */}
         <View style={styles.markerCapsule}>
-          <ShoppingBasket size={16} color="#0f172a" strokeWidth={2.2} />
+          <ShoppingBasket size={15} color="#0f172a" strokeWidth={2.2} />
           {isMuted && (
             <View style={styles.muteSlashContainerUnsaved} pointerEvents="none">
               <View style={styles.muteSlash} />
@@ -94,8 +94,8 @@ const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelecte
 
 const styles = StyleSheet.create({
   wrapper: {
-    width: 70,
-    height: 70,
+    width: 65,
+    height: 65,
     alignItems: 'center',
     justifyContent: 'center'},
 
@@ -103,20 +103,20 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 52,
-    height: 52},
+    width: 48,
+    height: 48},
   glowRing: {
     position: 'absolute',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 41,
+    height: 41,
+    borderRadius: 20.5,
     backgroundColor: 'rgba(15, 23, 42, 0.08)',
     borderWidth: 1.5,
     borderColor: 'rgba(15, 23, 42, 0.12)'},
   markerCapsule: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 33,
+    height: 33,
+    borderRadius: 16.5,
     backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
@@ -128,16 +128,16 @@ const styles = StyleSheet.create({
   pinContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 48,
-    height: 48},
+    width: 44,
+    height: 44},
   pinGlow: {
     position: 'absolute',
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: 'rgba(242, 114, 111, 0.25)',
-    top: 7,
-    left: 11},
+    top: 6,
+    left: 10},
   pinShadow: {
 
   },

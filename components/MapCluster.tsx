@@ -25,15 +25,15 @@ const MapCluster: React.FC<MapClusterProps> = React.memo(({ pointCount, onPress 
   }, []);
 
   // Dynamic size based on count
-  const size = pointCount > 50 ? 44 : pointCount > 20 ? 40 : 36;
+  const size = pointCount > 50 ? 41 : pointCount > 20 ? 37 : 33;
 
   return (
     <Animated.View style={[styles.container, { transform: [{ scale }], opacity }]}>
       {/* Soft outer glow ring */}
-      <View style={[styles.outerRing, { width: size + 8, height: size + 8, borderRadius: (size + 8) / 2 }]} />
+      <View style={[styles.outerRing, { width: size + 7, height: size + 7, borderRadius: (size + 7) / 2 }]} />
       {/* Main bubble */}
       <View style={[styles.bubble, { width: size, height: size, borderRadius: size / 2 }]}>
-        <Text style={[styles.text, pointCount > 99 ? { fontSize: 11 } : null]}>{pointCount}</Text>
+        <Text style={[styles.text, pointCount > 99 ? { fontSize: 10 } : null]}>{pointCount}</Text>
       </View>
     </Animated.View>
   );
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: '#ffffff',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     letterSpacing: -0.3,
     fontVariant: ['tabular-nums']}});
