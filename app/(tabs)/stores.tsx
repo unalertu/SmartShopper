@@ -260,11 +260,11 @@ export default function StoresScreen() {
   const formatDistance = (meters: number): string => {
     if (distanceUnit === 'imperial') {
       const miles = meters / 1609.34;
-      if (miles < 0.1) return `${Math.round(meters * 3.28084)}ft away`;
-      return `${miles.toFixed(1)}mi away`;
+      if (miles < 0.1) return `${Math.round(meters * 3.28084)} ft`;
+      return `${miles.toFixed(1)} mi`;
     }
-    if (meters < 1000) return `${Math.round(meters)}m away`;
-    return `${(meters / 1000).toFixed(1)}km away`;
+    if (meters < 1000) return `${Math.round(meters)} m`;
+    return `${(meters / 1000).toFixed(1)} km`;
   };
 
 
@@ -1000,14 +1000,14 @@ export default function StoresScreen() {
                       </View>
                       <View className="flex-1">
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                          <Text style={{ fontSize: 15, fontWeight: '600', color: '#0f172a', letterSpacing: -0.3 }} numberOfLines={1}>{selectedShopToSave.name}</Text>
+                          <Text style={{ fontSize: 16, fontWeight: '600', color: '#0f172a', letterSpacing: -0.3 }} numberOfLines={1}>{selectedShopToSave.name}</Text>
                           {userLocation && (
                             <View style={{ backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1.5 }}>
-                              <Text style={{ fontSize: 11, fontWeight: '600', color: '#64748b' }}>{formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, selectedShopToSave.latitude, selectedShopToSave.longitude))}</Text>
+                              <Text style={{ fontSize: 13, fontWeight: '500', color: '#64748b' }}>{formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, selectedShopToSave.latitude, selectedShopToSave.longitude))}</Text>
                             </View>
                           )}
                         </View>
-                        <Text style={{ fontSize: 12, fontWeight: '500', color: '#94a3b8', marginTop: 2 }} numberOfLines={1}>{selectedShopToSave.address || 'Unknown Address'}</Text>
+                        <Text style={{ fontSize: 14, fontWeight: '400', color: '#64748b', marginTop: 2 }} numberOfLines={1}>{selectedShopToSave.address || 'Unknown Address'}</Text>
                       </View>
                     </View>
                   </View>
@@ -1148,14 +1148,14 @@ export default function StoresScreen() {
                       </View>
                       <View className="flex-1">
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                          <Text style={{ fontSize: 15, fontWeight: '600', color: '#0f172a', letterSpacing: -0.3 }} numberOfLines={1}>{loc.name}</Text>
+                          <Text style={{ fontSize: 16, fontWeight: '600', color: '#0f172a', letterSpacing: -0.3 }} numberOfLines={1}>{loc.name}</Text>
                           {userLocation && (
                             <View style={{ backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1.5 }}>
-                              <Text style={{ fontSize: 11, fontWeight: '600', color: '#64748b' }}>{formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, loc.latitude, loc.longitude))}</Text>
+                              <Text style={{ fontSize: 13, fontWeight: '500', color: '#64748b' }}>{formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, loc.latitude, loc.longitude))}</Text>
                             </View>
                           )}
                         </View>
-                        <Text style={{ fontSize: 12, fontWeight: '500', color: '#94a3b8', marginTop: 2 }} numberOfLines={1}>{loc.address || 'Saved Shop'}</Text>
+                        <Text style={{ fontSize: 14, fontWeight: '400', color: '#64748b', marginTop: 2 }} numberOfLines={1}>{loc.address || 'Saved Shop'}</Text>
                       </View>
                     </View>
                     <TouchableOpacity
