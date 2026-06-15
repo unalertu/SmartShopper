@@ -1282,7 +1282,7 @@ export default function StoresScreen() {
             <Animated.View layout={LinearTransition.springify()} style={{ marginTop: 0, marginBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text style={{ fontSize: 28, fontWeight: '600', letterSpacing: -0.6, color: '#0f172a' }}>Saved Shops</Text>
               <Text style={{ fontSize: 14, fontWeight: '500', color: '#94a3b8', letterSpacing: -0.1 }}>
-                {savedShops.length} {savedShops.length === 1 ? 'shop' : 'shops'}
+                {savedShops.length === 0 ? 'No shops' : `${savedShops.length} ${savedShops.length === 1 ? 'shop' : 'shops'}`}
               </Text>
             </Animated.View>
           </Animated.View>
@@ -1290,10 +1290,10 @@ export default function StoresScreen() {
           {savedShops.length === 0 && (
             <View style={styles.emptyState}>
               <View style={styles.emptyIcon}>
-                <Store size={32} color="#cbd5e1" />
+                <Store size={26} color="#cbd5e1" strokeWidth={1.5} />
               </View>
               <Text style={styles.emptyTitle}>No saved shops yet</Text>
-              <Text style={styles.emptySub}>Tap a marker on the map to save your favourite shops</Text>
+              <Text style={styles.emptySub}>Tap a shop marker to save it</Text>
             </View>
           )}
 
@@ -1509,25 +1509,27 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     paddingHorizontal: 20},
   emptyIcon: {
-    width: 72,
-    height: 72,
+    width: 60,
+    height: 60,
     borderRadius: 9999,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#f8fafc',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(226,232,240,0.8)'},
+    borderColor: '#f1f5f9'},
   emptyTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#64748b',
-    marginBottom: 6},
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0f172a',
+    letterSpacing: -0.3,
+    marginBottom: 4},
   emptySub: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: '#94a3b8',
     textAlign: 'center',
+    marginTop: 4,
     lineHeight: 20},
 
   /* ── Saved shop card extras ────────────── */

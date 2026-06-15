@@ -598,7 +598,7 @@ export default function HomeScreen() {
           {shoppingLists.length === 0 ? (
             <Animated.View layout={LinearTransition.springify()} className="mb-3 mt-1">
               {/* Inline Empty State */}
-              <View className="px-6 py-5 items-center justify-center">
+              <View className="px-6 pt-0 pb-6 items-center justify-center">
                 <Text className="text-[16px] font-semibold text-slate-900 tracking-tight">No lists yet</Text>
                 <Text className="text-[13px] font-medium text-slate-400 mt-1">Create your first list</Text>
               </View>
@@ -679,7 +679,7 @@ export default function HomeScreen() {
           </Animated.View>
           {savedShops.length === 0 && (
             <Animated.View layout={LinearTransition.springify()} className="mb-3 mt-1">
-              <View className="px-6 py-5 items-center justify-center">
+              <View className="px-6 pt-0 pb-6 items-center justify-center">
                 <Text className="text-[16px] font-semibold text-slate-900 tracking-tight">No saved shops yet</Text>
                 <Text className="text-[13px] font-medium text-slate-400 mt-1">Save shops from map</Text>
               </View>
