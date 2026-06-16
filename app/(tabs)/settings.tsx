@@ -503,7 +503,7 @@ export default function SettingsScreen() {
             layout={LinearTransition.springify()}
             className="flex-row items-center mx-6 mb-6"
           >
-            <Text className="text-3xl font-bold text-slate-900">
+            <Text style={{ fontSize: 28, fontWeight: '600', letterSpacing: -0.6, color: '#0f172a' }}>
               Settings
             </Text>
           </Animated.View>
