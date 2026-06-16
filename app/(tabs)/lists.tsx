@@ -150,18 +150,16 @@ export default function ListsScreen() {
             <Animated.View 
               layout={LinearTransition.springify()} 
               exiting={FadeOutUp.duration(200)}
-              className="mt-2 flex-1"
+              className="mt-12 flex-1"
             >
               {/* Empty State Hero */}
               <View className="items-center justify-center py-6">
-                <View className="w-24 h-24 bg-slate-100 rounded-full items-center justify-center mb-5 border-[6px] border-white"
-                  
-                >
-                  <ShoppingBasket size={36} color="#0f172a" strokeWidth={1.5} />
+                <View className="w-[60px] h-[60px] bg-[#F8F9FB] rounded-full items-center justify-center mb-4 border border-[#E5E7EB]">
+                  <ShoppingBasket size={28} color="#475569" strokeWidth={2} />
                 </View>
-                <Text className="text-[22px] font-bold text-slate-900 tracking-tight mb-2">No lists yet?</Text>
+                <Text className="text-[22px] font-bold text-slate-900 tracking-tight mb-2">No Lists Yet</Text>
                 <Text className="text-[15px] font-medium text-slate-500 text-center px-10 leading-6">
-                  Create your first list and we'll notify you when you are at the supermarket.
+                  Create your first shopping list and get notified when you're nearby.
                 </Text>
               </View>
             </Animated.View>
@@ -300,7 +298,7 @@ export default function ListsScreen() {
           </Animated.View>
 
           {/* Recent Activity Section */}
-          {(() => {
+          {shoppingLists.length > 0 && (() => {
             // Build activity events from lists and items
             const activityEvents: Array<{
               id: string;
