@@ -46,7 +46,6 @@ export default function HomeScreen() {
   const [nearestShopDistance, setNearestShopDistance] = useState<string | null>(null);
   const [isNearStore, setIsNearStore] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
-  const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
 
   const suggestionCard = useMemo(() => getSuggestionCard(), []);
 
@@ -85,7 +84,7 @@ export default function HomeScreen() {
     .map(t => t.name)
     .slice(0, 4);
   // Shared Zustand store for saved shops (synced with Stores page)
-  const { locations: savedShops, removeLocation, updateLocation, cachedMarkets, isFetchingMarkets } = useLocationStore();
+  const { locations: savedShops, removeLocation, updateLocation, cachedMarkets, isFetchingMarkets, userLocation, setUserLocation } = useLocationStore();
 
   const checkedShops = useRef(new Set<string>());
 

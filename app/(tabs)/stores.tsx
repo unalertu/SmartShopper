@@ -152,7 +152,7 @@ export default function StoresScreen() {
     };
   }, []);
 
-  const { locations, addLocation, removeLocation, cachedMarkets, setCachedMarkets, isFetchingMarkets, setIsFetchingMarkets, canAddLocation, mutedUnsavedShops, toggleMuteUnsavedShop, canMuteShop } = useLocationStore();
+  const { locations, addLocation, removeLocation, cachedMarkets, setCachedMarkets, isFetchingMarkets, setIsFetchingMarkets, canAddLocation, mutedUnsavedShops, toggleMuteUnsavedShop, canMuteShop, userLocation, setUserLocation } = useLocationStore();
   const { distanceUnit, isPro } = useSettingsStore();
   const savedShops = locations ?? [];
 
@@ -234,7 +234,6 @@ export default function StoresScreen() {
 
   const [initialRegion, setInitialRegion] = useState<any>(null);
   const [currentRegion, setCurrentRegion] = useState<any>(null);
-  const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
 
   // Clustering state
   const superclusterRef = useRef(new Supercluster({

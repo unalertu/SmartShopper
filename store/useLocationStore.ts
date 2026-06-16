@@ -50,6 +50,8 @@ interface LocationStoreState {
   isFetchingMarkets: boolean;
   fetchingRegionCenter: { latitude: number, longitude: number } | null;
   setIsFetchingMarkets: (isFetching: boolean, center?: { latitude: number, longitude: number } | null) => void;
+  userLocation: { latitude: number, longitude: number } | null;
+  setUserLocation: (location: { latitude: number, longitude: number } | null) => void;
 }
 
 const generateId = () =>
@@ -63,12 +65,14 @@ export const useLocationStore = create<LocationStoreState>()(
       cachedMarkets: [],
       isFetchingMarkets: false,
       fetchingRegionCenter: null,
+      userLocation: null,
 
       setCachedMarkets: (markets) => set({ cachedMarkets: markets }),
       setIsFetchingMarkets: (isFetching, center = null) => set({ 
         isFetchingMarkets: isFetching,
         fetchingRegionCenter: isFetching ? center : null
       }),
+      setUserLocation: (location) => set({ userLocation: location }),
 
       addLocation: (location) =>
         set((state) => ({
