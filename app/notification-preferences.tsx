@@ -104,7 +104,7 @@ function SettingsGroup({ children, title }: { children: React.ReactNode; title?:
     <>
       {title && (
         <View className="mx-8 mb-2">
-          <Text className="text-[13px] font-semibold text-slate-400 uppercase tracking-wider">{title}</Text>
+          <Text className="text-[13px] font-semibold text-slate-400 tracking-wider">{title}</Text>
         </View>
       )}
       <Animated.View
@@ -171,12 +171,6 @@ export default function NotificationPreferencesScreen() {
   return (
     <View className="flex-1 bg-[#F2F2F7]">
       <StatusBar style="dark" />
-      <Stack.Screen 
-        options={{
-          headerShown: false,
-          presentation: 'modal',
-        }} 
-      />
 
       <View style={{ paddingTop: insets.top }} className="px-4 pb-2 flex-row items-center">
         <TouchableOpacity
