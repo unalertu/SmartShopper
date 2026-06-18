@@ -76,8 +76,7 @@ function SettingsRow({
             <Text className="text-[15px] font-medium text-slate-900">{label}</Text>
             {isProOnly && (
               <View className="flex-row items-center gap-0.5 bg-[#D4AF37]/10 px-1.5 py-0.5 rounded border border-[#D4AF37]/20">
-                <Lock size={8} color="#D4AF37" />
-                <Text className="text-[8px] font-bold text-[#D4AF37] uppercase tracking-wider">Pro</Text>
+                <Text className="text-[8px] font-bold text-[#D4AF37] tracking-wider">Pro</Text>
               </View>
             )}
           </View>
@@ -325,25 +324,7 @@ export default function NotificationPreferencesScreen() {
           />
         </SettingsGroup>
 
-        {/* Upgrade Banner for Free Users */}
-        {!isPro && (
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => {
-              hapticImpact(ImpactFeedbackStyle.Light);
-              router.push('/paywall');
-            }}
-            className="mx-6 mb-6 bg-[#D4AF37]/5 border border-[#D4AF37]/15 rounded-3xl p-4 flex-row items-center"
-          >
-            <View className="h-10 w-10 rounded-2xl bg-[#D4AF37]/10 items-center justify-center mr-3 border border-[#D4AF37]/20">
-              <Sparkles size={20} color="#D4AF37" />
-            </View>
-            <View className="flex-1">
-              <Text className="text-[14px] font-semibold text-slate-900">Unlock Advanced Controls</Text>
-              <Text className="text-[12px] text-slate-400 mt-0.5">Upgrade to Pro for full notification customization</Text>
-            </View>
-          </TouchableOpacity>
-        )}
+
       </ScrollView>
 
       {/* Inline Confirmation Sheet */}

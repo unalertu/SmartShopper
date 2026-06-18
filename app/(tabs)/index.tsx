@@ -475,7 +475,6 @@ export default function HomeScreen() {
           style={{ paddingTop: insets.top + 8, paddingBottom: 4 }}
         >
           <View className="flex-row items-center gap-0">
-            <Image source={require('../../assets/images/app-logo.png')} style={{ width: 90, height: 90, marginLeft: -17, marginRight: -22, marginTop: -27, marginBottom: -27 }} resizeMode="contain" />
             <Text style={{ fontSize: 36, fontWeight: '700', letterSpacing: -0.8, color: '#0f172a' }}>GeoCart</Text>
           </View>
           
@@ -485,7 +484,7 @@ export default function HomeScreen() {
             style={{ padding: 8, marginRight: -8 }}
           >
             <View>
-              <Bell size={24} color="#0f172a" />
+              <Bell size={24} color="#000000" strokeWidth={2.2} />
               {unreadCount > 0 && (
                 <View style={{ position: 'absolute', top: -1, right: -1, width: 10, height: 10, backgroundColor: '#ef4444', borderRadius: 5, borderWidth: 1.5, borderColor: '#F2F2F7' }} />
               )}
