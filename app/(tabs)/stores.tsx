@@ -107,6 +107,43 @@ function openDirectionsSheet(latitude: number, longitude: number) {
   );
 }
 
+// Helper: reverse-geocode coordinates into a clean, human-readable address
+async function reverseGeocodeAddress(latitude: number, longitude: number): Promise<string> {
+  try {
+    const result = await Location.reverseGeocodeAsync({ latitude, longitude });
+    if (result && result.length > 0) {
+      const loc = result[0];
+      const candidates = [
+        loc.neighborhood,
+        loc.district,
+        loc.subregion,
+        loc.city
+      ].filter(Boolean) as string[];
+
+      const cleanCandidates = Array.from(new Set(candidates)).filter(c => !/\d/.test(c));
+
+      if (cleanCandidates.length >= 2) {
+        return `${cleanCandidates[0]}, ${cleanCandidates[1]}`;
+      } else if (cleanCandidates.length === 1) {
+        return cleanCandidates[0];
+      }
+
+      // Fallback to street, stripping numbers
+      let fallback = loc.street || loc.name || '';
+      fallback = fallback.replace(/\b\d+[a-zA-Z]*\b/g, '')
+                         .replace(/Block\s*\d+/gi, '')
+                         .replace(/Unit\s*\d+/gi, '')
+                         .replace(/,\s*/g, ' ')
+                         .replace(/\s+/g, ' ')
+                         .trim();
+      if (fallback) return fallback;
+    }
+  } catch (e) {
+    console.log('Reverse geocode failed:', e);
+  }
+  return '';
+}
+
 export default function StoresScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -812,6 +849,16 @@ export default function StoresScreen() {
                 setReadyCalloutId(null); // Hide any existing callout
                 setSelectedShopToSave(properties);
 
+                // Reverse-geocode the address in the background
+                if (!properties.address) {
+                  reverseGeocodeAddress(properties.latitude ?? latitude, properties.longitude ?? longitude).then((addr) => {
+                    const current = useLocalUIStore.getState().selectedShopToSave;
+                    if (current && current.id === properties.id) {
+                      useLocalUIStore.getState().setSelectedShopToSave({ ...current, address: addr || 'Unknown Address' });
+                    }
+                  });
+                }
+
                 isAnimatingRef.current = true;
                 // Keep the current zoom level if known, otherwise default to 0.01
                 const latDelta = currentRegion?.latitudeDelta || 0.01;
@@ -949,7 +996,7 @@ export default function StoresScreen() {
                             </View>
                           )}
                         </View>
-                        <Text style={{ fontSize: 14, fontWeight: '400', color: '#64748b', marginTop: 2 }} numberOfLines={1}>{selectedShopToSave.address || 'Unknown Address'}</Text>
+                        <Text style={{ fontSize: 14, fontWeight: '400', color: '#64748b', marginTop: 2 }} numberOfLines={1}>{selectedShopToSave.address || 'Finding address...'}</Text>
                       </View>
                     </View>
                   </View>
