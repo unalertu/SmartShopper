@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, MoreHorizontal, ShoppingBag, CheckCircle, Check, Clock, Trash2, Plus, Mic, ScanBarcode, Minus, AlignLeft } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
 import { useListsStore, useShoppingListStore, useSettingsStore } from '../../store';
 
@@ -17,13 +18,53 @@ export default function ListDetails() {
   // Modal visibility
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   
-  // Item entry states
   const [newItemText, setNewItemText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('General');
   const [quantity, setQuantity] = useState(1);
   const [selectedUnit, setSelectedUnit] = useState('pcs');
   const [note, setNote] = useState('');
   const [isNoteVisible, setIsNoteVisible] = useState(false);
+
+  const slideAnim = useRef(new Animated.Value(1000)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (isAddModalVisible) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          damping: 22,
+          stiffness: 320,
+          mass: 0.6,
+          useNativeDriver: true
+        })
+      ]).start();
+    }
+  }, [isAddModalVisible]);
+
+  const closeModal = () => {
+    Keyboard.dismiss();
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 1000,
+        duration: 200,
+        useNativeDriver: true
+      })
+    ]).start(() => {
+      setIsAddModalVisible(false);
+      resetModalState();
+    });
+  };
 
   // Button scale animation
   const buttonScale = useRef(new Animated.Value(0.95)).current;
@@ -90,14 +131,13 @@ export default function ListDetails() {
       return;
     }
 
-    hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
+    hapticNotification(Haptics.NotificationFeedbackType.Success);
     addItem(listId, {
       name: newItemText.trim(),
       quantity,
       unit: selectedUnit,
       category: selectedCategory});
-    resetModalState();
-    setIsAddModalVisible(false);
+    closeModal();
   };
 
   const handleDeleteList = () => {
@@ -282,19 +322,19 @@ export default function ListDetails() {
       </View>
 
       {/* 6. Add Item Modal */}
-      <Modal animationType="slide" transparent={true} visible={isAddModalVisible} onRequestClose={() => { resetModalState(); setIsAddModalVisible(false); }}>
+      <Modal animationType="none" transparent={true} visible={isAddModalVisible} onRequestClose={closeModal}>
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
         >
           {/* Background Dimmer */}
-          <View className="flex-1 justify-end bg-black/40">
-            <TouchableWithoutFeedback onPress={() => { resetModalState(); setIsAddModalVisible(false); }}>
+          <Animated.View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)', opacity: fadeAnim }}>
+            <TouchableWithoutFeedback onPress={closeModal}>
               <View className="absolute top-0 left-0 right-0 bottom-0" />
             </TouchableWithoutFeedback>
 
             {/* The White Bottom Sheet */}
-            <View className="bg-white w-full h-[85%] rounded-t-[24px] px-6 pt-6 flex-col" style={{ paddingBottom: insets.bottom > 0 ? insets.bottom + 24 : 32 }}>
+            <Animated.View className="bg-white w-full h-[85%] rounded-t-[24px] px-6 pt-6 flex-col" style={[{ transform: [{ translateY: slideAnim }] }, { paddingBottom: insets.bottom > 0 ? insets.bottom + 24 : 32 }]}>
               <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
               <View className="flex-1">
               {/* Drag Handle */}
@@ -307,7 +347,7 @@ export default function ListDetails() {
                 <TextInput
                   className="flex-1 text-4xl font-extrabold text-slate-900"
                   placeholder="e.g. Avocado"
-                  placeholderTextColor="#cbd5e1"
+                  placeholderTextColor="#94a3b8"
                   value={newItemText}
                   onChangeText={setNewItemText}
                   autoFocus={true}
@@ -318,8 +358,8 @@ export default function ListDetails() {
               </View>
 
               {/* Compact Controls (Quantity, Units, Note) */}
-              <View className="flex-row items-center mb-6 z-10">
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-6 px-6" contentContainerStyle={{ paddingRight: 48, gap: 10 }}>
+              <View className="flex-row items-center mb-6 z-10 relative -mx-6">
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-6" contentContainerStyle={{ paddingRight: 48, gap: 10 }}>
                   {/* Quantity */}
                   <View className="bg-slate-100 rounded-full px-3 py-2 flex-row items-center gap-3">
                     <TouchableOpacity onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); setQuantity(prev => Math.max(1, prev - 1)); }}>
@@ -357,6 +397,13 @@ export default function ListDetails() {
                     <Text className={`text-sm font-bold ml-1.5 ${isNoteVisible ? 'text-white' : 'text-slate-600'}`}>Note</Text>
                   </TouchableOpacity>
                 </ScrollView>
+                <LinearGradient
+                  colors={['rgba(255,255,255,0)', 'rgba(255,255,255,1)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  className="absolute right-0 top-0 bottom-0 w-8"
+                  pointerEvents="none"
+                />
               </View>
 
               {/* Collapsible Note Input */}
@@ -377,7 +424,7 @@ export default function ListDetails() {
               )}
 
               {/* Categories */}
-              <View className="mb-6 -mx-6 z-10">
+              <View className="mb-6 -mx-6 z-10 relative">
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" className="px-6" contentContainerStyle={{ paddingRight: 48, gap: 8 }}>
                   {categories.map((cat, index) => {
                     const isSelected = selectedCategory === cat;
@@ -395,6 +442,13 @@ export default function ListDetails() {
                     );
                   })}
                 </ScrollView>
+                <LinearGradient
+                  colors={['rgba(255,255,255,0)', 'rgba(255,255,255,1)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  className="absolute right-0 top-0 bottom-0 w-8"
+                  pointerEvents="none"
+                />
               </View>
 
               {/* Dynamic Quick Add */}
@@ -430,8 +484,8 @@ export default function ListDetails() {
               </Animated.View>
               </View>
               </TouchableWithoutFeedback>
-            </View>
-          </View>
+            </Animated.View>
+          </Animated.View>
         </KeyboardAvoidingView>
       </Modal>
       

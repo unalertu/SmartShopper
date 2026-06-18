@@ -1,15 +1,38 @@
 import React, { useRef, useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, Pressable } from 'react-native';
 import { FREE_TIER, getMaxLists } from '@/constants/tierConfig';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Menu, ChevronRight, Plus, X, ShoppingBasket, Sparkles, ListPlus, PackagePlus, Clock, Activity } from 'lucide-react-native';
+import { Menu, ChevronRight, Plus, X, ShoppingBasket, Sparkles, ListPlus, PackagePlus, Clock, Activity, CheckCircle, Trash2 } from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
 import { Swipeable } from 'react-native-gesture-handler';
-import Animated, { FadeInDown, FadeOutLeft, FadeOutUp, LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeOutLeft, FadeOutUp, LinearTransition, Keyframe, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+const ScalePressable = ({ children, onPress, className }: any) => {
+  const scale = useSharedValue(1);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return (
+    <AnimatedPressable
+      onPressIn={() => { scale.value = withSpring(0.92, { damping: 15, stiffness: 300 }); }}
+      onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
+      onPress={onPress}
+      className={className}
+      style={style}
+    >
+      {children}
+    </AnimatedPressable>
+  );
+};
+
+const PopIn = new Keyframe({
+  0: { opacity: 0, transform: [{ translateY: 20 }, { scale: 0.95 }] },
+  100: { opacity: 1, transform: [{ translateY: 0 }, { scale: 1 }] },
+});
 import { useTabBarScrollHandler } from '../../hooks/useTabBarScroll';
 import { useListsStore, useShoppingListStore, useQuickStartStore, useSettingsStore } from '../../store';
 import { useScrollToTop } from '@react-navigation/native';
@@ -203,9 +226,8 @@ export default function ListsScreen() {
                       layout={LinearTransition.springify()}
                     >
                       {row.map((template) => (
-                        <TouchableOpacity
+                        <ScalePressable
                           key={template}
-                          activeOpacity={0.7}
                           onPress={() => {
                             if (!canCreateList(isPro)) {
                               Alert.alert(
@@ -227,11 +249,10 @@ export default function ListsScreen() {
                             incrementUsage(template);
                           }}
                           className="bg-white border border-slate-100/70 rounded-[12px] px-3.5 py-2 flex-row items-center gap-1.5"
-                          
                         >
                           <Plus size={13} color="#94a3b8" strokeWidth={2.5} />
                           <Text className="text-[13px] font-medium text-slate-600">{template}</Text>
-                        </TouchableOpacity>
+                        </ScalePressable>
                       ))}
                     </Animated.View>
                   ));
@@ -249,7 +270,7 @@ export default function ListsScreen() {
               <Animated.View
                 key={list.id}
                 layout={LinearTransition.springify()}
-                entering={FadeInDown.springify().delay(index * 100)}
+                entering={PopIn.delay(index * 80).duration(300)}
                 exiting={FadeOutLeft.duration(200)}
               >
                   <Swipeable
@@ -290,7 +311,7 @@ export default function ListsScreen() {
                           <Text style={{ fontSize: 14, fontWeight: '400', color: '#64748b', marginTop: 2 }} numberOfLines={1}>Updated {getRelativeDate(list.createdAt)}</Text>
                         </View>
                       </View>
-                      <ChevronRight size={16} color="#cbd5e1" />
+                      <ChevronRight size={16} color="#94a3b8" />
                     </TouchableOpacity>
                   </Swipeable>
                 </Animated.View>
@@ -302,7 +323,7 @@ export default function ListsScreen() {
             // Build activity events from lists and items
             const activityEvents: Array<{
               id: string;
-              type: 'list_created' | 'item_added' | 'list_updated';
+              type: 'list_created' | 'item_added' | 'list_updated' | 'item_removed' | 'item_completed';
               title: string;
               subtitle: string;
               timestamp: number;
@@ -342,9 +363,13 @@ export default function ListsScreen() {
             const getActivityIcon = (type: string) => {
               switch (type) {
                 case 'list_created':
-                  return <ListPlus size={14} color="#334155" strokeWidth={2} />;
+                  return <ListPlus size={14} color="#10b981" strokeWidth={2.5} />;
                 case 'item_added':
-                  return <PackagePlus size={14} color="#475569" strokeWidth={2} />;
+                  return <PackagePlus size={14} color="#1e3a8a" strokeWidth={2.5} />;
+                case 'item_removed':
+                  return <Trash2 size={14} color="#ef4444" strokeWidth={2.5} />;
+                case 'item_completed':
+                  return <CheckCircle size={14} color="#10b981" strokeWidth={2.5} />;
                 default:
                   return <Clock size={14} color="#94a3b8" strokeWidth={2} />;
               }
@@ -352,8 +377,10 @@ export default function ListsScreen() {
 
             const getIconBg = (type: string) => {
               switch (type) {
-                case 'list_created': return 'bg-slate-100/70';
-                case 'item_added': return 'bg-slate-100/50';
+                case 'list_created': return 'bg-emerald-100/60';
+                case 'item_added': return 'bg-blue-100/60';
+                case 'item_removed': return 'bg-red-100/60';
+                case 'item_completed': return 'bg-emerald-100/60';
                 default: return 'bg-slate-50/60';
               }
             };

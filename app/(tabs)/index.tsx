@@ -648,7 +648,7 @@ export default function HomeScreen() {
                           <Text style={{ fontSize: 14, fontWeight: '400', color: '#64748b', marginTop: 2 }} numberOfLines={1}>Updated {getRelativeDate(list.createdAt)}</Text>
                         </View>
                       </View>
-                      <ChevronRight size={16} color="#cbd5e1" />
+                      <ChevronRight size={16} color="#94a3b8" />
                     </TouchableOpacity>
                   </Swipeable>
                 </Animated.View>
@@ -731,7 +731,7 @@ export default function HomeScreen() {
                       <Text style={{ fontSize: 14, fontWeight: '400', color: '#64748b', marginTop: 2 }} numberOfLines={1}>{shop.address === 'Unknown Address' ? 'Finding address...' : (shop.address || 'Saved Shop')}</Text>
                     </View>
                   </View>
-                  <ChevronRight size={16} color="#cbd5e1" />
+                  <ChevronRight size={16} color="#94a3b8" />
                 </TouchableOpacity>
               </Swipeable>
             </Animated.View>

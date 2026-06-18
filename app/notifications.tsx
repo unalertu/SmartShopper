@@ -187,27 +187,26 @@ export default function NotificationsScreen() {
       <StatusBar style="dark" />
 
       <View style={{ paddingTop: insets.top }} className="px-4 pb-2 flex-row items-center justify-between">
-        <View className="flex-row items-center">
-          <TouchableOpacity
-            onPress={() => {
-              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-              router.back();
-            }}
-            className="h-10 w-10 bg-white items-center justify-center rounded-full shadow-sm ml-2"
-          >
-            <ChevronLeft size={24} color="#0f172a" />
-          </TouchableOpacity>
-          <Text className="text-xl font-semibold text-slate-900 ml-4">Notifications</Text>
-        </View>
+        <TouchableOpacity
+          onPress={() => {
+            hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+            router.back();
+          }}
+          className="h-10 w-10 bg-white items-center justify-center rounded-full shadow-sm ml-2"
+        >
+          <ChevronLeft size={24} color="#0f172a" />
+        </TouchableOpacity>
 
         <View className="flex-row items-center gap-2 mr-2">
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={handleMarkAllRead}
-            className="h-10 w-10 bg-white items-center justify-center rounded-full shadow-sm"
-          >
-            <CheckCheck size={20} color="#3b82f6" />
-          </TouchableOpacity>
+          {notifications.length > 0 && (
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={handleMarkAllRead}
+              className="h-10 w-10 bg-white items-center justify-center rounded-full shadow-sm"
+            >
+              <CheckCheck size={20} color="#3b82f6" />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => {
@@ -223,10 +222,18 @@ export default function NotificationsScreen() {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: insets.bottom + 40, paddingTop: 20 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 40, paddingTop: 4 }}
         showsVerticalScrollIndicator={false}
         onScrollBeginDrag={() => closeAllSwipeables()}
       >
+
+        {/* Large Title */}
+        <Animated.View
+          entering={FadeInDown.duration(400).springify()}
+          className="px-8 mb-2"
+        >
+          <Text style={{ fontSize: 28, fontWeight: '600', letterSpacing: -0.6, color: '#0f172a' }}>Notifications</Text>
+        </Animated.View>
 
         {/* Subtitle */}
         {notifications.length > 0 && (
@@ -246,18 +253,57 @@ export default function NotificationsScreen() {
         {notifications.length === 0 && (
           <Animated.View
             entering={FadeInDown.duration(500).delay(100).springify()}
-            className="mt-2 flex-1"
+            className="flex-1"
+            style={{ paddingTop: 80 }}
           >
             {/* Empty State Hero */}
             <View className="items-center justify-center py-6">
               <View className="mb-5">
-                <Bell size={36} color="#0f172a" strokeWidth={1.5} />
+                <Bell size={44} color="#0f172a" strokeWidth={1.8} />
               </View>
               <Text className="text-[22px] font-bold text-slate-900 tracking-tight mb-2">No notifications yet</Text>
               <Text className="text-[15px] font-medium text-slate-500 text-center px-10 leading-6">
                 We'll notify you when you're near a saved store or when there are updates to your lists.
               </Text>
             </View>
+
+            {/* Info Card */}
+            <Animated.View
+              entering={FadeInDown.duration(500).delay(200).springify()}
+              className="bg-white border border-slate-100 rounded-3xl mx-6 mt-2 p-2"
+            >
+              <View className="px-4 pt-3 pb-2">
+                <Text className="text-[15px] font-semibold text-slate-500">What you'll be notified about</Text>
+              </View>
+              <View className="flex-row items-center p-4 border-b border-slate-50">
+                <View style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
+                  <MapPin size={20} color="#22c55e" />
+                </View>
+                <View className="ml-3 flex-shrink flex-1">
+                  <Text className="text-[15px] font-semibold text-slate-900">Nearby Stores</Text>
+                  <Text className="text-[12px] text-slate-400 mt-0.5">Get alerted when you're close to a saved shop</Text>
+                </View>
+              </View>
+              <View className="flex-row items-center p-4 border-b border-slate-50">
+                <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
+                  <ShoppingBag size={20} color="#3b82f6" />
+                </View>
+                <View className="ml-3 flex-shrink flex-1">
+                  <Text className="text-[15px] font-semibold text-slate-900">List Reminders</Text>
+                  <Text className="text-[12px] text-slate-400 mt-0.5">Reminders about your shopping lists</Text>
+                </View>
+              </View>
+              <View className="flex-row items-center p-4">
+                <View style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
+                  <Sparkles size={20} color="#8b5cf6" />
+                </View>
+                <View className="ml-3 flex-shrink flex-1">
+                  <Text className="text-[15px] font-semibold text-slate-900">Smart Updates</Text>
+                  <Text className="text-[12px] text-slate-400 mt-0.5">Helpful tips and important updates</Text>
+                </View>
+              </View>
+            </Animated.View>
+
           </Animated.View>
         )}
 
