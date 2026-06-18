@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getMaxLists } from '@/constants/tierConfig';
+import { useActivityStore } from "./useActivityStore";
 
 export interface ShoppingList {
   id: number;
@@ -44,12 +45,27 @@ export const useListsStore = create<ListsStoreState>()(
             ...state.lists,
           ],
         }));
+        useActivityStore.getState().logActivity({
+          type: 'list_created',
+          title: name,
+          subtitle: 'List created',
+          listId: newId,
+        });
         return newId;
       },
-      removeList: (id) =>
+      removeList: (id) => {
+        const listToRemove = get().lists.find((l) => l.id === id);
+        if (listToRemove) {
+          useActivityStore.getState().logActivity({
+            type: 'list_removed',
+            title: listToRemove.name,
+            subtitle: 'List deleted',
+          });
+        }
         set((state) => ({
           lists: state.lists.filter((list) => list.id !== id),
-        })),
+        }));
+      },
       updateListCount: (id, count) =>
         set((state) => ({
           lists: state.lists.map((list) =>

@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useListsStore } from "./useListsStore";
 import { getMaxItemsPerList } from '@/constants/tierConfig';
+import { useActivityStore } from "./useActivityStore";
 
 export interface ShoppingItem {
   id: string;
@@ -57,6 +58,12 @@ export const useShoppingListStore = create<ShoppingListState>()(
           const newItems = [newItem, ...state.items];
           const newCount = newItems.filter(i => i.listId === listId).length;
           useListsStore.getState().updateListCount(listId, newCount);
+          useActivityStore.getState().logActivity({
+            type: 'item_added',
+            title: item.name,
+            subtitle: 'Item added',
+            listId,
+          });
           return { items: newItems };
         }),
 
@@ -67,16 +74,33 @@ export const useShoppingListStore = create<ShoppingListState>()(
           if (itemToRemove) {
             const newCount = newItems.filter(i => i.listId === itemToRemove.listId).length;
             useListsStore.getState().updateListCount(itemToRemove.listId, newCount);
+            useActivityStore.getState().logActivity({
+              type: 'item_removed',
+              title: itemToRemove.name,
+              subtitle: 'Item removed',
+              listId: itemToRemove.listId,
+            });
           }
           return { items: newItems };
         }),
 
       togglePurchased: (id) =>
-        set((state) => ({
-          items: state.items.map((item) =>
-            item.id === id ? { ...item, isPurchased: !item.isPurchased } : item
-          ),
-        })),
+        set((state) => {
+          const targetItem = state.items.find(i => i.id === id);
+          if (targetItem && !targetItem.isPurchased) {
+            useActivityStore.getState().logActivity({
+              type: 'item_completed',
+              title: targetItem.name,
+              subtitle: 'Marked as purchased',
+              listId: targetItem.listId,
+            });
+          }
+          return {
+            items: state.items.map((item) =>
+              item.id === id ? { ...item, isPurchased: !item.isPurchased } : item
+            ),
+          };
+        }),
 
       updateItem: (id, updates) =>
         set((state) => ({
@@ -86,16 +110,50 @@ export const useShoppingListStore = create<ShoppingListState>()(
         })),
 
       clearPurchased: (listId) =>
-        set((state) => ({
-          items: state.items.filter((item) => 
-            listId ? (item.listId !== listId || !item.isPurchased) : !item.isPurchased
-          ),
-        })),
+        set((state) => {
+          const itemsToRemove = state.items.filter((item) => 
+            listId ? (item.listId === listId && item.isPurchased) : item.isPurchased
+          );
+          if (itemsToRemove.length > 0) {
+            useActivityStore.getState().logActivity({
+              type: 'purchased_cleared',
+              title: `Cleared ${itemsToRemove.length} purchased items`,
+              subtitle: 'Items removed',
+              listId,
+            });
+          }
+          return {
+            items: state.items.filter((item) => 
+              listId ? (item.listId !== listId || !item.isPurchased) : !item.isPurchased
+            ),
+          };
+        }),
 
       clearAll: (listId) => 
-        set((state) => ({ 
-          items: listId ? state.items.filter(item => item.listId !== listId) : [] 
-        })),
+        set((state) => {
+          if (listId) {
+            const itemsToRemove = state.items.filter((item) => item.listId === listId);
+            if (itemsToRemove.length > 0) {
+              useActivityStore.getState().logActivity({
+                type: 'list_cleared',
+                title: 'Cleared all items in list',
+                subtitle: `${itemsToRemove.length} items removed`,
+                listId,
+              });
+            }
+          } else {
+            if (state.items.length > 0) {
+              useActivityStore.getState().logActivity({
+                type: 'list_cleared',
+                title: 'Cleared all items',
+                subtitle: `${state.items.length} items removed`,
+              });
+            }
+          }
+          return { 
+            items: listId ? state.items.filter(item => item.listId !== listId) : [] 
+          };
+        }),
 
       getUnpurchasedCount: (listId) =>
         get().items.filter((item) => 

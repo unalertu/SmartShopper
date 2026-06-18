@@ -35,6 +35,7 @@ const PopIn = new Keyframe({
 });
 import { useTabBarScrollHandler } from '../../hooks/useTabBarScroll';
 import { useListsStore, useShoppingListStore, useQuickStartStore, useSettingsStore } from '../../store';
+import { useActivityStore } from '../../store/useActivityStore';
 import { useScrollToTop } from '@react-navigation/native';
 import CreateListSheet from '../../components/CreateListSheet';
 
@@ -65,6 +66,7 @@ export default function ListsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { lists: shoppingLists, addList, removeList, canCreateList } = useListsStore();
+  const activityEvents = useActivityStore((state) => state.activities);
   const { templates, incrementUsage } = useQuickStartStore();
   const { isPro } = useSettingsStore();
 
@@ -169,27 +171,8 @@ export default function ListsScreen() {
             </TouchableOpacity>
           </Animated.View>
 
-          {shoppingLists.length === 0 && (
-            <Animated.View 
-              layout={LinearTransition.springify()} 
-              exiting={FadeOutUp.duration(200)}
-              className="mt-12 flex-1"
-            >
-              {/* Empty State Hero */}
-              <View className="items-center justify-center py-6">
-                <View className="w-[60px] h-[60px] bg-[#F8F9FB] rounded-full items-center justify-center mb-4 border border-[#E5E7EB]">
-                  <ShoppingBasket size={28} color="#475569" strokeWidth={2} />
-                </View>
-                <Text className="text-[22px] font-bold text-slate-900 tracking-tight mb-2">No Lists Yet</Text>
-                <Text className="text-[15px] font-medium text-slate-500 text-center px-10 leading-6">
-                  Create your first shopping list and get notified when you're nearby.
-                </Text>
-              </View>
-            </Animated.View>
-          )}
-
           {/* Quick Start Section */}
-          <Animated.View layout={LinearTransition.springify()} className={`${shoppingLists.length === 0 ? 'mt-4' : 'mb-6'}`}>
+          <Animated.View layout={LinearTransition.springify()} className={`${shoppingLists.length === 0 ? 'mb-2' : 'mb-6'}`}>
             <View className="flex-row items-center justify-between mb-3 px-6">
               <View className="flex-row items-center gap-1.5">
                 <Sparkles size={14} color="#94a3b8" strokeWidth={2} />
@@ -261,6 +244,25 @@ export default function ListsScreen() {
             </ScrollView>
           </Animated.View>
 
+          {shoppingLists.length === 0 && (
+            <Animated.View 
+              layout={LinearTransition.springify()} 
+              exiting={FadeOutUp.duration(200)}
+              className="mt-12 flex-1"
+            >
+              {/* Empty State Hero */}
+              <View className="items-center justify-center py-6">
+                <View className="mb-4 mt-2">
+                  <ShoppingBasket size={44} color="#0f172a" strokeWidth={1.8} />
+                </View>
+                <Text className="text-[22px] font-bold text-slate-900 tracking-tight mb-2">No Lists Yet</Text>
+                <Text className="text-[15px] font-medium text-slate-500 text-center px-10 leading-6">
+                  Create your first shopping list and get notified when you're nearby.
+                </Text>
+              </View>
+            </Animated.View>
+          )}
+
           {shoppingLists.length > 0 && (
             <Animated.View layout={LinearTransition.springify()} className="h-[3px] bg-slate-200 mx-16 mb-5 rounded-full" />
           )}
@@ -319,45 +321,7 @@ export default function ListsScreen() {
           </Animated.View>
 
           {/* Recent Activity Section */}
-          {shoppingLists.length > 0 && (() => {
-            // Build activity events from lists and items
-            const activityEvents: Array<{
-              id: string;
-              type: 'list_created' | 'item_added' | 'list_updated' | 'item_removed' | 'item_completed';
-              title: string;
-              subtitle: string;
-              timestamp: number;
-              listId?: number;
-            }> = [];
-
-            // Add list creation events
-            shoppingLists.forEach((list) => {
-              if (list.createdAt) {
-                activityEvents.push({
-                  id: `list_${list.id}`,
-                  type: 'list_created',
-                  title: list.name,
-                  subtitle: 'List created',
-                  timestamp: list.createdAt,
-                  listId: list.id});
-              }
-            });
-
-            // Add item events from shopping list store
-            const allItems = useShoppingListStore.getState().items;
-            allItems.slice(0, 10).forEach((item) => {
-              const parentList = shoppingLists.find(l => l.id === item.listId);
-              activityEvents.push({
-                id: `item_${item.id}`,
-                type: 'item_added',
-                title: item.name,
-                subtitle: parentList ? `Added to ${parentList.name}` : 'Item added',
-                timestamp: item.createdAt,
-                listId: item.listId});
-            });
-
-            // Sort by most recent first
-            activityEvents.sort((a, b) => b.timestamp - a.timestamp);
+          {(shoppingLists.length > 0 || activityEvents.length > 0) && (() => {
             const recentEvents = showAllActivities ? activityEvents : activityEvents.slice(0, 5);
 
             const getActivityIcon = (type: string) => {
@@ -367,9 +331,13 @@ export default function ListsScreen() {
                 case 'item_added':
                   return <PackagePlus size={14} color="#1e3a8a" strokeWidth={2.5} />;
                 case 'item_removed':
+                case 'list_removed':
                   return <Trash2 size={14} color="#ef4444" strokeWidth={2.5} />;
                 case 'item_completed':
                   return <CheckCircle size={14} color="#10b981" strokeWidth={2.5} />;
+                case 'purchased_cleared':
+                case 'list_cleared':
+                  return <Sparkles size={14} color="#eab308" strokeWidth={2.5} />;
                 default:
                   return <Clock size={14} color="#94a3b8" strokeWidth={2} />;
               }
@@ -379,11 +347,25 @@ export default function ListsScreen() {
               switch (type) {
                 case 'list_created': return 'bg-emerald-100/60';
                 case 'item_added': return 'bg-blue-100/60';
-                case 'item_removed': return 'bg-red-100/60';
+                case 'item_removed':
+                case 'list_removed': return 'bg-red-100/60';
                 case 'item_completed': return 'bg-emerald-100/60';
+                case 'purchased_cleared':
+                case 'list_cleared': return 'bg-yellow-100/60';
                 default: return 'bg-slate-50/60';
               }
             };
+
+            const groupedEvents: { title: string; data: typeof recentEvents }[] = [];
+            recentEvents.forEach(event => {
+              const title = getRelativeDate(event.timestamp);
+              const group = groupedEvents.find(g => g.title === title);
+              if (group) {
+                group.data.push(event);
+              } else {
+                groupedEvents.push({ title, data: [event] });
+              }
+            });
 
             return (
               <Animated.View layout={LinearTransition.springify()} className="px-6 mt-6 mb-2">
@@ -413,33 +395,45 @@ export default function ListsScreen() {
                     <Text className="text-[13px] font-medium text-slate-400/80 text-center">Your recent actions will appear here</Text>
                   </View>
                 ) : (
-                  <View style={{ gap: 6 }}>
-                    {recentEvents.map((event, index) => (
-                      <Animated.View
-                        key={event.id}
-                        entering={FadeInDown.delay(index * 60).duration(300)}
-                      >
-                        <TouchableOpacity
-                          activeOpacity={0.7}
-                          onPress={() => {
-                            if (event.listId) {
-                              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                              router.push(`/list/${event.listId}`);
-                            }
-                          }}
-                          className="bg-white rounded-[14px] px-3 py-2.5 flex-row items-center border border-slate-100/60"
-                          
-                        >
-                          <View className={`w-7 h-7 ${getIconBg(event.type)} rounded-[8px] items-center justify-center mr-2.5`}>
-                            {getActivityIcon(event.type)}
-                          </View>
-                          <View className="flex-1 mr-2">
-                            <Text className="text-[14px] font-bold text-slate-800 tracking-tight" numberOfLines={1}>{event.title}</Text>
-                            <Text className="text-[11.5px] font-medium text-slate-400/80 mt-px" numberOfLines={1}>{event.subtitle}</Text>
-                          </View>
-                          <Text className="text-[10.5px] font-medium text-slate-400/50">{getRelativeDate(event.timestamp)}</Text>
-                        </TouchableOpacity>
-                      </Animated.View>
+                  <View style={{ gap: 16 }}>
+                    {groupedEvents.map((group, groupIndex) => (
+                      <View key={group.title} style={{ gap: 8 }}>
+                        <Text className="text-[12px] font-bold text-slate-400 uppercase tracking-wider pl-1">
+                          {group.title}
+                        </Text>
+                        <View style={{ gap: 6 }}>
+                          {group.data.map((event, index) => {
+                            const dateObj = new Date(event.timestamp);
+                            const timeStr = dateObj.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+                            return (
+                              <Animated.View
+                                key={event.id}
+                                entering={FadeInDown.delay((groupIndex * 5 + index) * 60).duration(300)}
+                              >
+                                <TouchableOpacity
+                                  activeOpacity={0.7}
+                                  onPress={() => {
+                                    if (event.listId) {
+                                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                                      router.push(`/list/${event.listId}`);
+                                    }
+                                  }}
+                                  className="bg-white rounded-[14px] px-3 py-2.5 flex-row items-center border border-slate-100/60"
+                                >
+                                  <View className={`w-7 h-7 ${getIconBg(event.type)} rounded-[8px] items-center justify-center mr-2.5`}>
+                                    {getActivityIcon(event.type)}
+                                  </View>
+                                  <View className="flex-1 mr-2">
+                                    <Text className="text-[14px] font-bold text-slate-800 tracking-tight" numberOfLines={1}>{event.title}</Text>
+                                    <Text className="text-[11.5px] font-medium text-slate-400/80 mt-px" numberOfLines={1}>{event.subtitle}</Text>
+                                  </View>
+                                  <Text className="text-[10.5px] font-medium text-slate-400/50">{timeStr}</Text>
+                                </TouchableOpacity>
+                              </Animated.View>
+                            );
+                          })}
+                        </View>
+                      </View>
                     ))}
                   </View>
                 )}
