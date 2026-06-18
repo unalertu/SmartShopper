@@ -120,8 +120,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
-    // Soft, premium shadow
-
+    // Prominent shadow so it is clearly visible without being clicked
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 8,
   },
 
   // ── Saved pin styles ──
