@@ -101,7 +101,7 @@ function SettingsRow({
       </View>
       <View className="flex-row items-center gap-1.5">
         {rightElement ||
-          (onPress && !isDanger && <ChevronRight size={20} color="#cbd5e1" />)}
+          (onPress && !isDanger && <ChevronRight size={16} color="#94a3b8" />)}
       </View>
     </TouchableOpacity>
   );
@@ -156,7 +156,7 @@ const ProStatusCard = React.memo(({ animatedStyle, isPro }: { animatedStyle: any
           {isPro ? 'Tap to manage your subscription' : 'Upgrade to unlock all features'}
         </Text>
       </View>
-      <ChevronRight size={18} color="#cbd5e1" />
+      <ChevronRight size={16} color="#94a3b8" />
     </View>
   </Animated.View>
 ));
@@ -588,7 +588,7 @@ export default function SettingsScreen() {
               rightElement={
                 <View className="flex-row items-center gap-1.5">
                   <Text className="text-[13px] font-medium text-slate-400">English</Text>
-                  <ChevronRight size={18} color="#cbd5e1" />
+                  <ChevronRight size={16} color="#94a3b8" />
                 </View>
               }
               onPress={() => {
@@ -600,7 +600,7 @@ export default function SettingsScreen() {
                 }
               }}
             />
-            <SettingsRow
+            {/* <SettingsRow
               icon={<SunMoon size={20} color="#64748b" />}
               label="Theme"
               onPress={handleThemePick}
@@ -609,10 +609,10 @@ export default function SettingsScreen() {
                   <Text className="text-[13px] font-medium text-slate-400">
                     {THEME_LABELS[theme]}
                   </Text>
-                  <ChevronRight size={18} color="#cbd5e1" />
+                  <ChevronRight size={16} color="#94a3b8" />
                 </View>
               }
-            />
+            /> */}
             <SettingsRow
               icon={<Ruler size={20} color="#64748b" />}
               label="Distance Unit"
@@ -624,7 +624,7 @@ export default function SettingsScreen() {
                   <Text className="text-[13px] font-medium text-slate-400">
                     {distanceUnit === 'metric' ? 'Metric' : 'Imperial'}
                   </Text>
-                  <ChevronRight size={18} color="#cbd5e1" />
+                  <ChevronRight size={16} color="#94a3b8" />
                 </View>
               }
             />

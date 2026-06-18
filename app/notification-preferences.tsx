@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, ScrollView, Switch, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, ScrollView, Switch, TouchableOpacity } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,43 @@ import { MapPin, List, Vibrate, ChevronLeft, Lock, Sparkles, Clock, Calendar, Za
 import { useSettingsStore } from '../store';
 import { hapticImpact } from '../services/haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
+import ConfirmationSheet, { ConfirmationSheetData } from '../components/ConfirmationSheet';
+
+// ── Per-setting descriptions for enable / disable states ──
+const SETTING_DESCRIPTIONS: Record<string, { enable: string; disable: string }> = {
+  'Saved Stores Only': {
+    enable: "You'll only receive notifications from stores you've saved instead of all nearby stores.",
+    disable: "You'll receive notifications from all nearby stores instead of only your saved stores.",
+  },
+  'Shopping List Reminders': {
+    enable: "You'll be notified when a nearby store has items on your shopping list.",
+    disable: "You won't receive reminders when passing stores that carry your list items.",
+  },
+  'Notification Haptics': {
+    enable: "Your device will vibrate when alerts arrive for a more noticeable experience.",
+    disable: "Alerts will arrive silently without any vibration feedback.",
+  },
+  'Quiet Hours': {
+    enable: "Notifications will be paused during your quiet hours so you won't be disturbed.",
+    disable: "You'll receive notifications at any time, including during previously quiet hours.",
+  },
+  'Notification Schedules': {
+    enable: "Notifications will only arrive during your scheduled times instead of in real-time.",
+    disable: "Notifications will arrive in real-time without following any custom schedule.",
+  },
+  'Priority Alerts': {
+    enable: "Your key stores will trigger high-priority alerts that stand out from the rest.",
+    disable: "All store notifications will be treated with the same priority level.",
+  },
+  'Smart Notification Rules': {
+    enable: "AI will intelligently filter and group your notifications to reduce noise.",
+    disable: "All notifications will arrive individually without AI-powered filtering.",
+  },
+  'Advanced Notification Settings': {
+    enable: "You'll get full control over how each notification type behaves.",
+    disable: "Notification behavior will return to the default settings.",
+  },
+};
 
 function SettingsRow({
   icon,
@@ -94,12 +131,37 @@ export default function NotificationPreferencesScreen() {
     setHapticEnabled
   } = useSettingsStore();
 
+  // ── Confirmation Sheet state ──
+  const [sheetVisible, setSheetVisible] = useState(false);
+  const [sheetData, setSheetData] = useState<ConfirmationSheetData | null>(null);
+
   const switchTrackColor = { false: '#e2e8f0', true: '#0f172a' };
 
-  const handleToggle = (setter: (val: boolean) => void) => (val: boolean) => {
+  const requestToggle = useCallback((
+    settingName: string,
+    currentValue: boolean,
+    setter: ((val: boolean) => void) | null,
+  ) => {
     hapticImpact(ImpactFeedbackStyle.Light);
-    setter(val);
-  };
+    const isEnabling = !currentValue;
+    const descriptions = SETTING_DESCRIPTIONS[settingName];
+    const description = isEnabling ? descriptions.enable : descriptions.disable;
+
+    setSheetData({
+      settingName,
+      description,
+      isEnabling,
+      onConfirm: () => {
+        if (setter) setter(isEnabling);
+      },
+    });
+    setSheetVisible(true);
+  }, []);
+
+  const dismissSheet = useCallback(() => {
+    setSheetVisible(false);
+    setSheetData(null);
+  }, []);
 
   const handleProUpsell = (featureName: string) => {
     hapticImpact(ImpactFeedbackStyle.Light);
@@ -139,7 +201,7 @@ export default function NotificationPreferencesScreen() {
             rightElement={
               <Switch
                 value={savedStoresOnly}
-                onValueChange={handleToggle(setSavedStoresOnly)}
+                onValueChange={() => requestToggle('Saved Stores Only', savedStoresOnly, setSavedStoresOnly)}
                 trackColor={switchTrackColor}
                 thumbColor="#ffffff"
               />
@@ -152,7 +214,7 @@ export default function NotificationPreferencesScreen() {
             rightElement={
               <Switch
                 value={shoppingListReminders}
-                onValueChange={handleToggle(setShoppingListReminders)}
+                onValueChange={() => requestToggle('Shopping List Reminders', shoppingListReminders, setShoppingListReminders)}
                 trackColor={switchTrackColor}
                 thumbColor="#ffffff"
               />
@@ -166,7 +228,7 @@ export default function NotificationPreferencesScreen() {
             rightElement={
               <Switch
                 value={hapticEnabled}
-                onValueChange={handleToggle(setHapticEnabled)}
+                onValueChange={() => requestToggle('Notification Haptics', hapticEnabled, setHapticEnabled)}
                 trackColor={switchTrackColor}
                 thumbColor="#ffffff"
               />
@@ -187,7 +249,7 @@ export default function NotificationPreferencesScreen() {
               isPro ? (
                 <Switch
                   value={false}
-                  onValueChange={() => {}}
+                  onValueChange={() => requestToggle('Quiet Hours', false, null)}
                   trackColor={switchTrackColor}
                   thumbColor="#ffffff"
                 />
@@ -205,7 +267,7 @@ export default function NotificationPreferencesScreen() {
               isPro ? (
                 <Switch
                   value={false}
-                  onValueChange={() => {}}
+                  onValueChange={() => requestToggle('Notification Schedules', false, null)}
                   trackColor={switchTrackColor}
                   thumbColor="#ffffff"
                 />
@@ -223,7 +285,7 @@ export default function NotificationPreferencesScreen() {
               isPro ? (
                 <Switch
                   value={false}
-                  onValueChange={() => {}}
+                  onValueChange={() => requestToggle('Priority Alerts', false, null)}
                   trackColor={switchTrackColor}
                   thumbColor="#ffffff"
                 />
@@ -241,7 +303,7 @@ export default function NotificationPreferencesScreen() {
               isPro ? (
                 <Switch
                   value={false}
-                  onValueChange={() => {}}
+                  onValueChange={() => requestToggle('Smart Notification Rules', false, null)}
                   trackColor={switchTrackColor}
                   thumbColor="#ffffff"
                 />
@@ -260,7 +322,7 @@ export default function NotificationPreferencesScreen() {
               isPro ? (
                 <Switch
                   value={false}
-                  onValueChange={() => {}}
+                  onValueChange={() => requestToggle('Advanced Notification Settings', false, null)}
                   trackColor={switchTrackColor}
                   thumbColor="#ffffff"
                 />
@@ -289,6 +351,13 @@ export default function NotificationPreferencesScreen() {
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      {/* Inline Confirmation Sheet */}
+      <ConfirmationSheet
+        visible={sheetVisible}
+        data={sheetData}
+        onDismiss={dismissSheet}
+      />
     </View>
   );
 }
