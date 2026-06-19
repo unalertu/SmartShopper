@@ -16,8 +16,8 @@ import Animated, {
   withTiming,
   interpolateColor,
   Easing,
-  FadeInDown,
-  FadeOutDown,
+  FadeIn,
+  FadeOut,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -64,11 +64,6 @@ function CreateListSheet({
   useEffect(() => {
     if (visible) {
       setListName('');
-      // Delay focus slightly to allow the view to mount, then the native keyboard 
-      // will perfectly push the KeyboardAvoidingView up as a single hardware animation.
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 50);
     } else {
       Keyboard.dismiss();
     }
@@ -113,8 +108,8 @@ function CreateListSheet({
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {/* Backdrop */}
       <Animated.View 
-        entering={FadeInDown.duration(200)}
-        exiting={FadeOutDown.duration(200)}
+        entering={FadeIn.duration(320).easing(Easing.out(Easing.cubic))}
+        exiting={FadeOut.duration(320).easing(Easing.out(Easing.cubic))}
         style={styles.backdrop}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
@@ -127,9 +122,9 @@ function CreateListSheet({
         pointerEvents="box-none"
       >
         <Animated.View 
-          entering={FadeInDown.duration(300).springify().damping(28).stiffness(340)}
-          exiting={FadeOutDown.duration(200)}
-          style={[styles.pill, { marginBottom: insets.bottom > 0 ? insets.bottom : 16 }]}
+          entering={FadeIn.duration(320).easing(Easing.out(Easing.cubic))}
+          exiting={FadeOut.duration(320).easing(Easing.out(Easing.cubic))}
+          style={[styles.pill, { marginBottom: 8 }]}
         >
           <DragHandle />
 
@@ -160,6 +155,7 @@ function CreateListSheet({
                 style={styles.input}
                 returnKeyType="done"
                 onSubmitEditing={handleCreate}
+                autoFocus={true}
                 autoCorrect={false}
                 maxLength={40}
                 selectionColor="#0a7eff"
@@ -206,7 +202,7 @@ export default memo(CreateListSheet);
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.3)',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
     zIndex: 1,
   },
   keyboardContainer: {
