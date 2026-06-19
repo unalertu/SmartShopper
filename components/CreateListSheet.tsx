@@ -81,7 +81,7 @@ function CreateListSheet({
     borderColor: interpolateColor(
       inputFocusAnim.value,
       [0, 1],
-      ['#e8ecf0', '#0a7eff'],
+      ['#e8ecf0', '#334155'], // Softer navy focus border
     ),
   }));
 
@@ -89,7 +89,7 @@ function CreateListSheet({
     backgroundColor: interpolateColor(
       btnActive.value,
       [0, 1],
-      ['#eaeff4', '#0f172a'],
+      ['#f1f5f9', '#0f172a'], // Navy button
     ),
     transform: [{ scale: btnScale.value }],
   }));
@@ -139,7 +139,7 @@ function CreateListSheet({
               style={styles.closeBtn}
               hitSlop={14}
             >
-              <X size={14} color="#94a3b8" strokeWidth={2.5} />
+              <X size={14} color="#64748b" strokeWidth={2.5} />
             </Pressable>
           </View>
 
@@ -151,7 +151,7 @@ function CreateListSheet({
                 value={listName}
                 onChangeText={setListName}
                 placeholder="List name..."
-                placeholderTextColor="#b0bec5"
+                placeholderTextColor="#cbd5e1"
                 style={styles.input}
                 returnKeyType="done"
                 onSubmitEditing={handleCreate}
@@ -219,10 +219,10 @@ const styles = StyleSheet.create({
     paddingBottom: 28,     // Increased padding
     // Subtle shadow for depth
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 12,
+    shadowOffset: { width: 0, height: -5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 14,
   },
 
   // Handle
@@ -244,21 +244,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 8,
-    paddingBottom: 20, // Increased spacing
+    paddingBottom: 29, // Increased spacing by ~5px
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 19,
+    fontWeight: '800',
     color: '#0f172a',
-    letterSpacing: -0.35,
+    letterSpacing: -0.2,
   },
   closeBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#f1f5f9',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
+    transform: [{ translateY: -2 }],
   },
 
   // Input + Button in one row
@@ -269,13 +270,13 @@ const styles = StyleSheet.create({
   },
   inputWrap: {
     flex: 1,
-    borderWidth: 1.5,
-    borderRadius: 14,
+    borderWidth: 1, // Reduced to 1px for a cleaner, Apple-like look
+    borderRadius: 16,
     backgroundColor: '#f8fafc',
   },
   input: {
-    paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 12,
+    paddingHorizontal: 20,
+    paddingVertical: Platform.OS === 'ios' ? 17 : 15,
     fontSize: 15,
     fontWeight: '500',
     color: '#0f172a',
@@ -284,8 +285,8 @@ const styles = StyleSheet.create({
 
   // Create button
   createBtn: {
-    borderRadius: 14,
-    paddingVertical: 14,
+    borderRadius: 16,
+    paddingVertical: 16,
     paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
