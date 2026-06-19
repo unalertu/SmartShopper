@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState, memo } from 'react';
+import React, { useEffect, useRef, useState, memo } from 'react';
 import {
   View,
   Text,
@@ -7,33 +7,23 @@ import {
   Keyboard,
   Platform,
   StyleSheet,
-  Dimensions,
+  KeyboardAvoidingView,
 } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
-  runOnJS,
-  interpolate,
   interpolateColor,
-  Extrapolation,
   Easing,
-  useAnimatedKeyboard,
-  KeyboardState,
-  useAnimatedReaction,
-  cancelAnimation,
+  FadeInDown,
+  FadeOutDown,
 } from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { X } from 'lucide-react-native';
 
-// ── Spring configs tuned for iOS-native feel ──
-const SPRING_SHEET = { damping: 28, stiffness: 340, mass: 0.65 };
-const SPRING_SNAP  = { damping: 20, stiffness: 260, mass: 0.5 };
-const DISMISS_VELOCITY = 500;
-const SWIPE_THRESHOLD = 35;
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface CreateListSheetProps {
   visible: boolean;
@@ -41,9 +31,6 @@ interface CreateListSheetProps {
   onCreateList: (name: string) => void;
 }
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-// ── Memoized static sub-components to prevent re-renders while typing ──
 const DragHandle = memo(() => (
   <View style={styles.handleRow}>
     <View style={styles.handle} />
@@ -56,28 +43,16 @@ function CreateListSheet({
   onCreateList,
 }: CreateListSheetProps) {
   const insets = useSafeAreaInsets();
-  const keyboard = useAnimatedKeyboard();
+  const inputRef = useRef<TextInput>(null);
+  
+  const [listName, setListName] = useState('');
+  const hasText = listName.trim().length > 0;
 
-  // Bottom margin: when keyboard is closed, use safe area; when open, use a small gap
-  const safeBottom = insets.bottom > 0 ? insets.bottom : 16;
-
-  // ── Shared values ──
-  // sheetProgress: 0 = fully hidden, 1 = fully open
-  const sheetProgress = useSharedValue(0);
-  const dragOffset = useSharedValue(0);
-  const dragCtx = useSharedValue(0);
   const inputFocusAnim = useSharedValue(0);
   const btnActive = useSharedValue(0);
   const btnScale = useSharedValue(1);
 
-  // ── React state ──
-  const inputRef = useRef<TextInput>(null);
-  const [listName, setListName] = useState('');
-  const closingRef = useRef(false);
-
-  const hasText = listName.trim().length > 0;
-
-  // ── Button active color animation (UI thread) ──
+  // Animate button color when text changes
   useEffect(() => {
     btnActive.value = withTiming(hasText ? 1 : 0, {
       duration: 180,
@@ -85,146 +60,27 @@ function CreateListSheet({
     });
   }, [hasText]);
 
-  // ── Open ──
-  const open = useCallback(() => {
-    closingRef.current = false;
-    sheetProgress.value = 0;
-    dragOffset.value = 0;
-
-    sheetProgress.value = withSpring(1, SPRING_SHEET);
-
-    setTimeout(() => inputRef.current?.focus(), 280);
-  }, []);
-
-  // ── Close ──
-  const close = useCallback(() => {
-    if (closingRef.current) return;
-    closingRef.current = true;
-    Keyboard.dismiss();
-
-    cancelAnimation(sheetProgress);
-    sheetProgress.value = withTiming(0, {
-      duration: 220,
-      easing: Easing.in(Easing.cubic),
-    }, (fin) => {
-      if (fin) runOnJS(onDone)();
-    });
-  }, []);
-
-  const onDone = useCallback(() => {
-    setListName('');
-    closingRef.current = false;
-    onClose();
-  }, [onClose]);
-
+  // Handle visibility and focus
   useEffect(() => {
-    if (visible) open();
+    if (visible) {
+      setListName('');
+      // Delay focus slightly to allow the view to mount, then the native keyboard 
+      // will perfectly push the KeyboardAvoidingView up as a single hardware animation.
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+    } else {
+      Keyboard.dismiss();
+    }
   }, [visible]);
 
-  // ── Pan gesture (swipe down to dismiss) ──
-  const pan = Gesture.Pan()
-    .onStart(() => {
-      dragCtx.value = dragOffset.value;
-    })
-    .onUpdate((e) => {
-      // Only allow downward drag (positive translationY)
-      const raw = dragCtx.value + e.translationY;
-      dragOffset.value = raw < 0 ? raw * 0.08 : raw;
-    })
-    .onEnd((e) => {
-      if (
-        dragOffset.value > SWIPE_THRESHOLD ||
-        e.velocityY > DISMISS_VELOCITY
-      ) {
-        runOnJS(close)();
-      } else {
-        // Snap back
-        dragOffset.value = withSpring(0, SPRING_SNAP);
-      }
-    });
-
-  // ── Create ──
-  const handleCreate = useCallback(() => {
+  const handleCreate = () => {
     const t = listName.trim();
     if (!t) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     onCreateList(t);
-    close();
-  }, [listName, onCreateList, close]);
-
-  // ── Animated styles (all run on UI thread) ──
-  const pillAnim = useAnimatedStyle(() => {
-    const kbHeight = Platform.OS === 'ios' ? keyboard.height.value : 0;
-
-    // Bottom position: keyboard height determines where pill sits
-    // When keyboard closed: pill sits at safeBottom from screen bottom
-    // When keyboard open: pill sits right above keyboard with 8px gap
-    const bottomWhenClosed = safeBottom;
-    const bottomWhenOpen = kbHeight > 0 ? kbHeight + 8 : safeBottom;
-    const currentBottom = kbHeight > 0 ? bottomWhenOpen : bottomWhenClosed;
-
-    // Entrance animation: slide up from 60px below + fade in
-    const enterTranslateY = interpolate(
-      sheetProgress.value,
-      [0, 1],
-      [60, 0],
-      Extrapolation.CLAMP,
-    );
-
-    const enterScale = interpolate(
-      sheetProgress.value,
-      [0, 1],
-      [0.95, 1],
-      Extrapolation.CLAMP,
-    );
-
-    const enterOpacity = interpolate(
-      sheetProgress.value,
-      [0, 0.4],
-      [0, 1],
-      Extrapolation.CLAMP,
-    );
-
-    // Drag offset fades opacity slightly
-    const dragOpacity = interpolate(
-      dragOffset.value,
-      [0, 80],
-      [1, 0.5],
-      Extrapolation.CLAMP,
-    );
-
-    return {
-      bottom: currentBottom,
-      transform: [
-        { translateY: enterTranslateY + dragOffset.value },
-        { scale: enterScale },
-      ],
-      opacity: enterOpacity * dragOpacity,
-    };
-  });
-
-  const backdropAnim = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      sheetProgress.value,
-      [0, 1],
-      [0, 1],
-      Extrapolation.CLAMP,
-    );
-
-    // Also fade with drag
-    const dragFade = interpolate(
-      dragOffset.value,
-      [0, 80],
-      [1, 0.3],
-      Extrapolation.CLAMP,
-    );
-
-    return {
-      opacity: opacity * dragFade,
-      pointerEvents:
-        opacity > 0.01 ? ('auto' as const) : ('none' as const),
-    };
-  });
+    onClose();
+  };
 
   const inputBorder = useAnimatedStyle(() => ({
     borderColor: interpolateColor(
@@ -256,14 +112,25 @@ function CreateListSheet({
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {/* Backdrop */}
-      <Animated.View style={[styles.backdrop, backdropAnim]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={close} />
+      <Animated.View 
+        entering={FadeInDown.duration(200)}
+        exiting={FadeOutDown.duration(200)}
+        style={styles.backdrop}
+      >
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
       </Animated.View>
 
-      {/* Floating pill — positioned absolutely from bottom */}
-      <GestureDetector gesture={pan}>
-        <Animated.View style={[styles.pill, pillAnim]}>
-          {/* Drag handle */}
+      {/* Keyboard Avoiding Container */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardContainer}
+        pointerEvents="box-none"
+      >
+        <Animated.View 
+          entering={FadeInDown.duration(300).springify().damping(28).stiffness(340)}
+          exiting={FadeOutDown.duration(200)}
+          style={[styles.pill, { marginBottom: insets.bottom > 0 ? insets.bottom : 16 }]}
+        >
           <DragHandle />
 
           {/* Header row */}
@@ -272,7 +139,7 @@ function CreateListSheet({
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                close();
+                onClose();
               }}
               style={styles.closeBtn}
               hitSlop={14}
@@ -320,7 +187,7 @@ function CreateListSheet({
                   stiffness: 280,
                 });
               }}
-              style={[styles.createBtn, btnBg, hasText && styles.createBtnShadow]}
+              style={[styles.createBtn, btnBg]}
             >
               <Animated.Text style={[styles.createBtnLabel, btnTextStyle]}>
                 Create
@@ -328,7 +195,7 @@ function CreateListSheet({
             </AnimatedPressable>
           </View>
         </Animated.View>
-      </GestureDetector>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -340,18 +207,20 @@ const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(15, 23, 42, 0.3)',
+    zIndex: 1,
   },
-
+  keyboardContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    zIndex: 2,
+  },
   // ── Floating pill card ──
   pill: {
-    position: 'absolute',
-    left: 14,
-    right: 14,
-    // bottom is set dynamically via animated style
+    marginHorizontal: 14,
     backgroundColor: '#ffffff',
     borderRadius: 26,
-    paddingHorizontal: 18,
-    paddingBottom: 18,
+    paddingHorizontal: 20, // Increased padding
+    paddingBottom: 28,     // Increased padding
     // Subtle shadow for depth
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
@@ -364,12 +233,12 @@ const styles = StyleSheet.create({
   handleRow: {
     alignItems: 'center',
     paddingTop: 10,
-    paddingBottom: 2,
+    paddingBottom: 4,
   },
   handle: {
-    width: 34,
-    height: 4,
-    borderRadius: 2,
+    width: 36,
+    height: 5,
+    borderRadius: 3,
     backgroundColor: '#dfe4ea',
   },
 
@@ -378,19 +247,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 12,
-    paddingBottom: 14,
+    paddingTop: 8,
+    paddingBottom: 20, // Increased spacing
   },
   title: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
     color: '#0f172a',
     letterSpacing: -0.35,
   },
   closeBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
@@ -400,7 +269,7 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
   inputWrap: {
     flex: 1,
@@ -409,8 +278,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   input: {
-    paddingHorizontal: 14,
-    paddingVertical: Platform.OS === 'ios' ? 13 : 11,
+    paddingHorizontal: 16,
+    paddingVertical: Platform.OS === 'ios' ? 14 : 12,
     fontSize: 15,
     fontWeight: '500',
     color: '#0f172a',
@@ -420,14 +289,14 @@ const styles = StyleSheet.create({
   // Create button
   createBtn: {
     borderRadius: 14,
-    paddingVertical: 13,
-    paddingHorizontal: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   createBtnShadow: {},
   createBtnLabel: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     letterSpacing: 0.05,
   },
