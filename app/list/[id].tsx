@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Keyboard, Alert, Animated, Ke
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { FREE_TIER, getMaxItemsPerList } from '@/constants/tierConfig';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, MoreHorizontal, ShoppingBag, CheckCircle, Check, Clock, Trash2, Plus, Mic, ScanBarcode, Minus, AlignLeft } from 'lucide-react-native';
+import { ArrowLeft, MoreHorizontal, ShoppingBag, CheckCircle, Check, Clock, Trash2, Plus, Mic, ScanBarcode, Minus, AlignLeft, X } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -383,12 +383,13 @@ export default function ListDetails() {
         </TouchableOpacity>
       </View>
 
-      {/* 6. Add Item Modal */}
       <BottomSheetModal
         ref={addBottomSheetRef}
         snapPoints={['85%']}
         backdropComponent={renderBackdrop}
-        enablePanDownToClose
+        enablePanDownToClose={false}
+        enableContentPanningGesture={false}
+        enableHandlePanningGesture={false}
         handleIndicatorStyle={{ width: 48, height: 6, backgroundColor: '#e2e8f0' }}
         backgroundStyle={{ borderRadius: 24 }}
         keyboardBehavior="extend"
@@ -410,6 +411,15 @@ export default function ListDetails() {
               cursorColor={Colors.primary[900]}
               selectionColor={Colors.primary[900]}
             />
+            <TouchableOpacity 
+              onPress={() => {
+                hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                closeModal();
+              }} 
+              className="ml-3 p-2 bg-slate-100 rounded-full"
+            >
+              <X size={20} color="#64748b" strokeWidth={2.5} />
+            </TouchableOpacity>
           </View>
 
           {/* Compact Controls (Quantity, Units, Note) */}
