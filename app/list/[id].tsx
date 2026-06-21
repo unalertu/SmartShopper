@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, TouchableWithoutFeedback, Platform, Animated, Keyboard, Alert } from 'react-native';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Keyboard, Alert, Animated, KeyboardAvoidingView, Platform } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { FREE_TIER, getMaxItemsPerList } from '@/constants/tierConfig';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,14 +11,15 @@ import { hapticImpact, hapticNotification, hapticSelection } from '../../service
 import { useListsStore, useShoppingListStore, useSettingsStore } from '../../store';
 import ConfirmationSheet from '../../components/ConfirmationSheet';
 import { Colors } from '@/constants/theme';
+import { BottomSheetModal, BottomSheetView, BottomSheetBackdrop, BottomSheetTextInput, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 export default function ListDetails() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   
-  // Modal visibility
-  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  // Modal visibility handled by BottomSheetModal internally
+  const addBottomSheetRef = useRef<BottomSheetModal>(null);
   
   const [newItemText, setNewItemText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('General');
@@ -29,46 +30,19 @@ export default function ListDetails() {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteModalData, setDeleteModalData] = useState<any>(null);
 
-  const slideAnim = useRef(new Animated.Value(1000)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (isAddModalVisible) {
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 250,
-          useNativeDriver: true
-        }),
-        Animated.spring(slideAnim, {
-          toValue: 0,
-          damping: 22,
-          stiffness: 320,
-          mass: 0.6,
-          useNativeDriver: true
-        })
-      ]).start();
+  const handleSheetAnimate = useCallback((fromIndex: number, toIndex: number) => {
+    // Only instantly dismiss the keyboard if the sheet was FULLY open (fromIndex === 0).
+    // If fromIndex is -1, it means the user interrupted the opening animation. 
+    // In that case, we let keyboardBlurBehavior="restore" handle it to prevent the snap-point crash!
+    if (fromIndex === 0 && toIndex === -1) {
+      Keyboard.dismiss();
     }
-  }, [isAddModalVisible]);
+  }, []);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     Keyboard.dismiss();
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 1000,
-        duration: 200,
-        useNativeDriver: true
-      })
-    ]).start(() => {
-      setIsAddModalVisible(false);
-      resetModalState();
-    });
-  };
+    addBottomSheetRef.current?.dismiss();
+  }, []);
 
   // Button scale animation
   const buttonScale = useRef(new Animated.Value(0.95)).current;
@@ -158,6 +132,19 @@ export default function ListDetails() {
     });
     setDeleteModalVisible(true);
   };
+
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        pressBehavior="close"
+        opacity={0.4}
+      />
+    ),
+    []
+  );
 
   if (!list) return null;
 
@@ -313,7 +300,7 @@ export default function ListDetails() {
         <TouchableOpacity 
           onPress={() => {
             hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
-            setIsAddModalVisible(true);
+            addBottomSheetRef.current?.present();
           }}
           className="bg-slate-900 py-[18px] rounded-full flex-row justify-center items-center shadow-lg"
           
@@ -323,176 +310,167 @@ export default function ListDetails() {
       </View>
 
       {/* 6. Add Item Modal */}
-      <Modal animationType="none" transparent={true} visible={isAddModalVisible} onRequestClose={closeModal}>
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
-        >
-          {/* Background Dimmer */}
-          <Animated.View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)', opacity: fadeAnim }}>
-            <TouchableWithoutFeedback onPress={closeModal}>
-              <View className="absolute top-0 left-0 right-0 bottom-0" />
-            </TouchableWithoutFeedback>
+      <BottomSheetModal
+        ref={addBottomSheetRef}
+        snapPoints={['85%']}
+        backdropComponent={renderBackdrop}
+        enablePanDownToClose
+        handleIndicatorStyle={{ width: 48, height: 6, backgroundColor: '#e2e8f0' }}
+        backgroundStyle={{ borderRadius: 24 }}
+        keyboardBehavior="extend"
+        keyboardBlurBehavior="restore"
+        onAnimate={handleSheetAnimate}
+        onDismiss={() => {
+          resetModalState();
+        }}
+      >
+        <BottomSheetView style={{ flex: 1, paddingHorizontal: 24, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 24) }}>
+          {/* Focal Point (Input) */}
+          <View className="mb-5 z-10 border-b-2 border-slate-100 pb-3 flex-row items-center">
+            <BottomSheetTextInput
+              className="flex-1 text-4xl font-extrabold text-slate-900"
+              placeholder="e.g. Avocado"
+              placeholderTextColor="#94a3b8"
+              value={newItemText}
+              onChangeText={setNewItemText}
+              autoFocus={true}
+              cursorColor={Colors.primary[900]}
+              selectionColor={Colors.primary[900]}
+            />
+            <TouchableOpacity className="p-3 bg-slate-100 rounded-full ml-2">
+              <Mic size={20} color="#0f172a" />
+            </TouchableOpacity>
+          </View>
 
-            {/* The White Bottom Sheet */}
-            <Animated.View className="bg-white w-full h-[85%] rounded-t-[24px] px-6 pt-6 flex-col" style={[{ transform: [{ translateY: slideAnim }] }, { paddingBottom: insets.bottom > 0 ? insets.bottom + 24 : 32 }]}>
-              <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-              <View className="flex-1">
-              {/* Drag Handle */}
-              <View className="items-center mb-4 z-10">
-                <View className="w-12 h-1.5 bg-slate-200 rounded-full" />
+          {/* Compact Controls (Quantity, Units, Note) */}
+          <View className="flex-row items-center mb-6 z-10 relative -mx-6">
+            <BottomSheetScrollView horizontal showsHorizontalScrollIndicator={false} className="px-6" contentContainerStyle={{ paddingRight: 48, gap: 10 }}>
+              {/* Quantity */}
+              <View className="bg-slate-100 rounded-full px-3 py-2 flex-row items-center gap-3">
+                <TouchableOpacity onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); setQuantity(prev => Math.max(1, prev - 1)); }}>
+                  <Minus size={16} color="#0f172a" strokeWidth={3} />
+                </TouchableOpacity>
+                <Text className="text-base font-bold text-slate-900 min-w-[20px] text-center">{quantity}</Text>
+                <TouchableOpacity onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); setQuantity(prev => prev + 1); }}>
+                  <Plus size={16} color="#0f172a" strokeWidth={3} />
+                </TouchableOpacity>
               </View>
-              
-              {/* Focal Point (Input) */}
-              <View className="mb-5 z-10 border-b-2 border-slate-100 pb-3 flex-row items-center">
-                <TextInput
-                  className="flex-1 text-4xl font-extrabold text-slate-900"
-                  placeholder="e.g. Avocado"
+
+              {/* Units */}
+              {units.map((unit) => {
+                const isSelected = selectedUnit === unit;
+                return (
+                  <TouchableOpacity
+                    key={unit}
+                    onPress={() => {
+                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                      setSelectedUnit(unit);
+                    }}
+                    className={`px-4 py-2 rounded-full ${isSelected ? 'bg-slate-900' : 'bg-slate-100'}`}
+                  >
+                    <Text className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-slate-600'}`}>{unit}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+
+              {/* Add Note Button */}
+              <TouchableOpacity 
+                onPress={() => setIsNoteVisible(!isNoteVisible)} 
+                className={`px-4 py-2 rounded-full flex-row items-center ${isNoteVisible ? 'bg-slate-900' : 'bg-slate-100'}`}
+              >
+                <AlignLeft size={16} color={isNoteVisible ? "#ffffff" : "#64748b"} />
+                <Text className={`text-sm font-bold ml-1.5 ${isNoteVisible ? 'text-white' : 'text-slate-600'}`}>Note</Text>
+              </TouchableOpacity>
+            </BottomSheetScrollView>
+            <LinearGradient
+              colors={['rgba(255,255,255,0)', 'rgba(255,255,255,1)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              className="absolute right-0 top-0 bottom-0 w-8"
+              pointerEvents="none"
+            />
+          </View>
+
+          {/* Collapsible Note Input */}
+          {isNoteVisible && (
+            <View className="mb-6 z-10">
+              <View className="bg-slate-50 rounded-xl px-4 py-3 border border-slate-100">
+                <BottomSheetTextInput
+                  className="text-sm font-medium text-slate-900"
+                  placeholder="e.g. Organic only, 2% fat..."
                   placeholderTextColor="#94a3b8"
-                  value={newItemText}
-                  onChangeText={setNewItemText}
+                  value={note}
+                  onChangeText={setNote}
+                  multiline={true}
                   autoFocus={true}
                   cursorColor={Colors.primary[900]}
                   selectionColor={Colors.primary[900]}
                 />
-                <TouchableOpacity className="p-3 bg-slate-100 rounded-full ml-2">
-                  <Mic size={20} color="#0f172a" />
-                </TouchableOpacity>
               </View>
+            </View>
+          )}
 
-              {/* Compact Controls (Quantity, Units, Note) */}
-              <View className="flex-row items-center mb-6 z-10 relative -mx-6">
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-6" contentContainerStyle={{ paddingRight: 48, gap: 10 }}>
-                  {/* Quantity */}
-                  <View className="bg-slate-100 rounded-full px-3 py-2 flex-row items-center gap-3">
-                    <TouchableOpacity onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); setQuantity(prev => Math.max(1, prev - 1)); }}>
-                      <Minus size={16} color="#0f172a" strokeWidth={3} />
-                    </TouchableOpacity>
-                    <Text className="text-base font-bold text-slate-900 min-w-[20px] text-center">{quantity}</Text>
-                    <TouchableOpacity onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); setQuantity(prev => prev + 1); }}>
-                      <Plus size={16} color="#0f172a" strokeWidth={3} />
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Units */}
-                  {units.map((unit) => {
-                    const isSelected = selectedUnit === unit;
-                    return (
-                      <TouchableOpacity
-                        key={unit}
-                        onPress={() => {
-                          hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                          setSelectedUnit(unit);
-                        }}
-                        className={`px-4 py-2 rounded-full ${isSelected ? 'bg-slate-900' : 'bg-slate-100'}`}
-                      >
-                        <Text className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-slate-600'}`}>{unit}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-
-                  {/* Add Note Button */}
+          {/* Categories */}
+          <View className="mb-6 -mx-6 z-10 relative">
+            <BottomSheetScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" className="px-6" contentContainerStyle={{ paddingRight: 48, gap: 8 }}>
+              {categories.map((cat, index) => {
+                const isSelected = selectedCategory === cat;
+                return (
                   <TouchableOpacity 
-                    onPress={() => setIsNoteVisible(!isNoteVisible)} 
-                    className={`px-4 py-2 rounded-full flex-row items-center ${isNoteVisible ? 'bg-slate-900' : 'bg-slate-100'}`}
+                    key={index}
+                    onPress={() => {
+                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                      setSelectedCategory(cat);
+                    }}
+                    className={`px-4 py-2 rounded-xl border ${isSelected ? 'bg-slate-900 border-slate-900' : 'bg-transparent border-slate-200'}`}
                   >
-                    <AlignLeft size={16} color={isNoteVisible ? "#ffffff" : "#64748b"} />
-                    <Text className={`text-sm font-bold ml-1.5 ${isNoteVisible ? 'text-white' : 'text-slate-600'}`}>Note</Text>
+                    <Text className={`text-sm font-semibold ${isSelected ? 'text-white' : 'text-slate-500'}`}>{cat}</Text>
                   </TouchableOpacity>
-                </ScrollView>
-                <LinearGradient
-                  colors={['rgba(255,255,255,0)', 'rgba(255,255,255,1)']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  className="absolute right-0 top-0 bottom-0 w-8"
-                  pointerEvents="none"
-                />
-              </View>
+                );
+              })}
+            </BottomSheetScrollView>
+            <LinearGradient
+              colors={['rgba(255,255,255,0)', 'rgba(255,255,255,1)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              className="absolute right-0 top-0 bottom-0 w-8"
+              pointerEvents="none"
+            />
+          </View>
 
-              {/* Collapsible Note Input */}
-              {isNoteVisible && (
-                <View className="mb-6 z-10">
-                  <View className="bg-slate-50 rounded-xl px-4 py-3 border border-slate-100">
-                    <TextInput
-                      className="text-sm font-medium text-slate-900"
-                      placeholder="e.g. Organic only, 2% fat..."
-                      placeholderTextColor="#94a3b8"
-                      value={note}
-                      onChangeText={setNote}
-                      multiline={true}
-                      autoFocus={true}
-                      cursorColor={Colors.primary[900]}
-                      selectionColor={Colors.primary[900]}
-                    />
-                  </View>
-                </View>
-              )}
-
-              {/* Categories */}
-              <View className="mb-6 -mx-6 z-10 relative">
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" className="px-6" contentContainerStyle={{ paddingRight: 48, gap: 8 }}>
-                  {categories.map((cat, index) => {
-                    const isSelected = selectedCategory === cat;
-                    return (
-                      <TouchableOpacity 
-                        key={index}
-                        onPress={() => {
-                          hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                          setSelectedCategory(cat);
-                        }}
-                        className={`px-4 py-2 rounded-xl border ${isSelected ? 'bg-slate-900 border-slate-900' : 'bg-transparent border-slate-200'}`}
-                      >
-                        <Text className={`text-sm font-semibold ${isSelected ? 'text-white' : 'text-slate-500'}`}>{cat}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-                <LinearGradient
-                  colors={['rgba(255,255,255,0)', 'rgba(255,255,255,1)']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  className="absolute right-0 top-0 bottom-0 w-8"
-                  pointerEvents="none"
-                />
-              </View>
-
-              {/* Dynamic Quick Add */}
-              <View className="z-10 flex-1">
-                <Text className="text-xs font-bold text-slate-400 mb-3 uppercase tracking-widest">Quick Tap</Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {suggestedItems.map((suggestion, idx) => (
-                    <TouchableOpacity 
-                      key={idx}
-                      onPress={() => {
-                        hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                        setNewItemText(suggestion);
-                      }}
-                      className="bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-[14px] flex-row items-center"
-                    >
-                      <Plus size={14} color="#64748b" className="mr-1.5" strokeWidth={3} />
-                      <Text className="text-slate-700 font-bold text-[15px]">{suggestion}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              {/* Action Button — pinned at bottom */}
-              <Animated.View style={{ transform: [{ scale: buttonScale }] }} className="z-10 mt-4">
+          {/* Dynamic Quick Add */}
+          <View className="z-10 flex-1">
+            <Text className="text-xs font-bold text-slate-400 mb-3 uppercase tracking-widest">Quick Tap</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {suggestedItems.map((suggestion, idx) => (
                 <TouchableOpacity 
-                  disabled={!isButtonActive}
-                  className={`h-16 rounded-[24px] flex-row items-center justify-center shadow-xl ${isButtonActive ? 'bg-slate-900' : 'bg-slate-100'}`}
-                  onPress={handleAddItem}
+                  key={idx}
+                  onPress={() => {
+                    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                    setNewItemText(suggestion);
+                  }}
+                  className="bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-[14px] flex-row items-center"
                 >
-                  <Plus size={24} color={isButtonActive ? "#ffffff" : "#94a3b8"} strokeWidth={2.5} className="mr-2" />
-                  <Text className={`font-bold text-lg tracking-wide ${isButtonActive ? 'text-white' : 'text-slate-400'}`}>Add to List</Text>
+                  <Plus size={14} color="#64748b" className="mr-1.5" strokeWidth={3} />
+                  <Text className="text-slate-700 font-bold text-[15px]">{suggestion}</Text>
                 </TouchableOpacity>
-              </Animated.View>
-              </View>
-              </TouchableWithoutFeedback>
-            </Animated.View>
+              ))}
+            </View>
+          </View>
+
+          {/* Action Button — pinned at bottom */}
+          <Animated.View style={{ transform: [{ scale: buttonScale as any }] }} className="z-10 mt-4">
+            <TouchableOpacity 
+              disabled={!isButtonActive}
+              className={`h-16 rounded-[24px] flex-row items-center justify-center shadow-xl ${isButtonActive ? 'bg-slate-900' : 'bg-slate-100'}`}
+              onPress={handleAddItem}
+            >
+              <Plus size={24} color={isButtonActive ? "#ffffff" : "#94a3b8"} strokeWidth={2.5} className="mr-2" />
+              <Text className={`font-bold text-lg tracking-wide ${isButtonActive ? 'text-white' : 'text-slate-400'}`}>Add to List</Text>
+            </TouchableOpacity>
           </Animated.View>
-        </KeyboardAvoidingView>
-      </Modal>
+        </BottomSheetView>
+      </BottomSheetModal>
 
       <ConfirmationSheet
         visible={deleteModalVisible}
