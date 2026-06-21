@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -20,10 +20,14 @@ const DISMISS_VELOCITY = 400;
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 export interface ConfirmationSheetData {
-  settingName: string;
+  settingName?: string;
+  title?: string;
   description: string;
-  isEnabling: boolean;
+  isEnabling?: boolean;
+  isDestructive?: boolean;
+  confirmLabel?: string;
   onConfirm: () => void;
+  onCancel?: () => void;
 }
 
 interface ConfirmationSheetProps {
@@ -68,6 +72,7 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
 
   const dismiss = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (data?.onCancel) data.onCancel();
     backdropOpacity.value = withTiming(0, { duration: 200, easing: Easing.in(Easing.quad) });
     translateY.value = withSpring(SHEET_HEIGHT + 60, SPRING_DISMISS, () => {
       runOnJS(handleFullyDismissed)();
@@ -109,12 +114,17 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
   // Don't render anything when fully dismissed
   if (!mounted) return null;
 
-  const actionLabel = data?.isEnabling ? 'Enable' : 'Disable';
-  const title = data ? `${actionLabel} ${data.settingName}?` : '';
+  const actionLabel = data?.confirmLabel || (data?.isEnabling ? 'Enable' : 'Disable');
+  const title = data?.title || (data ? `${actionLabel} ${data.settingName}?` : '');
   const description = data?.description ?? '';
 
   return (
-    <>
+    <Modal
+      transparent
+      visible={mounted}
+      animationType="none"
+      onRequestClose={dismiss}
+    >
       {/* Backdrop */}
       <AnimatedTouchableOpacity
         style={[styles.backdrop, backdropStyle]}
@@ -153,7 +163,11 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.button, styles.confirmButton]}
+              style={[
+                styles.button, 
+                styles.confirmButton,
+                data?.isDestructive && styles.destructiveButton
+              ]}
               onPress={confirm}
               activeOpacity={0.7}
             >
@@ -164,7 +178,7 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
           </View>
         </Animated.View>
       </GestureDetector>
-    </>
+    </Modal>
   );
 });
 
@@ -255,5 +269,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#ffffff',
+  },
+  destructiveButton: {
+    backgroundColor: '#0f172a', // Darker navy (slate-900) for destructive actions
+    shadowColor: '#0f172a',
   },
 });

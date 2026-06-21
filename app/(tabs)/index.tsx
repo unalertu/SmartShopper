@@ -21,6 +21,7 @@ import AnimatedScreen from '../../components/AnimatedScreen';
 import RadarPinIcon from '../../components/RadarPinIcon';
 import StoreMarker from '../../components/StoreMarker';
 import CreateListSheet from '../../components/CreateListSheet';
+import ConfirmationSheet from '../../components/ConfirmationSheet';
 import { getSuggestionCard, SuggestionCard } from '@/constants/events';
 
 const getRelativeDate = (timestamp?: number): string => {
@@ -46,6 +47,8 @@ export default function HomeScreen() {
   const [nearestShopDistance, setNearestShopDistance] = useState<string | null>(null);
   const [isNearStore, setIsNearStore] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleteModalData, setDeleteModalData] = useState<any>(null);
 
   const suggestionCard = useMemo(() => getSuggestionCard(), []);
 
@@ -319,21 +322,21 @@ export default function HomeScreen() {
         activeOpacity={0.7}
         onPress={() => {
           hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
-          Alert.alert(
-            'Delete List',
-            'Are you sure you want to delete this list?',
-            [
-              { text: 'Cancel', style: 'cancel', onPress: () => swipeableRefs.current.get(listId)?.close() },
-              { 
-                text: 'Delete', 
-                style: 'destructive', 
-                onPress: () => {
-                  removeList(listId);
-                  swipeableRefs.current.delete(listId);
-                }
-              }
-            ]
-          );
+          setDeleteModalData({
+            title: 'Delete List?',
+            description: 'This action cannot be undone. All items in this list will be permanently removed.',
+            isDestructive: true,
+            confirmLabel: 'Delete',
+            onConfirm: () => {
+              removeList(listId);
+              swipeableRefs.current.delete(listId);
+              setDeleteModalVisible(false);
+            },
+            onCancel: () => {
+              swipeableRefs.current.get(listId)?.close();
+            }
+          });
+          setDeleteModalVisible(true);
         }}
       >
         <View style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'flex-end', width: 80, height: '100%', borderRadius: 24, marginLeft: 8 }}>
@@ -361,21 +364,21 @@ export default function HomeScreen() {
         activeOpacity={0.7}
         onPress={() => {
           hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
-          Alert.alert(
-            'Delete Shop',
-            'Are you sure you want to delete this shop?',
-            [
-              { text: 'Cancel', style: 'cancel', onPress: () => swipeableShopRefs.current.get(shopId)?.close() },
-              { 
-                text: 'Delete', 
-                style: 'destructive', 
-                onPress: () => {
-                  removeLocation(shopId);
-                  swipeableShopRefs.current.delete(shopId);
-                }
-              }
-            ]
-          );
+          setDeleteModalData({
+            title: 'Delete Shop?',
+            description: 'You will stop receiving notifications for this shop. This action cannot be undone.',
+            isDestructive: true,
+            confirmLabel: 'Delete',
+            onConfirm: () => {
+              removeLocation(shopId);
+              swipeableShopRefs.current.delete(shopId);
+              setDeleteModalVisible(false);
+            },
+            onCancel: () => {
+              swipeableShopRefs.current.get(shopId)?.close();
+            }
+          });
+          setDeleteModalVisible(true);
         }}
       >
         <View style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'flex-end', width: 80, height: '100%', borderRadius: 24, marginLeft: 8 }}>
@@ -873,6 +876,12 @@ export default function HomeScreen() {
           visible={showCreateSheet}
           onClose={() => setShowCreateSheet(false)}
           onCreateList={handleCreateList}
+        />
+
+        <ConfirmationSheet
+          visible={deleteModalVisible}
+          data={deleteModalData}
+          onDismiss={() => setDeleteModalVisible(false)}
         />
     </View>
     </AnimatedScreen>

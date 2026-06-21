@@ -23,6 +23,7 @@ import { MapSearchIndicator } from '../../components/MapSearchIndicator';
 import { create } from 'zustand';
 import { Alert } from 'react-native';
 import { FREE_TIER, getMaxSavedStores } from '@/constants/tierConfig';
+import ConfirmationSheet from '../../components/ConfirmationSheet';
 
 interface LocalUIState {
   selectedShopToSave: any | null;
@@ -161,6 +162,8 @@ export default function StoresScreen() {
   const calloutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [tracksViewId, setTracksViewId] = useState<string | null>(null);
   const [readyCalloutId, setReadyCalloutId] = useState<string | null>(null);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleteModalData, setDeleteModalData] = useState<any>(null);
 
   // Stable ref for fetchMarketsFromOverpass so memoized callbacks always call the latest version
   const fetchMarketsRef = useRef<(region: any) => void>(() => {});
@@ -645,25 +648,25 @@ export default function StoresScreen() {
         activeOpacity={0.7}
         onPress={() => {
           hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
-          Alert.alert(
-            'Delete Shop',
-            'Are you sure you want to delete this shop?',
-            [
-              { text: 'Cancel', style: 'cancel', onPress: () => swipeableRefs.current.get(locId)?.close() },
-              { 
-                text: 'Delete', 
-                style: 'destructive', 
-                onPress: () => {
-                  removeLocation(locId);
-                  swipeableRefs.current.delete(locId);
-                  swipeableRefs.current.delete('context-' + locId);
-                  if (selectedShopToSave && (selectedShopToSave.id === locId || selectedShopToSave.id === `saved-${locId}`)) {
-                    setSelectedShopToSave(null);
-                  }
-                }
+          setDeleteModalData({
+            title: 'Delete Shop?',
+            description: 'You will stop receiving notifications for this shop. This action cannot be undone.',
+            isDestructive: true,
+            confirmLabel: 'Delete',
+            onConfirm: () => {
+              removeLocation(locId);
+              swipeableRefs.current.delete(locId);
+              swipeableRefs.current.delete('context-' + locId);
+              if (selectedShopToSave && (selectedShopToSave.id === locId || selectedShopToSave.id === `saved-${locId}`)) {
+                setSelectedShopToSave(null);
               }
-            ]
-          );
+              setDeleteModalVisible(false);
+            },
+            onCancel: () => {
+              swipeableRefs.current.get(locId)?.close();
+            }
+          });
+          setDeleteModalVisible(true);
         }}
       >
         <View style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'flex-end', width: 80, height: '100%', borderRadius: 20 }}>
@@ -1429,6 +1432,12 @@ export default function StoresScreen() {
         </BottomSheetScrollView>
       </BottomSheet>
       </Animated.View>
+
+      <ConfirmationSheet
+        visible={deleteModalVisible}
+        data={deleteModalData}
+        onDismiss={() => setDeleteModalVisible(false)}
+      />
     </View>
     </AnimatedScreen>
   );

@@ -38,6 +38,7 @@ import { useListsStore, useShoppingListStore, useQuickStartStore, useSettingsSto
 import { useActivityStore } from '../../store/useActivityStore';
 import { useScrollToTop } from '@react-navigation/native';
 import CreateListSheet from '../../components/CreateListSheet';
+import ConfirmationSheet from '../../components/ConfirmationSheet';
 
 const getRelativeDate = (timestamp?: number): string => {
   if (!timestamp) return 'today';
@@ -79,6 +80,8 @@ export default function ListsScreen() {
   const [showCreateSheet, setShowCreateSheet] = useState(false);
   const [showAllTemplates, setShowAllTemplates] = useState(false);
   const [showAllActivities, setShowAllActivities] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleteModalData, setDeleteModalData] = useState<any>(null);
 
   const handlePresentModalPress = useCallback(() => {
     if (!canCreateList(isPro)) {
@@ -120,21 +123,21 @@ export default function ListsScreen() {
         activeOpacity={0.7}
         onPress={() => {
           hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
-          Alert.alert(
-            'Delete List',
-            'Are you sure you want to delete this list?',
-            [
-              { text: 'Cancel', style: 'cancel', onPress: () => swipeableRefs.current.get(listId)?.close() },
-              { 
-                text: 'Delete', 
-                style: 'destructive', 
-                onPress: () => {
-                  removeList(listId);
-                  swipeableRefs.current.delete(listId);
-                }
-              }
-            ]
-          );
+          setDeleteModalData({
+            title: 'Delete List?',
+            description: 'This action cannot be undone. All items in this list will be permanently removed.',
+            isDestructive: true,
+            confirmLabel: 'Delete',
+            onConfirm: () => {
+              removeList(listId);
+              swipeableRefs.current.delete(listId);
+              setDeleteModalVisible(false);
+            },
+            onCancel: () => {
+              swipeableRefs.current.get(listId)?.close();
+            }
+          });
+          setDeleteModalVisible(true);
         }}
       >
         <View style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'flex-end', width: 80, height: '100%', borderRadius: 24, marginLeft: 8 }}>
@@ -462,6 +465,12 @@ export default function ListsScreen() {
           visible={showCreateSheet}
           onClose={() => setShowCreateSheet(false)}
           onCreateList={handleCreateList}
+        />
+
+        <ConfirmationSheet
+          visible={deleteModalVisible}
+          data={deleteModalData}
+          onDismiss={() => setDeleteModalVisible(false)}
         />
       </View>
     </AnimatedScreen>

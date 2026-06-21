@@ -9,6 +9,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
 import { useListsStore, useShoppingListStore, useSettingsStore } from '../../store';
+import ConfirmationSheet from '../../components/ConfirmationSheet';
 
 export default function ListDetails() {
   const { id } = useLocalSearchParams();
@@ -24,6 +25,8 @@ export default function ListDetails() {
   const [selectedUnit, setSelectedUnit] = useState('pcs');
   const [note, setNote] = useState('');
   const [isNoteVisible, setIsNoteVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleteModalData, setDeleteModalData] = useState<any>(null);
 
   const slideAnim = useRef(new Animated.Value(1000)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -141,21 +144,18 @@ export default function ListDetails() {
   };
 
   const handleDeleteList = () => {
-    Alert.alert(
-      "Delete List",
-      "Are you sure you want to delete this list?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
-          style: "destructive", 
-          onPress: () => {
-            removeList(listId);
-            router.back();
-          }
-        }
-      ]
-    );
+    setDeleteModalData({
+      title: "Delete List?",
+      description: "This action cannot be undone. All items in this list will be permanently removed.",
+      isDestructive: true,
+      confirmLabel: "Delete",
+      onConfirm: () => {
+        removeList(listId);
+        setDeleteModalVisible(false);
+        router.back();
+      }
+    });
+    setDeleteModalVisible(true);
   };
 
   if (!list) return null;
@@ -488,6 +488,12 @@ export default function ListDetails() {
           </Animated.View>
         </KeyboardAvoidingView>
       </Modal>
+
+      <ConfirmationSheet
+        visible={deleteModalVisible}
+        data={deleteModalData}
+        onDismiss={() => setDeleteModalVisible(false)}
+      />
       
     </View>
   );
