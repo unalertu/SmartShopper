@@ -58,7 +58,7 @@ export default function ListDetails() {
   const removeItem = useShoppingListStore((state) => state.removeItem);
   const canAddItemToList = useShoppingListStore((state) => state.canAddItemToList);
   
-  const { isPro } = useSettingsStore();
+  const { isPro, distanceUnit } = useSettingsStore();
 
   const completedCount = items.filter(item => item.isPurchased).length;
   const remainingCount = items.length - completedCount;
@@ -72,7 +72,7 @@ export default function ListDetails() {
   }, [newItemText]);
 
   const categories = ['General', '🍎 Fruits', '🥛 Dairy', '🍞 Bakery', '🥩 Meat', '🧼 Cleaning'];
-  const units = ['pcs', 'kg', 'lt', 'pack'];
+  const units = distanceUnit === 'imperial' ? ['pcs', 'lb', 'oz', 'pack'] : ['pcs', 'kg', 'lt', 'pack'];
 
   const CATEGORY_SUGGESTIONS: Record<string, string[]> = {
     'General': [
@@ -560,8 +560,8 @@ export default function ListDetails() {
                     }}
                     className="bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-[14px] flex-row items-center"
                   >
-                    <Plus size={14} color="#64748b" className="mr-1.5" strokeWidth={3} />
-                    <Text className="text-slate-700 font-bold text-[15px]">{suggestion}</Text>
+                    <Plus size={14} color="#64748b" className="mr-2" strokeWidth={3} />
+                    <Text className="text-slate-700 font-bold text-[15px]"> {suggestion}</Text>
                   </TouchableOpacity>
                 ))}
                 {displayedSuggestions.length === 0 && activeSuggestionTab === 'recent' && (
