@@ -137,26 +137,19 @@ const THEME_LABELS: Record<ThemeOption, string> = {
 const ProStatusCard = React.memo(({ animatedStyle, isPro }: { animatedStyle: any; isPro: boolean }) => (
   <Animated.View style={animatedStyle}>
     <View
-      className="bg-white border border-slate-100 rounded-3xl p-4 flex-row items-center"
-      
+      className="bg-white border border-slate-100 rounded-3xl px-4 py-4 flex-row items-center justify-between"
     >
-      <View className="h-12 w-12 rounded-full bg-slate-100 items-center justify-center mr-4">
-        <User size={24} color="#64748b" />
+      <View className="flex-row items-center gap-3">
+        <Text className="text-[24px] font-semibold text-slate-900 tracking-tight">Plan</Text>
       </View>
-      <View className="flex-1 justify-center">
-        <View className="flex-row items-center mb-0.5 gap-2">
-          <Text className="text-[17px] font-semibold text-slate-900 tracking-tight">Your Plan</Text>
-          <View className={`${isPro ? 'bg-[#D4AF37]/10 border-[#D4AF37]/20' : 'bg-slate-100 border-slate-200'} px-1.5 py-0.5 rounded flex-row items-center border`}>
-            <Text className={`${isPro ? 'text-[#D4AF37]' : 'text-slate-400'} font-bold text-[9px] uppercase tracking-wider`}>
-              {isPro ? 'Pro Active' : 'Free'}
-            </Text>
-          </View>
+      <View className="flex-row items-center gap-2">
+        <View className={`${isPro ? 'bg-[#D4AF37]/15' : 'bg-[#0f172a]/10'} px-3 py-1 rounded-full flex-row items-center`}>
+          <Text className={`${isPro ? 'text-[#D4AF37]' : 'text-[#0f172a]'} font-medium text-[11px] uppercase tracking-wider`}>
+            {isPro ? 'Pro Active' : 'Free'}
+          </Text>
         </View>
-        <Text className="text-[13px] text-slate-500">
-          {isPro ? 'Tap to manage your subscription' : 'Upgrade to unlock all features'}
-        </Text>
+        <ChevronRight size={16} color="#94a3b8" />
       </View>
-      <ChevronRight size={16} color="#94a3b8" />
     </View>
   </Animated.View>
 ));
@@ -570,7 +563,6 @@ export default function SettingsScreen() {
             <SettingsRow
               icon={<RefreshCw size={20} color="#64748b" />}
               label="Restore Purchases"
-              sublabel="Restore your Pro subscription"
               isLast
               rightElement={<View />}
               onPress={() => {
@@ -580,44 +572,11 @@ export default function SettingsScreen() {
             />
           </SettingsGroup>
 
-          {/* ── General Preferences ── */}
+          {/* ── Preferences & Device Settings ── */}
           <SettingsGroup delay={100}>
-            <SettingsRow
-              icon={<Globe size={20} color="#64748b" />}
-              label="Language"
-              rightElement={
-                <View className="flex-row items-center gap-1.5">
-                  <Text className="text-[13px] font-medium text-slate-400">English</Text>
-                  <ChevronRight size={16} color="#94a3b8" />
-                </View>
-              }
-              onPress={() => {
-                hapticImpact(ImpactFeedbackStyle.Light);
-                if (Platform.OS === 'ios') {
-                  Linking.openURL('app-settings:');
-                } else {
-                  Linking.openSettings();
-                }
-              }}
-            />
-            {/* <SettingsRow
-              icon={<SunMoon size={20} color="#64748b" />}
-              label="Theme"
-              onPress={handleThemePick}
-              rightElement={
-                <View className="flex-row items-center gap-1.5">
-                  <Text className="text-[13px] font-medium text-slate-400">
-                    {THEME_LABELS[theme]}
-                  </Text>
-                  <ChevronRight size={16} color="#94a3b8" />
-                </View>
-              }
-            /> */}
             <SettingsRow
               icon={<Ruler size={20} color="#64748b" />}
               label="Distance Unit"
-              sublabel="Metric or Imperial"
-              isLast
               onPress={handleDistanceUnitToggle}
               rightElement={
                 <View className="flex-row items-center gap-1.5">
@@ -628,10 +587,6 @@ export default function SettingsScreen() {
                 </View>
               }
             />
-          </SettingsGroup>
-
-          {/* ── Permissions & Device Settings ── */}
-          <SettingsGroup delay={200}>
             <SettingsRow
               icon={<SlidersHorizontal size={20} color="#64748b" />}
               label="Map & Notifications"
@@ -684,23 +639,20 @@ export default function SettingsScreen() {
           </SettingsGroup>
 
           {/* ── Support & Feedback ── */}
-          <SettingsGroup delay={300}>
+          <SettingsGroup delay={200}>
             <SettingsRow
               icon={<LifeBuoy size={20} color="#64748b" />}
               label="Help Center"
-              sublabel="FAQ & troubleshooting"
               onPress={handleHelpCenter}
             />
             <SettingsRow
               icon={<MessageSquare size={20} color="#64748b" />}
               label="Send Feedback"
-              sublabel="Report bugs or suggest features"
               onPress={handleSendFeedback}
             />
             <SettingsRow
               icon={<Star size={20} color="#64748b" />}
               label="Rate GeoCart"
-              sublabel="Leave a review on the App Store"
               onPress={handleRateApp}
             />
             <SettingsRow
@@ -712,7 +664,7 @@ export default function SettingsScreen() {
           </SettingsGroup>
 
           {/* ── Legal & About ── */}
-          <SettingsGroup delay={400}>
+          <SettingsGroup delay={300}>
             <SettingsRow
               icon={<Shield size={20} color="#64748b" />}
               label="Privacy Policy"
@@ -745,7 +697,7 @@ export default function SettingsScreen() {
           </SettingsGroup>
 
           {/* ── Danger Zone ── */}
-          <SettingsGroup delay={500}>
+          <SettingsGroup delay={400}>
             <SettingsRow
               icon={<RotateCcw size={20} color="#ef4444" />}
               label="Reset App Data"
