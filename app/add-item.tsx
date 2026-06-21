@@ -72,7 +72,7 @@ export default function AddItemScreen() {
             </Text>
             <View
               className={`flex-row items-center bg-[#f8fafc] rounded-[24px] border ${
-                isFocused ? "border-primary-400" : "border-surface-100"
+                isFocused ? "border-primary-900" : "border-surface-100"
               }`}
               style={
                 isFocused
@@ -92,6 +92,8 @@ export default function AddItemScreen() {
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
                 className="flex-1 px-6 py-5 text-lg text-surface-900 font-semibold"
+                cursorColor={Colors.primary[900]}
+                selectionColor={Colors.primary[900]}
               />
             </View>
           </View>

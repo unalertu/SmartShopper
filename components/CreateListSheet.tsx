@@ -22,6 +22,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { X } from 'lucide-react-native';
+import { Colors } from '@/constants/theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -81,7 +82,7 @@ function CreateListSheet({
     borderColor: interpolateColor(
       inputFocusAnim.value,
       [0, 1],
-      ['#e8ecf0', '#334155'], // Softer navy focus border
+      ['#e8ecf0', Colors.primary[900]], // Navy focus border
     ),
   }));
 
@@ -158,7 +159,8 @@ function CreateListSheet({
                 autoFocus={true}
                 autoCorrect={false}
                 maxLength={40}
-                selectionColor="#0a7eff"
+                selectionColor={Colors.primary[900]}
+                cursorColor={Colors.primary[900]}
                 onFocus={() => {
                   inputFocusAnim.value = withTiming(1, { duration: 200 });
                 }}

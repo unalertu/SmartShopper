@@ -175,7 +175,8 @@ export default function AddLocationScreen() {
               placeholderTextColor={Colors.surface[300]}
               autoFocus
               className="bg-white rounded-2xl px-4 py-4 text-base text-surface-900 shadow-sm"
-              
+              cursorColor={Colors.primary[900]}
+              selectionColor={Colors.primary[900]}
             />
           </Animated.View>
 
@@ -193,7 +194,8 @@ export default function AddLocationScreen() {
               placeholder="e.g., 123 Main Street"
               placeholderTextColor={Colors.surface[300]}
               className="bg-white rounded-2xl px-4 py-4 text-base text-surface-900 shadow-sm"
-              
+              cursorColor={Colors.primary[900]}
+              selectionColor={Colors.primary[900]}
             />
           </Animated.View>
 
@@ -241,7 +243,8 @@ export default function AddLocationScreen() {
                   placeholderTextColor={Colors.surface[300]}
                   keyboardType="numeric"
                   className="bg-white rounded-2xl px-4 py-4 text-base text-surface-900 shadow-sm"
-                  
+                  cursorColor={Colors.primary[900]}
+                  selectionColor={Colors.primary[900]}
                 />
               </View>
               <View className="flex-1">
@@ -252,7 +255,8 @@ export default function AddLocationScreen() {
                   placeholderTextColor={Colors.surface[300]}
                   keyboardType="numeric"
                   className="bg-white rounded-2xl px-4 py-4 text-base text-surface-900 shadow-sm"
-                  
+                  cursorColor={Colors.primary[900]}
+                  selectionColor={Colors.primary[900]}
                 />
               </View>
             </View>

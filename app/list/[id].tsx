@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
 import { useListsStore, useShoppingListStore, useSettingsStore } from '../../store';
 import ConfirmationSheet from '../../components/ConfirmationSheet';
+import { Colors } from '@/constants/theme';
 
 export default function ListDetails() {
   const { id } = useLocalSearchParams();
@@ -351,6 +352,8 @@ export default function ListDetails() {
                   value={newItemText}
                   onChangeText={setNewItemText}
                   autoFocus={true}
+                  cursorColor={Colors.primary[900]}
+                  selectionColor={Colors.primary[900]}
                 />
                 <TouchableOpacity className="p-3 bg-slate-100 rounded-full ml-2">
                   <Mic size={20} color="#0f172a" />
@@ -418,6 +421,8 @@ export default function ListDetails() {
                       onChangeText={setNote}
                       multiline={true}
                       autoFocus={true}
+                      cursorColor={Colors.primary[900]}
+                      selectionColor={Colors.primary[900]}
                     />
                   </View>
                 </View>
