@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -23,6 +23,16 @@ export default function AddItemScreen() {
   const [selectedUnit, setSelectedUnit] = useState("pcs");
   const [selectedCategory, setSelectedCategory] = useState("other");
   const [isFocused, setIsFocused] = useState(false);
+
+  const suggestedItems = ['Avocado', 'Milk', 'Eggs', 'Bread', 'Water', 'Cheese', 'Chicken', 'Apples', 'Bananas'];
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % suggestedItems.length);
+    }, 2000); // Change placeholder every 2 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   const handleAdd = () => {
     if (!name.trim()) return;
@@ -84,7 +94,7 @@ export default function AddItemScreen() {
               <TextInput
                 value={name}
                 onChangeText={setName}
-                placeholder="e.g., Organic Milk"
+                placeholder={suggestedItems[placeholderIndex]}
                 placeholderTextColor={Colors.surface[400]}
                 autoFocus={false}
                 autoCorrect={false}

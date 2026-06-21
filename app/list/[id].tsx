@@ -74,8 +74,17 @@ export default function ListDetails() {
   }, [newItemText]);
 
   const categories = ['General', '🍎 Fruits', '🥛 Dairy', '🍞 Bakery', '🥩 Meat', '🧼 Cleaning'];
-  const suggestedItems = ['Milk', 'Eggs', 'Bread', 'Water', 'Cheese', 'Chicken'];
+  const suggestedItems = ['Avocado', 'Milk', 'Eggs', 'Bread', 'Water', 'Cheese', 'Chicken', 'Apples', 'Bananas'];
   const units = ['pcs', 'kg', 'lt', 'pack'];
+
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % suggestedItems.length);
+    }, 2000); // Change placeholder every 2 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   const resetModalState = () => {
     setNewItemText('');
@@ -329,7 +338,7 @@ export default function ListDetails() {
           <View className="mb-5 z-10 border-b-2 border-slate-100 pb-3 flex-row items-center">
             <BottomSheetTextInput
               className="flex-1 text-4xl font-extrabold text-slate-900"
-              placeholder="e.g. Avocado"
+              placeholder={suggestedItems[placeholderIndex]}
               placeholderTextColor="#94a3b8"
               value={newItemText}
               onChangeText={setNewItemText}
@@ -337,9 +346,6 @@ export default function ListDetails() {
               cursorColor={Colors.primary[900]}
               selectionColor={Colors.primary[900]}
             />
-            <TouchableOpacity className="p-3 bg-slate-100 rounded-full ml-2">
-              <Mic size={20} color="#0f172a" />
-            </TouchableOpacity>
           </View>
 
           {/* Compact Controls (Quantity, Units, Note) */}

@@ -318,31 +318,32 @@ export default function HomeScreen() {
 
   const renderRightActions = (listId: number) => {
     return (
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={() => {
-          hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
-          setDeleteModalData({
-            title: 'Delete List?',
-            description: 'This action cannot be undone. All items in this list will be permanently removed.',
-            isDestructive: true,
-            confirmLabel: 'Delete',
-            onConfirm: () => {
-              removeList(listId);
-              swipeableRefs.current.delete(listId);
-              setDeleteModalVisible(false);
-            },
-            onCancel: () => {
-              swipeableRefs.current.get(listId)?.close();
-            }
-          });
-          setDeleteModalVisible(true);
-        }}
-      >
-        <View style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'flex-end', width: 80, height: '100%', borderRadius: 24, marginLeft: 8 }}>
-          <Text style={{ color: 'white', fontWeight: 'bold', paddingRight: 16 }}>Delete</Text>
-        </View>
-      </TouchableOpacity>
+      <View style={{ width: 88, height: '100%' }}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'center', width: 80, height: '100%', borderRadius: 24, marginLeft: 8 }}
+          onPress={() => {
+            hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
+            setDeleteModalData({
+              title: 'Delete List?',
+              description: 'This action cannot be undone. All items in this list will be permanently removed.',
+              isDestructive: true,
+              confirmLabel: 'Delete',
+              onConfirm: () => {
+                removeList(listId);
+                swipeableRefs.current.delete(listId);
+                setDeleteModalVisible(false);
+              },
+              onCancel: () => {
+                swipeableRefs.current.get(listId)?.close();
+              }
+            });
+            setDeleteModalVisible(true);
+          }}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete</Text>
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -360,31 +361,32 @@ export default function HomeScreen() {
 
   const renderShopRightActions = (shopId: string) => {
     return (
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={() => {
-          hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
-          setDeleteModalData({
-            title: 'Delete Shop?',
-            description: 'You will stop receiving notifications for this shop. This action cannot be undone.',
-            isDestructive: true,
-            confirmLabel: 'Delete',
-            onConfirm: () => {
-              removeLocation(shopId);
-              swipeableShopRefs.current.delete(shopId);
-              setDeleteModalVisible(false);
-            },
-            onCancel: () => {
-              swipeableShopRefs.current.get(shopId)?.close();
-            }
-          });
-          setDeleteModalVisible(true);
-        }}
-      >
-        <View style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'flex-end', width: 80, height: '100%', borderRadius: 24, marginLeft: 8 }}>
-          <Text style={{ color: 'white', fontWeight: 'bold', paddingRight: 16 }}>Delete</Text>
-        </View>
-      </TouchableOpacity>
+      <View style={{ width: 88, height: '100%' }}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'center', width: 80, height: '100%', borderRadius: 24, marginLeft: 8 }}
+          onPress={() => {
+            hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
+            setDeleteModalData({
+              title: 'Delete Shop?',
+              description: 'You will stop receiving notifications for this shop. This action cannot be undone.',
+              isDestructive: true,
+              confirmLabel: 'Delete',
+              onConfirm: () => {
+                removeLocation(shopId);
+                swipeableShopRefs.current.delete(shopId);
+                setDeleteModalVisible(false);
+              },
+              onCancel: () => {
+                swipeableShopRefs.current.get(shopId)?.close();
+              }
+            });
+            setDeleteModalVisible(true);
+          }}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete</Text>
+        </TouchableOpacity>
+      </View>
     );
   };
 

@@ -168,14 +168,15 @@ export default function NotificationsScreen() {
   }, [markAsRead]);
 
   const renderRightActions = (id: string) => (
-    <TouchableOpacity
-      activeOpacity={0.7}
-      onPress={() => handleDelete(id)}
-    >
-      <View style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'flex-end', width: 80, height: '100%', borderRadius: 24, marginLeft: 8 }}>
-        <Text style={{ color: 'white', fontWeight: 'bold', paddingRight: 16 }}>Delete</Text>
-      </View>
-    </TouchableOpacity>
+    <View style={{ width: 88, height: '100%' }}>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'center', width: 80, height: '100%', borderRadius: 24, marginLeft: 8 }}
+        onPress={() => handleDelete(id)}
+      >
+        <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete</Text>
+      </TouchableOpacity>
+    </View>
   );
 
   const { today, earlier } = groupNotifications(notifications);

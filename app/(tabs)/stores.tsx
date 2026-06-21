@@ -6,7 +6,7 @@ import { Store, Plus, Search, ShoppingBasket, LocateFixed, Trash2, MapPin, X, Na
 import MapView, { Marker, Callout } from 'react-native-maps';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
-import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetScrollView, TouchableOpacity as BottomSheetTouchableOpacity } from '@gorhom/bottom-sheet';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, interpolate, runOnJS, FadeInDown, FadeOutUp, FadeOutLeft, LinearTransition } from 'react-native-reanimated';
 import { Swipeable } from 'react-native-gesture-handler';
 import { BlurView } from 'expo-blur';
@@ -644,35 +644,36 @@ export default function StoresScreen() {
 
   const renderRightActions = (locId: string) => {
     return (
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={() => {
-          hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
-          setDeleteModalData({
-            title: 'Delete Shop?',
-            description: 'You will stop receiving notifications for this shop. This action cannot be undone.',
-            isDestructive: true,
-            confirmLabel: 'Delete',
-            onConfirm: () => {
-              removeLocation(locId);
-              swipeableRefs.current.delete(locId);
-              swipeableRefs.current.delete('context-' + locId);
-              if (selectedShopToSave && (selectedShopToSave.id === locId || selectedShopToSave.id === `saved-${locId}`)) {
-                setSelectedShopToSave(null);
+      <View style={{ width: 88, height: '100%' }}>
+        <BottomSheetTouchableOpacity
+          activeOpacity={0.7}
+          style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'center', width: 80, height: '100%', borderRadius: 20 }}
+          onPress={() => {
+            hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
+            setDeleteModalData({
+              title: 'Delete Shop?',
+              description: 'You will stop receiving notifications for this shop. This action cannot be undone.',
+              isDestructive: true,
+              confirmLabel: 'Delete',
+              onConfirm: () => {
+                removeLocation(locId);
+                swipeableRefs.current.delete(locId);
+                swipeableRefs.current.delete('context-' + locId);
+                if (selectedShopToSave && (selectedShopToSave.id === locId || selectedShopToSave.id === `saved-${locId}`)) {
+                  setSelectedShopToSave(null);
+                }
+                setDeleteModalVisible(false);
+              },
+              onCancel: () => {
+                swipeableRefs.current.get(locId)?.close();
               }
-              setDeleteModalVisible(false);
-            },
-            onCancel: () => {
-              swipeableRefs.current.get(locId)?.close();
-            }
-          });
-          setDeleteModalVisible(true);
-        }}
-      >
-        <View style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'flex-end', width: 80, height: '100%', borderRadius: 20 }}>
-          <Text style={{ color: 'white', fontWeight: 'bold', paddingRight: 16 }}>Delete</Text>
-        </View>
-      </TouchableOpacity>
+            });
+            setDeleteModalVisible(true);
+          }}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete</Text>
+        </BottomSheetTouchableOpacity>
+      </View>
     );
   };
 
