@@ -274,7 +274,7 @@ export default function HomeScreen() {
       setNearestShopDistance(null);
       setIsNearStore(false);
     }
-  }, [cachedMarkets, userLocation, isFetchingMarkets]);
+  }, [cachedMarkets, userLocation, isFetchingMarkets, distanceUnit]);
 
   const { lists: shoppingLists, addList, removeList, canCreateList } = useListsStore();
 
