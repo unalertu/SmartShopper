@@ -645,12 +645,25 @@ export default function StoresScreen() {
         activeOpacity={0.7}
         onPress={() => {
           hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
-          removeLocation(locId);
-          swipeableRefs.current.delete(locId);
-          swipeableRefs.current.delete('context-' + locId);
-          if (selectedShopToSave && (selectedShopToSave.id === locId || selectedShopToSave.id === `saved-${locId}`)) {
-            setSelectedShopToSave(null);
-          }
+          Alert.alert(
+            'Delete Shop',
+            'Are you sure you want to delete this shop?',
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => swipeableRefs.current.get(locId)?.close() },
+              { 
+                text: 'Delete', 
+                style: 'destructive', 
+                onPress: () => {
+                  removeLocation(locId);
+                  swipeableRefs.current.delete(locId);
+                  swipeableRefs.current.delete('context-' + locId);
+                  if (selectedShopToSave && (selectedShopToSave.id === locId || selectedShopToSave.id === `saved-${locId}`)) {
+                    setSelectedShopToSave(null);
+                  }
+                }
+              }
+            ]
+          );
         }}
       >
         <View style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'flex-end', width: 80, height: '100%', borderRadius: 20 }}>

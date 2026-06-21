@@ -188,7 +188,7 @@ export default function ListDetails() {
           </Text>
         </View>
         <TouchableOpacity onPress={handleDeleteList} className="bg-slate-100 p-3 rounded-full">
-          <Trash2 size={20} color="#ef4444" strokeWidth={2.5} />
+          <Trash2 size={20} color="#f87171" strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
 
@@ -202,38 +202,38 @@ export default function ListDetails() {
         <View className="flex-row mx-6 gap-3 mb-8">
           {/* Card 1 */}
           <View 
-            className="flex-1 bg-white border border-slate-100 rounded-[24px] py-6 px-4 items-center justify-center" 
+            className="flex-1 bg-white border border-slate-100 rounded-[24px] py-5 px-4 items-center justify-center" 
             
           >
-            <View className="bg-slate-900/5 p-3 rounded-full mb-4">
+            <View className="bg-slate-900/5 p-3 rounded-full mb-2">
               <ShoppingBag size={20} color="#0f172a" />
             </View>
             <Text className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Total</Text>
-            <Text className="text-2xl font-bold text-slate-900 mt-2">{items.length}</Text>
+            <Text className="text-2xl font-bold text-slate-900 mt-1">{items.length}</Text>
           </View>
 
           {/* Card 2 */}
           <View 
-            className="flex-1 bg-white border border-slate-100 rounded-[24px] py-6 px-4 items-center justify-center" 
+            className="flex-1 bg-white border border-slate-100 rounded-[24px] py-5 px-4 items-center justify-center" 
             
           >
-            <View className="bg-green-500/10 p-3 rounded-full mb-4">
+            <View className="bg-green-500/10 p-3 rounded-full mb-2">
               <Check size={20} color="#22c55e" strokeWidth={2.5} />
             </View>
             <Text className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Done</Text>
-            <Text className="text-2xl font-bold text-slate-900 mt-2">{completedCount}</Text>
+            <Text className="text-2xl font-bold text-slate-900 mt-1">{completedCount}</Text>
           </View>
 
           {/* Card 3 */}
           <View 
-            className="flex-1 bg-white border border-slate-100 rounded-[24px] py-6 px-4 items-center justify-center" 
+            className="flex-1 bg-white border border-slate-100 rounded-[24px] py-5 px-4 items-center justify-center" 
             
           >
-            <View className="bg-orange-500/10 p-3 rounded-full mb-4">
+            <View className="bg-orange-500/10 p-3 rounded-full mb-2">
               <Clock size={20} color="#f97316" />
             </View>
             <Text className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Left</Text>
-            <Text className="text-2xl font-bold text-slate-900 mt-2">{remainingCount}</Text>
+            <Text className="text-2xl font-bold text-slate-900 mt-1">{remainingCount}</Text>
           </View>
         </View>
 
@@ -295,9 +295,9 @@ export default function ListDetails() {
             </View>
           ))}
           {items.length === 0 && (
-            <View className="p-8 items-center justify-center">
-              <ShoppingBag size={48} color="#cbd5e1" strokeWidth={1.5} />
-              <Text className="text-slate-400 font-semibold text-[15px] mt-4 text-center">No items yet.{'\n'}Tap the button below to add.</Text>
+            <View className="py-6 px-4 items-center justify-center">
+              <ShoppingBag size={48} color="#94a3b8" strokeWidth={1.5} />
+              <Text className="text-slate-500 font-semibold text-[15px] mt-3 text-center">No items yet.{'\n'}Tap the button below to add.</Text>
             </View>
           )}
         </View>
@@ -307,7 +307,7 @@ export default function ListDetails() {
       {/* 5. The Bottom Floating Button */}
       <View 
         className="absolute left-6 right-6 z-50"
-        style={{ bottom: insets.bottom > 0 ? insets.bottom + 16 : 40 }}
+        style={{ bottom: insets.bottom > 0 ? insets.bottom + 24 : 40 }}
       >
         <TouchableOpacity 
           onPress={() => {

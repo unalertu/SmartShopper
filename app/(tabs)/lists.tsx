@@ -120,8 +120,21 @@ export default function ListsScreen() {
         activeOpacity={0.7}
         onPress={() => {
           hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
-          removeList(listId);
-          swipeableRefs.current.delete(listId);
+          Alert.alert(
+            'Delete List',
+            'Are you sure you want to delete this list?',
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => swipeableRefs.current.get(listId)?.close() },
+              { 
+                text: 'Delete', 
+                style: 'destructive', 
+                onPress: () => {
+                  removeList(listId);
+                  swipeableRefs.current.delete(listId);
+                }
+              }
+            ]
+          );
         }}
       >
         <View style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'flex-end', width: 80, height: '100%', borderRadius: 24, marginLeft: 8 }}>
