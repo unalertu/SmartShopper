@@ -31,10 +31,7 @@ export default function ListDetails() {
   const [deleteModalData, setDeleteModalData] = useState<any>(null);
 
   const handleSheetAnimate = useCallback((fromIndex: number, toIndex: number) => {
-    // Only instantly dismiss the keyboard if the sheet was FULLY open (fromIndex === 0).
-    // If fromIndex is -1, it means the user interrupted the opening animation. 
-    // In that case, we let keyboardBlurBehavior="restore" handle it to prevent the snap-point crash!
-    if (fromIndex === 0 && toIndex === -1) {
+    if (toIndex === -1) {
       Keyboard.dismiss();
     }
   }, []);
@@ -327,7 +324,6 @@ export default function ListDetails() {
         handleIndicatorStyle={{ width: 48, height: 6, backgroundColor: '#e2e8f0' }}
         backgroundStyle={{ borderRadius: 24 }}
         keyboardBehavior="extend"
-        keyboardBlurBehavior="restore"
         onAnimate={handleSheetAnimate}
         onDismiss={() => {
           resetModalState();
