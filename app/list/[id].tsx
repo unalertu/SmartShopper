@@ -414,11 +414,11 @@ export default function ListDetails() {
             <TouchableOpacity 
               onPress={() => {
                 hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                closeModal();
+                handleAddItem();
               }} 
-              className="ml-3 p-2 bg-slate-100 rounded-full"
+              className="ml-3 p-2 bg-slate-900 rounded-full"
             >
-              <X size={20} color="#64748b" strokeWidth={2.5} />
+              <Plus size={20} color="#ffffff" strokeWidth={2.5} />
             </TouchableOpacity>
           </View>
 
