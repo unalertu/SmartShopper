@@ -29,6 +29,7 @@ export default function ListDetails() {
   const [isNoteVisible, setIsNoteVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteModalData, setDeleteModalData] = useState<any>(null);
+  const [activeSuggestionTab, setActiveSuggestionTab] = useState<'quick' | 'recent' | 'catalog'>('quick');
 
   const handleSheetAnimate = useCallback((fromIndex: number, toIndex: number) => {
     if (toIndex === -1) {
@@ -71,17 +72,83 @@ export default function ListDetails() {
   }, [newItemText]);
 
   const categories = ['General', '🍎 Fruits', '🥛 Dairy', '🍞 Bakery', '🥩 Meat', '🧼 Cleaning'];
-  const suggestedItems = ['Avocado', 'Milk', 'Eggs', 'Bread', 'Water', 'Cheese', 'Chicken', 'Apples', 'Bananas'];
   const units = ['pcs', 'kg', 'lt', 'pack'];
+
+  const CATEGORY_SUGGESTIONS: Record<string, string[]> = {
+    'General': [
+      'Milk', 'Eggs', 'Bread', 'Water', 'Chicken', 'Banana', 'Rice', 'Cheese',
+      'Butter', 'Pasta', 'Tomatoes', 'Onions', 'Potatoes', 'Coffee', 'Tea',
+      'Sugar', 'Salt', 'Olive Oil', 'Flour', 'Yogurt', 'Apples', 'Cereal',
+      'Toilet Paper', 'Paper Towels', 'Dish Soap'
+    ],
+    '🍎 Fruits': [
+      'Apple', 'Banana', 'Avocado', 'Strawberry', 'Orange', 'Grapes',
+      'Lemon', 'Lime', 'Blueberry', 'Raspberry', 'Blackberry', 'Peach',
+      'Plum', 'Cherry', 'Pear', 'Watermelon', 'Cantaloupe', 'Pineapple',
+      'Mango', 'Kiwi', 'Pomegranate', 'Grapefruit', 'Papaya'
+    ],
+    '🥛 Dairy': [
+      'Milk', 'Cheese', 'Yogurt', 'Butter', 'Cream', 'Eggs',
+      'Sour Cream', 'Cottage Cheese', 'Cream Cheese', 'Whipping Cream',
+      'Parmesan', 'Cheddar', 'Mozzarella', 'Feta', 'Brie', 'Gouda',
+      'Almond Milk', 'Oat Milk', 'Soy Milk', 'Half & Half', 'Margarine'
+    ],
+    '🍞 Bakery': [
+      'Bread', 'Croissant', 'Bagel', 'Muffin', 'Baguette', 'Rolls',
+      'Buns', 'Pita', 'Tortillas', 'Donut', 'Cake', 'Cookies',
+      'Pie', 'Pastry', 'Sourdough', 'Ciabatta', 'Focaccia', 'Pretzel',
+      'English Muffin', 'Crackers', 'Brownie'
+    ],
+    '🥩 Meat': [
+      'Chicken', 'Beef', 'Salmon', 'Turkey', 'Sausage', 'Pork',
+      'Bacon', 'Ham', 'Lamb', 'Steak', 'Ground Beef', 'Chicken Breast',
+      'Chicken Thighs', 'Shrimp', 'Tuna', 'Cod', 'Tilapia', 'Crab',
+      'Lobster', 'Hot Dogs', 'Deli Meat', 'Pepperoni', 'Prosciutto'
+    ],
+    '🧼 Cleaning': [
+      'Dish Soap', 'Sponge', 'Bleach', 'Trash Bags', 'Detergent',
+      'Fabric Softener', 'Glass Cleaner', 'All-Purpose Cleaner', 'Toilet Cleaner',
+      'Paper Towels', 'Napkins', 'Tissues', 'Broom', 'Mop', 'Dustpan',
+      'Disinfectant Wipes', 'Air Freshener', 'Laundry Pods', 'Stain Remover',
+      'Hand Soap', 'Rubber Gloves'
+    ],
+  };
+
+  const recentItems = useMemo(() => {
+    const uniqueNames = new Set<string>();
+    const recents: string[] = [];
+    for (const item of allItems) {
+      const lowerName = item.name.trim().toLowerCase();
+      if (!uniqueNames.has(lowerName)) {
+        uniqueNames.add(lowerName);
+        recents.push(item.name.trim());
+        if (recents.length >= 20) break;
+      }
+    }
+    return recents;
+  }, [allItems]);
+
+  const displayedSuggestions = useMemo(() => {
+    if (activeSuggestionTab === 'recent') return recentItems;
+    const catItems = CATEGORY_SUGGESTIONS[selectedCategory] || CATEGORY_SUGGESTIONS['General'];
+    if (activeSuggestionTab === 'catalog') return catItems;
+    return catItems.slice(0, 12); // Quick Tap shows top 12
+  }, [activeSuggestionTab, recentItems, selectedCategory]);
 
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
+  // Reset placeholder index when category or tab changes
   useEffect(() => {
+    setPlaceholderIndex(0);
+  }, [selectedCategory, activeSuggestionTab]);
+
+  useEffect(() => {
+    if (displayedSuggestions.length === 0) return;
     const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % suggestedItems.length);
-    }, 2000); // Change placeholder every 2 seconds
+      setPlaceholderIndex((prev) => (prev + 1) % displayedSuggestions.length);
+    }, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [displayedSuggestions.length]);
 
   const resetModalState = () => {
     setNewItemText('');
@@ -90,6 +157,7 @@ export default function ListDetails() {
     setNote('');
     setIsNoteVisible(false);
     setSelectedCategory('General');
+    setActiveSuggestionTab('quick');
   };
 
   const handleAddItem = () => {
@@ -329,12 +397,12 @@ export default function ListDetails() {
           resetModalState();
         }}
       >
-        <BottomSheetView style={{ flex: 1, paddingHorizontal: 24, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 24) }}>
+        <BottomSheetView style={{ flex: 1, paddingHorizontal: 24, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 24) + 12 }}>
           {/* Focal Point (Input) */}
           <View className="mb-5 z-10 border-b-2 border-slate-100 pb-3 flex-row items-center">
             <BottomSheetTextInput
-              className="flex-1 text-4xl font-extrabold text-slate-900"
-              placeholder={suggestedItems[placeholderIndex]}
+              className="flex-1 text-2xl font-bold text-slate-900"
+              placeholder="Add item..."
               placeholderTextColor="#94a3b8"
               value={newItemText}
               onChangeText={setNewItemText}
@@ -345,52 +413,59 @@ export default function ListDetails() {
           </View>
 
           {/* Compact Controls (Quantity, Units, Note) */}
-          <View className="flex-row items-center mb-6 z-10 relative -mx-6">
-            <BottomSheetScrollView horizontal showsHorizontalScrollIndicator={false} className="px-6" contentContainerStyle={{ paddingRight: 48, gap: 10 }}>
-              {/* Quantity */}
-              <View className="bg-slate-100 rounded-full px-3 py-2 flex-row items-center gap-3">
-                <TouchableOpacity onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); setQuantity(prev => Math.max(1, prev - 1)); }}>
-                  <Minus size={16} color="#0f172a" strokeWidth={3} />
-                </TouchableOpacity>
-                <Text className="text-base font-bold text-slate-900 min-w-[20px] text-center">{quantity}</Text>
-                <TouchableOpacity onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); setQuantity(prev => prev + 1); }}>
-                  <Plus size={16} color="#0f172a" strokeWidth={3} />
-                </TouchableOpacity>
-              </View>
-
-              {/* Units */}
-              {units.map((unit) => {
-                const isSelected = selectedUnit === unit;
-                return (
-                  <TouchableOpacity
-                    key={unit}
-                    onPress={() => {
-                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                      setSelectedUnit(unit);
-                    }}
-                    className={`px-4 py-2 rounded-full ${isSelected ? 'bg-slate-900' : 'bg-slate-100'}`}
-                  >
-                    <Text className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-slate-600'}`}>{unit}</Text>
+          <View className="mb-6 z-10">
+            {/* Section Labels */}
+            <View className="flex-row mb-2">
+              <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-widest" style={{ width: 100 }}>Quantity</Text>
+              <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Unit</Text>
+            </View>
+            <View className="flex-row items-center relative -mx-6">
+              <BottomSheetScrollView horizontal showsHorizontalScrollIndicator={false} className="px-6" contentContainerStyle={{ paddingRight: 48, gap: 10 }}>
+                {/* Quantity */}
+                <View className="bg-slate-100 rounded-full px-3 py-2 flex-row items-center gap-3">
+                  <TouchableOpacity onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); setQuantity(prev => Math.max(1, prev - 1)); }}>
+                    <Minus size={16} color="#0f172a" strokeWidth={3} />
                   </TouchableOpacity>
-                );
-              })}
+                  <Text className="text-base font-bold text-slate-900 min-w-[20px] text-center">{quantity}</Text>
+                  <TouchableOpacity onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); setQuantity(prev => prev + 1); }}>
+                    <Plus size={16} color="#0f172a" strokeWidth={3} />
+                  </TouchableOpacity>
+                </View>
 
-              {/* Add Note Button */}
-              <TouchableOpacity 
-                onPress={() => setIsNoteVisible(!isNoteVisible)} 
-                className={`px-4 py-2 rounded-full flex-row items-center ${isNoteVisible ? 'bg-slate-900' : 'bg-slate-100'}`}
-              >
-                <AlignLeft size={16} color={isNoteVisible ? "#ffffff" : "#64748b"} />
-                <Text className={`text-sm font-bold ml-1.5 ${isNoteVisible ? 'text-white' : 'text-slate-600'}`}>Note</Text>
-              </TouchableOpacity>
-            </BottomSheetScrollView>
-            <LinearGradient
-              colors={['rgba(255,255,255,0)', 'rgba(255,255,255,1)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              className="absolute right-0 top-0 bottom-0 w-8"
-              pointerEvents="none"
-            />
+                {/* Units */}
+                {units.map((unit) => {
+                  const isSelected = selectedUnit === unit;
+                  return (
+                    <TouchableOpacity
+                      key={unit}
+                      onPress={() => {
+                        hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                        setSelectedUnit(unit);
+                      }}
+                      className={`px-4 py-2 rounded-full ${isSelected ? 'bg-slate-900' : 'bg-slate-100'}`}
+                    >
+                      <Text className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-slate-600'}`}>{unit}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+
+                {/* Add Note Button */}
+                <TouchableOpacity 
+                  onPress={() => setIsNoteVisible(!isNoteVisible)} 
+                  className={`px-4 py-2 rounded-full flex-row items-center ${isNoteVisible ? 'bg-slate-900' : 'bg-slate-100'}`}
+                >
+                  <AlignLeft size={16} color={isNoteVisible ? "#ffffff" : "#64748b"} />
+                  <Text className={`text-sm font-bold ml-1.5 ${isNoteVisible ? 'text-white' : 'text-slate-600'}`}>Note</Text>
+                </TouchableOpacity>
+              </BottomSheetScrollView>
+              <LinearGradient
+                colors={['rgba(255,255,255,0)', 'rgba(255,255,255,1)']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                className="absolute right-0 top-0 bottom-0 w-8"
+                pointerEvents="none"
+              />
+            </View>
           </View>
 
           {/* Collapsible Note Input */}
@@ -414,6 +489,7 @@ export default function ListDetails() {
 
           {/* Categories */}
           <View className="mb-6 -mx-6 z-10 relative">
+            <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-6">Category</Text>
             <BottomSheetScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" className="px-6" contentContainerStyle={{ paddingRight: 48, gap: 8 }}>
               {categories.map((cat, index) => {
                 const isSelected = selectedCategory === cat;
@@ -424,9 +500,9 @@ export default function ListDetails() {
                       hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                       setSelectedCategory(cat);
                     }}
-                    className={`px-4 py-2 rounded-xl border ${isSelected ? 'bg-slate-900 border-slate-900' : 'bg-transparent border-slate-200'}`}
+                    className={`px-3.5 py-[7px] rounded-full border ${isSelected ? 'bg-slate-900 border-slate-900' : 'bg-transparent border-slate-200'}`}
                   >
-                    <Text className={`text-sm font-semibold ${isSelected ? 'text-white' : 'text-slate-500'}`}>{cat}</Text>
+                    <Text className={`text-[13px] font-semibold ${isSelected ? 'text-white' : 'text-slate-500'}`}>{cat}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -442,22 +518,47 @@ export default function ListDetails() {
 
           {/* Dynamic Quick Add */}
           <View className="z-10 flex-1">
-            <Text className="text-xs font-bold text-slate-400 mb-3 uppercase tracking-widest">Quick Tap</Text>
-            <View className="flex-row flex-wrap gap-2">
-              {suggestedItems.map((suggestion, idx) => (
-                <TouchableOpacity 
-                  key={idx}
-                  onPress={() => {
-                    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                    setNewItemText(suggestion);
-                  }}
-                  className="bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-[14px] flex-row items-center"
-                >
-                  <Plus size={14} color="#64748b" className="mr-1.5" strokeWidth={3} />
-                  <Text className="text-slate-700 font-bold text-[15px]">{suggestion}</Text>
-                </TouchableOpacity>
-              ))}
+            <View className="flex-row items-center gap-4 mb-3">
+              <TouchableOpacity onPress={() => {
+                hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                setActiveSuggestionTab('quick');
+              }}>
+                <Text className={`text-[11px] font-bold uppercase tracking-widest ${activeSuggestionTab === 'quick' ? 'text-slate-900' : 'text-slate-400'}`}>Quick Tap</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => {
+                hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                setActiveSuggestionTab('recent');
+              }}>
+                <Text className={`text-[11px] font-bold uppercase tracking-widest ${activeSuggestionTab === 'recent' ? 'text-slate-900' : 'text-slate-400'}`}>Recent Items</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => {
+                hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                setActiveSuggestionTab('catalog');
+              }}>
+                <Text className={`text-[11px] font-bold uppercase tracking-widest ${activeSuggestionTab === 'catalog' ? 'text-slate-900' : 'text-slate-400'}`}>Catalog</Text>
+              </TouchableOpacity>
             </View>
+
+            <BottomSheetScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 16 }}>
+              <View className="flex-row flex-wrap gap-2">
+                {displayedSuggestions.map((suggestion, idx) => (
+                  <TouchableOpacity 
+                    key={`${activeSuggestionTab}-${selectedCategory}-${idx}`}
+                    onPress={() => {
+                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                      setNewItemText(suggestion);
+                    }}
+                    className="bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-[14px] flex-row items-center"
+                  >
+                    <Plus size={14} color="#64748b" className="mr-1.5" strokeWidth={3} />
+                    <Text className="text-slate-700 font-bold text-[15px]">{suggestion}</Text>
+                  </TouchableOpacity>
+                ))}
+                {displayedSuggestions.length === 0 && activeSuggestionTab === 'recent' && (
+                  <Text className="text-slate-400 text-sm italic mt-2">No recent items yet.</Text>
+                )}
+              </View>
+            </BottomSheetScrollView>
           </View>
 
           {/* Action Button — pinned at bottom */}
@@ -468,7 +569,9 @@ export default function ListDetails() {
               onPress={handleAddItem}
             >
               <Plus size={24} color={isButtonActive ? "#ffffff" : "#94a3b8"} strokeWidth={2.5} className="mr-2" />
-              <Text className={`font-bold text-lg tracking-wide ${isButtonActive ? 'text-white' : 'text-slate-400'}`}>Add to List</Text>
+              <Text className={`font-bold text-lg tracking-wide ${isButtonActive ? 'text-white' : 'text-slate-400'}`} numberOfLines={1}>
+                {isButtonActive ? `Add "${newItemText.trim()}"` : 'Add to List'}
+              </Text>
             </TouchableOpacity>
           </Animated.View>
         </BottomSheetView>
