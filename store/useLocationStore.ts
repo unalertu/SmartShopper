@@ -47,11 +47,31 @@ interface LocationStoreState {
 
   cachedMarkets: any[];
   setCachedMarkets: (markets: any[]) => void;
+  appendCachedMarkets: (markets: any[]) => void;
+  
   isFetchingMarkets: boolean;
   fetchingRegionCenter: { latitude: number, longitude: number } | null;
   setIsFetchingMarkets: (isFetching: boolean, center?: { latitude: number, longitude: number } | null) => void;
+  
   userLocation: { latitude: number, longitude: number } | null;
   setUserLocation: (location: { latitude: number, longitude: number } | null) => void;
+
+  lastBackgroundFetchCoords: { latitude: number, longitude: number } | null;
+  setLastBackgroundFetchCoords: (coords: { latitude: number, longitude: number } | null) => void;
+
+  debugMetrics: {
+    backgroundExecutions: number;
+    overpassRequests: number;
+    notificationsTriggered: number;
+    fetchThrottled: boolean;
+    consecutiveHighSpeedCount: number;
+  };
+  incrementDebugMetric: (key: keyof LocationStoreState['debugMetrics']) => void;
+  setDebugMetric: <K extends keyof LocationStoreState['debugMetrics']>(key: K, value: LocationStoreState['debugMetrics'][K]) => void;
+
+  debugLogs: string[];
+  addDebugLog: (msg: string) => void;
+  clearDebugLogs: () => void;
 }
 
 const generateId = () =>
@@ -66,13 +86,51 @@ export const useLocationStore = create<LocationStoreState>()(
       isFetchingMarkets: false,
       fetchingRegionCenter: null,
       userLocation: null,
+      lastBackgroundFetchCoords: null,
+      
+      debugMetrics: {
+        backgroundExecutions: 0,
+        overpassRequests: 0,
+        notificationsTriggered: 0,
+        fetchThrottled: false,
+        consecutiveHighSpeedCount: 0,
+      },
+      debugLogs: [],
 
       setCachedMarkets: (markets) => set({ cachedMarkets: markets }),
+      appendCachedMarkets: (markets) => set((state) => {
+        // deduplicate by ID
+        const existingIds = new Set(state.cachedMarkets.map(m => m.id));
+        const newUnique = markets.filter(m => !existingIds.has(m.id));
+        return { cachedMarkets: [...state.cachedMarkets, ...newUnique] };
+      }),
       setIsFetchingMarkets: (isFetching, center = null) => set({ 
         isFetchingMarkets: isFetching,
         fetchingRegionCenter: isFetching ? center : null
       }),
       setUserLocation: (location) => set({ userLocation: location }),
+      setLastBackgroundFetchCoords: (coords) => set({ lastBackgroundFetchCoords: coords }),
+
+      incrementDebugMetric: (key) => set((state) => ({
+        debugMetrics: {
+          ...state.debugMetrics,
+          [key]: (state.debugMetrics[key] as number) + 1
+        }
+      })),
+      setDebugMetric: (key, value) => set((state) => ({
+        debugMetrics: {
+          ...state.debugMetrics,
+          [key]: value
+        }
+      })),
+
+      addDebugLog: (msg) => set((state) => {
+        const timestamp = new Date().toLocaleTimeString('en-GB', { hour12: false });
+        const entry = `[${timestamp}] ${msg}`;
+        const newLogs = [entry, ...state.debugLogs].slice(0, 100);
+        return { debugLogs: newLogs };
+      }),
+      clearDebugLogs: () => set({ debugLogs: [] }),
 
       addLocation: (location) =>
         set((state) => ({

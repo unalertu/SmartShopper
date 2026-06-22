@@ -82,7 +82,8 @@ export const geoEngine = {
   getNearbyStores: async (
     lat: number,
     lon: number,
-    savedStoresOnly: boolean
+    savedStoresOnly: boolean,
+    searchRadius?: number
   ): Promise<(SavedLocation & { distance: number })[]> => {
     const locations = await geoEngine.getLocations();
     const activeLocations = locations.filter((loc: SavedLocation) => loc.isActive);
@@ -113,11 +114,24 @@ export const geoEngine = {
         const distance = getDistance(lat, lon, loc.latitude, loc.longitude);
         return { ...loc, distance };
       })
-      .filter((loc) => loc.distance <= loc.radius);
+      .filter((loc) => loc.distance <= (searchRadius || loc.radius || 500));
 
     // Sort by distance (closest first)
     nearbyWithDistance.sort((a, b) => a.distance - b.distance);
 
     return nearbyWithDistance;
+  },
+
+  getBoundingBox: (lat: number, lon: number, radiusInMeters: number) => {
+    // 1 degree of latitude is ~111,320 meters
+    const latOffset = radiusInMeters / 111320;
+    // 1 degree of longitude is ~111,320 meters * cos(latitude)
+    const lonOffset = radiusInMeters / (111320 * Math.cos((lat * Math.PI) / 180));
+    return {
+      south: lat - latOffset,
+      north: lat + latOffset,
+      west: lon - lonOffset,
+      east: lon + lonOffset,
+    };
   }
 };

@@ -11,6 +11,16 @@ import { notificationEngine } from "./notificationEngine";
 import { sendLocalNotification } from "./notificationService";
 import { notificationAnalytics } from "./notificationAnalytics";
 import { NOTIFICATION_CONSTANTS } from "../constants";
+import { useLocationStore } from "../store/useLocationStore";
+import { fetchMarkets } from "./overpassService";
+
+const SEARCH_RADIUS = 1000;
+const OVERPASS_FETCH_RADIUS = 2500;
+const MIN_NEARBY_CACHE_THRESHOLD = 3;
+
+let consecutiveHighSpeedCount = 0;
+const REQUIRED_HIGH_SPEED_COUNT = 3;
+const HIGH_SPEED_THRESHOLD = 6.94; // ~25 km/h
 
 export const requestLocationPermissions = async (): Promise<boolean> => {
   const { status: foreground } = await Location.requestForegroundPermissionsAsync();
@@ -38,6 +48,13 @@ export const BACKGROUND_LOCATION_TASK = "background-location-task";
 // Module-level in-memory Map — lost on app kill
 const dwellTimers = new Map<string, number>();
 
+export const getDwellTimersState = () => {
+  return Array.from(dwellTimers.entries()).map(([id, entryTime]) => ({
+    id,
+    entryTime,
+  }));
+};
+
 const getSettingsFromStorage = async () => {
   try {
     const data = await AsyncStorage.getItem("settings-storage");
@@ -64,48 +81,111 @@ const getSettingsFromStorage = async () => {
   };
 };
 
-TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
-  if (error) {
-    console.error("Background Location Error:", error);
-    return;
-  }
+export const processLocationUpdate = async (location: Location.LocationObject) => {
+  const { addDebugLog, incrementDebugMetric, setDebugMetric } = useLocationStore.getState();
+  incrementDebugMetric("backgroundExecutions");
+  addDebugLog("Background task started");
 
-  if (!data) return;
-
-  const { locations } = data as any;
-  if (!locations || locations.length === 0) return;
-
-  const location = locations[0];
   const { latitude, longitude, speed } = location.coords;
+  addDebugLog(`Speed: ${speed ? speed.toFixed(2) : '0.00'} m/s`);
 
   // 1. Read settings
   const settings = await getSettingsFromStorage();
 
   // 2. GUARD: Ensure notifications are enabled globally and for background
-  if (!settings.notificationsEnabled || !settings.backgroundNotifications) return;
+  if (!settings.notificationsEnabled || !settings.backgroundNotifications) {
+    addDebugLog("Notifications disabled in settings");
+    return;
+  }
 
   // 3. SPEED CHECK
-  if (!notificationEngine.isUserLikelyWalking(speed)) return;
+  if (speed !== null && speed > HIGH_SPEED_THRESHOLD) {
+    consecutiveHighSpeedCount++;
+    addDebugLog(`High speed detected: ${speed.toFixed(2)}m/s. Count: ${consecutiveHighSpeedCount}`);
+    setDebugMetric("consecutiveHighSpeedCount", consecutiveHighSpeedCount);
+    if (consecutiveHighSpeedCount >= REQUIRED_HIGH_SPEED_COUNT) {
+      addDebugLog("Ignored update due to sustained high speed");
+      return;
+    }
+  } else {
+    consecutiveHighSpeedCount = 0;
+    setDebugMetric("consecutiveHighSpeedCount", 0);
+  }
 
-  // 4. FIND NEARBY STORES
-  const nearbyStores = await geoEngine.getNearbyStores(latitude, longitude, settings.savedStoresOnly);
+  // 4. FIND NEARBY STORES (CACHE-FIRST)
+  let nearbyStores = await geoEngine.getNearbyStores(latitude, longitude, settings.savedStoresOnly, SEARCH_RADIUS);
+  addDebugLog(`Nearby cached stores: ${nearbyStores.length}`);
   
-  if (nearbyStores.length === 0) {
-    // Clear dwell timers if no stores are nearby
+  // 5. CACHE MISS & THROTTLE LOGIC
+  if (nearbyStores.length < MIN_NEARBY_CACHE_THRESHOLD && !settings.savedStoresOnly) {
+    addDebugLog("Threshold miss");
+    
+    // Check if there are active unpurchased items before doing ANY network requests
+    const hasActiveList = await geoEngine.hasActiveShoppingList();
+    addDebugLog(`Active list: ${hasActiveList ? 'Yes' : 'No'}`);
+    if (!hasActiveList) {
+      addDebugLog("No active lists. Skipping Overpass fetch.");
+    } else {
+      // Check throttle (1.5km from last fetch)
+      const lastCoords = useLocationStore.getState().lastBackgroundFetchCoords;
+      let shouldFetch = true;
+      if (lastCoords) {
+        const distFromLastFetch = getDistance(latitude, longitude, lastCoords.latitude, lastCoords.longitude);
+        if (distFromLastFetch < 1500) {
+          addDebugLog(`Fetch throttled: Yes (${distFromLastFetch.toFixed(0)}m from last fetch)`);
+          setDebugMetric("fetchThrottled", true);
+          shouldFetch = false;
+        }
+      }
+
+      if (shouldFetch) {
+        setDebugMetric("fetchThrottled", false);
+        addDebugLog("Fetch throttled: No");
+        addDebugLog("Overpass fetch started");
+        incrementDebugMetric("overpassRequests");
+        try {
+          const bbox = geoEngine.getBoundingBox(latitude, longitude, OVERPASS_FETCH_RADIUS);
+          const newMarkets = await fetchMarkets(bbox.south, bbox.west, bbox.north, bbox.east);
+          addDebugLog(`Overpass fetch completed (${newMarkets.length} stores)`);
+          
+          if (newMarkets.length > 0) {
+            useLocationStore.getState().appendCachedMarkets(newMarkets);
+            useLocationStore.getState().setLastBackgroundFetchCoords({ latitude, longitude });
+            addDebugLog(`Cache size: ${useLocationStore.getState().cachedMarkets.length}`);
+            
+            // Re-evaluate nearby stores with updated cache
+            nearbyStores = await geoEngine.getNearbyStores(latitude, longitude, settings.savedStoresOnly, SEARCH_RADIUS);
+            addDebugLog(`Re-evaluated: Found ${nearbyStores.length} nearby stores in cache.`);
+          }
+        } catch (e: any) {
+          addDebugLog(`Overpass fetch failed: ${e.message}`);
+        }
+      }
+    }
+  } else {
+    // If we didn't go through the threshold miss block, just log active list status for clarity
+    const hasActiveList = await geoEngine.hasActiveShoppingList();
+    addDebugLog(`Active list: ${hasActiveList ? 'Yes' : 'No'}`);
+  }
+
+  const insideStores = nearbyStores.filter(s => s.distance <= s.radius);
+
+  if (insideStores.length === 0) {
+    addDebugLog("Not inside any store geofence, clearing dwell timers");
     dwellTimers.clear();
     return;
   }
 
-  // 5. ACTIVE LIST CHECK
-  const hasActiveList = await geoEngine.hasActiveShoppingList();
-  if (!hasActiveList) return;
+  // 6. ACTIVE LIST CHECK (For notification evaluation)
+  const hasActiveListFinal = await geoEngine.hasActiveShoppingList();
+  if (!hasActiveListFinal) return;
 
   // 6. DWELL TIME VALIDATION (in-memory)
-  const nearbyIds = new Set(nearbyStores.map((s) => s.id));
+  const insideIds = new Set(insideStores.map((s) => s.id));
   
   // Clean up old timers
   for (const [id] of dwellTimers) {
-    if (!nearbyIds.has(id)) {
+    if (!insideIds.has(id)) {
       dwellTimers.delete(id);
     }
   }
@@ -113,24 +193,35 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
   const dwelledStores: typeof nearbyStores = [];
   const now = Date.now();
 
-  for (const store of nearbyStores) {
+  for (const store of insideStores) {
     if (!dwellTimers.has(store.id)) {
+      addDebugLog(`Started dwell timer for ${store.name}`);
       // Start timer
       dwellTimers.set(store.id, now);
     } else {
       const entryTime = dwellTimers.get(store.id)!;
-      if (now - entryTime >= NOTIFICATION_CONSTANTS.DWELL_TIME_MS) {
+      const elapsed = now - entryTime;
+      addDebugLog(`Dwell time for ${store.name}: ${elapsed}ms (target: ${NOTIFICATION_CONSTANTS.DWELL_TIME_MS}ms)`);
+      if (elapsed >= NOTIFICATION_CONSTANTS.DWELL_TIME_MS) {
         dwelledStores.push(store);
       }
     }
   }
 
-  if (dwelledStores.length === 0) return;
+  if (dwelledStores.length === 0) {
+    addDebugLog("Dwell time not met");
+    return;
+  }
+  addDebugLog(`Stores meeting dwell time: ${dwelledStores.map(s => s.name).join(', ')}`);
 
   // 7. PICK BEST STORE
   const bestStore = await notificationEngine.pickBestStore(dwelledStores);
-  if (!bestStore) return;
+  if (!bestStore) {
+    addDebugLog("No best store picked (cooldowns, etc.)");
+    return;
+  }
 
+  addDebugLog(`Checking restrictions for ${bestStore.name}`);
   // 8. SHOULD SEND (Cooldowns, Tier limits, Quiet hours)
   const decision = await notificationEngine.shouldSendLocationNotification({
     storeId: bestStore.id,
@@ -139,9 +230,13 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
   });
 
   if (!decision.allowed) {
-    console.log(`Notification suppressed: ${decision.reason}`);
+    addDebugLog(`Notification blocked: ${decision.reason}`);
     return;
   }
+
+  addDebugLog("Notification triggered");
+  const { incrementDebugMetric: idm } = useLocationStore.getState();
+  idm("notificationsTriggered");
 
   // 9. SEND NOTIFICATION
   const content = notificationEngine.buildNotificationContent(bestStore.name);
@@ -156,6 +251,18 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
   
   // Once sent, remove from dwell timer to avoid immediate re-evaluation if cooldowns fail for some reason
   dwellTimers.delete(bestStore.id);
+};
+
+TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
+  if (error) {
+    console.error("Background Location Error:", error);
+    return;
+  }
+  if (!data) return;
+  const { locations } = data as any;
+  if (!locations || locations.length === 0) return;
+  
+  await processLocationUpdate(locations[0]);
 });
 
 export const startBackgroundLocationTracking = async () => {
@@ -167,7 +274,7 @@ export const startBackgroundLocationTracking = async () => {
         await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
           accuracy: Location.Accuracy.Balanced,
           timeInterval: 60000,
-          distanceInterval: 100,
+          distanceInterval: 300,
           showsBackgroundLocationIndicator: true,
         });
       }

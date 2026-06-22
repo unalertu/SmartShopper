@@ -10,35 +10,8 @@ export const notificationEngine = {
     isPro: boolean;
     nightNotificationsEnabled: boolean;
   }): Promise<{ allowed: boolean; reason?: string }> => {
-    const { storeId, isPro, nightNotificationsEnabled } = params;
-
-    // 1. Quiet hours
-    if (notificationEngine.isInQuietHours(nightNotificationsEnabled)) {
-      return { allowed: false, reason: "Quiet hours active" };
-    }
-
-    const state = await notificationAnalytics.getState();
-
-    // 2. Daily limits (Free tier)
-    if (!notificationAnalytics.canSendDailyNotification(state, isPro)) {
-      return { allowed: false, reason: "Daily limit reached" };
-    }
-
-    // 3. Global cooldown
-    if (notificationAnalytics.isGlobalCooldownActive(state)) {
-      return { allowed: false, reason: "Global cooldown active" };
-    }
-
-    // 4. Store cooldown
-    if (notificationAnalytics.isStoreCoolingDown(state, storeId)) {
-      return { allowed: false, reason: "Store cooling down" };
-    }
-
-    // 5. Fingerprint dedup
-    if (notificationAnalytics.hasFingerprint(state, storeId)) {
-      return { allowed: false, reason: "Already notified for this store today" };
-    }
-
+    // TEST MODE: Bypass all restrictions
+    console.log(`[TEST] Bypassing restrictions for store: ${params.storeId}`);
     return { allowed: true };
   },
 
@@ -50,23 +23,9 @@ export const notificationEngine = {
   ): Promise<(SavedLocation & { distance: number }) | null> => {
     if (nearbyStores.length === 0) return null;
 
-    const state = await notificationAnalytics.getState();
-
-    // Filter out cooling down stores
-    const eligibleStores = nearbyStores.filter((store) => {
-      // We don't check global cooldown here, because if global cooldown is active, 
-      // NONE of the stores will pass the final check anyway.
-      // But we do check store cooldowns to skip to the next eligible store.
-      if (notificationAnalytics.isStoreCoolingDown(state, store.id)) return false;
-      if (notificationAnalytics.hasFingerprint(state, store.id)) return false;
-      
-      return true;
-    });
-
-    if (eligibleStores.length === 0) return null;
-
-    // Return closest
-    return eligibleStores[0];
+    // TEST MODE: Bypass store cooldown checks
+    console.log(`[TEST] Picking best store from: ${nearbyStores.map(s => s.name).join(", ")}`);
+    return nearbyStores[0];
   },
 
   buildNotificationContent: (storeName: string): { title: string; body: string } => {

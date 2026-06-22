@@ -46,8 +46,12 @@ import {
   Sparkles,
   Globe,
   Users,
-  Calendar} from 'lucide-react-native';
+  Calendar,
+  Bug} from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
+import { geoEngine } from '../../services/geoEngine';
+import { notificationEngine } from '../../services/notificationEngine';
+import { sendLocalNotification } from '../../services/notificationService';
 import {
   useShoppingListStore,
   useLocationStore,
@@ -477,6 +481,32 @@ export default function SettingsScreen() {
     [setHapticEnabled]
   );
 
+  const handleTestNotification = useCallback(async () => {
+    hapticImpact(ImpactFeedbackStyle.Light);
+    try {
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const lat = loc.coords.latitude;
+      const lon = loc.coords.longitude;
+      
+      const nearbyStores = await geoEngine.getNearbyStores(lat, lon, false);
+      if (nearbyStores.length === 0) {
+        Alert.alert("Test Flow", "No stores nearby to trigger the flow. Try adding one nearby first.");
+        return;
+      }
+      
+      const bestStore = nearbyStores[0];
+      const content = notificationEngine.buildNotificationContent(bestStore.name);
+      await sendLocalNotification(content.title, content.body, "geofence-alerts");
+      
+      console.log(`[TEST] Manually triggered test notification for ${bestStore.name}`);
+    } catch (e) {
+      console.error(e);
+      Alert.alert("Error", "Failed to trigger test flow. Please ensure location permissions are granted.");
+    }
+  }, []);
+
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -518,6 +548,23 @@ export default function SettingsScreen() {
               <ProStatusCard animatedStyle={animatedProCardStyle} isPro={isPro} />
             </TouchableOpacity>
           </Animated.View>
+
+          {/* ── Debug ── */}
+          <SettingsGroup delay={35}>
+            <SettingsRow
+              icon={<Bug size={20} color="#8b5cf6" />}
+              label="Test Notification Flow"
+              sublabel="Immediately trigger store detection and send notification"
+              onPress={handleTestNotification}
+            />
+            <SettingsRow
+              icon={<MapPin size={20} color="#8b5cf6" />}
+              label="Location Debugger"
+              sublabel="View real-time location and dwell timers"
+              isLast
+              onPress={() => router.push('/debug')}
+            />
+          </SettingsGroup>
 
           {/* ── Subscriptions & Purchases ── */}
           <SettingsGroup delay={50}>
