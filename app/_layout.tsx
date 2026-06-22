@@ -19,6 +19,7 @@ import NotificationPermissionScreen, {
   shouldShowNotificationPermission} from "@/components/NotificationPermissionScreen";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { useShoppingListStore } from "@/store/useShoppingListStore";
+import { useNotificationsStore } from "@/store/useNotificationsStore";
 import { notificationEngine } from "@/services/notificationEngine";
 import { startBackgroundLocationTracking } from "@/services/locationService";
 
@@ -74,6 +75,9 @@ export default function RootLayout() {
 
     // Check and send welcome notification safely (persisted check)
     await notificationEngine.checkAndSendWelcome();
+    
+    // Sync notifications from analytics to Zustand
+    await useNotificationsStore.getState().syncFromAnalytics();
     
     // Attempt to start background location tracking
     await startBackgroundLocationTracking();

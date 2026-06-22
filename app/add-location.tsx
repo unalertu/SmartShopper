@@ -312,7 +312,7 @@ export default function AddLocationScreen() {
                 </Pressable>
               </View>
               <View className="flex-row justify-between mt-3 px-2">
-                {[50, 100, 200, 500].map((r) => (
+                {[100, 200, 300, 500].map((r) => (
                   <Pressable
                     key={r}
                     onPress={() => {

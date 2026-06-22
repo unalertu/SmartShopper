@@ -36,12 +36,8 @@ import { useNotificationsStore, AppNotification } from '../store';
 
 function getNotificationIcon(type: AppNotification['type']) {
   switch (type) {
-    case 'store_nearby':
+    case 'location':
       return <MapPin size={20} color="#22c55e" />;
-    case 'list_reminder':
-      return <ShoppingBag size={20} color="#3b82f6" />;
-    case 'location_permission':
-      return <AlertTriangle size={20} color="#f59e0b" />;
     case 'welcome':
       return <Sparkles size={20} color="#8b5cf6" />;
   }
@@ -49,15 +45,25 @@ function getNotificationIcon(type: AppNotification['type']) {
 
 function getNotificationIconBg(type: AppNotification['type']) {
   switch (type) {
-    case 'store_nearby':
+    case 'location':
       return 'rgba(34, 197, 94, 0.1)';
-    case 'list_reminder':
-      return 'rgba(59, 130, 246, 0.1)';
-    case 'location_permission':
-      return 'rgba(245, 158, 11, 0.1)';
     case 'welcome':
       return 'rgba(139, 92, 246, 0.1)';
   }
+}
+
+// ─── Time Helper ─────────────────────────────────────────────────────────────
+
+function formatRelativeTime(timestamp: number): string {
+  const diff = Date.now() - timestamp;
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 60) return minutes <= 1 ? 'Just now' : `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days} days ago`;
+  return new Date(timestamp).toLocaleDateString();
 }
 
 // ─── Notification Row ────────────────────────────────────────────────────────
@@ -100,7 +106,7 @@ function NotificationRow({
         </View>
       </View>
       <View className="items-end gap-1.5">
-        <Text className="text-[11px] font-medium text-slate-300">{notification.time}</Text>
+        <Text className="text-[11px] font-medium text-slate-300">{formatRelativeTime(notification.timestamp)}</Text>
         {!notification.read && (
           <View
             style={{
@@ -122,8 +128,14 @@ function groupNotifications(notifications: AppNotification[]) {
   const today: AppNotification[] = [];
   const earlier: AppNotification[] = [];
 
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+
   notifications.forEach((n) => {
-    if (n.time.includes('ago') || n.time === 'Just now') {
+    const nDate = new Date(n.timestamp);
+    const nStr = `${nDate.getFullYear()}-${nDate.getMonth()}-${nDate.getDate()}`;
+    
+    if (nStr === todayStr) {
       today.push(n);
     } else {
       earlier.push(n);

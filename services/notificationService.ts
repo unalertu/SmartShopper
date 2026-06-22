@@ -30,13 +30,19 @@ export const setupNotifications = async (): Promise<boolean> => {
 
   if (finalStatus !== "granted") return false;
 
-  // Android notification channel
+  // Android notification channels
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("geofence-alerts", {
       name: "Store Reminders",
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: "#0a7eff",
+      sound: "default",
+    });
+
+    await Notifications.setNotificationChannelAsync("shopping-reminders", {
+      name: "Shopping Reminders",
+      importance: Notifications.AndroidImportance.DEFAULT,
       sound: "default",
     });
   }
@@ -46,7 +52,8 @@ export const setupNotifications = async (): Promise<boolean> => {
 
 export const sendLocalNotification = async (
   title: string,
-  body: string
+  body: string,
+  channelId: string = "geofence-alerts"
 ): Promise<void> => {
   await Notifications.scheduleNotificationAsync({
     content: {
@@ -54,7 +61,7 @@ export const sendLocalNotification = async (
       body,
       sound: "default",
       ...(Platform.OS === "android" && {
-        channelId: "geofence-alerts",
+        channelId,
       }),
     },
     trigger: null, // Send immediately

@@ -11,10 +11,9 @@ export const FREE_TIER = {
   maxSavedStores: 4,
   maxLists: 4,
   maxItemsPerList: 25,
-  maxNotificationsPerDay: 5,
-  maxNearbyAlertsPerDay: 5,
+  maxLocationNotificationsPerDay: 4,
   maxMutedShops: 5,
-  fixedGeofenceRadius: 100, // meters
+  fixedGeofenceRadius: 150, // meters
   canCustomizeGeofenceRadius: false,
   canCustomizeNotifications: false,
   canSetQuietHours: false,
@@ -22,17 +21,16 @@ export const FREE_TIER = {
   canUsePriorityAlerts: false,
   canUseSmartNotificationRules: false,
   canUseAdvancedNotificationSettings: false,
+  canDisableQuietHours: false,
 } as const;
 
 export const PRO_TIER = {
   maxSavedStores: 20, // aligned with iOS geofence limitations
   maxLists: Infinity,
   maxItemsPerList: 500,
-  maxNotificationsPerDay: Infinity,
-  maxNearbyAlertsPerDay: Infinity,
+  maxLocationNotificationsPerDay: Infinity,
   maxMutedShops: Infinity,
-  minGeofenceRadius: 50, // meters
-  maxGeofenceRadius: 1000, // meters
+  geofenceRadiusOptions: [100, 200, 300, 500] as const,
   canCustomizeGeofenceRadius: true,
   canCustomizeNotifications: true,
   canSetQuietHours: true,
@@ -40,6 +38,7 @@ export const PRO_TIER = {
   canUsePriorityAlerts: true,
   canUseSmartNotificationRules: true,
   canUseAdvancedNotificationSettings: true,
+  canDisableQuietHours: true,
 } as const;
 
 /**
@@ -54,16 +53,10 @@ export const getMaxSavedStores = (isPro: boolean): number =>
   isPro ? PRO_TIER.maxSavedStores : FREE_TIER.maxSavedStores;
 
 /**
- * Returns the max notifications per day for the given tier.
+ * Returns the max location notifications per day for the given tier.
  */
-export const getMaxNotificationsPerDay = (isPro: boolean): number =>
-  isPro ? PRO_TIER.maxNotificationsPerDay : FREE_TIER.maxNotificationsPerDay;
-
-/**
- * Returns the max nearby alerts per day for the given tier.
- */
-export const getMaxNearbyAlertsPerDay = (isPro: boolean): number =>
-  isPro ? PRO_TIER.maxNearbyAlertsPerDay : FREE_TIER.maxNearbyAlertsPerDay;
+export const getMaxLocationNotificationsPerDay = (isPro: boolean): number =>
+  isPro ? PRO_TIER.maxLocationNotificationsPerDay : FREE_TIER.maxLocationNotificationsPerDay;
 
 /**
  * Returns the max shopping lists for the given tier.
@@ -74,7 +67,7 @@ export const getMaxLists = (isPro: boolean): number =>
 /**
  * Returns the max items per list for the given tier.
  */
-export const getMaxItemsPerList = (isPro: boolean): number => // forced reload
+export const getMaxItemsPerList = (isPro: boolean): number =>
   isPro ? PRO_TIER.maxItemsPerList : FREE_TIER.maxItemsPerList;
 
 /**
@@ -82,4 +75,3 @@ export const getMaxItemsPerList = (isPro: boolean): number => // forced reload
  */
 export const getMaxMutedShops = (isPro: boolean): number =>
   isPro ? PRO_TIER.maxMutedShops : FREE_TIER.maxMutedShops;
-

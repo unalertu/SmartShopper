@@ -82,5 +82,4 @@ export const FontSize = {
   "4xl": 36,
 } as const;
 
-export const GEOFENCE_DEFAULT_RADIUS = 100; // meters
-export const BACKGROUND_LOCATION_TASK = "BACKGROUND_LOCATION_TASK";
+export const GEOFENCE_DEFAULT_RADIUS = 150; // meters
