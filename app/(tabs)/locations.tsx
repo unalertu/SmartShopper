@@ -47,7 +47,7 @@ export default function LocationsScreen() {
       >
         {locations.length === 0 ? (
           <Animated.View
-            entering={FadeInDown.duration(600).delay(200)}
+            entering={FadeInDown.duration(400).delay(200).springify()}
             className="items-center justify-center pt-20"
           >
             <View className="w-20 h-20 rounded-full bg-primary-100 items-center justify-center mb-4">
@@ -64,7 +64,7 @@ export default function LocationsScreen() {
           locations.map((location, index) => (
             <Animated.View
               key={location.id}
-              entering={FadeInDown.duration(400).delay(index * 60)}
+              entering={FadeInDown.duration(400).delay(index * 60).springify()}
               className="bg-white rounded-2xl p-4 mb-3 shadow-sm"
               
             >

@@ -116,6 +116,7 @@ function SettingsGroup({
 }) {
   return (
     <Animated.View
+      entering={FadeInDown.duration(400).delay(delay).springify()}
       layout={LinearTransition.springify()}
       className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 mx-6"
       
@@ -493,6 +494,7 @@ export default function SettingsScreen() {
         >
           {/* Header */}
           <Animated.View
+            entering={FadeInDown.duration(400).springify()}
             layout={LinearTransition.springify()}
             className="flex-row items-center mx-6 mb-6"
           >
@@ -503,6 +505,7 @@ export default function SettingsScreen() {
 
           {/* GeoCart Pro Card */}
           <Animated.View
+            entering={FadeInDown.duration(400).delay(25).springify()}
             layout={LinearTransition.springify()}
             className="mx-6 mb-6"
           >
@@ -710,6 +713,7 @@ export default function SettingsScreen() {
 
           {/* Footer */}
           <Animated.View
+            entering={FadeInDown.duration(400).delay(500).springify()}
             layout={LinearTransition.springify()}
             className="items-center mb-4"
           >

@@ -1285,7 +1285,11 @@ export default function StoresScreen() {
               );
             })()}
 
-            <Animated.View layout={LinearTransition.springify()} style={{ marginTop: 0, marginBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Animated.View 
+              entering={FadeInDown.duration(400).springify()}
+              layout={LinearTransition.springify()} 
+              style={{ marginTop: 0, marginBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+            >
               <Text style={{ fontSize: 28, fontWeight: '600', letterSpacing: -0.6, color: '#0f172a' }}>Saved Shops</Text>
               <Text style={{ fontSize: 14, fontWeight: '600', color: '#64748b', letterSpacing: -0.1 }}>
                 {savedShops.length === 0 ? 'No shops' : `${savedShops.length} ${savedShops.length === 1 ? 'shop' : 'shops'}`}
@@ -1294,23 +1298,27 @@ export default function StoresScreen() {
           </Animated.View>
           {/* Empty state */}
           {savedShops.length === 0 && (
-            <View style={styles.emptyState}>
+            <Animated.View 
+              entering={FadeInDown.duration(400).delay(100).springify()}
+              style={styles.emptyState}
+            >
               <View style={styles.emptyIcon}>
                 <Store size={26} color="#475569" strokeWidth={1.5} />
               </View>
               <Text style={styles.emptyTitle}>No saved shops yet</Text>
               <Text style={styles.emptySub}>Tap a shop marker to save it</Text>
-            </View>
+            </Animated.View>
           )}
 
           {/* Saved shop cards with swipe-to-delete */}
-          {savedShops.map((loc) => {
+          {savedShops.map((loc, index) => {
             if (selectedShopToSave && selectedShopToSave.isSaved && selectedShopToSave.id === `saved-${loc.id}`) {
               return null;
             }
             return (
             <Animated.View
               key={loc.id}
+              entering={FadeInDown.duration(400).delay(index * 60).springify()}
               layout={LinearTransition.springify()}
               exiting={FadeOutLeft.duration(200)}
             >

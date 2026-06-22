@@ -165,6 +165,7 @@ export default function ListsScreen() {
         >
           {/* Header */}
           <Animated.View
+            entering={FadeInDown.duration(400).springify()}
             layout={LinearTransition.springify()}
             className="flex-row items-center justify-between mx-6 mb-6"
             style={{ zIndex: 10 }}
@@ -191,7 +192,7 @@ export default function ListsScreen() {
 
           {/* Quick Start Section */}
           <Animated.View layout={LinearTransition.springify()} className={`${shoppingLists.length === 0 ? 'mb-2' : 'mb-6'}`}>
-            <View className="flex-row items-center justify-between mb-3 px-6">
+            <Animated.View entering={FadeInDown.duration(400).delay(100).springify()} className="flex-row items-center justify-between mb-3 px-6">
               <View className="flex-row items-center gap-1.5">
                 <Sparkles size={14} color="#94a3b8" strokeWidth={2} />
                 <Text className="text-[14px] font-bold text-slate-500 tracking-wide">Quick Start</Text>
@@ -207,7 +208,7 @@ export default function ListsScreen() {
                   <Text className="text-[12px] font-semibold text-slate-400">{showAllTemplates ? 'See Less' : 'See All'}</Text>
                 </TouchableOpacity>
               ) : null}
-            </View>
+            </Animated.View>
             
             <ScrollView 
               ref={quickStartScrollRef}
@@ -223,7 +224,7 @@ export default function ListsScreen() {
                       key={rowIndex} 
                       className="flex-row" 
                       style={{ gap: 8 }}
-                      entering={FadeInDown.delay(rowIndex * 60).duration(300)}
+                      entering={FadeInDown.duration(400).delay(150 + rowIndex * 50).springify()}
                       layout={LinearTransition.springify()}
                     >
                       {row.map((template) => (
@@ -264,6 +265,7 @@ export default function ListsScreen() {
 
           {shoppingLists.length === 0 && (
             <Animated.View 
+              entering={FadeInDown.duration(400).delay(250).springify()}
               layout={LinearTransition.springify()} 
               exiting={FadeOutUp.duration(200)}
               className="mt-12 flex-1"
@@ -282,7 +284,7 @@ export default function ListsScreen() {
           )}
 
           {shoppingLists.length > 0 && (
-            <Animated.View layout={LinearTransition.springify()} className="h-[3px] bg-slate-200 mx-16 mb-5 rounded-full" />
+            <Animated.View entering={FadeInDown.duration(400).delay(250).springify()} layout={LinearTransition.springify()} className="h-[3px] bg-slate-200 mx-16 mb-5 rounded-full" />
           )}
 
           <Animated.View layout={LinearTransition.springify()}>
@@ -290,7 +292,7 @@ export default function ListsScreen() {
               <Animated.View
                 key={list.id}
                 layout={LinearTransition.springify()}
-                entering={PopIn.delay(index * 80).duration(300)}
+                entering={FadeInDown.duration(400).delay(300 + index * 50).springify()}
                 exiting={FadeOutLeft.duration(200)}
               >
                   <Swipeable
@@ -387,7 +389,7 @@ export default function ListsScreen() {
 
             return (
               <Animated.View layout={LinearTransition.springify()} className="px-6 mt-6 mb-2">
-                <View className="flex-row items-center justify-between mb-3">
+                <Animated.View entering={FadeInDown.duration(400).delay(400).springify()} className="flex-row items-center justify-between mb-3">
                   <View className="flex-row items-center gap-1.5">
                     <Activity size={14} color="#94a3b8" strokeWidth={2} />
                     <Text className="text-[14px] font-bold text-slate-500 tracking-wide">Recent Activity</Text>
@@ -403,22 +405,26 @@ export default function ListsScreen() {
                       <Text className="text-[12px] font-semibold text-slate-400">{showAllActivities ? 'See Less' : 'See All'}</Text>
                     </TouchableOpacity>
                   ) : null}
-                </View>
+                </Animated.View>
 
                 {recentEvents.length === 0 ? (
-                  <View className="bg-white rounded-[20px] p-5 border border-slate-100 items-center" >
+                  <Animated.View entering={FadeInDown.duration(400).delay(450).springify()} className="bg-white rounded-[20px] p-5 border border-slate-100 items-center" >
                     <View className="w-10 h-10 bg-slate-50 rounded-full items-center justify-center mb-2.5">
                       <Clock size={18} color="#cbd5e1" strokeWidth={1.5} />
                     </View>
                     <Text className="text-[13px] font-medium text-slate-400/80 text-center">Your recent actions will appear here</Text>
-                  </View>
+                  </Animated.View>
                 ) : (
                   <View style={{ gap: 16 }}>
-                    {groupedEvents.map((group, groupIndex) => (
+                    {groupedEvents.map((group, groupIndex) => {
+                      const previousItemsCount = groupedEvents.slice(0, groupIndex).reduce((sum, g) => sum + g.data.length, 0);
+                      return (
                       <View key={group.title} style={{ gap: 8 }}>
-                        <Text className="text-[12px] font-bold text-slate-400 uppercase tracking-wider pl-1">
-                          {group.title}
-                        </Text>
+                        <Animated.View entering={FadeInDown.duration(400).delay(450 + (previousItemsCount + groupIndex) * 50).springify()}>
+                          <Text className="text-[12px] font-bold text-slate-400 uppercase tracking-wider pl-1">
+                            {group.title}
+                          </Text>
+                        </Animated.View>
                         <View style={{ gap: 6 }}>
                           {group.data.map((event, index) => {
                             const dateObj = new Date(event.timestamp);
@@ -426,7 +432,7 @@ export default function ListsScreen() {
                             return (
                               <Animated.View
                                 key={event.id}
-                                entering={FadeInDown.delay((groupIndex * 5 + index) * 60).duration(300)}
+                                entering={FadeInDown.duration(400).delay(450 + (previousItemsCount + groupIndex + 1 + index) * 50).springify()}
                               >
                                 <TouchableOpacity
                                   activeOpacity={0.7}
@@ -452,7 +458,8 @@ export default function ListsScreen() {
                           })}
                         </View>
                       </View>
-                    ))}
+                      );
+                    })}
                   </View>
                 )}
               </Animated.View>
