@@ -739,7 +739,8 @@ export default function StoresScreen() {
           const isSaved = true;
           const shopId = `saved-${shop.id}`;
           const isSelected = selectedShopToSave?.id === shopId;
-          const markerName = shop.name || 'Store';
+          let markerName = shop.name || 'Store';
+          if (markerName) markerName = markerName.replace(/7[\s-]*eleven/ig, '7\u2011Eleven');
           const needsTracking = tracksViewId === shopId;
           const longitude = shop.longitude;
           const latitude = shop.latitude;
@@ -752,7 +753,7 @@ export default function StoresScreen() {
               }}
               coordinate={{ latitude, longitude }}
               anchor={{ x: 0.5, y: 0.5 }}
-              calloutAnchor={{ x: 0.5, y: 0 }}
+              calloutAnchor={{ x: 0.5, y: 0.15 }}
               forceTrack={needsTracking}
               onPress={(e: any) => {
                 e.stopPropagation();
@@ -798,7 +799,7 @@ export default function StoresScreen() {
                 <Callout tooltip onPress={() => {}}>
                   <View style={styles.calloutContainer} pointerEvents="none">
                     <View style={[styles.calloutBubble, isSaved ? styles.calloutBubbleSaved : styles.calloutBubbleUnsaved]}>
-                      <Text style={[styles.calloutText, isSaved ? styles.calloutTextSaved : styles.calloutTextUnsaved]} numberOfLines={1}>{markerName}</Text>
+                      <Text style={[styles.calloutText, isSaved ? styles.calloutTextSaved : styles.calloutTextUnsaved]} numberOfLines={3}>{markerName}</Text>
                     </View>
                     <View style={[styles.calloutArrow, isSaved ? styles.calloutArrowSaved : styles.calloutArrowUnsaved]} />
                   </View>
@@ -845,7 +846,8 @@ export default function StoresScreen() {
           if (!properties?.id) return null; // Guard against corrupted cluster data
           const isSaved = properties.isSaved;
           const isSelected = selectedShopToSave?.id === properties.id || (isSaved && selectedShopToSave?.id === `saved-${properties.id}`);
-          const markerName = properties.name || 'Store';
+          let markerName = properties.name || 'Store';
+          if (markerName) markerName = markerName.replace(/7[\s-]*eleven/ig, '7\u2011Eleven');
           const needsTracking = tracksViewId === properties.id;
 
           return (
@@ -856,7 +858,7 @@ export default function StoresScreen() {
               }}
               coordinate={{ latitude, longitude }}
               anchor={{ x: 0.5, y: 0.5 }}
-              calloutAnchor={{ x: 0.5, y: 0 }}
+              calloutAnchor={{ x: 0.5, y: 0.15 }}
               forceTrack={needsTracking}
               onPress={(e: any) => {
                 e.stopPropagation();
@@ -912,7 +914,7 @@ export default function StoresScreen() {
                 <Callout tooltip onPress={() => {}}>
                   <View style={styles.calloutContainer} pointerEvents="none">
                     <View style={[styles.calloutBubble, isSaved ? styles.calloutBubbleSaved : styles.calloutBubbleUnsaved]}>
-                      <Text style={[styles.calloutText, isSaved ? styles.calloutTextSaved : styles.calloutTextUnsaved]} numberOfLines={1}>{markerName}</Text>
+                      <Text style={[styles.calloutText, isSaved ? styles.calloutTextSaved : styles.calloutTextUnsaved]} numberOfLines={3}>{markerName}</Text>
                     </View>
                     <View style={[styles.calloutArrow, isSaved ? styles.calloutArrowSaved : styles.calloutArrowUnsaved]} />
                   </View>
@@ -1674,8 +1676,8 @@ const styles = StyleSheet.create({
   /* ── Marker Callout Tooltip ──────────── */
   calloutContainer: {
     alignItems: 'center',
-    minWidth: 60,
-    maxWidth: 200},
+    minWidth: 120,
+    maxWidth: 260},
   calloutBubble: {
     borderRadius: 12,
     paddingVertical: 8,
