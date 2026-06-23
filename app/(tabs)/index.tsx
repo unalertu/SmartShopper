@@ -22,7 +22,7 @@ import RadarPinIcon from '../../components/RadarPinIcon';
 import StoreMarker from '../../components/StoreMarker';
 import CreateListSheet from '../../components/CreateListSheet';
 import ConfirmationSheet from '../../components/ConfirmationSheet';
-import { getSuggestionCard, SuggestionCard } from '@/constants/events';
+import { getSuggestionCards, SuggestionCard } from '@/constants/events';
 
 const getRelativeDate = (timestamp?: number): string => {
   if (!timestamp) return 'today';
@@ -50,7 +50,7 @@ export default function HomeScreen() {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteModalData, setDeleteModalData] = useState<any>(null);
 
-  const suggestionCard = useMemo(() => getSuggestionCard(), []);
+  const suggestionCards = useMemo(() => getSuggestionCards(), []);
 
   const unreadCount = useNotificationsStore((state) => state.unreadCount());
 
@@ -443,8 +443,9 @@ export default function HomeScreen() {
           category: item.category
         });
       });
-    } else if (suggestionCard && name === suggestionCard.name) {
-      suggestionCard.items.forEach(itemName => {
+    } else if (suggestionCards.some(c => c.name === name)) {
+      const matchedCard = suggestionCards.find(c => c.name === name)!;
+      matchedCard.items.forEach(itemName => {
         useShoppingListStore.getState().addItem(listId, {
           name: itemName,
           quantity: 1,
@@ -776,7 +777,6 @@ export default function HomeScreen() {
           <Animated.View entering={FadeInDown.duration(400).delay(2300).springify()} layout={LinearTransition.springify()} className="mt-6 mb-2">
             <View className="px-6 mb-4">
               <Text style={{ fontSize: 28, fontWeight: '600', letterSpacing: -0.6, color: '#0f172a' }}>Suggestions</Text>
-              <Text style={{ fontSize: 14, fontWeight: '400', color: '#64748b', marginTop: 4 }}>Based on your shopping habits</Text>
             </View>
             <View className="px-6 gap-3 pb-4">
               {/* 1. Shop Card (Most Visited or Nearest) */}
@@ -851,25 +851,28 @@ export default function HomeScreen() {
                 <ChevronRight size={18} color="#34d399" strokeWidth={2.5} />
               </TouchableOpacity>
 
-              {/* Suggestion Card: Event countdown or Seasonal */}
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => handleCreateSuggestedList(suggestionCard.name)}
-                className="bg-rose-50 border border-rose-100 rounded-[20px] px-4 py-4 flex-row items-center gap-3 w-full"
-              >
-                <View className="w-9 h-9 rounded-full bg-rose-100 items-center justify-center">
-                  <suggestionCard.icon size={18} color="#e11d48" strokeWidth={2.5} />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-[15px] font-bold text-rose-900 leading-tight">{suggestionCard.name}</Text>
-                  {suggestionCard.type === 'event' && suggestionCard.daysLeft !== undefined && (
-                    <Text className="text-[13px] font-medium text-rose-700 mt-0.5">
-                      {suggestionCard.daysLeft === 0 ? 'Today' : `${suggestionCard.daysLeft} ${suggestionCard.daysLeft === 1 ? 'day' : 'days'} left`}
-                    </Text>
-                  )}
-                </View>
-                <ChevronRight size={18} color="#fb7185" strokeWidth={2.5} />
-              </TouchableOpacity>
+              {/* Suggestion Cards: Event countdowns or Seasonal */}
+              {suggestionCards.map((card, index) => (
+                <TouchableOpacity
+                  key={index}
+                  activeOpacity={0.7}
+                  onPress={() => handleCreateSuggestedList(card.name)}
+                  className="bg-rose-50 border border-rose-100 rounded-[20px] px-4 py-4 flex-row items-center gap-3 w-full"
+                >
+                  <View className="w-9 h-9 rounded-full bg-rose-100 items-center justify-center">
+                    <card.icon size={18} color="#e11d48" strokeWidth={2.5} />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-[15px] font-bold text-rose-900 leading-tight">{card.name}</Text>
+                    {card.type === 'event' && card.daysLeft !== undefined && (
+                      <Text className="text-[13px] font-medium text-rose-700 mt-0.5">
+                        {card.daysLeft === 0 ? 'Today' : `${card.daysLeft} ${card.daysLeft === 1 ? 'day' : 'days'} left`}
+                      </Text>
+                    )}
+                  </View>
+                  <ChevronRight size={18} color="#fb7185" strokeWidth={2.5} />
+                </TouchableOpacity>
+              ))}
               
             </View>
           </Animated.View>

@@ -1,7 +1,8 @@
 import { 
   Gift, PartyPopper, Flag, 
   Rabbit, ShoppingCart, Monitor, Backpack, Trophy,
-  Sparkles, Sun, Snowflake, Leaf, Flame, UtensilsCrossed, TreePine, Coffee
+  Sparkles, Sun, Snowflake, Leaf, Flame, UtensilsCrossed, TreePine, Coffee,
+  Heart, Flower2, Shirt
 } from 'lucide-react-native';
 
 export interface EventData {
@@ -120,6 +121,41 @@ function getShoppingEvents(): EventData[] {
       items: ["Burgers", "Hot Dogs", "Charcoal", "Soda"],
       icon: Flag
     });
+    // Valentine's Day
+    events.push({
+      name: "Valentine's Day",
+      date: new Date(year, 1, 14),
+      items: ["Chocolates", "Flowers", "Cards", "Candles"],
+      icon: Heart
+    });
+
+    // Mother's Day: 2nd Sunday in May
+    const mayFirst = new Date(year, 4, 1);
+    const firstSunOffsetMay = (0 - mayFirst.getDay() + 7) % 7;
+    events.push({
+      name: "Mother's Day",
+      date: new Date(year, 4, 1 + firstSunOffsetMay + 7),
+      items: ["Flowers", "Cards", "Gift Wrap", "Perfume"],
+      icon: Flower2
+    });
+
+    // Father's Day: 3rd Sunday in June
+    const juneFirst = new Date(year, 5, 1);
+    const firstSunOffsetJune = (0 - juneFirst.getDay() + 7) % 7;
+    events.push({
+      name: "Father's Day",
+      date: new Date(year, 5, 1 + firstSunOffsetJune + 14),
+      items: ["Cards", "Tools", "Grill Accessories", "Cologne"],
+      icon: Shirt
+    });
+
+    // New Year's
+    events.push({
+      name: "New Year's",
+      date: new Date(year, 11, 31),
+      items: ["Champagne", "Party Hats", "Snacks", "Decorations"],
+      icon: PartyPopper
+    });
   });
 
   return events;
@@ -194,13 +230,12 @@ export interface SuggestionCard {
  * 1. Shopping event ≤14 days away → show event card with countdown
  * 2. No upcoming event → show rotating seasonal card
  */
-export function getSuggestionCard(): SuggestionCard {
+export function getSuggestionCards(): SuggestionCard[] {
   const events = getShoppingEvents();
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  let closestEvent: (EventData & { daysLeft: number }) | null = null;
-  let minDaysLeft = Infinity;
+  const upcomingEvents: SuggestionCard[] = [];
 
   for (const event of events) {
     const eventDate = new Date(event.date.getFullYear(), event.date.getMonth(), event.date.getDate());
@@ -208,29 +243,26 @@ export function getSuggestionCard(): SuggestionCard {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays >= 0 && diffDays <= 14) {
-      if (diffDays < minDaysLeft) {
-        minDaysLeft = diffDays;
-        closestEvent = { ...event, daysLeft: diffDays };
-      }
+      upcomingEvents.push({
+        type: 'event',
+        name: event.name,
+        items: event.items,
+        icon: event.icon,
+        daysLeft: diffDays,
+      });
     }
   }
 
-  if (closestEvent) {
-    return {
-      type: 'event',
-      name: closestEvent.name,
-      items: closestEvent.items,
-      icon: closestEvent.icon,
-      daysLeft: closestEvent.daysLeft,
-    };
+  if (upcomingEvents.length > 0) {
+    return upcomingEvents.sort((a, b) => (a.daysLeft || 0) - (b.daysLeft || 0));
   }
 
   // Fallback: seasonal card
   const seasonal = getCurrentSeasonalCard();
-  return {
+  return [{
     type: 'seasonal',
     name: seasonal.name,
     items: seasonal.items,
     icon: seasonal.icon,
-  };
+  }];
 }
