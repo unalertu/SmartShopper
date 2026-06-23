@@ -545,8 +545,8 @@ export default function HomeScreen() {
                       initialRegion={{
                         latitude: userLocation.latitude,
                         longitude: userLocation.longitude,
-                        latitudeDelta: 0.025,
-                        longitudeDelta: 0.025}}
+                        latitudeDelta: 0.015,
+                        longitudeDelta: 0.015}}
                       scrollEnabled={false}
                       zoomEnabled={false}
                       pitchEnabled={false}
