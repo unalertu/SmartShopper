@@ -109,8 +109,8 @@ function CreateListSheet({
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {/* Backdrop */}
       <Animated.View 
-        entering={FadeIn.duration(320).easing(Easing.out(Easing.cubic))}
-        exiting={FadeOut.duration(320).easing(Easing.out(Easing.cubic))}
+        entering={FadeIn.duration(500).easing(Easing.out(Easing.cubic))}
+        exiting={FadeOut.duration(400).easing(Easing.out(Easing.cubic))}
         style={styles.backdrop}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
@@ -123,8 +123,8 @@ function CreateListSheet({
         pointerEvents="box-none"
       >
         <Animated.View 
-          entering={FadeIn.duration(320).easing(Easing.out(Easing.cubic))}
-          exiting={FadeOut.duration(320).easing(Easing.out(Easing.cubic))}
+          entering={FadeIn.duration(500).easing(Easing.out(Easing.cubic))}
+          exiting={FadeOut.duration(400).easing(Easing.out(Easing.cubic))}
           style={[styles.pill, { marginBottom: 8 }]}
         >
           <DragHandle />
