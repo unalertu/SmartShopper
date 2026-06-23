@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   inputWrap: {
     flex: 1,
     borderWidth: 1, // Reduced to 1px for a cleaner, Apple-like look
-    borderRadius: 16,
+    borderRadius: 25,
     backgroundColor: '#f8fafc',
   },
   input: {
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
 
   // Create button
   createBtn: {
-    borderRadius: 16,
+    borderRadius: 25,
     paddingVertical: 16,
     paddingHorizontal: 20,
     alignItems: 'center',
