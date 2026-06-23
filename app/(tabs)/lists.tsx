@@ -73,13 +73,17 @@ export default function ListsScreen() {
   const { isPro } = useSettingsStore();
 
   const sortedTemplates = [...templates].sort((a, b) => b.usageCount - a.usageCount).map(t => t.name);
+  
   const templateRows = [];
-  for (let i = 0; i < sortedTemplates.length; i += 3) {
-    templateRows.push(sortedTemplates.slice(i, i + 3));
+  const half = Math.ceil(sortedTemplates.length / 2);
+  if (sortedTemplates.length > 0) {
+    templateRows.push(sortedTemplates.slice(0, half));
+    if (half < sortedTemplates.length) {
+      templateRows.push(sortedTemplates.slice(half));
+    }
   }
 
   const [showCreateSheet, setShowCreateSheet] = useState(false);
-  const [showAllTemplates, setShowAllTemplates] = useState(false);
   const [showAllActivities, setShowAllActivities] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteModalData, setDeleteModalData] = useState<any>(null);
@@ -106,7 +110,8 @@ export default function ListsScreen() {
 
   const handleCreateList = useCallback((name: string) => {
     addList(name);
-  }, [addList]);
+    incrementUsage(name);
+  }, [addList, incrementUsage]);
 
   const swipeableRefs = useRef<Map<number, Swipeable>>(new Map());
 
@@ -197,17 +202,6 @@ export default function ListsScreen() {
                 <Sparkles size={14} color="#94a3b8" strokeWidth={2} />
                 <Text className="text-[14px] font-bold text-slate-500 tracking-wide">Quick Start</Text>
               </View>
-              {templateRows.length > 2 ? (
-                <TouchableOpacity
-                  activeOpacity={0.6}
-                  onPress={() => {
-                    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                    setShowAllTemplates(!showAllTemplates);
-                  }}
-                >
-                  <Text className="text-[12px] font-semibold text-slate-400">{showAllTemplates ? 'See Less' : 'See All'}</Text>
-                </TouchableOpacity>
-              ) : null}
             </Animated.View>
             
             <ScrollView 
@@ -217,17 +211,15 @@ export default function ListsScreen() {
               contentContainerStyle={{ paddingHorizontal: 24 }}
             >
               <View style={{ gap: 8 }}>
-                {(() => {
-                  const visibleRows = showAllTemplates ? templateRows : templateRows.slice(0, 2);
-                  return visibleRows.map((row, rowIndex) => (
-                    <Animated.View 
-                      key={rowIndex} 
-                      className="flex-row" 
-                      style={{ gap: 8 }}
-                      entering={FadeInDown.duration(400).delay(150 + rowIndex * 50).springify()}
-                      layout={LinearTransition.springify()}
-                    >
-                      {row.map((template) => (
+                {templateRows.map((row, rowIndex) => (
+                  <Animated.View 
+                    key={rowIndex} 
+                    className="flex-row" 
+                    style={{ gap: 8 }}
+                    entering={FadeInDown.duration(400).delay(150 + rowIndex * 50).springify()}
+                    layout={LinearTransition.springify()}
+                  >
+                    {row.map((template) => (
                         <ScalePressable
                           key={template}
                           onPress={() => {
@@ -256,9 +248,8 @@ export default function ListsScreen() {
                           <Text className="text-[13px] font-medium text-slate-600">{template}</Text>
                         </ScalePressable>
                       ))}
-                    </Animated.View>
-                  ));
-                })()}
+                  </Animated.View>
+                ))}
               </View>
             </ScrollView>
           </Animated.View>

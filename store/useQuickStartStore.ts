@@ -32,11 +32,12 @@ export const useQuickStartStore = create<QuickStartStoreState>()(
       templates: DEFAULT_TEMPLATES,
       incrementUsage: (name) =>
         set((state) => {
-          const existing = state.templates.find(t => t.name === name);
+          const lowerName = name.toLowerCase();
+          const existing = state.templates.find(t => t.name.toLowerCase() === lowerName);
           if (existing) {
             return {
               templates: state.templates.map(t => 
-                t.name === name ? { ...t, usageCount: t.usageCount + 1 } : t
+                t.name.toLowerCase() === lowerName ? { ...t, usageCount: t.usageCount + 1 } : t
               )
             };
           } else {
