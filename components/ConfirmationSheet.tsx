@@ -98,15 +98,13 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
   const title = data?.title || (data ? `${actionLabel} ${data.settingName}?` : '');
   const description = data?.description ?? '';
 
-  const snapPoints = React.useMemo(() => ['35%'], []);
   const modalName = React.useMemo(() => `confirmation-sheet-${Math.random().toString(36).substr(2, 9)}`, []);
 
   return (
     <BottomSheetModal
       name={modalName}
       ref={bottomSheetRef}
-      snapPoints={snapPoints}
-      enableDynamicSizing={false}
+      enableDynamicSizing={true}
       enablePanDownToClose
       backdropComponent={renderBackdrop}
       onDismiss={handleDismiss}
