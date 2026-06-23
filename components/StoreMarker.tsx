@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
-import { ShoppingBasket } from 'lucide-react-native';
+import { ShoppingBasket, BellOff } from 'lucide-react-native';
 import Svg, { Path, Circle as SvgCircle } from 'react-native-svg';
 
 interface StoreMarkerProps {
@@ -18,7 +18,7 @@ const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelecte
 
   useEffect(() => {
     Animated.spring(scale, {
-      toValue: isSelected ? 1.18 : 1,
+      toValue: isSelected ? 1 : 0.847,
       friction: 6,
       tension: 120,
       useNativeDriver: true}).start();
@@ -30,7 +30,7 @@ const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelecte
     
     Animated.parallel([
       Animated.spring(scale, {
-        toValue: isSelected ? 1.18 : 1,
+        toValue: isSelected ? 1 : 0.847,
         friction: 7,
         tension: 160,
         useNativeDriver: true}),
@@ -41,35 +41,9 @@ const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelecte
     ]).start();
   }, [isSelected]);
 
-  // ── Saved marker: Apple Maps-inspired geometric pin ──
-  if (isSaved) {
-    return (
-      <View style={styles.wrapper}>
-        <Animated.View style={[styles.pinContainer, { transform: [{ scale }] }]}>
-          {/* Glow — positioned behind the circular body of the pin */}
-          <Animated.View style={[styles.pinGlow, { opacity: glowOpacity, transform: [{ scale: 1.4 }] }]} />
-
-          {/* Custom SVG pin shape */}
-          <View style={styles.pinShadow}>
-            <Svg width={22} height={26} viewBox="0 0 24 28">
-              <Path
-                d="M12 27 C12 27 2 19 2 11 C2 5.48 6.48 1 12 1 C17.52 1 22 5.48 22 11 C22 19 12 27 12 27 Z"
-                fill={isMuted ? "#94a3b8" : "#F2726F"}
-              />
-              <SvgCircle cx={12} cy={11} r={4} fill="rgba(255,255,255,0.92)" />
-            </Svg>
-            {isMuted && (
-              <View style={styles.muteSlashContainerSaved} pointerEvents="none">
-                <View style={styles.muteSlash} />
-              </View>
-            )}
-          </View>
-        </Animated.View>
-      </View>
-    );
-  }
-
-  // ── Unsaved marker: Apple-style white capsule with basket icon ──
+  // ── Marker: White capsule with basket icon ──
+  // Saved shops have a thin navy ring around them.
+  // Muted shops have a gray ring around them, with the standard basket.
   return (
     <View style={styles.wrapper}>
       <Animated.View style={[styles.container, { transform: [{ scale }] }]}>
@@ -77,14 +51,19 @@ const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelecte
         <Animated.View style={[styles.glowRing, { opacity: glowOpacity }]} />
         
         {/* Main marker capsule */}
-        <View style={styles.markerCapsule}>
-          <ShoppingBasket size={15} color="#0f172a" strokeWidth={2.2} />
-          {isMuted && (
-            <View style={styles.muteSlashContainerUnsaved} pointerEvents="none">
-              <View style={styles.muteSlash} />
-            </View>
-          )}
+        <View style={[
+          styles.markerCapsule, 
+          isSaved && styles.markerCapsuleSaved
+        ]}>
+          <ShoppingBasket size={18} color="#0f172a" strokeWidth={2.2} />
         </View>
+
+        {/* Muted Badge */}
+        {isMuted && (
+          <View style={styles.mutedBadge}>
+            <BellOff size={14} color="#64748b" strokeWidth={2.5} />
+          </View>
+        )}
       </Animated.View>
     </View>
   );
@@ -94,8 +73,8 @@ const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelecte
 
 const styles = StyleSheet.create({
   wrapper: {
-    width: 65,
-    height: 65,
+    width: 70,
+    height: 70,
     alignItems: 'center',
     justifyContent: 'center'},
 
@@ -103,70 +82,51 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 48,
-    height: 48},
+    width: 56,
+    height: 56},
   glowRing: {
     position: 'absolute',
-    width: 41,
-    height: 41,
-    borderRadius: 20.5,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: 'rgba(15, 23, 42, 0.08)',
-    borderWidth: 1.5,
+    borderWidth: 1.8,
     borderColor: 'rgba(15, 23, 42, 0.12)'},
   markerCapsule: {
-    width: 33,
-    height: 33,
-    borderRadius: 16.5,
+    width: 39,
+    height: 39,
+    borderRadius: 19.5,
     backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
     // Prominent shadow so it is clearly visible without being clicked
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: { width: 0, height: 3.5 },
     shadowOpacity: 0.25,
-    shadowRadius: 6,
+    shadowRadius: 7,
     elevation: 8,
   },
 
-  // ── Saved pin styles ──
-  pinContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 44,
-    height: 44},
-  pinGlow: {
+  markerCapsuleSaved: {
+    borderWidth: 3,
+    borderColor: '#0f172a',
+  },
+  mutedBadge: {
     position: 'absolute',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(242, 114, 111, 0.25)',
-    top: 6,
-    left: 10},
-  pinShadow: {
-
-  },
-  muteSlashContainerUnsaved: {
-    ...StyleSheet.absoluteFillObject,
+    top: -2,
+    right: -2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1.5 },
+    shadowOpacity: 0.25,
+    shadowRadius: 2.5,
+    elevation: 10,
     zIndex: 10,
-  },
-  muteSlashContainerSaved: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  },
-  muteSlash: {
-    width: 26,
-    height: 2.5,
-    backgroundColor: '#ef4444',
-    transform: [{ rotate: '-45deg' }],
-    borderRadius: 1,
   }});
 StoreMarker.displayName = 'StoreMarker';
 

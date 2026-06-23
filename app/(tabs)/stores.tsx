@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Dimensions, Keyboard, TouchableWithoutFeedback, Linking, ActionSheetIOS } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Store, Plus, Search, ShoppingBasket, LocateFixed, Trash2, MapPin, X, Navigation2, MoreHorizontal, Bell, BellOff, Settings } from 'lucide-react-native';
+import { Store, Plus, Search, ShoppingBasket, Navigation, Trash2, MapPin, X, Navigation2, MoreHorizontal, Bell, BellOff, Settings } from 'lucide-react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
@@ -193,8 +194,12 @@ export default function StoresScreen() {
   }, []);
 
   const { locations, addLocation, removeLocation, cachedMarkets, setCachedMarkets, isFetchingMarkets, setIsFetchingMarkets, canAddLocation, mutedUnsavedShops, toggleMuteUnsavedShop, canMuteShop, userLocation, setUserLocation } = useLocationStore();
-  const { distanceUnit, isPro } = useSettingsStore();
+  
   const savedShops = locations ?? [];
+  const activeSavedShops = savedShops.filter(loc => loc.isActive !== false);
+  const mutedSavedShops = savedShops.filter(loc => loc.isActive === false);
+
+  const { distanceUnit, isPro } = useSettingsStore();
 
   const markets = cachedMarkets || [];
   const selectedShopToSave = useLocalUIStore((s) => s.selectedShopToSave);
@@ -775,10 +780,10 @@ export default function StoresScreen() {
                   latitudeDelta: latDelta,
                   longitudeDelta: lonDelta}, 350);
 
-                // Mount the callout slightly faster to reduce delay
+                // Mount the callout immediately to sync with marker animation
                 calloutTimerRef.current = setTimeout(() => {
                   setReadyCalloutId(shopId);
-                }, 200);
+                }, 10);
 
                 // Expand the bottom sheet to medium snap point to show the context card
                 if (bottomSheetRef.current) {
@@ -889,10 +894,10 @@ export default function StoresScreen() {
                   latitudeDelta: latDelta,
                   longitudeDelta: lonDelta}, 350);
 
-                // Mount the callout slightly faster to reduce delay
+                // Mount the callout immediately to sync with marker animation
                 calloutTimerRef.current = setTimeout(() => {
                   setReadyCalloutId(properties.id);
-                }, 200);
+                }, 10);
 
                 // Expand the bottom sheet to medium snap point to show the context card
                 if (bottomSheetRef.current) {
@@ -951,7 +956,7 @@ export default function StoresScreen() {
             onPress={() => handleLocateMe()}
             activeOpacity={0.7}
           >
-            <LocateFixed size={20} color="#334155" strokeWidth={2.5} />
+            <MaterialCommunityIcons name="crosshairs-gps" size={20} color="#334155" />
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -1292,12 +1297,12 @@ export default function StoresScreen() {
             >
               <Text style={{ fontSize: 28, fontWeight: '600', letterSpacing: -0.6, color: '#0f172a' }}>Saved Shops</Text>
               <Text style={{ fontSize: 14, fontWeight: '600', color: '#64748b', letterSpacing: -0.1 }}>
-                {savedShops.length === 0 ? 'No shops' : `${savedShops.length} ${savedShops.length === 1 ? 'shop' : 'shops'}`}
+                {activeSavedShops.length === 0 ? 'No shops' : `${activeSavedShops.length} ${activeSavedShops.length === 1 ? 'shop' : 'shops'}`}
               </Text>
             </Animated.View>
           </Animated.View>
           {/* Empty state */}
-          {savedShops.length === 0 && (
+          {activeSavedShops.length === 0 && (
             <Animated.View 
               entering={FadeInDown.duration(400).delay(100).springify()}
               style={styles.emptyState}
@@ -1311,128 +1316,164 @@ export default function StoresScreen() {
           )}
 
           {/* Saved shop cards with swipe-to-delete */}
-          {savedShops.map((loc, index) => {
-            if (selectedShopToSave && selectedShopToSave.isSaved && selectedShopToSave.id === `saved-${loc.id}`) {
-              return null;
-            }
-            return (
-            <Animated.View
-              key={loc.id}
-              entering={FadeInDown.duration(400).delay(index * 60).springify()}
-              layout={LinearTransition.springify()}
-              exiting={FadeOutLeft.duration(200)}
-            >
-              <Swipeable
-                containerStyle={{ marginBottom: 10 }}
-                ref={(ref) => {
-                  if (ref) {
-                    swipeableRefs.current.set(loc.id, ref);
-                  } else {
-                    swipeableRefs.current.delete(loc.id);
-                  }
-                }}
-                renderRightActions={() => renderRightActions(loc.id)}
-                rightThreshold={40}
-                overshootRight={false}
-                friction={2}
-                onSwipeableWillOpen={() => closeAllSwipeables(loc.id)}
-              >
-                <TouchableOpacity
-                  className="bg-white rounded-[22px] flex-row items-center justify-between"
-                  style={{ paddingVertical: 10, paddingHorizontal: 14 }}
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    closeAllSwipeables();
-                    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                    Keyboard.dismiss();
-                    isAnimatingRef.current = true;
-                    const latitudeDelta = 0.01;
-                    const longitudeDelta = 0.01;
-                    const adjustedLatitude = loc.latitude - (latitudeDelta * 0.25);
-                    const region = {
-                      latitude: adjustedLatitude,
-                      longitude: loc.longitude,
-                      latitudeDelta,
-                      longitudeDelta};
-                    mapRef.current?.animateToRegion(region, 500);
-                    bottomSheetRef.current?.snapToIndex(1);
-                    // Scroll content to top so the preview is fully visible
-                    bottomSheetScrollRef.current?.scrollTo({ y: 0, animated: true });
+          {(() => {
+            const mutedUnsavedMarkets = markets
+              .filter(m => mutedUnsavedShops.includes(m.id))
+              .map(m => ({ ...m, isActive: false, isUnsaved: true }));
 
-                    // Select this shop and show its callout after animation settles
-                    const savedId = `saved-${loc.id}`;
-                    setReadyCalloutId(null);
-                    setSelectedShopToSave({ ...loc, id: savedId, isSaved: true });
-                    setTimeout(() => {
-                      setReadyCalloutId(savedId);
-                    }, 550);
+            const allMutedShops = [...mutedSavedShops, ...mutedUnsavedMarkets];
+
+            const renderShopCard = (loc: any, index: number) => {
+              if (selectedShopToSave && selectedShopToSave.isSaved && selectedShopToSave.id === `saved-${loc.id}`) {
+                return null;
+              }
+              return (
+              <Animated.View
+                key={loc.id}
+                entering={FadeInDown.duration(400).delay(index * 60).springify()}
+                layout={LinearTransition.springify()}
+                exiting={FadeOutLeft.duration(200)}
+              >
+                <Swipeable
+                  containerStyle={{ marginBottom: 10 }}
+                  ref={(ref) => {
+                    if (ref) {
+                      swipeableRefs.current.set(loc.id, ref);
+                    } else {
+                      swipeableRefs.current.delete(loc.id);
+                    }
                   }}
+                  renderRightActions={loc.isUnsaved ? undefined : () => renderRightActions(loc.id)}
+                  rightThreshold={40}
+                  overshootRight={false}
+                  friction={2}
+                  onSwipeableWillOpen={() => closeAllSwipeables(loc.id)}
                 >
-                  <View className="flex-row items-center gap-3 flex-1">
-                    <View style={{ width: 34, height: 34, backgroundColor: 'rgba(241,245,249,0.6)', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
-                      <Store size={16} color="#475569" />
-                    </View>
-                    <View className="flex-1">
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Text style={{ fontSize: 16, fontWeight: '600', color: '#0f172a', letterSpacing: -0.3 }} numberOfLines={1}>{loc.name}</Text>
-                        {userLocation && (
-                          <View style={{ backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1.5 }}>
-                            <Text style={{ fontSize: 13, fontWeight: '500', color: '#64748b' }}>{formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, loc.latitude, loc.longitude))}</Text>
-                          </View>
-                        )}
-                      </View>
-                      <Text style={{ fontSize: 14, fontWeight: '400', color: '#64748b', marginTop: 2 }} numberOfLines={1}>{loc.address || 'Saved Shop'}</Text>
-                    </View>
-                  </View>
                   <TouchableOpacity
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    activeOpacity={0.5}
-                    onPress={(e) => {
-                      e.stopPropagation();
+                    className="bg-white rounded-[22px] flex-row items-center justify-between"
+                    style={{ paddingVertical: 10, paddingHorizontal: 14 }}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      closeAllSwipeables();
                       hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                      const isMuted = !loc.isActive;
-                      const muteOption = isMuted ? 'Unmute Notifications' : 'Mute Notifications';
-                      const options = ['Cancel', muteOption, 'View Store Details'];
-                      const cancelButtonIndex = 0;
-                      ActionSheetIOS.showActionSheetWithOptions(
-                        {
-                          options,
-                          cancelButtonIndex,
-                        },
-                        (index: number) => {
-                          if (index === 1) {
-                            if (!isMuted && !canMuteShop(isPro)) {
-                              Alert.alert(
-                                'Mute Limit Reached',
-                                `You've reached the free limit of ${FREE_TIER.maxMutedShops} muted shops. Upgrade to Pro for unlimited muted shops.`,
-                                [
-                                  { text: 'OK', style: 'cancel' },
-                                  {
-                                    text: 'Upgrade to Pro',
-                                    onPress: () => router.push('/paywall'),
-                                  },
-                                ]
-                              );
-                              return;
-                            }
-                            useLocationStore.getState().toggleActive(loc.id);
-                            hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
-                          } else if (index === 2) {
-                            Alert.alert('Store Details', 'Coming soon');
-                          }
-                        }
-                      );
+                      Keyboard.dismiss();
+                      isAnimatingRef.current = true;
+                      const latitudeDelta = 0.01;
+                      const longitudeDelta = 0.01;
+                      const adjustedLatitude = loc.latitude - (latitudeDelta * 0.25);
+                      const region = {
+                        latitude: adjustedLatitude,
+                        longitude: loc.longitude,
+                        latitudeDelta,
+                        longitudeDelta};
+                      mapRef.current?.animateToRegion(region, 500);
+                      bottomSheetRef.current?.snapToIndex(1);
+                      // Scroll content to top so the preview is fully visible
+                      bottomSheetScrollRef.current?.scrollTo({ y: 0, animated: true });
+
+                      // Select this shop and show its callout after animation settles
+                      const savedId = loc.isUnsaved ? loc.id : `saved-${loc.id}`;
+                      setReadyCalloutId(null);
+                      setSelectedShopToSave({ ...loc, id: savedId, isSaved: !loc.isUnsaved });
+                      setTimeout(() => {
+                        setReadyCalloutId(savedId);
+                      }, 550);
                     }}
                   >
-                    <MoreHorizontal size={20} color="#94a3b8" />
+                    <View className="flex-row items-center gap-3 flex-1">
+                      <View style={{ width: 34, height: 34, backgroundColor: 'rgba(241,245,249,0.6)', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
+                        {loc.isActive === false ? (
+                          <BellOff size={16} color="#94a3b8" />
+                        ) : (
+                          <Store size={16} color="#475569" />
+                        )}
+                      </View>
+                      <View className="flex-1">
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Text style={{ fontSize: 16, fontWeight: '600', color: loc.isActive === false ? '#64748b' : '#0f172a', letterSpacing: -0.3 }} numberOfLines={1}>{loc.name}</Text>
+                          {userLocation && (
+                            <View style={{ backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1.5 }}>
+                              <Text style={{ fontSize: 13, fontWeight: '500', color: '#64748b' }}>{formatDistance(haversineDistance(userLocation.latitude, userLocation.longitude, loc.latitude, loc.longitude))}</Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text style={{ fontSize: 14, fontWeight: '400', color: '#94a3b8', marginTop: 2 }} numberOfLines={1}>{loc.address || 'Saved Shop'}</Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      activeOpacity={0.5}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                        const isMuted = !loc.isActive;
+                        const muteOption = isMuted ? 'Unmute Notifications' : 'Mute Notifications';
+                        const options = ['Cancel', muteOption, 'View Store Details'];
+                        const cancelButtonIndex = 0;
+                        ActionSheetIOS.showActionSheetWithOptions(
+                          {
+                            options,
+                            cancelButtonIndex,
+                          },
+                          (index: number) => {
+                            if (index === 1) {
+                              if (!isMuted && !canMuteShop(isPro)) {
+                                Alert.alert(
+                                  'Mute Limit Reached',
+                                  `You've reached the free limit of ${FREE_TIER.maxMutedShops} muted shops. Upgrade to Pro for unlimited muted shops.`,
+                                  [
+                                    { text: 'OK', style: 'cancel' },
+                                    {
+                                      text: 'Upgrade to Pro',
+                                      onPress: () => router.push('/paywall'),
+                                    },
+                                  ]
+                                );
+                                return;
+                              }
+                              if (loc.isUnsaved) {
+                                toggleMuteUnsavedShop(loc.id);
+                              } else {
+                                useLocationStore.getState().toggleActive(loc.id);
+                              }
+                              hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
+                            } else if (index === 2) {
+                              Alert.alert('Store Details', 'Coming soon');
+                            }
+                          }
+                        );
+                      }}
+                    >
+                      <MoreHorizontal size={20} color="#94a3b8" />
+                    </TouchableOpacity>
                   </TouchableOpacity>
-                </TouchableOpacity>
-              </Swipeable>
-            </Animated.View>
-            );
-          })}
+                </Swipeable>
+              </Animated.View>
+              );
+            };
 
-          {/* Hint/Placeholder Text — shown when fewer than 3 shops saved */}
+            return (
+              <>
+                {activeSavedShops.map((loc, index) => renderShopCard(loc, index))}
+
+                {allMutedShops.length > 0 && (
+                  <Animated.View 
+                    entering={FadeInDown.duration(400).springify()}
+                    layout={LinearTransition.springify()} 
+                    style={{ marginTop: 24, marginBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+                  >
+                    <Text style={{ fontSize: 22, fontWeight: '600', letterSpacing: -0.6, color: '#64748b' }}>Muted Shops</Text>
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: '#94a3b8', letterSpacing: -0.1 }}>
+                      {allMutedShops.length} {allMutedShops.length === 1 ? 'shop' : 'shops'}
+                    </Text>
+                  </Animated.View>
+                )}
+                {allMutedShops.map((loc, index) => renderShopCard(loc, index + activeSavedShops.length))}
+              </>
+            );
+          })()}
+
+          {/* Hint/Placeholder Text — shown when fewer than 3 shops saved overall */}
           {savedShops.length > 0 && savedShops.length < 3 && (
             <View style={{ alignItems: 'center', marginVertical: 24 }}>
               <Text style={{ fontSize: 14, fontWeight: '500', color: '#BDBDBD' }}>Tap a map marker to add more shops</Text>
@@ -1644,7 +1685,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0'},
   calloutBubbleSaved: {
-    backgroundColor: '#F2726F'},
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    borderColor: '#0f172a'},
   calloutText: {
     fontSize: 14,
     fontWeight: '600',
@@ -1653,7 +1696,7 @@ const styles = StyleSheet.create({
   calloutTextUnsaved: {
     color: '#0f172a'},
   calloutTextSaved: {
-    color: '#ffffff'},
+    color: '#0f172a'},
   calloutArrow: {
     width: 0,
     height: 0,
@@ -1669,4 +1712,5 @@ const styles = StyleSheet.create({
     borderTopColor: '#ffffff',
     marginTop: -2},
   calloutArrowSaved: {
-    borderTopColor: '#F2726F'}});
+    borderTopColor: '#0f172a',
+    marginTop: -2}});
