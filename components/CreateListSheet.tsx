@@ -132,16 +132,6 @@ function CreateListSheet({
           {/* Header row */}
           <View style={styles.header}>
             <Text style={styles.title}>New List</Text>
-            <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onClose();
-              }}
-              style={styles.closeBtn}
-              hitSlop={14}
-            >
-              <X size={14} color="#64748b" strokeWidth={2.5} />
-            </Pressable>
           </View>
 
           {/* Input + Button row */}
@@ -245,12 +235,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 8,
-    paddingBottom: 29, // Increased spacing by ~5px
+    paddingTop: 18,
+    paddingBottom: 19,
   },
   title: {
     fontSize: 19,
-    fontWeight: '800',
+    fontWeight: '600',
     color: '#0f172a',
     letterSpacing: -0.2,
   },

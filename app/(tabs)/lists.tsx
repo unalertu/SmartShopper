@@ -421,7 +421,7 @@ export default function ListsScreen() {
                       return (
                       <View key={group.title} style={{ gap: 8 }}>
                         <Animated.View entering={FadeInDown.duration(400).delay(450 + (previousItemsCount + groupIndex) * 50).springify()}>
-                          <Text className="text-[12px] font-bold text-slate-400 uppercase tracking-wider pl-1">
+                          <Text className="text-[12px] font-bold text-slate-400 capitalize tracking-wider pl-1">
                             {group.title}
                           </Text>
                         </Animated.View>
