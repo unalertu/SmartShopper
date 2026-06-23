@@ -1,15 +1,8 @@
 import React, { memo, useEffect, useRef, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  Animated,
-  Pressable,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 
 export interface ConfirmationSheetData {
   settingName?: string;
@@ -28,161 +21,146 @@ interface ConfirmationSheetProps {
   onDismiss: () => void;
 }
 
-const SHEET_TRANSLATE = 260;
-
 const ConfirmationSheet = memo(function ConfirmationSheet({
   visible,
   data,
   onDismiss,
 }: ConfirmationSheetProps) {
   const insets = useSafeAreaInsets();
-  const translateY = useRef(new Animated.Value(SHEET_TRANSLATE)).current;
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
-  const [modalVisible, setModalVisible] = React.useState(false);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const actionTakenRef = useRef(false);
+  const isSheetOpenRef = useRef(false);
 
   useEffect(() => {
     if (visible) {
-      setModalVisible(true);
-      Animated.parallel([
-        Animated.spring(translateY, {
-          toValue: 0,
-          damping: 22,
-          stiffness: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(backdropOpacity, {
-          toValue: 1,
-          duration: 220,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      actionTakenRef.current = false;
+      isSheetOpenRef.current = true;
+      // Slight delay ensures the layout is ready and the modal provider can present it
+      setTimeout(() => {
+        bottomSheetRef.current?.present();
+      }, 50);
     } else {
-      Animated.parallel([
-        Animated.timing(translateY, {
-          toValue: SHEET_TRANSLATE,
-          duration: 260,
-          useNativeDriver: true,
-        }),
-        Animated.timing(backdropOpacity, {
-          toValue: 0,
-          duration: 220,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        setModalVisible(false);
-      });
+      if (isSheetOpenRef.current) {
+        bottomSheetRef.current?.dismiss();
+        isSheetOpenRef.current = false;
+      }
     }
   }, [visible]);
 
+  const handleDismiss = useCallback(() => {
+    isSheetOpenRef.current = false;
+    if (!actionTakenRef.current) {
+      actionTakenRef.current = true;
+      if (data?.onCancel) {
+        data.onCancel();
+      }
+      onDismiss();
+    }
+  }, [data, onDismiss]);
+
   const dismiss = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    actionTakenRef.current = true;
     if (data?.onCancel) data.onCancel();
+    
+    if (isSheetOpenRef.current) {
+      bottomSheetRef.current?.dismiss();
+      isSheetOpenRef.current = false;
+    }
     onDismiss();
   }, [data, onDismiss]);
 
   const confirm = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    actionTakenRef.current = true;
     if (data?.onConfirm) data.onConfirm();
+    
+    if (isSheetOpenRef.current) {
+      bottomSheetRef.current?.dismiss();
+      isSheetOpenRef.current = false;
+    }
     onDismiss();
   }, [data, onDismiss]);
+
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.35}
+      />
+    ),
+    []
+  );
 
   const actionLabel = data?.confirmLabel || (data?.isEnabling ? 'Enable' : 'Disable');
   const title = data?.title || (data ? `${actionLabel} ${data.settingName}?` : '');
   const description = data?.description ?? '';
 
+  const snapPoints = React.useMemo(() => ['35%'], []);
+  const modalName = React.useMemo(() => `confirmation-sheet-${Math.random().toString(36).substr(2, 9)}`, []);
+
   return (
-    <Modal
-      transparent
-      visible={modalVisible}
-      animationType="none"
-      statusBarTranslucent
-      onRequestClose={dismiss}
+    <BottomSheetModal
+      name={modalName}
+      ref={bottomSheetRef}
+      snapPoints={snapPoints}
+      enableDynamicSizing={false}
+      enablePanDownToClose
+      backdropComponent={renderBackdrop}
+      onDismiss={handleDismiss}
+      handleIndicatorStyle={styles.handle}
+      backgroundStyle={styles.sheet}
     >
-      {/* Animated backdrop */}
-      <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
-        <Pressable style={StyleSheet.absoluteFillObject} onPress={dismiss} />
-      </Animated.View>
+      <BottomSheetView style={[styles.content, { paddingBottom: Math.max(insets.bottom, 16) + 8 }]}>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.description}>{description}</Text>
 
-      {/* Animated sheet */}
-      <Animated.View
-        style={[
-          styles.sheet,
-          { paddingBottom: Math.max(insets.bottom, 16) + 8 },
-          { transform: [{ translateY }] },
-        ]}
-      >
-        {/* Drag handle */}
-        <View style={styles.handleRow}>
-          <View style={styles.handle} />
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={[styles.button, styles.cancelButton]}
+            onPress={dismiss}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.cancelText}>Cancel</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.button,
+              styles.confirmButton,
+              data?.isDestructive && styles.destructiveButton,
+            ]}
+            onPress={confirm}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.confirmText}>{actionLabel}</Text>
+          </TouchableOpacity>
         </View>
-
-        <View style={styles.content}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.description}>{description}</Text>
-
-          <View style={styles.buttonRow}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={dismiss}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.button,
-                styles.confirmButton,
-                data?.isDestructive && styles.destructiveButton,
-              ]}
-              onPress={confirm}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.confirmText}>{actionLabel}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Animated.View>
-    </Modal>
+      </BottomSheetView>
+    </BottomSheetModal>
   );
 });
 
 export default ConfirmationSheet;
 
 const styles = StyleSheet.create({
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-  },
   sheet: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     backgroundColor: '#ffffff',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 24,
-  },
-  handleRow: {
-    alignItems: 'center',
-    paddingTop: 10,
-    paddingBottom: 4,
   },
   handle: {
     width: 36,
     height: 4,
     borderRadius: 2,
     backgroundColor: '#e2e8f0',
+    marginTop: 10,
   },
   content: {
     paddingHorizontal: 24,
-    paddingTop: 6,
-    paddingBottom: 4,
+    paddingTop: 10,
   },
   title: {
     fontSize: 17,
