@@ -707,6 +707,7 @@ export default function StoresScreen() {
         ref={mapRef}
         userInterfaceStyle="light"
         style={StyleSheet.absoluteFillObject}
+        mapPadding={{ top: insets.top, right: 0, bottom: 210, left: 0 }}
         initialRegion={initialRegion}
         showsUserLocation={true}
         followsUserLocation={false}
@@ -968,6 +969,13 @@ export default function StoresScreen() {
       <BottomSheet
         ref={bottomSheetRef}
         index={1}
+        style={{
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 18,
+          elevation: 12,
+        }}
         animatedPosition={animatedPosition}
         snapPoints={snapPoints}
         topInset={SCREEN_HEIGHT * 0.3}
