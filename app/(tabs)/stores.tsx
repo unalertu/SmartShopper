@@ -206,7 +206,7 @@ export default function StoresScreen() {
   const setSelectedShopToSave = useLocalUIStore((s) => s.setSelectedShopToSave);
 
   const snapPoints = useMemo(() => {
-    return [200, '40%', '70%'];
+    return [180, '40%', '70%'];
   }, []);
 
   const animatedPosition = useSharedValue(SCREEN_HEIGHT);
@@ -980,7 +980,16 @@ export default function StoresScreen() {
         snapPoints={snapPoints}
         topInset={SCREEN_HEIGHT * 0.3}
         animateOnMount={true}
-        enableOverDrag={false}
+        enableOverDrag={true}
+        overDragResistanceFactor={15}
+        animationConfigs={{
+          damping: 70,
+          stiffness: 300,
+          mass: 1,
+          overshootClamping: true,
+          restDisplacementThreshold: 0.1,
+          restSpeedThreshold: 0.1,
+        }}
         enableDynamicSizing={false}
         enablePanDownToClose={false}
         handleStyle={{ paddingBottom: 4, paddingTop: 12 }}
