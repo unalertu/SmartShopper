@@ -4,7 +4,7 @@ import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { LinearTransition } from 'react-native-reanimated';
-import { MapPin, Menu, Vibrate, ChevronLeft, Lock, Sparkles, Clock, Calendar, Zap, SlidersHorizontal } from 'lucide-react-native';
+import { MapPin, Menu, Vibrate, ChevronLeft, Lock, Clock, Calendar, SlidersHorizontal } from 'lucide-react-native';
 import { useSettingsStore } from '../store';
 import { hapticImpact } from '../services/haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
@@ -31,14 +31,6 @@ const SETTING_DESCRIPTIONS: Record<string, { enable: string; disable: string }> 
   'Notification Schedules': {
     enable: "Notifications will only arrive during your scheduled times instead of in real-time.",
     disable: "Notifications will arrive in real-time without following any custom schedule.",
-  },
-  'Priority Alerts': {
-    enable: "Your key stores will trigger high-priority alerts that stand out from the rest.",
-    disable: "All store notifications will be treated with the same priority level.",
-  },
-  'Smart Notification Rules': {
-    enable: "AI will intelligently filter and group your notifications to reduce noise.",
-    disable: "All notifications will arrive individually without AI-powered filtering.",
   },
   'Advanced Notification Settings': {
     enable: "You'll get full control over how each notification type behaves.",
@@ -203,7 +195,7 @@ export default function NotificationPreferencesScreen() {
           <SettingsRow
             icon={<Menu size={20} color="#64748b" />}
             label="Shopping List Reminders"
-            sublabel="Notify when you have items for nearby store"
+            sublabel="Notify for nearby stores"
             rightElement={
               <Switch
                 value={shoppingListReminders}
@@ -261,42 +253,6 @@ export default function NotificationPreferencesScreen() {
                 <Switch
                   value={false}
                   onValueChange={() => requestToggle('Notification Schedules', false, null)}
-                  trackColor={switchTrackColor}
-                  thumbColor="#ffffff"
-                />
-              ) : undefined
-            }
-          />
-          <SettingsRow
-            icon={<Zap size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
-            label="Priority Alerts"
-            sublabel="High-priority notifications for key stores"
-            isProOnly={!isPro}
-            isLocked={!isPro}
-            onLockedPress={() => handleProUpsell('Priority Alerts')}
-            rightElement={
-              isPro ? (
-                <Switch
-                  value={false}
-                  onValueChange={() => requestToggle('Priority Alerts', false, null)}
-                  trackColor={switchTrackColor}
-                  thumbColor="#ffffff"
-                />
-              ) : undefined
-            }
-          />
-          <SettingsRow
-            icon={<Sparkles size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
-            label="Smart Notification Rules"
-            sublabel="AI-powered alert filtering and grouping"
-            isProOnly={!isPro}
-            isLocked={!isPro}
-            onLockedPress={() => handleProUpsell('Smart Notification Rules')}
-            rightElement={
-              isPro ? (
-                <Switch
-                  value={false}
-                  onValueChange={() => requestToggle('Smart Notification Rules', false, null)}
                   trackColor={switchTrackColor}
                   thumbColor="#ffffff"
                 />
