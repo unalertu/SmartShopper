@@ -4,7 +4,7 @@ import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { LinearTransition } from 'react-native-reanimated';
-import { MapPin, List, Vibrate, ChevronLeft, Lock, Sparkles, Clock, Calendar, Zap, SlidersHorizontal } from 'lucide-react-native';
+import { MapPin, Menu, Vibrate, ChevronLeft, Lock, Sparkles, Clock, Calendar, Zap, SlidersHorizontal } from 'lucide-react-native';
 import { useSettingsStore } from '../store';
 import { hapticImpact } from '../services/haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
@@ -201,7 +201,7 @@ export default function NotificationPreferencesScreen() {
             }
           />
           <SettingsRow
-            icon={<List size={20} color="#64748b" />}
+            icon={<Menu size={20} color="#64748b" />}
             label="Shopping List Reminders"
             sublabel="Notify when you have items for nearby store"
             rightElement={

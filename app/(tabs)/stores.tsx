@@ -1047,47 +1047,7 @@ export default function StoresScreen() {
                   exiting={FadeOutUp.duration(200)}
                   style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}
                 >
-                  <TouchableOpacity
-                    style={[styles.contextDirectionsBtn, { paddingHorizontal: 0, width: 52 }]}
-                    activeOpacity={0.8}
-                    onPress={() => {
-                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                      const isMuted = mutedUnsavedShops.includes(selectedShopToSave.id);
-                      const muteOption = isMuted ? 'Unmute Notifications' : 'Mute Notifications';
-                      const options = ['Cancel', muteOption, 'View Store Details'];
-                      const cancelButtonIndex = 0;
-                      ActionSheetIOS.showActionSheetWithOptions(
-                        {
-                          options,
-                          cancelButtonIndex,
-                        },
-                        (index: number) => {
-                          if (index === 1) {
-                            if (!isMuted && !canMuteShop(isPro)) {
-                              Alert.alert(
-                                'Mute Limit Reached',
-                                `You've reached the free limit of ${FREE_TIER.maxMutedShops} muted shops. Upgrade to Pro for unlimited muted shops.`,
-                                [
-                                  { text: 'OK', style: 'cancel' },
-                                  {
-                                    text: 'Upgrade to Pro',
-                                    onPress: () => router.push('/paywall'),
-                                  },
-                                ]
-                              );
-                              return;
-                            }
-                            toggleMuteUnsavedShop(selectedShopToSave.id);
-                            hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
-                          } else if (index === 2) {
-                            Alert.alert('Store Details', 'Coming soon');
-                          }
-                        }
-                      );
-                    }}
-                  >
-                    <MoreHorizontal size={20} color="#0f172a" />
-                  </TouchableOpacity>
+
                   <TouchableOpacity
                     style={[styles.contextDirectionsBtn, { flex: 1 }]}
                     activeOpacity={0.8}
@@ -1196,12 +1156,14 @@ export default function StoresScreen() {
                         hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                         const isMuted = !loc.isActive;
                         const muteOption = isMuted ? 'Unmute Notifications' : 'Mute Notifications';
-                        const options = ['Cancel', muteOption, 'View Store Details'];
+                        const options = ['Cancel', muteOption, 'Open in Maps', 'Delete Shop'];
                         const cancelButtonIndex = 0;
+                        const destructiveButtonIndex = 3;
                         ActionSheetIOS.showActionSheetWithOptions(
                           {
                             options,
                             cancelButtonIndex,
+                            destructiveButtonIndex,
                           },
                           (index: number) => {
                             if (index === 1) {
@@ -1222,7 +1184,28 @@ export default function StoresScreen() {
                               useLocationStore.getState().toggleActive(originalId);
                               hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
                             } else if (index === 2) {
-                              Alert.alert('Store Details', 'Coming soon');
+                              openDirectionsSheet(loc.latitude, loc.longitude);
+                            } else if (index === 3) {
+                              hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
+                              setDeleteModalData({
+                                title: 'Delete Shop?',
+                                description: 'You will stop receiving notifications for this shop. This action cannot be undone.',
+                                isDestructive: true,
+                                confirmLabel: 'Delete',
+                                onConfirm: () => {
+                                  removeLocation(originalId);
+                                  swipeableRefs.current.delete(originalId);
+                                  swipeableRefs.current.delete('context-' + originalId);
+                                  if (selectedShopToSave && (selectedShopToSave.id === originalId || selectedShopToSave.id === `saved-${originalId}`)) {
+                                    setSelectedShopToSave(null);
+                                  }
+                                  setDeleteModalVisible(false);
+                                },
+                                onCancel: () => {
+                                  swipeableRefs.current.get('context-' + originalId)?.close();
+                                }
+                              });
+                              setDeleteModalVisible(true);
                             }
                           }
                         );
@@ -1238,47 +1221,7 @@ export default function StoresScreen() {
                 exiting={FadeOutUp.duration(200)}
                 style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}
               >
-                <TouchableOpacity
-                  style={[styles.contextDirectionsBtn, { paddingHorizontal: 0, width: 52 }]}
-                  activeOpacity={0.8}
-                  onPress={() => {
-                    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                    const isMuted = !loc.isActive;
-                    const muteOption = isMuted ? 'Unmute Notifications' : 'Mute Notifications';
-                    const options = ['Cancel', muteOption, 'View Store Details'];
-                    const cancelButtonIndex = 0;
-                    ActionSheetIOS.showActionSheetWithOptions(
-                      {
-                        options,
-                        cancelButtonIndex,
-                      },
-                      (index: number) => {
-                        if (index === 1) {
-                          if (!isMuted && !canMuteShop(isPro)) {
-                            Alert.alert(
-                              'Mute Limit Reached',
-                              `You've reached the free limit of ${FREE_TIER.maxMutedShops} muted shops. Upgrade to Pro for unlimited muted shops.`,
-                              [
-                                { text: 'OK', style: 'cancel' },
-                                {
-                                  text: 'Upgrade to Pro',
-                                  onPress: () => router.push('/paywall'),
-                                },
-                              ]
-                            );
-                            return;
-                          }
-                          useLocationStore.getState().toggleActive(originalId);
-                          hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
-                        } else if (index === 2) {
-                          Alert.alert('Store Details', 'Coming soon');
-                        }
-                      }
-                    );
-                  }}
-                >
-                  <MoreHorizontal size={20} color="#0f172a" />
-                </TouchableOpacity>
+
                 <TouchableOpacity
                   style={[styles.contextDirectionsBtn, { flex: 1 }]}
                   activeOpacity={0.8}
@@ -1427,12 +1370,14 @@ export default function StoresScreen() {
                         hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                         const isMuted = !loc.isActive;
                         const muteOption = isMuted ? 'Unmute Notifications' : 'Mute Notifications';
-                        const options = ['Cancel', muteOption, 'View Store Details'];
+                        const options = loc.isUnsaved ? ['Cancel', muteOption, 'Open in Maps'] : ['Cancel', muteOption, 'Open in Maps', 'Delete Shop'];
                         const cancelButtonIndex = 0;
+                        const destructiveButtonIndex = loc.isUnsaved ? undefined : 3;
                         ActionSheetIOS.showActionSheetWithOptions(
                           {
                             options,
                             cancelButtonIndex,
+                            destructiveButtonIndex,
                           },
                           (index: number) => {
                             if (index === 1) {
@@ -1457,7 +1402,28 @@ export default function StoresScreen() {
                               }
                               hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
                             } else if (index === 2) {
-                              Alert.alert('Store Details', 'Coming soon');
+                              openDirectionsSheet(loc.latitude, loc.longitude);
+                            } else if (index === 3 && !loc.isUnsaved) {
+                              hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
+                              setDeleteModalData({
+                                title: 'Delete Shop?',
+                                description: 'You will stop receiving notifications for this shop. This action cannot be undone.',
+                                isDestructive: true,
+                                confirmLabel: 'Delete',
+                                onConfirm: () => {
+                                  removeLocation(loc.id);
+                                  swipeableRefs.current.delete(loc.id);
+                                  swipeableRefs.current.delete('context-' + loc.id);
+                                  if (selectedShopToSave && (selectedShopToSave.id === loc.id || selectedShopToSave.id === `saved-${loc.id}`)) {
+                                    setSelectedShopToSave(null);
+                                  }
+                                  setDeleteModalVisible(false);
+                                },
+                                onCancel: () => {
+                                  swipeableRefs.current.get(loc.id)?.close();
+                                }
+                              });
+                              setDeleteModalVisible(true);
                             }
                           }
                         );

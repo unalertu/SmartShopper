@@ -4,7 +4,7 @@ import { View, Text, ScrollView, TouchableOpacity, Alert, Pressable } from 'reac
 import { FREE_TIER, getMaxLists } from '@/constants/tierConfig';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Menu, ChevronRight, Plus, X, ShoppingBasket, Sparkles, ListPlus, PackagePlus, Clock, Activity, CheckCircle, Trash2 } from 'lucide-react-native';
+import { Menu, ChevronRight, Plus, X, ShoppingBasket, Sparkles, ListPlus, PackagePlus, Clock, Activity, History, CheckCircle, Trash2, Zap } from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -180,7 +180,6 @@ export default function ListsScreen() {
           >
             <View>
               <Text style={{ fontSize: 28, fontWeight: '600', letterSpacing: -0.6, color: '#0f172a' }}>Lists</Text>
-              <Text style={{ fontSize: 14, fontWeight: '500', color: '#94a3b8', marginTop: 2, letterSpacing: -0.1 }}>{shoppingLists.length === 0 ? 'No saved lists' : `${shoppingLists.length} saved list${shoppingLists.length !== 1 ? 's' : ''}`}</Text>
             </View>
             <TouchableOpacity
               activeOpacity={0.7}
@@ -202,7 +201,7 @@ export default function ListsScreen() {
           <Animated.View layout={LinearTransition.springify()} className={`${shoppingLists.length === 0 ? 'mb-2' : 'mb-6'}`}>
             <Animated.View entering={FadeInDown.duration(400).delay(100).springify()} className="flex-row items-center justify-between mb-3 px-6">
               <View className="flex-row items-center gap-1.5">
-                <Sparkles size={14} color="#94a3b8" strokeWidth={2} />
+                <Zap size={14} color="#94a3b8" strokeWidth={2} />
                 <Text className="text-[14px] font-bold text-slate-500 tracking-wide">Quick Start</Text>
               </View>
             </Animated.View>
@@ -334,6 +333,14 @@ export default function ListsScreen() {
               ))}
           </Animated.View>
 
+          {shoppingLists.length > 0 && (
+            <Animated.View layout={LinearTransition.springify()} style={{ alignItems: 'center', marginTop: 8, marginBottom: 4 }}>
+              <Text style={{ fontSize: 14, fontWeight: '500', color: '#94a3b8', letterSpacing: -0.1 }}>
+                {shoppingLists.length} saved list{shoppingLists.length !== 1 ? 's' : ''}
+              </Text>
+            </Animated.View>
+          )}
+
           {/* Recent Activity Section */}
           {(shoppingLists.length > 0 || activityEvents.length > 0) && (() => {
             const recentEvents = showAllActivities ? activityEvents : activityEvents.slice(0, 5);
@@ -385,7 +392,7 @@ export default function ListsScreen() {
               <Animated.View layout={LinearTransition.springify()} className="px-6 mt-6 mb-2">
                 <Animated.View entering={FadeInDown.duration(400).delay(400).springify()} className="flex-row items-center justify-between mb-3">
                   <View className="flex-row items-center gap-1.5">
-                    <Activity size={14} color="#94a3b8" strokeWidth={2} />
+                    <History size={14} color="#94a3b8" strokeWidth={2} />
                     <Text className="text-[14px] font-bold text-slate-500 tracking-wide">Recent Activity</Text>
                   </View>
                   {activityEvents.length > 5 ? (
