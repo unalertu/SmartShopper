@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -49,6 +49,7 @@ import {
   Calendar,
   Bug} from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
+import LocationPermissionSheet from '../../components/LocationPermissionSheet';
 import { geoEngine } from '../../services/geoEngine';
 import { notificationEngine } from '../../services/notificationEngine';
 import { sendLocalNotification } from '../../services/notificationService';
@@ -175,6 +176,9 @@ export default function SettingsScreen() {
   const scrollHandler = useTabBarScrollHandler();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+
+  // ── Sheet State ──
+  const [permissionSheetVisible, setPermissionSheetVisible] = useState(false);
 
   // ── Store selectors ──
   const { clearAll: clearAllItems } = useShoppingListStore();
@@ -322,62 +326,10 @@ export default function SettingsScreen() {
   const handleLocationToggle = useCallback(
     async (value: boolean) => {
       hapticImpact(ImpactFeedbackStyle.Light);
-
-      try {
-        if (value) {
-          const { status } = await Location.getForegroundPermissionsAsync();
-
-          if (status === 'denied') {
-            Alert.alert(
-              'Location Disabled',
-              'To enable location services, please allow them in your device Settings.',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Open Settings',
-                  onPress: () => {
-                    if (Platform.OS === 'ios') {
-                      Linking.openURL('app-settings:');
-                    } else {
-                      Linking.openSettings();
-                    }
-                  }},
-              ]
-            );
-            return;
-          }
-
-          if (status === 'undetermined') {
-            const { status: newStatus } =
-              await Location.requestForegroundPermissionsAsync();
-            setLocationEnabled(newStatus === 'granted');
-            return;
-          }
-
-          setLocationEnabled(true);
-        } else {
-          Alert.alert(
-            'Disable Location',
-            'To turn off location services, please go to your device Settings.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Open Settings',
-                onPress: () => {
-                  if (Platform.OS === 'ios') {
-                    Linking.openURL('app-settings:');
-                  } else {
-                    Linking.openSettings();
-                  }
-                }},
-            ]
-          );
-        }
-      } catch {
-        setLocationEnabled(value);
-      }
+      // Always show the primer regardless of whether turning on or off
+      setPermissionSheetVisible(true);
     },
-    [setLocationEnabled]
+    []
   );
 
   const handleDistanceUnitToggle = useCallback(() => {
@@ -606,6 +558,10 @@ export default function SettingsScreen() {
               icon={<Navigation size={20} color="#64748b" />}
               label="Location Services"
               sublabel="Background geofencing"
+              onPress={() => {
+                hapticImpact(ImpactFeedbackStyle.Light);
+                setPermissionSheetVisible(true);
+              }}
               rightElement={
                 <Switch
                   value={locationEnabled}
@@ -783,6 +739,12 @@ export default function SettingsScreen() {
             </Text>
           </Animated.View>
         </Animated.ScrollView>
+
+        <LocationPermissionSheet
+          visible={permissionSheetVisible}
+          onDismiss={() => setPermissionSheetVisible(false)}
+          onGranted={() => setLocationEnabled(true)}
+        />
       </View>
     </AnimatedScreen>
   );
