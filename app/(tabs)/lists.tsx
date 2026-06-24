@@ -43,8 +43,11 @@ import ConfirmationSheet from '../../components/ConfirmationSheet';
 
 const getRelativeDate = (timestamp?: number): string => {
   if (!timestamp) return 'today';
-  const now = Date.now();
-  const diff = now - timestamp;
+  const date = new Date(timestamp);
+  const now = new Date();
+  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const nowOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diff = nowOnly.getTime() - dateOnly.getTime();
   const days = Math.floor(diff / 86400000);
   if (days === 0) return 'today';
   if (days === 1) return 'yesterday';
