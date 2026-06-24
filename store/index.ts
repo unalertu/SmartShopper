@@ -13,4 +13,5 @@ export type { AppNotification } from "./useNotificationsStore";
 export type {
   DistanceUnit,
   ThemeOption,
+  NotificationSensitivity,
 } from "./useSettingsStore";

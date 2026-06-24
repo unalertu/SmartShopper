@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export type DistanceUnit = "metric" | "imperial";
 export type ThemeOption = "system" | "light" | "dark";
-
+export type NotificationSensitivity = "near" | "balanced" | "far";
 
 interface SettingsState {
   // ── Hydration ──
@@ -37,6 +37,8 @@ interface SettingsState {
 
   // ── Subscription ──
   isPro: boolean;
+  
+  notificationSensitivity: NotificationSensitivity;
 
   // ── Actions ──
   setNotificationsEnabled: (enabled: boolean) => void;
@@ -48,6 +50,7 @@ interface SettingsState {
   setBackgroundNotifications: (enabled: boolean) => void;
   setLowPowerMode: (enabled: boolean) => void;
   setAutoOpenNearbyList: (enabled: boolean) => void;
+  setNotificationSensitivity: (sensitivity: NotificationSensitivity) => void;
 
   setLocationEnabled: (enabled: boolean) => void;
 
@@ -70,6 +73,7 @@ const DEFAULT_SETTINGS = {
   backgroundNotifications: true,
   lowPowerMode: false,
   autoOpenNearbyList: false,
+  notificationSensitivity: "balanced" as const,
 
   locationEnabled: false,
 
@@ -96,6 +100,7 @@ export const useSettingsStore = create<SettingsState>()(
       setBackgroundNotifications: (enabled) => set({ backgroundNotifications: enabled }),
       setLowPowerMode: (enabled) => set({ lowPowerMode: enabled }),
       setAutoOpenNearbyList: (enabled) => set({ autoOpenNearbyList: enabled }),
+      setNotificationSensitivity: (sensitivity) => set({ notificationSensitivity: sensitivity }),
 
       setLocationEnabled: (enabled) => set({ locationEnabled: enabled }),
 

@@ -4,7 +4,7 @@ import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { LinearTransition } from 'react-native-reanimated';
-import { MapPin, Menu, Vibrate, ChevronLeft, Lock, Clock, Calendar, SlidersHorizontal } from 'lucide-react-native';
+import { MapPin, Menu, Vibrate, ChevronLeft, Lock, Clock, Calendar, SlidersHorizontal, Activity } from 'lucide-react-native';
 import { useSettingsStore } from '../store';
 import { hapticImpact } from '../services/haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
@@ -28,14 +28,11 @@ const SETTING_DESCRIPTIONS: Record<string, { enable: string; disable: string }> 
     enable: "Notifications will be paused during your quiet hours so you won't be disturbed.",
     disable: "You'll receive notifications at any time, including during previously quiet hours.",
   },
-  'Notification Schedules': {
+  'Notification Schedule': {
     enable: "Notifications will only arrive during your scheduled times instead of in real-time.",
     disable: "Notifications will arrive in real-time without following any custom schedule.",
   },
-  'Advanced Notification Settings': {
-    enable: "You'll get full control over how each notification type behaves.",
-    disable: "Notification behavior will return to the default settings.",
-  },
+
 };
 
 function SettingsRow({
@@ -64,18 +61,18 @@ function SettingsRow({
       <View className="flex-row items-center flex-1 pr-4">
         {icon}
         <View className="ml-3 flex-shrink">
-          <View className="flex-row items-center gap-2">
-            <Text className="text-[15px] font-medium text-slate-900">{label}</Text>
-            {isProOnly && (
-              <View className="flex-row items-center gap-0.5 bg-[#D4AF37]/10 px-1.5 py-0.5 rounded border border-[#D4AF37]/20">
-                <Text className="text-[8px] font-bold text-[#D4AF37] tracking-wider">Pro</Text>
-              </View>
-            )}
-          </View>
+          <Text className="text-[15px] font-medium text-slate-900">{label}</Text>
           {sublabel && <Text className="text-[12px] text-slate-400 mt-0.5">{sublabel}</Text>}
         </View>
       </View>
-      <View className="flex-row items-center gap-1.5">{rightElement}</View>
+      <View className="flex-row items-center gap-3">
+        {isProOnly && (
+          <View className="bg-[#D4AF37]/15 px-3 py-1 rounded-full flex-row items-center">
+            <Text className="text-[#D4AF37] font-medium text-[11px] uppercase tracking-wider">Pro</Text>
+          </View>
+        )}
+        {rightElement}
+      </View>
     </View>
   );
 
@@ -117,9 +114,11 @@ export default function NotificationPreferencesScreen() {
     savedStoresOnly,
     shoppingListReminders,
     hapticEnabled,
+    notificationSensitivity,
     setSavedStoresOnly,
     setShoppingListReminders,
-    setHapticEnabled
+    setHapticEnabled,
+    setNotificationSensitivity
   } = useSettingsStore();
 
   // ── Confirmation Sheet state ──
@@ -157,6 +156,20 @@ export default function NotificationPreferencesScreen() {
   const handleProUpsell = (featureName: string) => {
     hapticImpact(ImpactFeedbackStyle.Light);
     router.push('/paywall');
+  };
+
+  const SENSITIVITY_OPTIONS = {
+    near: "Near (100m)",
+    balanced: "Balanced (150m)",
+    far: "Far (300m)",
+  };
+
+  const handleSensitivityPress = () => {
+    hapticImpact(ImpactFeedbackStyle.Light);
+    const order: ("near" | "balanced" | "far")[] = ['near', 'balanced', 'far'];
+    const currentIndex = order.indexOf(notificationSensitivity);
+    const nextIndex = (currentIndex + 1) % order.length;
+    setNotificationSensitivity(order[nextIndex]);
   };
 
   return (
@@ -224,6 +237,26 @@ export default function NotificationPreferencesScreen() {
         {/* Advanced Notification Settings — Pro Only */}
         <SettingsGroup title="Advanced">
           <SettingsRow
+            icon={<Activity size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
+            label="Notification Sensitivity"
+            sublabel="Radius for store alerts"
+            isProOnly={!isPro}
+            isLocked={!isPro}
+            onLockedPress={() => handleProUpsell('Notification Sensitivity')}
+            rightElement={
+              isPro ? (
+                <TouchableOpacity
+                  onPress={handleSensitivityPress}
+                  className="bg-slate-100 px-3 py-1.5 rounded-full"
+                >
+                  <Text className="text-[13px] font-medium text-slate-700">
+                    {SENSITIVITY_OPTIONS[notificationSensitivity]}
+                  </Text>
+                </TouchableOpacity>
+              ) : undefined
+            }
+          />
+          <SettingsRow
             icon={<Clock size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
             label="Quiet Hours"
             sublabel="Mute notifications during set hours"
@@ -243,35 +276,17 @@ export default function NotificationPreferencesScreen() {
           />
           <SettingsRow
             icon={<Calendar size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
-            label="Notification Schedules"
-            sublabel="Set specific times for notifications"
-            isProOnly={!isPro}
-            isLocked={!isPro}
-            onLockedPress={() => handleProUpsell('Notification Schedules')}
-            rightElement={
-              isPro ? (
-                <Switch
-                  value={false}
-                  onValueChange={() => requestToggle('Notification Schedules', false, null)}
-                  trackColor={switchTrackColor}
-                  thumbColor="#ffffff"
-                />
-              ) : undefined
-            }
-          />
-          <SettingsRow
-            icon={<SlidersHorizontal size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
-            label="Advanced Notification Settings"
-            sublabel="Full control over notification behavior"
+            label="Notification Schedule"
+            sublabel="Set specific days for notifications"
             isLast
             isProOnly={!isPro}
             isLocked={!isPro}
-            onLockedPress={() => handleProUpsell('Advanced Notification Settings')}
+            onLockedPress={() => handleProUpsell('Notification Schedule')}
             rightElement={
               isPro ? (
                 <Switch
                   value={false}
-                  onValueChange={() => requestToggle('Advanced Notification Settings', false, null)}
+                  onValueChange={() => requestToggle('Notification Schedule', false, null)}
                   trackColor={switchTrackColor}
                   thumbColor="#ffffff"
                 />
