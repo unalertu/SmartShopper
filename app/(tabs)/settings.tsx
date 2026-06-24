@@ -112,6 +112,7 @@ function SettingsRow({
 }
 
 function SettingsGroup({
+  title,
   children,
   delay = 0}: {
   title?: string;
@@ -122,10 +123,16 @@ function SettingsGroup({
     <Animated.View
       entering={FadeInDown.duration(400).delay(delay).springify()}
       layout={LinearTransition.springify()}
-      className="bg-white border border-slate-100 rounded-3xl p-2 mb-6 mx-6"
-      
+      className="mb-6 mx-6"
     >
-      {children}
+      {title && (
+        <Text className="text-[14px] font-semibold text-slate-500 mb-2 ml-4">
+          {title}
+        </Text>
+      )}
+      <View className="bg-white border border-slate-100 rounded-3xl p-2">
+        {children}
+      </View>
     </Animated.View>
   );
 }
@@ -393,6 +400,27 @@ export default function SettingsScreen() {
     ]);
   }, [theme, setTheme]);
 
+  const handleClearCache = useCallback(() => {
+    hapticImpact(ImpactFeedbackStyle.Heavy);
+    Alert.alert(
+      'Clear Cache',
+      'This will delete cached markets, map data, and temporary data. Your saved lists and shops will not be affected.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: () => {
+            const locState = useLocationStore.getState();
+            locState.setCachedMarkets([]);
+            hapticNotification(NotificationFeedbackType.Success);
+            Alert.alert('Cache Cleared', 'Temporary data has been successfully deleted.');
+          },
+        },
+      ]
+    );
+  }, []);
+
   const handleResetApp = useCallback(() => {
     hapticImpact(ImpactFeedbackStyle.Heavy);
     Alert.alert(
@@ -517,7 +545,7 @@ export default function SettingsScreen() {
         <Animated.ScrollView
           ref={scrollRef}
           className="flex-1"
-          contentContainerStyle={{ paddingBottom: 150, paddingTop: insets.top + 8 }}
+          contentContainerStyle={{ paddingBottom: 250, paddingTop: insets.top + 8 }}
           showsVerticalScrollIndicator={false}
           onScroll={scrollHandler}
           scrollEventThrottle={16}
@@ -549,65 +577,15 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </Animated.View>
 
-          {/* ── Debug ── */}
-          <SettingsGroup delay={35}>
+          {/* ── Premium ── */}
+          <SettingsGroup title="Premium" delay={50}>
             <SettingsRow
-              icon={<Bug size={20} color="#8b5cf6" />}
-              label="Test Notification Flow"
-              sublabel="Immediately trigger store detection and send notification"
-              onPress={handleTestNotification}
-            />
-            <SettingsRow
-              icon={<MapPin size={20} color="#8b5cf6" />}
-              label="Location Debugger"
-              sublabel="View real-time location and dwell timers"
-              isLast
-              onPress={() => router.push('/debug')}
-            />
-          </SettingsGroup>
-
-          {/* ── Subscriptions & Purchases ── */}
-          <SettingsGroup delay={50}>
-            {!isPro && (
-              <SettingsRow
-                icon={<Sparkles size={20} color="#D4AF37" />}
-                label="GeoCart Pro"
-                sublabel="Unlock all premium features"
-                onPress={() => {
-                  hapticImpact(ImpactFeedbackStyle.Light);
-                  router.push('/paywall');
-                }}
-              />
-            )}
-
-            {isPro ? (
-              <SettingsRow
-                icon={<Users size={20} color="#64748b" />}
-                label="Upgrade to Family Plan"
-                sublabel="Share Pro with up to 5 members"
-                onPress={() => {
-                  hapticImpact(ImpactFeedbackStyle.Light);
-                  Alert.alert('Coming Soon', 'The Family Plan will be available in a future update.');
-                }}
-              />
-            ) : (
-              <SettingsRow
-                icon={<Users size={20} color="#64748b" />}
-                label="Family Plan"
-                sublabel="Coming soon"
-                onPress={() => {
-                  hapticImpact(ImpactFeedbackStyle.Light);
-                  Alert.alert('Coming Soon', 'The Family Plan will be available in a future update.');
-                }}
-              />
-            )}
-            <SettingsRow
-              icon={<Calendar size={20} color="#64748b" />}
-              label="Calendar & Reminders"
-              sublabel="Coming in future updates"
+              icon={<Sparkles size={20} color="#D4AF37" />}
+              label="GeoCart Pro"
+              sublabel="Unlock all premium features"
               onPress={() => {
                 hapticImpact(ImpactFeedbackStyle.Light);
-                Alert.alert('Coming Soon', 'Calendar and reminders integration will be available in future updates.');
+                router.push('/paywall');
               }}
             />
             <SettingsRow
@@ -622,30 +600,8 @@ export default function SettingsScreen() {
             />
           </SettingsGroup>
 
-          {/* ── Preferences & Device Settings ── */}
-          <SettingsGroup delay={100}>
-            <SettingsRow
-              icon={<Ruler size={20} color="#64748b" />}
-              label="Distance Unit"
-              onPress={handleDistanceUnitToggle}
-              rightElement={
-                <View className="flex-row items-center gap-1.5">
-                  <Text className="text-[13px] font-medium text-slate-400">
-                    {distanceUnit === 'metric' ? 'Metric' : 'Imperial'}
-                  </Text>
-                  <ChevronRight size={16} color="#94a3b8" />
-                </View>
-              }
-            />
-            <SettingsRow
-              icon={<SlidersHorizontal size={20} color="#64748b" />}
-              label="Map & Notifications"
-              sublabel="Customize map and alerts"
-              onPress={() => {
-                hapticImpact(ImpactFeedbackStyle.Light);
-                router.push('/notification-preferences');
-              }}
-            />
+          {/* ── Notifications & Location ── */}
+          <SettingsGroup title="Notifications & Location" delay={100}>
             <SettingsRow
               icon={<Navigation size={20} color="#64748b" />}
               label="Location Services"
@@ -660,23 +616,9 @@ export default function SettingsScreen() {
               }
             />
             <SettingsRow
-              icon={<Vibrate size={20} color="#64748b" />}
-              label="Haptic Feedback"
-              sublabel="Vibrations on interactions"
-              rightElement={
-                <Switch
-                  value={hapticEnabled}
-                  onValueChange={handleHapticToggle}
-                  trackColor={switchTrackColor}
-                  thumbColor="#ffffff"
-                />
-              }
-            />
-            <SettingsRow
               icon={<Bell size={20} color="#64748b" />}
               label="Push Notifications"
               sublabel="Get reminded near stores"
-              isLast
               rightElement={
                 <Switch
                   value={notificationsEnabled}
@@ -686,10 +628,51 @@ export default function SettingsScreen() {
                 />
               }
             />
+            <SettingsRow
+              icon={<SlidersHorizontal size={20} color="#64748b" />}
+              label="Map & Notifications"
+              sublabel="Customize map and alerts"
+              isLast
+              onPress={() => {
+                hapticImpact(ImpactFeedbackStyle.Light);
+                router.push('/notification-preferences');
+              }}
+            />
           </SettingsGroup>
 
-          {/* ── Support & Feedback ── */}
-          <SettingsGroup delay={200}>
+          {/* ── App Preferences ── */}
+          <SettingsGroup title="App Preferences" delay={150}>
+            <SettingsRow
+              icon={<Ruler size={20} color="#64748b" />}
+              label="Distance Unit"
+              onPress={handleDistanceUnitToggle}
+              rightElement={
+                <View className="flex-row items-center gap-1.5">
+                  <Text className="text-[13px] font-medium text-slate-400">
+                    {distanceUnit === 'metric' ? 'Metric' : 'Imperial'}
+                  </Text>
+                  <ChevronRight size={16} color="#94a3b8" />
+                </View>
+              }
+            />
+            <SettingsRow
+              icon={<Vibrate size={20} color="#64748b" />}
+              label="Haptic Feedback"
+              sublabel="Vibrations on interactions"
+              isLast
+              rightElement={
+                <Switch
+                  value={hapticEnabled}
+                  onValueChange={handleHapticToggle}
+                  trackColor={switchTrackColor}
+                  thumbColor="#ffffff"
+                />
+              }
+            />
+          </SettingsGroup>
+
+          {/* ── Support ── */}
+          <SettingsGroup title="Support" delay={200}>
             <SettingsRow
               icon={<LifeBuoy size={20} color="#64748b" />}
               label="Help Center"
@@ -713,8 +696,8 @@ export default function SettingsScreen() {
             />
           </SettingsGroup>
 
-          {/* ── Legal & About ── */}
-          <SettingsGroup delay={300}>
+          {/* ── Legal ── */}
+          <SettingsGroup title="Legal" delay={250}>
             <SettingsRow
               icon={<Shield size={20} color="#64748b" />}
               label="Privacy Policy"
@@ -734,8 +717,13 @@ export default function SettingsScreen() {
             <SettingsRow
               icon={<FileText size={20} color="#64748b" />}
               label="Open Source Licenses"
+              isLast
               onPress={handleOpenSourceLicenses}
             />
+          </SettingsGroup>
+
+          {/* ── About ── */}
+          <SettingsGroup title="About" delay={300}>
             <SettingsRow
               icon={<Info size={20} color="#64748b" />}
               label="Version"
@@ -747,7 +735,13 @@ export default function SettingsScreen() {
           </SettingsGroup>
 
           {/* ── Danger Zone ── */}
-          <SettingsGroup delay={400}>
+          <SettingsGroup title="Danger Zone" delay={400}>
+            <SettingsRow
+              icon={<Trash2 size={20} color="#f97316" />}
+              label="Clear Cache"
+              sublabel="Delete cached markets and temporary map data"
+              onPress={handleClearCache}
+            />
             <SettingsRow
               icon={<RotateCcw size={20} color="#ef4444" />}
               label="Reset App Data"
@@ -755,6 +749,23 @@ export default function SettingsScreen() {
               isDanger
               isLast
               onPress={handleResetApp}
+            />
+          </SettingsGroup>
+
+          {/* ── Debug ── */}
+          <SettingsGroup title="Debug" delay={350}>
+            <SettingsRow
+              icon={<Bug size={20} color="#8b5cf6" />}
+              label="Test Notification Flow"
+              sublabel="Immediately trigger store detection and send notification"
+              onPress={handleTestNotification}
+            />
+            <SettingsRow
+              icon={<MapPin size={20} color="#8b5cf6" />}
+              label="Location Debugger"
+              sublabel="View real-time location and dwell timers"
+              isLast
+              onPress={() => router.push('/debug')}
             />
           </SettingsGroup>
 
