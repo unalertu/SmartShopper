@@ -22,6 +22,7 @@ export default function ListDetails() {
   const addBottomSheetRef = useRef<BottomSheetModal>(null);
   
   const [newItemText, setNewItemText] = useState('');
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('General');
   const [quantity, setQuantity] = useState(1);
   const [selectedUnit, setSelectedUnit] = useState('pcs');
@@ -54,6 +55,7 @@ export default function ListDetails() {
   const items = useMemo(() => allItems.filter(item => item.listId === listId), [allItems, listId]);
   
   const addItem = useShoppingListStore((state) => state.addItem);
+  const updateItem = useShoppingListStore((state) => state.updateItem);
   const togglePurchased = useShoppingListStore((state) => state.togglePurchased);
   const removeItem = useShoppingListStore((state) => state.removeItem);
   const canAddItemToList = useShoppingListStore((state) => state.canAddItemToList);
@@ -151,6 +153,7 @@ export default function ListDetails() {
   }, [displayedSuggestions.length]);
 
   const resetModalState = () => {
+    setEditingItemId(null);
     setNewItemText('');
     setQuantity(1);
     setSelectedUnit('pcs');
@@ -163,6 +166,18 @@ export default function ListDetails() {
   const handleAddItem = () => {
     if (newItemText.trim().length === 0) return;
     
+    if (editingItemId) {
+      updateItem(editingItemId, {
+        name: newItemText.trim(),
+        quantity,
+        unit: selectedUnit,
+        category: selectedCategory
+      });
+      hapticNotification(Haptics.NotificationFeedbackType.Success);
+      closeModal();
+      return;
+    }
+
     if (!canAddItemToList(listId, isPro)) {
       Alert.alert(
         'Item Limit Reached',
@@ -307,24 +322,20 @@ export default function ListDetails() {
           {items.map((item, index) => (
             <View key={item.id}>
               <View className="flex-row items-center justify-between py-4 bg-white">
-                <View className="flex-row items-center gap-4 flex-1">
-                  {/* Minimal Checkbox */}
+                <View className="flex-row items-center gap-4 flex-1 pr-4">
+                  {/* Item Text */}
                   <TouchableOpacity 
+                    className="flex-1"
                     onPress={() => {
                       hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                      togglePurchased(item.id);
+                      setEditingItemId(item.id);
+                      setNewItemText(item.name);
+                      setQuantity(item.quantity);
+                      setSelectedUnit(item.unit || 'pcs');
+                      setSelectedCategory(item.category || 'General');
+                      addBottomSheetRef.current?.present();
                     }}
-                    className="justify-center items-center w-8 h-8"
                   >
-                    {item.isPurchased ? (
-                      <Check size={24} color="#0f172a" strokeWidth={3} />
-                    ) : (
-                      <View className="w-6 h-6 rounded-full border-[2px] border-slate-300" />
-                    )}
-                  </TouchableOpacity>
-                  
-                  {/* Item Text */}
-                  <View className="flex-1">
                     <Text 
                       className={`text-[16px] font-bold ${
                         item.isPurchased ? 'text-slate-400 line-through' : 'text-slate-800'
@@ -335,19 +346,37 @@ export default function ListDetails() {
                     <Text className="text-[13px] text-slate-400 font-medium mt-0.5">
                       {item.quantity} {item.unit} {item.category !== 'General' ? `• ${item.category}` : ''}
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                 </View>
 
-                {/* Right Action */}
-                <TouchableOpacity 
-                  onPress={() => {
-                    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                    removeItem(item.id);
-                  }}
-                  className="p-2"
-                >
-                  <Trash2 size={18} color="#cbd5e1" />
-                </TouchableOpacity>
+                {/* Right Actions */}
+                <View className="flex-row items-center gap-2">
+                  <TouchableOpacity 
+                    onPress={() => {
+                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                      removeItem(item.id);
+                    }}
+                    className="p-2"
+                  >
+                    <Trash2 size={18} color="#cbd5e1" />
+                  </TouchableOpacity>
+
+                  {/* Minimal Checkbox */}
+                  <TouchableOpacity 
+                    onPress={() => {
+                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                      togglePurchased(item.id);
+                    }}
+                    className="justify-center items-center w-8 h-8"
+                    hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+                  >
+                    {item.isPurchased ? (
+                      <Check size={24} color="#0f172a" strokeWidth={3} />
+                    ) : (
+                      <View className="w-6 h-6 rounded-full border-[2px] border-slate-300" />
+                    )}
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {/* Divider (hide for last item) */}
@@ -580,7 +609,7 @@ export default function ListDetails() {
             >
               <Plus size={24} color={isButtonActive ? "#ffffff" : "#94a3b8"} strokeWidth={2.5} className="mr-2" />
               <Text className={`font-bold text-lg tracking-wide ${isButtonActive ? 'text-white' : 'text-slate-400'}`} numberOfLines={1}>
-                {isButtonActive ? `Add "${newItemText.trim()}"` : 'Add to List'}
+                {isButtonActive ? `${editingItemId ? 'Save' : 'Add'} "${newItemText.trim()}"` : (editingItemId ? 'Save Changes' : 'Add to List')}
               </Text>
             </TouchableOpacity>
           </Animated.View>
