@@ -1,23 +1,23 @@
-import React, { memo, useEffect, useState } from 'react';
+import React, { memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking, Platform, Modal, Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import * as Location from 'expo-location';
+import * as Notifications from 'expo-notifications';
 import { SymbolView } from 'expo-symbols';
-import { Navigation } from 'lucide-react-native';
+import { Bell } from 'lucide-react-native';
 
-export interface LocationPermissionSheetProps {
+export interface NotificationPermissionSheetProps {
   visible: boolean;
   onDismiss: () => void;
   onGranted: () => void;
   isTurningOff?: boolean;
 }
 
-const LocationPermissionSheet = memo(function LocationPermissionSheet({
+const NotificationPermissionSheet = memo(function NotificationPermissionSheet({
   visible,
   onDismiss,
   onGranted,
   isTurningOff
-}: LocationPermissionSheetProps) {
+}: NotificationPermissionSheetProps) {
 
   const handleContinue = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -26,8 +26,8 @@ const LocationPermissionSheet = memo(function LocationPermissionSheet({
       onDismiss();
       setTimeout(() => {
         Alert.alert(
-          'Disable Location Services',
-          'To turn off location permissions, please go to your device Settings.',
+          'Disable Notifications',
+          'To turn off notifications, please go to your device Settings.',
           [
             { text: 'Cancel', style: 'cancel' },
             {
@@ -46,7 +46,7 @@ const LocationPermissionSheet = memo(function LocationPermissionSheet({
       return;
     }
 
-    const { status } = await Location.requestForegroundPermissionsAsync();
+    const { status } = await Notifications.requestPermissionsAsync();
     if (status === 'granted') {
       onGranted();
       onDismiss();
@@ -55,8 +55,8 @@ const LocationPermissionSheet = memo(function LocationPermissionSheet({
       // Use native iOS popup for denied state, delay to avoid Modal dismiss conflict
       setTimeout(() => {
         Alert.alert(
-          'Location Access Required',
-          "SmartShopper needs location access to notify you when you're near stores. You can enable location permissions anytime in Settings.",
+          'Notifications Required',
+          "SmartShopper needs notification access to remind you when you're near stores. You can enable notifications anytime in Settings.",
           [
             { text: 'Cancel', style: 'cancel' },
             {
@@ -91,14 +91,14 @@ const LocationPermissionSheet = memo(function LocationPermissionSheet({
         <View style={styles.modalCard}>
           <View style={styles.iconContainer}>
             {Platform.OS === 'ios' ? (
-              <SymbolView name="location.fill" size={32} tintColor="#0f172a" />
+              <SymbolView name="bell.fill" size={32} tintColor="#0f172a" />
             ) : (
-              <Navigation size={32} color="#0f172a" />
+              <Bell size={32} color="#0f172a" />
             )}
           </View>
-          <Text style={styles.title}>Enable Location Reminders</Text>
+          <Text style={styles.title}>Enable Notifications</Text>
           <Text style={styles.description}>
-            SmartShopper uses your location to remind you when you&apos;re near stores on your shopping list. Location updates are optimized to minimize battery usage. Your location is never shared or sold.
+            SmartShopper uses notifications to gently remind you when you&apos;re near stores on your shopping list. We only notify you when it matters.
           </Text>
           <TouchableOpacity
             style={styles.primaryButton}
@@ -113,7 +113,7 @@ const LocationPermissionSheet = memo(function LocationPermissionSheet({
   );
 });
 
-export default LocationPermissionSheet;
+export default NotificationPermissionSheet;
 
 const styles = StyleSheet.create({
   backdrop: {
@@ -170,18 +170,6 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: '#ffffff',
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    width: '100%',
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  secondaryButtonText: {
-    color: '#64748b',
     fontSize: 17,
     fontWeight: '600',
   },

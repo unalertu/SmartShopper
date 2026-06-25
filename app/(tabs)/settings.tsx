@@ -50,6 +50,7 @@ import {
   Bug} from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import LocationPermissionSheet from '../../components/LocationPermissionSheet';
+import NotificationPermissionSheet from '../../components/NotificationPermissionSheet';
 import { geoEngine } from '../../services/geoEngine';
 import { notificationEngine } from '../../services/notificationEngine';
 import { sendLocalNotification } from '../../services/notificationService';
@@ -179,6 +180,9 @@ export default function SettingsScreen() {
 
   // ── Sheet State ──
   const [permissionSheetVisible, setPermissionSheetVisible] = useState(false);
+  const [isTurningOffLocation, setIsTurningOffLocation] = useState(false);
+  const [notificationSheetVisible, setNotificationSheetVisible] = useState(false);
+  const [isTurningOffNotification, setIsTurningOffNotification] = useState(false);
 
   // ── Store selectors ──
   const { clearAll: clearAllItems } = useShoppingListStore();
@@ -266,67 +270,16 @@ export default function SettingsScreen() {
   const handleNotificationToggle = useCallback(
     async (value: boolean) => {
       hapticImpact(ImpactFeedbackStyle.Light);
-
-      try {
-        if (value) {
-          const { status } = await Notifications.getPermissionsAsync();
-
-          if (status === 'denied') {
-            Alert.alert(
-              'Notifications Disabled',
-              'To enable notifications, please allow them in your device Settings.',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Open Settings',
-                  onPress: () => {
-                    if (Platform.OS === 'ios') {
-                      Linking.openURL('app-settings:');
-                    } else {
-                      Linking.openSettings();
-                    }
-                  }},
-              ]
-            );
-            return;
-          }
-
-          if (status === 'undetermined') {
-            const { status: newStatus } = await Notifications.requestPermissionsAsync();
-            setNotificationsEnabled(newStatus === 'granted');
-            return;
-          }
-
-          setNotificationsEnabled(true);
-        } else {
-          Alert.alert(
-            'Disable Notifications',
-            'To turn off notifications, please go to your device Settings.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Open Settings',
-                onPress: () => {
-                  if (Platform.OS === 'ios') {
-                    Linking.openURL('app-settings:');
-                  } else {
-                    Linking.openSettings();
-                  }
-                }},
-            ]
-          );
-        }
-      } catch {
-        setNotificationsEnabled(value);
-      }
+      setIsTurningOffNotification(!value);
+      setNotificationSheetVisible(true);
     },
-    [setNotificationsEnabled]
+    []
   );
 
   const handleLocationToggle = useCallback(
     async (value: boolean) => {
       hapticImpact(ImpactFeedbackStyle.Light);
-      // Always show the primer regardless of whether turning on or off
+      setIsTurningOffLocation(!value); // if turning off, value is false
       setPermissionSheetVisible(true);
     },
     []
@@ -560,6 +513,7 @@ export default function SettingsScreen() {
               sublabel="Background geofencing"
               onPress={() => {
                 hapticImpact(ImpactFeedbackStyle.Light);
+                setIsTurningOffLocation(locationEnabled); // if already on, tapping row turns it off
                 setPermissionSheetVisible(true);
               }}
               rightElement={
@@ -575,6 +529,11 @@ export default function SettingsScreen() {
               icon={<Bell size={20} color="#64748b" />}
               label="Push Notifications"
               sublabel="Get reminded near stores"
+              onPress={() => {
+                hapticImpact(ImpactFeedbackStyle.Light);
+                setIsTurningOffNotification(notificationsEnabled);
+                setNotificationSheetVisible(true);
+              }}
               rightElement={
                 <Switch
                   value={notificationsEnabled}
@@ -744,6 +703,13 @@ export default function SettingsScreen() {
           visible={permissionSheetVisible}
           onDismiss={() => setPermissionSheetVisible(false)}
           onGranted={() => setLocationEnabled(true)}
+          isTurningOff={isTurningOffLocation}
+        />
+        <NotificationPermissionSheet
+          visible={notificationSheetVisible}
+          onDismiss={() => setNotificationSheetVisible(false)}
+          onGranted={() => setNotificationsEnabled(true)}
+          isTurningOff={isTurningOffNotification}
         />
       </View>
     </AnimatedScreen>

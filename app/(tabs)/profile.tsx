@@ -26,14 +26,15 @@ import {
   Info,
   Lock} from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
-import NotificationPermissionScreen from '../../components/NotificationPermissionScreen';
+import NotificationPermissionSheet from '../../components/NotificationPermissionSheet';
 import { useSettingsStore } from '../../store/useSettingsStore';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { notificationsEnabled, setNotificationsEnabled, theme, isPro } = useSettingsStore();
-  const [showPermissionScreen, setShowPermissionScreen] = useState(false);
+  const [notificationSheetVisible, setNotificationSheetVisible] = useState(false);
+  const [isTurningOffNotification, setIsTurningOffNotification] = useState(false);
 
   // Check notification permission on mount + whenever app returns from background
   useEffect(() => {
@@ -55,65 +56,14 @@ export default function ProfileScreen() {
 
   const handleNotificationToggle = useCallback(async (value: boolean) => {
     hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-
-    if (value) {
-      // User wants to enable — check if permanently denied first
-      const { status } = await Notifications.getPermissionsAsync();
-
-      if (status === 'denied') {
-        // iOS has permanently denied — must go to system settings
-        Alert.alert(
-          'Notifications Disabled',
-          'To enable notifications, please allow them in your device Settings.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Open Settings',
-              onPress: () => {
-                if (Platform.OS === 'ios') {
-                  Linking.openURL('app-settings:');
-                } else {
-                  Linking.openSettings();
-                }
-              }},
-          ]
-        );
-        return;
-      }
-
-      // Show the premium permission screen
-      setShowPermissionScreen(true);
-    } else {
-      // User wants to disable — iOS requires system settings
-      Alert.alert(
-        'Disable Notifications',
-        'To turn off notifications, please go to your device Settings.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Open Settings',
-            onPress: () => {
-              if (Platform.OS === 'ios') {
-                Linking.openURL('app-settings:');
-              } else {
-                Linking.openSettings();
-              }
-            }},
-        ]
-      );
-    }
+    setIsTurningOffNotification(!value);
+    setNotificationSheetVisible(true);
   }, []);
-
-  const handlePermissionScreenComplete = useCallback(() => {
-    setShowPermissionScreen(false);
-    // Re-check status after the permission flow finishes
-    checkNotificationStatus();
-  }, [checkNotificationStatus]);
 
   return (
     <AnimatedScreen>
     <View className="flex-1 bg-white">
-      <StatusBar style={showPermissionScreen ? "light" : "dark"} />
+      <StatusBar style="dark" />
       <ScrollView 
         className="flex-1" 
         contentContainerStyle={{ 
@@ -349,12 +299,12 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Premium Notification Permission Screen Overlay */}
-      {showPermissionScreen && (
-        <NotificationPermissionScreen
-          onComplete={handlePermissionScreenComplete}
-        />
-      )}
+      <NotificationPermissionSheet
+        visible={notificationSheetVisible}
+        onDismiss={() => setNotificationSheetVisible(false)}
+        onGranted={() => setNotificationsEnabled(true)}
+        isTurningOff={isTurningOffNotification}
+      />
     </View>
     </AnimatedScreen>
   );
