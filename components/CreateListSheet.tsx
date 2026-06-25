@@ -265,20 +265,25 @@ const styles = StyleSheet.create({
     borderWidth: 1, // Reduced to 1px for a cleaner, Apple-like look
     borderRadius: 25,
     backgroundColor: '#f8fafc',
+    height: 54,
+    justifyContent: 'center',
   },
   input: {
+    flex: 1,
     paddingHorizontal: 20,
-    paddingVertical: Platform.OS === 'ios' ? 17 : 15,
-    fontSize: 15,
+    paddingVertical: 0,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '500',
     color: '#0f172a',
     letterSpacing: -0.1,
+    textAlignVertical: 'center',
   },
 
   // Create button
   createBtn: {
     borderRadius: 25,
-    paddingVertical: 16,
+    height: 54,
     paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
