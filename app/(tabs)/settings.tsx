@@ -510,7 +510,6 @@ export default function SettingsScreen() {
             <SettingsRow
               icon={<Navigation size={20} color="#64748b" />}
               label="Location Services"
-              sublabel="Background geofencing"
               onPress={() => {
                 hapticImpact(ImpactFeedbackStyle.Light);
                 setIsTurningOffLocation(locationEnabled); // if already on, tapping row turns it off
@@ -528,7 +527,6 @@ export default function SettingsScreen() {
             <SettingsRow
               icon={<Bell size={20} color="#64748b" />}
               label="Push Notifications"
-              sublabel="Get reminded near stores"
               onPress={() => {
                 hapticImpact(ImpactFeedbackStyle.Light);
                 setIsTurningOffNotification(notificationsEnabled);
@@ -546,7 +544,6 @@ export default function SettingsScreen() {
             <SettingsRow
               icon={<SlidersHorizontal size={20} color="#64748b" />}
               label="Map & Notifications"
-              sublabel="Customize map and alerts"
               isLast
               onPress={() => {
                 hapticImpact(ImpactFeedbackStyle.Light);
@@ -573,7 +570,6 @@ export default function SettingsScreen() {
             <SettingsRow
               icon={<Vibrate size={20} color="#64748b" />}
               label="Haptic Feedback"
-              sublabel="Vibrations on interactions"
               isLast
               rightElement={
                 <Switch
