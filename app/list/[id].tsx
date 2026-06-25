@@ -58,9 +58,59 @@ export default function ListDetails() {
   const updateItem = useShoppingListStore((state) => state.updateItem);
   const togglePurchased = useShoppingListStore((state) => state.togglePurchased);
   const removeItem = useShoppingListStore((state) => state.removeItem);
+  const restoreItem = useShoppingListStore((state) => state.restoreItem);
   const canAddItemToList = useShoppingListStore((state) => state.canAddItemToList);
   
   const { isPro, distanceUnit } = useSettingsStore();
+
+  const [deletedItem, setDeletedItem] = useState<any>(null);
+  const hideToastTimeout = useRef<NodeJS.Timeout | null>(null);
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+
+  const handleRemoveItem = (item: any) => {
+    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+    removeItem(item.id);
+    setDeletedItem(item);
+    
+    Animated.timing(toastOpacity, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+
+    if (hideToastTimeout.current) {
+      clearTimeout(hideToastTimeout.current);
+    }
+    
+    hideToastTimeout.current = setTimeout(() => {
+      Animated.timing(toastOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start(() => {
+        setDeletedItem(null);
+      });
+    }, 4000);
+  };
+
+  const handleUndo = () => {
+    if (deletedItem) {
+      hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
+      restoreItem(deletedItem);
+      
+      Animated.timing(toastOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start(() => {
+        setDeletedItem(null);
+      });
+      
+      if (hideToastTimeout.current) {
+        clearTimeout(hideToastTimeout.current);
+      }
+    }
+  };
 
   const completedCount = items.filter(item => item.isPurchased).length;
   const remainingCount = items.length - completedCount;
@@ -352,10 +402,7 @@ export default function ListDetails() {
                 {/* Right Actions */}
                 <View className="flex-row items-center gap-2">
                   <TouchableOpacity 
-                    onPress={() => {
-                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                      removeItem(item.id);
-                    }}
+                    onPress={() => handleRemoveItem(item)}
                     className="p-2"
                   >
                     <Trash2 size={18} color="#cbd5e1" />
@@ -397,7 +444,7 @@ export default function ListDetails() {
 
       {/* 5. The Bottom Floating Button */}
       <View 
-        className="absolute left-6 right-6 z-50"
+        className="absolute left-6 right-6 z-40"
         style={{ bottom: insets.bottom > 0 ? insets.bottom + 24 : 40 }}
       >
         <TouchableOpacity 
@@ -411,6 +458,24 @@ export default function ListDetails() {
           <Text className="text-white font-extrabold text-[17px] tracking-wide">Add New Item</Text>
         </TouchableOpacity>
       </View>
+
+      {/* 6. Undo Toast */}
+      <Animated.View 
+        className="absolute left-6 right-6 z-50 flex-row items-center justify-between bg-slate-800 rounded-2xl px-5 py-3.5 shadow-2xl"
+        pointerEvents={deletedItem ? "auto" : "none"}
+        style={{ 
+          bottom: insets.bottom > 0 ? insets.bottom + 92 : 108,
+          opacity: toastOpacity,
+          transform: [
+            { translateY: toastOpacity.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }
+          ]
+        }}
+      >
+        <Text className="text-white font-medium text-[15px]">Item deleted</Text>
+        <TouchableOpacity onPress={handleUndo} className="bg-slate-600 px-4 py-2 rounded-xl active:bg-slate-500">
+          <Text className="text-white font-extrabold text-[14px] tracking-wide">Undo</Text>
+        </TouchableOpacity>
+      </Animated.View>
 
       <BottomSheetModal
         ref={addBottomSheetRef}

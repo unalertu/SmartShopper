@@ -36,6 +36,8 @@ interface ShoppingListState {
    * Returns the current item count for a specific list.
    */
   getItemCountForList: (listId: number) => number;
+  
+  restoreItem: (item: ShoppingItem) => void;
 }
 
 const generateId = () =>
@@ -83,6 +85,21 @@ export const useShoppingListStore = create<ShoppingListState>()(
           }
           return { items: newItems };
         }),
+
+      restoreItem: (item) =>
+        set((state) => {
+          const newItems = [item, ...state.items];
+          const newCount = newItems.filter(i => i.listId === item.listId).length;
+          useListsStore.getState().updateListCount(item.listId, newCount);
+          useActivityStore.getState().logActivity({
+            type: 'item_added',
+            title: item.name,
+            subtitle: 'Item restored',
+            listId: item.listId,
+          });
+          return { items: newItems };
+        }),
+
 
       togglePurchased: (id) =>
         set((state) => {
