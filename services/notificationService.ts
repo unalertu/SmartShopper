@@ -5,17 +5,21 @@
 
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
+import { useSettingsStore } from "../store/useSettingsStore";
 
 export const setupNotifications = async (): Promise<boolean> => {
   // Configure notification behavior
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
+    handleNotification: async () => {
+      const { soundEnabled } = useSettingsStore.getState();
+      return {
+        shouldShowAlert: true,
+        shouldPlaySound: soundEnabled,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      };
+    },
   });
 
   // Request permissions
@@ -55,11 +59,13 @@ export const sendLocalNotification = async (
   body: string,
   channelId: string = "geofence-alerts"
 ): Promise<void> => {
+  const { soundEnabled } = useSettingsStore.getState();
+
   await Notifications.scheduleNotificationAsync({
     content: {
       title,
       body,
-      sound: "default",
+      sound: soundEnabled ? "default" : null,
       ...(Platform.OS === "android" && {
         channelId,
       }),

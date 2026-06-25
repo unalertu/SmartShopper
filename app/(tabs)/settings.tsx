@@ -405,14 +405,16 @@ export default function SettingsScreen() {
     []
   );
 
-  const handleHapticToggle = useCallback(
-    (value: boolean) => {
-      // Force a raw haptic impact so the user feels it when turning it on
+  const handleHapticToggle = (value: boolean) => {
+    console.log("Haptic Toggle Tapped. New value:", value);
+    if (value) {
+      console.log("Triggering vibration...");
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setHapticEnabled(value);
-    },
-    [setHapticEnabled]
-  );
+    } else {
+      console.log("Not triggering vibration for OFF state.");
+    }
+    setHapticEnabled(value);
+  };
 
   const handleTestNotification = useCallback(async () => {
     hapticImpact(ImpactFeedbackStyle.Light);

@@ -113,11 +113,9 @@ export default function NotificationPreferencesScreen() {
     isPro,
     savedStoresOnly,
     shoppingListReminders,
-    hapticEnabled,
     notificationSensitivity,
     setSavedStoresOnly,
     setShoppingListReminders,
-    setHapticEnabled,
     setNotificationSensitivity
   } = useSettingsStore();
 
@@ -209,24 +207,11 @@ export default function NotificationPreferencesScreen() {
             icon={<Menu size={20} color="#64748b" />}
             label="Shopping List Reminders"
             sublabel="Notify for nearby stores"
+            isLast
             rightElement={
               <Switch
                 value={shoppingListReminders}
                 onValueChange={() => requestToggle('Shopping List Reminders', shoppingListReminders, setShoppingListReminders)}
-                trackColor={switchTrackColor}
-                thumbColor="#ffffff"
-              />
-            }
-          />
-          <SettingsRow
-            icon={<Vibrate size={20} color="#64748b" />}
-            label="Notification Haptics"
-            sublabel="Vibrate on incoming alerts"
-            isLast
-            rightElement={
-              <Switch
-                value={hapticEnabled}
-                onValueChange={() => requestToggle('Notification Haptics', hapticEnabled, setHapticEnabled)}
                 trackColor={switchTrackColor}
                 thumbColor="#ffffff"
               />
