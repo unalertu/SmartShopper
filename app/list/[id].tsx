@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Keyboard, Alert, Animated, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Keyboard, Alert, Animated, KeyboardAvoidingView, Platform, TouchableWithoutFeedback } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { FREE_TIER, getMaxItemsPerList } from '@/constants/tierConfig';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -500,8 +500,10 @@ export default function ListDetails() {
           resetModalState();
         }}
       >
-        <BottomSheetView style={{ flex: 1, paddingHorizontal: 24, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 24) + 12 }}>
-          {/* Focal Point (Input) */}
+        <BottomSheetView style={{ flex: 1 }}>
+          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()} accessible={false}>
+            <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 24) + 12 }}>
+              {/* Focal Point (Input) */}
           <View className="mb-5 z-10 border-b-2 border-slate-100 flex-row items-center h-14">
             <BottomSheetTextInput
               className="flex-1 text-2xl font-bold text-slate-900 py-0 h-full"
@@ -708,6 +710,8 @@ export default function ListDetails() {
               </Text>
             </TouchableOpacity>
           </Animated.View>
+            </View>
+          </TouchableWithoutFeedback>
         </BottomSheetView>
       </BottomSheetModal>
 
