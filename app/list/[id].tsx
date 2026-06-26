@@ -31,7 +31,7 @@ export default function ListDetails() {
   const [isNoteVisible, setIsNoteVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteModalData, setDeleteModalData] = useState<any>(null);
-  const [activeSuggestionTab, setActiveSuggestionTab] = useState<'quick' | 'recent' | 'catalog'>('quick');
+  const [activeSuggestionTab, setActiveSuggestionTab] = useState<'recent' | 'catalog'>('recent');
   const [renameSheetVisible, setRenameSheetVisible] = useState(false);
 
   const handleSheetAnimate = useCallback((fromIndex: number, toIndex: number) => {
@@ -186,8 +186,7 @@ export default function ListDetails() {
   const displayedSuggestions = useMemo(() => {
     if (activeSuggestionTab === 'recent') return recentItems;
     const catItems = CATEGORY_SUGGESTIONS[selectedCategory] || CATEGORY_SUGGESTIONS['General'];
-    if (activeSuggestionTab === 'catalog') return catItems;
-    return catItems.slice(0, 12); // Quick Tap shows top 12
+    return catItems;
   }, [activeSuggestionTab, recentItems, selectedCategory]);
 
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
@@ -344,7 +343,7 @@ export default function ListDetails() {
             <View className="bg-blue-500/10 p-3 rounded-full mb-2">
               <ShoppingBag size={20} color="#3b82f6" />
             </View>
-            <Text className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Total</Text>
+            <Text className="text-xs text-slate-500 font-medium">Total</Text>
             <Text className="text-2xl font-bold text-slate-900 mt-1">{items.length}</Text>
           </View>
 
@@ -356,7 +355,7 @@ export default function ListDetails() {
             <View className="bg-green-500/10 p-3 rounded-full mb-2">
               <Check size={20} color="#22c55e" strokeWidth={2.5} />
             </View>
-            <Text className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Done</Text>
+            <Text className="text-xs text-slate-500 font-medium">Done</Text>
             <Text className="text-2xl font-bold text-slate-900 mt-1">{completedCount}</Text>
           </View>
 
@@ -368,7 +367,7 @@ export default function ListDetails() {
             <View className="bg-orange-500/10 p-3 rounded-full mb-2">
               <Clock size={20} color="#f97316" />
             </View>
-            <Text className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Left</Text>
+            <Text className="text-xs text-slate-500 font-medium">Left</Text>
             <Text className="text-2xl font-bold text-slate-900 mt-1">{remainingCount}</Text>
           </View>
         </View>
@@ -530,8 +529,8 @@ export default function ListDetails() {
           <View className="mb-6 z-10">
             {/* Section Labels */}
             <View className="flex-row mb-2">
-              <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-widest" style={{ width: 100 }}>Quantity</Text>
-              <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Unit</Text>
+              <Text className="text-[15px] font-bold text-slate-500" style={{ width: 100 }}>Quantity</Text>
+              <Text className="text-[15px] font-bold text-slate-500">Unit</Text>
             </View>
             <View className="flex-row items-center relative -mx-6">
               <BottomSheetScrollView horizontal showsHorizontalScrollIndicator={false} className="px-6" contentContainerStyle={{ paddingRight: 48, gap: 10 }}>
@@ -603,7 +602,7 @@ export default function ListDetails() {
 
           {/* Categories */}
           <View className="mb-6 -mx-6 z-10 relative">
-            <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-6">Category</Text>
+            <Text className="text-[15px] font-bold text-slate-500 mb-2 px-6">Category</Text>
             <BottomSheetScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" className="px-6" contentContainerStyle={{ paddingRight: 48, gap: 8 }}>
               {categories.map((cat, index) => {
                 const isSelected = selectedCategory === cat;
@@ -633,46 +632,65 @@ export default function ListDetails() {
           {/* Dynamic Quick Add */}
           <View className="z-10 flex-1">
             <View className="flex-row items-center gap-4 mb-3">
-              <TouchableOpacity onPress={() => {
-                hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                setActiveSuggestionTab('quick');
-              }}>
-                <Text className={`text-[11px] font-bold uppercase tracking-widest ${activeSuggestionTab === 'quick' ? 'text-slate-900' : 'text-slate-400'}`}>Quick Tap</Text>
+              <TouchableOpacity 
+                hitSlop={{ top: 15, bottom: 15, left: 10, right: 10 }}
+                onPress={() => {
+                  hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                  setActiveSuggestionTab('recent');
+                }}
+              >
+                <Text className={`text-[15px] font-bold ${activeSuggestionTab === 'recent' ? 'text-slate-900' : 'text-slate-500'}`}>Recent Items</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => {
-                hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                setActiveSuggestionTab('recent');
-              }}>
-                <Text className={`text-[11px] font-bold uppercase tracking-widest ${activeSuggestionTab === 'recent' ? 'text-slate-900' : 'text-slate-400'}`}>Recent Items</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => {
-                hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                setActiveSuggestionTab('catalog');
-              }}>
-                <Text className={`text-[11px] font-bold uppercase tracking-widest ${activeSuggestionTab === 'catalog' ? 'text-slate-900' : 'text-slate-400'}`}>Catalog</Text>
+              <TouchableOpacity 
+                hitSlop={{ top: 15, bottom: 15, left: 10, right: 10 }}
+                onPress={() => {
+                  hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                  setActiveSuggestionTab('catalog');
+                }}
+              >
+                <Text className={`text-[15px] font-bold ${activeSuggestionTab === 'catalog' ? 'text-slate-900' : 'text-slate-500'}`}>Catalog</Text>
               </TouchableOpacity>
             </View>
 
-            <BottomSheetScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 16 }}>
-              <View className="flex-row flex-wrap gap-2">
-                {displayedSuggestions.map((suggestion, idx) => (
-                  <TouchableOpacity 
-                    key={`${activeSuggestionTab}-${selectedCategory}-${idx}`}
-                    onPress={() => {
-                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                      setNewItemText(suggestion);
-                    }}
-                    className="bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-[14px] flex-row items-center"
-                  >
-                    <Plus size={14} color="#64748b" className="mr-2" strokeWidth={3} />
-                    <Text className="text-slate-700 font-bold text-[15px]"> {suggestion}</Text>
-                  </TouchableOpacity>
-                ))}
-                {displayedSuggestions.length === 0 && activeSuggestionTab === 'recent' && (
-                  <Text className="text-slate-400 text-sm italic mt-2">No recent items yet.</Text>
-                )}
-              </View>
-            </BottomSheetScrollView>
+            <View className="-mx-6 relative">
+              <BottomSheetScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingLeft: 24, paddingRight: 48, paddingBottom: 16 }}>
+                <View className="gap-2">
+                  {[0, 1, 2].map(rowIndex => {
+                    const rowItems = displayedSuggestions.filter((_, idx) => idx % 3 === rowIndex);
+                    if (rowItems.length === 0) return null;
+                    return (
+                      <View key={`${activeSuggestionTab}-${selectedCategory}-row-${rowIndex}`} className="flex-row gap-2">
+                        {rowItems.map((suggestion, idx) => (
+                          <TouchableOpacity 
+                            key={`${activeSuggestionTab}-${selectedCategory}-${rowIndex}-${idx}`}
+                            onPress={() => {
+                              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                              setNewItemText(suggestion);
+                            }}
+                            className="bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-full flex-row items-center"
+                          >
+                            <Plus size={14} color="#64748b" className="mr-2" strokeWidth={3} />
+                            <Text className="text-slate-700 font-bold text-[15px]"> {suggestion}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    );
+                  })}
+                  {displayedSuggestions.length === 0 && activeSuggestionTab === 'recent' && (
+                    <View className="py-2">
+                      <Text className="text-slate-400 text-sm italic">No recent items yet.</Text>
+                    </View>
+                  )}
+                </View>
+              </BottomSheetScrollView>
+              <LinearGradient
+                colors={['rgba(255,255,255,0)', 'rgba(255,255,255,1)']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                className="absolute right-0 top-0 bottom-0 w-8"
+                pointerEvents="none"
+              />
+            </View>
           </View>
 
           {/* Action Button — pinned at bottom */}
