@@ -285,10 +285,12 @@ export default function TabLayout() {
       )}
       screenOptions={{
         headerTransparent: true,
-        headerBackground: () => <GradientBlurBackground />,
+        header: () => (
+          <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 85, zIndex: 100 }}>
+            <GradientBlurBackground />
+          </View>
+        ),
         sceneStyle: { backgroundColor: '#F2F2F7' },
-        headerTitle: '',
-        headerStyle: { height: 85 },
         freezeOnBlur: false,
         unmountOnBlur: false}}
     >

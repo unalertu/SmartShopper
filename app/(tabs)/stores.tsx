@@ -196,7 +196,7 @@ export default function StoresScreen() {
   const { locations, addLocation, removeLocation, cachedMarkets, setCachedMarkets, isFetchingMarkets, setIsFetchingMarkets, canAddLocation, mutedUnsavedShops, toggleMuteUnsavedShop, canMuteShop, userLocation, setUserLocation } = useLocationStore();
   
   const savedShops = locations ?? [];
-  const activeSavedShops = savedShops.filter(loc => loc.isActive !== false);
+  const activeSavedShops = savedShops;
   const mutedSavedShops = savedShops.filter(loc => loc.isActive === false);
 
   const { distanceUnit, isPro } = useSettingsStore();
@@ -647,7 +647,7 @@ export default function StoresScreen() {
     });
   };
 
-  const renderRightActions = (locId: string) => {
+  const renderRightActions = (locId: string, uniqueKey: string) => {
     return (
       <View style={{ width: 88, height: '100%' }}>
         <BottomSheetTouchableOpacity
@@ -662,7 +662,7 @@ export default function StoresScreen() {
               confirmLabel: 'Delete',
               onConfirm: () => {
                 removeLocation(locId);
-                swipeableRefs.current.delete(locId);
+                swipeableRefs.current.delete(uniqueKey);
                 swipeableRefs.current.delete('context-' + locId);
                 if (selectedShopToSave && (selectedShopToSave.id === locId || selectedShopToSave.id === `saved-${locId}`)) {
                   setSelectedShopToSave(null);
@@ -670,7 +670,7 @@ export default function StoresScreen() {
                 setDeleteModalVisible(false);
               },
               onCancel: () => {
-                swipeableRefs.current.get(locId)?.close();
+                swipeableRefs.current.get(uniqueKey)?.close();
               }
             });
             setDeleteModalVisible(true);
@@ -1117,7 +1117,7 @@ export default function StoresScreen() {
                       swipeableRefs.current.delete('context-' + originalId);
                     }
                   }}
-                  renderRightActions={() => renderRightActions(originalId)}
+                  renderRightActions={() => renderRightActions(originalId, 'context-' + originalId)}
                   rightThreshold={40}
                   overshootRight={false}
                   friction={2}
@@ -1285,13 +1285,14 @@ export default function StoresScreen() {
 
             const allMutedShops = [...mutedSavedShops, ...mutedUnsavedMarkets];
 
-            const renderShopCard = (loc: any, index: number) => {
+            const renderShopCard = (loc: any, index: number, sectionPrefix: string = '') => {
+              const uniqueKey = sectionPrefix ? `${sectionPrefix}-${loc.id}` : loc.id;
               if (selectedShopToSave && selectedShopToSave.isSaved && selectedShopToSave.id === `saved-${loc.id}`) {
                 return null;
               }
               return (
               <Animated.View
-                key={loc.id}
+                key={uniqueKey}
                 entering={FadeInDown.duration(400).delay(index * 60).springify()}
                 layout={LinearTransition.springify()}
                 exiting={FadeOutLeft.duration(200)}
@@ -1300,16 +1301,16 @@ export default function StoresScreen() {
                   containerStyle={{ marginBottom: 10 }}
                   ref={(ref) => {
                     if (ref) {
-                      swipeableRefs.current.set(loc.id, ref);
+                      swipeableRefs.current.set(uniqueKey, ref);
                     } else {
-                      swipeableRefs.current.delete(loc.id);
+                      swipeableRefs.current.delete(uniqueKey);
                     }
                   }}
-                  renderRightActions={loc.isUnsaved ? undefined : () => renderRightActions(loc.id)}
+                  renderRightActions={(loc.isUnsaved || sectionPrefix === 'muted') ? undefined : () => renderRightActions(loc.id, uniqueKey)}
                   rightThreshold={40}
                   overshootRight={false}
                   friction={2}
-                  onSwipeableWillOpen={() => closeAllSwipeables(loc.id)}
+                  onSwipeableWillOpen={() => closeAllSwipeables(uniqueKey)}
                 >
                   <TouchableOpacity
                     className="bg-white rounded-[22px] flex-row items-center justify-between"
@@ -1412,7 +1413,7 @@ export default function StoresScreen() {
                                 confirmLabel: 'Delete',
                                 onConfirm: () => {
                                   removeLocation(loc.id);
-                                  swipeableRefs.current.delete(loc.id);
+                                  swipeableRefs.current.delete(uniqueKey);
                                   swipeableRefs.current.delete('context-' + loc.id);
                                   if (selectedShopToSave && (selectedShopToSave.id === loc.id || selectedShopToSave.id === `saved-${loc.id}`)) {
                                     setSelectedShopToSave(null);
@@ -1420,7 +1421,7 @@ export default function StoresScreen() {
                                   setDeleteModalVisible(false);
                                 },
                                 onCancel: () => {
-                                  swipeableRefs.current.get(loc.id)?.close();
+                                  swipeableRefs.current.get(uniqueKey)?.close();
                                 }
                               });
                               setDeleteModalVisible(true);
@@ -1439,7 +1440,7 @@ export default function StoresScreen() {
 
             return (
               <>
-                {activeSavedShops.map((loc, index) => renderShopCard(loc, index))}
+                {activeSavedShops.map((loc, index) => renderShopCard(loc, index, 'active'))}
 
                 {allMutedShops.length > 0 && (
                   <Animated.View 
@@ -1453,7 +1454,7 @@ export default function StoresScreen() {
                     </Text>
                   </Animated.View>
                 )}
-                {allMutedShops.map((loc, index) => renderShopCard(loc, index + activeSavedShops.length))}
+                {allMutedShops.map((loc, index) => renderShopCard(loc, index + activeSavedShops.length, 'muted'))}
               </>
             );
           })()}
