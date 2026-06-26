@@ -143,14 +143,14 @@ export default function AddItemScreen() {
                 <Pressable
                   key={unit.value}
                   onPress={() => setSelectedUnit(unit.value)}
-                  className={`px-5 py-3 rounded-full border ${
+                  className={`px-5 py-3 rounded-full border justify-center items-center ${
                     selectedUnit === unit.value
                       ? "bg-primary-500 border-primary-500"
                       : "bg-[#f8fafc] border-surface-100"
                   }`}
                 >
                   <Text
-                    className={`text-[15px] font-semibold ${
+                    className={`text-[15px] font-semibold text-center ${
                       selectedUnit === unit.value ? "text-white" : "text-surface-600"
                     }`}
                   >

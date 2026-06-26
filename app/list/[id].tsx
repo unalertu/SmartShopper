@@ -557,9 +557,9 @@ export default function ListDetails() {
                         hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                         setSelectedUnit(unit);
                       }}
-                      className={`px-4 py-2 rounded-full ${isSelected ? 'bg-slate-900' : 'bg-slate-100'}`}
+                      className={`px-4 py-2 rounded-full justify-center items-center ${isSelected ? 'bg-slate-900' : 'bg-slate-100'}`}
                     >
-                      <Text className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-slate-600'}`}>{unit}</Text>
+                      <Text className={`text-sm font-bold text-center ${isSelected ? 'text-white' : 'text-slate-600'}`}>{unit}</Text>
                     </TouchableOpacity>
                   );
                 })}
