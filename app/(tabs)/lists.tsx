@@ -4,9 +4,9 @@ import { View, Text, ScrollView, TouchableOpacity, Alert, Pressable } from 'reac
 import { FREE_TIER, getMaxLists } from '@/constants/tierConfig';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Menu, ChevronRight, Plus, X, ShoppingBasket, Sparkles, ListPlus, PackagePlus, Clock, Activity, History, CheckCircle, Trash2, Zap } from 'lucide-react-native';
+import { Menu, ChevronRight, Plus, X, ShoppingBasket, Zap } from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
 import { Swipeable } from 'react-native-gesture-handler';
@@ -40,6 +40,7 @@ import { useActivityStore } from '../../store/useActivityStore';
 import { useScrollToTop } from '@react-navigation/native';
 import CreateListSheet from '../../components/CreateListSheet';
 import ConfirmationSheet from '../../components/ConfirmationSheet';
+import ActivityTimeline from '../../components/ActivityTimeline';
 
 const getRelativeDate = (timestamp?: number): string => {
   if (!timestamp) return 'today';
@@ -71,7 +72,7 @@ export default function ListsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { lists: shoppingLists, addList, removeList, canCreateList } = useListsStore();
-  const activityEvents = useActivityStore((state) => state.activities);
+  const activityCount = useActivityStore((state) => state.activities.length);
   const { templates, incrementUsage } = useQuickStartStore();
   const { isPro } = useSettingsStore();
 
@@ -87,13 +88,6 @@ export default function ListsScreen() {
   }
 
   const [showCreateSheet, setShowCreateSheet] = useState(false);
-  const [visibleActivityCount, setVisibleActivityCount] = useState(5);
-
-  useFocusEffect(
-    useCallback(() => {
-      setVisibleActivityCount(5);
-    }, [])
-  );
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteModalData, setDeleteModalData] = useState<any>(null);
 
@@ -348,143 +342,9 @@ export default function ListsScreen() {
           )}
 
           {/* Recent Activity Section */}
-          {(shoppingLists.length > 0 || activityEvents.length > 0) && (() => {
-            const recentEvents = activityEvents.slice(0, visibleActivityCount);
-
-            const getActivityIcon = (type: string) => {
-              switch (type) {
-                case 'list_created':
-                  return <ListPlus size={14} color="#10b981" strokeWidth={2.5} />;
-                case 'item_added':
-                  return <PackagePlus size={14} color="#1e3a8a" strokeWidth={2.5} />;
-                case 'item_removed':
-                case 'list_removed':
-                  return <Trash2 size={14} color="#ef4444" strokeWidth={2.5} />;
-                case 'item_completed':
-                  return <CheckCircle size={14} color="#10b981" strokeWidth={2.5} />;
-                case 'purchased_cleared':
-                case 'list_cleared':
-                  return <Sparkles size={14} color="#eab308" strokeWidth={2.5} />;
-                default:
-                  return <Clock size={14} color="#94a3b8" strokeWidth={2} />;
-              }
-            };
-
-            const getIconBg = (type: string) => {
-              switch (type) {
-                case 'list_created': return 'bg-emerald-100/60';
-                case 'item_added': return 'bg-blue-100/60';
-                case 'item_removed':
-                case 'list_removed': return 'bg-red-100/60';
-                case 'item_completed': return 'bg-emerald-100/60';
-                case 'purchased_cleared':
-                case 'list_cleared': return 'bg-yellow-100/60';
-                default: return 'bg-slate-50/60';
-              }
-            };
-
-            const groupedEvents: { title: string; data: typeof recentEvents }[] = [];
-            recentEvents.forEach(event => {
-              const title = getRelativeDate(event.timestamp);
-              const group = groupedEvents.find(g => g.title === title);
-              if (group) {
-                group.data.push(event);
-              } else {
-                groupedEvents.push({ title, data: [event] });
-              }
-            });
-
-            return (
-              <Animated.View layout={LinearTransition.springify()} className="px-6 mt-6 mb-2">
-                <Animated.View entering={FadeInDown.duration(200).delay(200).springify()} className="flex-row items-center mb-3">
-                  <View className="flex-row items-center gap-1.5">
-                    <History size={14} color="#94a3b8" strokeWidth={2} />
-                    <Text className="text-[14px] font-bold text-slate-500 tracking-wide">Recent Activity</Text>
-                  </View>
-                </Animated.View>
-
-                {recentEvents.length === 0 ? (
-                  <Animated.View entering={FadeInDown.duration(200).delay(225).springify()} className="bg-white rounded-[20px] p-5 border border-slate-100 items-center" >
-                    <View className="w-10 h-10 bg-slate-50 rounded-full items-center justify-center mb-2.5">
-                      <Clock size={18} color="#cbd5e1" strokeWidth={1.5} />
-                    </View>
-                    <Text className="text-[13px] font-medium text-slate-400/80 text-center">Your recent actions will appear here</Text>
-                  </Animated.View>
-                ) : (
-                  <View style={{ gap: 16 }}>
-                    {groupedEvents.map((group, groupIndex) => {
-                      const previousItemsCount = groupedEvents.slice(0, groupIndex).reduce((sum, g) => sum + g.data.length, 0);
-                      return (
-                      <View key={group.title} style={{ gap: 8 }}>
-                        <Animated.View entering={FadeInDown.duration(200).delay(225 + (previousItemsCount + groupIndex) * 25).springify()}>
-                          <Text className="text-[12px] font-bold text-slate-400 capitalize tracking-wider pl-1">
-                            {group.title}
-                          </Text>
-                        </Animated.View>
-                        <View style={{ gap: 6 }}>
-                          {group.data.map((event, index) => {
-                            const dateObj = new Date(event.timestamp);
-                            const timeStr = dateObj.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-                            return (
-                              <Animated.View
-                                key={event.id}
-                                entering={FadeInDown.duration(200).delay(225 + (previousItemsCount + groupIndex + 1 + index) * 25).springify()}
-                              >
-                                <TouchableOpacity
-                                  activeOpacity={0.7}
-                                  onPress={() => {
-                                    if (event.listId) {
-                                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                                      router.push(`/list/${event.listId}`);
-                                    }
-                                  }}
-                                  className="bg-white rounded-[14px] px-3 py-2.5 flex-row items-center border border-slate-100/60"
-                                >
-                                  <View className={`w-7 h-7 ${getIconBg(event.type)} rounded-[8px] items-center justify-center mr-2.5`}>
-                                    {getActivityIcon(event.type)}
-                                  </View>
-                                  <View className="flex-1 mr-2">
-                                    <Text className="text-[14px] font-bold text-slate-800 tracking-tight" numberOfLines={1}>{event.title}</Text>
-                                    <Text className="text-[11.5px] font-medium text-slate-400/80 mt-px" numberOfLines={1}>{event.subtitle}</Text>
-                                  </View>
-                                  <Text className="text-[10.5px] font-medium text-slate-400/50">{timeStr}</Text>
-                                </TouchableOpacity>
-                              </Animated.View>
-                            );
-                          })}
-                        </View>
-                      </View>
-                      );
-                    })}
-                    
-                    {activityEvents.length > 5 && (
-                      <Animated.View 
-                        entering={FadeInDown.duration(200).delay(225 + recentEvents.length * 25).springify()}
-                        layout={LinearTransition.springify()}
-                        style={{ alignItems: 'center', marginTop: 4, marginBottom: 8 }}
-                      >
-                        <TouchableOpacity
-                          activeOpacity={0.6}
-                          onPress={() => {
-                            hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                            if (visibleActivityCount >= activityEvents.length) {
-                              setVisibleActivityCount(5);
-                            } else {
-                              setVisibleActivityCount(prev => prev + 5);
-                            }
-                          }}
-                        >
-                          <Text className="text-[12px] font-semibold text-slate-400">
-                            {visibleActivityCount >= activityEvents.length ? 'See Less' : 'See More'}
-                          </Text>
-                        </TouchableOpacity>
-                      </Animated.View>
-                    )}
-                  </View>
-                )}
-              </Animated.View>
-            );
-          })()}
+          {(shoppingLists.length > 0 || activityCount > 0) && (
+            <ActivityTimeline />
+          )}
 
 
         </Animated.ScrollView>

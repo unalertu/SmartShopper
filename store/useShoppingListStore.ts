@@ -60,11 +60,13 @@ export const useShoppingListStore = create<ShoppingListState>()(
           const newItems = [newItem, ...state.items];
           const newCount = newItems.filter(i => i.listId === listId).length;
           useListsStore.getState().updateListCount(listId, newCount);
+          const listName = useListsStore.getState().lists.find(l => l.id === listId)?.name || 'Unknown List';
           useActivityStore.getState().logActivity({
             type: 'item_added',
             title: item.name,
             subtitle: 'Item added',
             listId,
+            listName,
           });
           return { items: newItems };
         }),
@@ -76,11 +78,13 @@ export const useShoppingListStore = create<ShoppingListState>()(
           if (itemToRemove) {
             const newCount = newItems.filter(i => i.listId === itemToRemove.listId).length;
             useListsStore.getState().updateListCount(itemToRemove.listId, newCount);
+            const listName = useListsStore.getState().lists.find(l => l.id === itemToRemove.listId)?.name || 'Unknown List';
             useActivityStore.getState().logActivity({
               type: 'item_removed',
               title: itemToRemove.name,
               subtitle: 'Item removed',
               listId: itemToRemove.listId,
+              listName,
             });
           }
           return { items: newItems };
@@ -91,11 +95,13 @@ export const useShoppingListStore = create<ShoppingListState>()(
           const newItems = [item, ...state.items];
           const newCount = newItems.filter(i => i.listId === item.listId).length;
           useListsStore.getState().updateListCount(item.listId, newCount);
+          const listName = useListsStore.getState().lists.find(l => l.id === item.listId)?.name || 'Unknown List';
           useActivityStore.getState().logActivity({
-            type: 'item_added',
+            type: 'item_restored',
             title: item.name,
             subtitle: 'Item restored',
             listId: item.listId,
+            listName,
           });
           return { items: newItems };
         }),
@@ -105,11 +111,13 @@ export const useShoppingListStore = create<ShoppingListState>()(
         set((state) => {
           const targetItem = state.items.find(i => i.id === id);
           if (targetItem && !targetItem.isPurchased) {
+            const listName = useListsStore.getState().lists.find(l => l.id === targetItem.listId)?.name || 'Unknown List';
             useActivityStore.getState().logActivity({
               type: 'item_completed',
               title: targetItem.name,
               subtitle: 'Marked as purchased',
               listId: targetItem.listId,
+              listName,
             });
           }
           return {
@@ -132,11 +140,14 @@ export const useShoppingListStore = create<ShoppingListState>()(
             listId ? (item.listId === listId && item.isPurchased) : item.isPurchased
           );
           if (itemsToRemove.length > 0) {
+            const listName = listId ? useListsStore.getState().lists.find(l => l.id === listId)?.name || 'Unknown List' : 'All Lists';
             useActivityStore.getState().logActivity({
               type: 'purchased_cleared',
               title: `Cleared ${itemsToRemove.length} purchased items`,
-              subtitle: 'Items removed',
+              subtitle: `Cleared ${itemsToRemove.length} purchased items`,
               listId,
+              listName,
+              count: itemsToRemove.length,
             });
           }
           return {
@@ -151,11 +162,14 @@ export const useShoppingListStore = create<ShoppingListState>()(
           if (listId) {
             const itemsToRemove = state.items.filter((item) => item.listId === listId);
             if (itemsToRemove.length > 0) {
+              const listName = useListsStore.getState().lists.find(l => l.id === listId)?.name || 'Unknown List';
               useActivityStore.getState().logActivity({
                 type: 'list_cleared',
                 title: 'Cleared all items in list',
-                subtitle: `${itemsToRemove.length} items removed`,
+                subtitle: `Cleared ${itemsToRemove.length} items`,
                 listId,
+                listName,
+                count: itemsToRemove.length,
               });
             }
           } else {
@@ -163,7 +177,9 @@ export const useShoppingListStore = create<ShoppingListState>()(
               useActivityStore.getState().logActivity({
                 type: 'list_cleared',
                 title: 'Cleared all items',
-                subtitle: `${state.items.length} items removed`,
+                subtitle: `Cleared ${state.items.length} items`,
+                listName: 'All Lists',
+                count: state.items.length,
               });
             }
           }

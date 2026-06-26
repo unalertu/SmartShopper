@@ -50,6 +50,7 @@ export const useListsStore = create<ListsStoreState>()(
           title: name,
           subtitle: 'List created',
           listId: newId,
+          listName: name,
         });
         return newId;
       },
@@ -60,6 +61,7 @@ export const useListsStore = create<ListsStoreState>()(
             type: 'list_removed',
             title: listToRemove.name,
             subtitle: 'List deleted',
+            listName: listToRemove.name,
           });
         }
         set((state) => ({
