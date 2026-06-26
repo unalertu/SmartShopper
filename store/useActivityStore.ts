@@ -8,14 +8,17 @@ export type ActivityEventType =
   | 'item_added'
   | 'item_removed'
   | 'item_completed'
+  | 'item_uncompleted'
   | 'item_restored'
   | 'purchased_cleared'
-  | 'list_cleared';
+  | 'list_cleared'
+  | 'list_renamed';
 
 /** List-level event types that should never be merged into item-level groups */
 const LIST_LEVEL_TYPES: ActivityEventType[] = [
   'list_created',
   'list_removed',
+  'list_renamed',
   'list_cleared',
   'purchased_cleared',
 ];
@@ -122,15 +125,26 @@ function buildGroup(events: ActivityEvent[], listsLookup?: Map<number, string>):
   const listName = resolveListName(events, listsLookup);
 
   // Count events by type, respecting the `count` field for aggregated events
+  // For toggles (completed/uncompleted), we only count the final state of the item within this session.
   const counts: Record<string, number> = {};
+  const seenToggles = new Set<string>();
+
   for (const e of events) {
+    if (e.type === 'item_completed' || e.type === 'item_uncompleted') {
+      if (seenToggles.has(e.title)) {
+        // Skip earlier toggle events for the same item in this session
+        continue;
+      }
+      seenToggles.add(e.title);
+    }
+
     const c = e.count || 1;
     counts[e.type] = (counts[e.type] || 0) + c;
   }
 
   const summaryLines = buildSummaryLines(counts);
-  const totalCount = events.reduce((sum, e) => sum + (e.count || 1), 0);
-  const actionTypes = [...new Set(events.map(e => e.type))];
+  const totalCount = Object.values(counts).reduce((sum, count) => sum + count, 0);
+  const actionTypes = Object.keys(counts) as ActivityEventType[];
 
   return {
     id: `group_${latestEvent.id}`,
@@ -175,6 +189,9 @@ function buildListLevelGroup(event: ActivityEvent): ActivityGroup {
     case 'list_removed':
       summaryLine = 'Deleted list';
       break;
+    case 'list_renamed':
+      summaryLine = event.subtitle || 'Renamed list';
+      break;
     case 'purchased_cleared':
       summaryLine = event.subtitle || `Cleared ${event.count || 0} purchased items`;
       break;
@@ -203,6 +220,7 @@ function buildSummaryLines(counts: Record<string, number>): string[] {
   const order: [string, string][] = [
     ['item_added', 'Added'],
     ['item_completed', 'Purchased'],
+    ['item_uncompleted', 'Unpurchased'],
     ['item_removed', 'Removed'],
     ['item_restored', 'Restored'],
   ];

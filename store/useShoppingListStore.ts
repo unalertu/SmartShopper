@@ -110,15 +110,25 @@ export const useShoppingListStore = create<ShoppingListState>()(
       togglePurchased: (id) =>
         set((state) => {
           const targetItem = state.items.find(i => i.id === id);
-          if (targetItem && !targetItem.isPurchased) {
+          if (targetItem) {
             const listName = useListsStore.getState().lists.find(l => l.id === targetItem.listId)?.name || 'Unknown List';
-            useActivityStore.getState().logActivity({
-              type: 'item_completed',
-              title: targetItem.name,
-              subtitle: 'Marked as purchased',
-              listId: targetItem.listId,
-              listName,
-            });
+            if (!targetItem.isPurchased) {
+              useActivityStore.getState().logActivity({
+                type: 'item_completed',
+                title: targetItem.name,
+                subtitle: 'Marked as purchased',
+                listId: targetItem.listId,
+                listName,
+              });
+            } else {
+              useActivityStore.getState().logActivity({
+                type: 'item_uncompleted',
+                title: targetItem.name,
+                subtitle: 'Marked as unpurchased',
+                listId: targetItem.listId,
+                listName,
+              });
+            }
           }
           return {
             items: state.items.map((item) =>
@@ -143,8 +153,8 @@ export const useShoppingListStore = create<ShoppingListState>()(
             const listName = listId ? useListsStore.getState().lists.find(l => l.id === listId)?.name || 'Unknown List' : 'All Lists';
             useActivityStore.getState().logActivity({
               type: 'purchased_cleared',
-              title: `Cleared ${itemsToRemove.length} purchased items`,
-              subtitle: `Cleared ${itemsToRemove.length} purchased items`,
+              title: `Cleared purchased items`,
+              subtitle: `Removed ${itemsToRemove.length} purchased items`,
               listId,
               listName,
               count: itemsToRemove.length,

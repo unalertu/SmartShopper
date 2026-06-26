@@ -76,11 +76,23 @@ export const useListsStore = create<ListsStoreState>()(
           ),
         })),
       renameList: (id, newName) =>
-        set((state) => ({
-          lists: state.lists.map((list) =>
-            list.id === id ? { ...list, name: newName } : list
-          ),
-        })),
+        set((state) => {
+          const listToRename = state.lists.find(l => l.id === id);
+          if (listToRename && listToRename.name !== newName) {
+            useActivityStore.getState().logActivity({
+              type: 'list_renamed',
+              title: listToRename.name,
+              subtitle: `Renamed to "${newName}"`,
+              listId: id,
+              listName: newName,
+            });
+          }
+          return {
+            lists: state.lists.map((list) =>
+              list.id === id ? { ...list, name: newName } : list
+            ),
+          };
+        }),
 
       canCreateList: (isPro: boolean) => {
         const currentCount = get().lists.length;

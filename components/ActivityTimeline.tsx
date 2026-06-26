@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { History, Clock, ListPlus, Trash2, Sparkles, ShoppingBag } from 'lucide-react-native';
+import { History, Clock, ListPlus, Trash2, Sparkles, ShoppingBag, Pencil } from 'lucide-react-native';
 import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { hapticImpact } from '../services/haptics';
@@ -41,6 +41,8 @@ const getGroupIcon = (group: ActivityGroup) => {
   switch (type) {
     case 'list_created':
       return <ListPlus size={14} color="#10b981" strokeWidth={2.5} />;
+    case 'list_renamed':
+      return <Pencil size={14} color="#8b5cf6" strokeWidth={2.5} />;
     case 'list_removed':
       return <Trash2 size={14} color="#ef4444" strokeWidth={2.5} />;
     case 'purchased_cleared':
@@ -56,6 +58,7 @@ const getListLevelIconBg = (group: ActivityGroup) => {
   const type = group.actionTypes[0];
   switch (type) {
     case 'list_created': return 'rgba(209,250,229,0.5)';
+    case 'list_renamed': return 'rgba(237,233,254,0.5)';
     case 'list_removed': return 'rgba(254,226,226,0.5)';
     case 'purchased_cleared':
     case 'list_cleared': return 'rgba(254,249,195,0.5)';
