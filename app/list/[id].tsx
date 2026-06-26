@@ -503,9 +503,9 @@ export default function ListDetails() {
       >
         <BottomSheetView style={{ flex: 1, paddingHorizontal: 24, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 24) + 12 }}>
           {/* Focal Point (Input) */}
-          <View className="mb-5 z-10 border-b-2 border-slate-100 pb-3 flex-row items-center">
+          <View className="mb-5 z-10 border-b-2 border-slate-100 flex-row items-center h-14">
             <BottomSheetTextInput
-              className="flex-1 text-2xl font-bold text-slate-900"
+              className="flex-1 text-2xl font-bold text-slate-900 py-0 h-full"
               placeholder="Add item..."
               placeholderTextColor="#94a3b8"
               value={newItemText}
@@ -513,6 +513,7 @@ export default function ListDetails() {
               autoFocus={true}
               cursorColor={Colors.primary[900]}
               selectionColor={Colors.primary[900]}
+              style={{ textAlignVertical: "center" }}
             />
             <TouchableOpacity 
               onPress={() => {

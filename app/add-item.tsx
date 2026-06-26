@@ -81,12 +81,12 @@ export default function AddItemScreen() {
               Item Name
             </Text>
             <View
-              className={`flex-row items-center bg-[#f8fafc] rounded-[24px] border ${
+              className={`flex-row items-center bg-[#f8fafc] rounded-[24px] border h-16 ${
                 isFocused ? "border-primary-900" : "border-surface-100"
               }`}
               style={
                 isFocused
-                  ? {
+                  ? {
                     }
                   : undefined
               }
@@ -101,9 +101,10 @@ export default function AddItemScreen() {
                 spellCheck={false}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
-                className="flex-1 px-6 py-5 text-lg text-surface-900 font-semibold"
+                className="flex-1 px-6 py-0 text-lg text-surface-900 font-semibold h-full"
                 cursorColor={Colors.primary[900]}
                 selectionColor={Colors.primary[900]}
+                style={{ textAlignVertical: "center" }}
               />
             </View>
           </View>
