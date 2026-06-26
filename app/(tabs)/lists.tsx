@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Menu, ChevronRight, Plus, X, ShoppingBasket, Sparkles, ListPlus, PackagePlus, Clock, Activity, History, CheckCircle, Trash2, Zap } from 'lucide-react-native';
 import AnimatedScreen from '../../components/AnimatedScreen';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
 import { Swipeable } from 'react-native-gesture-handler';
@@ -87,7 +87,13 @@ export default function ListsScreen() {
   }
 
   const [showCreateSheet, setShowCreateSheet] = useState(false);
-  const [showAllActivities, setShowAllActivities] = useState(false);
+  const [visibleActivityCount, setVisibleActivityCount] = useState(5);
+
+  useFocusEffect(
+    useCallback(() => {
+      setVisibleActivityCount(5);
+    }, [])
+  );
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteModalData, setDeleteModalData] = useState<any>(null);
 
@@ -173,7 +179,7 @@ export default function ListsScreen() {
         >
           {/* Header */}
           <Animated.View
-            entering={FadeInDown.duration(400).springify()}
+            entering={FadeInDown.duration(200).springify()}
             layout={LinearTransition.springify()}
             className="flex-row items-center justify-between mx-6 mb-6"
             style={{ zIndex: 10 }}
@@ -199,7 +205,7 @@ export default function ListsScreen() {
 
           {/* Quick Start Section */}
           <Animated.View layout={LinearTransition.springify()} className={`${shoppingLists.length === 0 ? 'mb-2' : 'mb-6'}`}>
-            <Animated.View entering={FadeInDown.duration(400).delay(100).springify()} className="flex-row items-center justify-between mb-3 px-6">
+            <Animated.View entering={FadeInDown.duration(200).delay(50).springify()} className="flex-row items-center justify-between mb-3 px-6">
               <View className="flex-row items-center gap-1.5">
                 <Zap size={14} color="#94a3b8" strokeWidth={2} />
                 <Text className="text-[14px] font-bold text-slate-500 tracking-wide">Quick Start</Text>
@@ -218,7 +224,7 @@ export default function ListsScreen() {
                     key={rowIndex} 
                     className="flex-row" 
                     style={{ gap: 8 }}
-                    entering={FadeInDown.duration(400).delay(150 + rowIndex * 50).springify()}
+                    entering={FadeInDown.duration(200).delay(75 + rowIndex * 25).springify()}
                     layout={LinearTransition.springify()}
                   >
                     {row.map((template) => (
@@ -258,7 +264,7 @@ export default function ListsScreen() {
 
           {shoppingLists.length === 0 && (
             <Animated.View 
-              entering={FadeInDown.duration(400).delay(250).springify()}
+              entering={FadeInDown.duration(200).delay(125).springify()}
               layout={LinearTransition.springify()} 
               exiting={FadeOutUp.duration(200)}
               className="mt-12 flex-1"
@@ -277,7 +283,7 @@ export default function ListsScreen() {
           )}
 
           {shoppingLists.length > 0 && (
-            <Animated.View entering={FadeInDown.duration(400).delay(250).springify()} layout={LinearTransition.springify()} className="h-[3px] bg-slate-200 mx-16 mb-5 rounded-full" />
+            <Animated.View entering={FadeInDown.duration(200).delay(125).springify()} layout={LinearTransition.springify()} className="h-[3px] bg-slate-200 mx-16 mb-5 rounded-full" />
           )}
 
           <Animated.View layout={LinearTransition.springify()}>
@@ -285,7 +291,7 @@ export default function ListsScreen() {
               <Animated.View
                 key={list.id}
                 layout={LinearTransition.springify()}
-                entering={FadeInDown.duration(400).delay(300 + index * 50).springify()}
+                entering={FadeInDown.duration(200).delay(150 + index * 25).springify()}
                 exiting={FadeOutLeft.duration(200)}
               >
                   <Swipeable
@@ -334,7 +340,7 @@ export default function ListsScreen() {
           </Animated.View>
 
           {shoppingLists.length > 0 && (
-            <Animated.View layout={LinearTransition.springify()} style={{ alignItems: 'center', marginTop: 8, marginBottom: 4 }}>
+            <Animated.View entering={FadeInDown.duration(200).delay(175 + shoppingLists.length * 25).springify()} layout={LinearTransition.springify()} style={{ alignItems: 'center', marginTop: 8, marginBottom: 4 }}>
               <Text style={{ fontSize: 14, fontWeight: '500', color: '#94a3b8', letterSpacing: -0.1 }}>
                 {shoppingLists.length} saved list{shoppingLists.length !== 1 ? 's' : ''}
               </Text>
@@ -343,7 +349,7 @@ export default function ListsScreen() {
 
           {/* Recent Activity Section */}
           {(shoppingLists.length > 0 || activityEvents.length > 0) && (() => {
-            const recentEvents = showAllActivities ? activityEvents : activityEvents.slice(0, 5);
+            const recentEvents = activityEvents.slice(0, visibleActivityCount);
 
             const getActivityIcon = (type: string) => {
               switch (type) {
@@ -390,26 +396,15 @@ export default function ListsScreen() {
 
             return (
               <Animated.View layout={LinearTransition.springify()} className="px-6 mt-6 mb-2">
-                <Animated.View entering={FadeInDown.duration(400).delay(400).springify()} className="flex-row items-center justify-between mb-3">
+                <Animated.View entering={FadeInDown.duration(200).delay(200).springify()} className="flex-row items-center mb-3">
                   <View className="flex-row items-center gap-1.5">
                     <History size={14} color="#94a3b8" strokeWidth={2} />
                     <Text className="text-[14px] font-bold text-slate-500 tracking-wide">Recent Activity</Text>
                   </View>
-                  {activityEvents.length > 5 ? (
-                    <TouchableOpacity
-                      activeOpacity={0.6}
-                      onPress={() => {
-                        hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                        setShowAllActivities(!showAllActivities);
-                      }}
-                    >
-                      <Text className="text-[12px] font-semibold text-slate-400">{showAllActivities ? 'See Less' : 'See All'}</Text>
-                    </TouchableOpacity>
-                  ) : null}
                 </Animated.View>
 
                 {recentEvents.length === 0 ? (
-                  <Animated.View entering={FadeInDown.duration(400).delay(450).springify()} className="bg-white rounded-[20px] p-5 border border-slate-100 items-center" >
+                  <Animated.View entering={FadeInDown.duration(200).delay(225).springify()} className="bg-white rounded-[20px] p-5 border border-slate-100 items-center" >
                     <View className="w-10 h-10 bg-slate-50 rounded-full items-center justify-center mb-2.5">
                       <Clock size={18} color="#cbd5e1" strokeWidth={1.5} />
                     </View>
@@ -421,7 +416,7 @@ export default function ListsScreen() {
                       const previousItemsCount = groupedEvents.slice(0, groupIndex).reduce((sum, g) => sum + g.data.length, 0);
                       return (
                       <View key={group.title} style={{ gap: 8 }}>
-                        <Animated.View entering={FadeInDown.duration(400).delay(450 + (previousItemsCount + groupIndex) * 50).springify()}>
+                        <Animated.View entering={FadeInDown.duration(200).delay(225 + (previousItemsCount + groupIndex) * 25).springify()}>
                           <Text className="text-[12px] font-bold text-slate-400 capitalize tracking-wider pl-1">
                             {group.title}
                           </Text>
@@ -433,7 +428,7 @@ export default function ListsScreen() {
                             return (
                               <Animated.View
                                 key={event.id}
-                                entering={FadeInDown.duration(400).delay(450 + (previousItemsCount + groupIndex + 1 + index) * 50).springify()}
+                                entering={FadeInDown.duration(200).delay(225 + (previousItemsCount + groupIndex + 1 + index) * 25).springify()}
                               >
                                 <TouchableOpacity
                                   activeOpacity={0.7}
@@ -461,6 +456,30 @@ export default function ListsScreen() {
                       </View>
                       );
                     })}
+                    
+                    {activityEvents.length > 5 && (
+                      <Animated.View 
+                        entering={FadeInDown.duration(200).delay(225 + recentEvents.length * 25).springify()}
+                        layout={LinearTransition.springify()}
+                        style={{ alignItems: 'center', marginTop: 4, marginBottom: 8 }}
+                      >
+                        <TouchableOpacity
+                          activeOpacity={0.6}
+                          onPress={() => {
+                            hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                            if (visibleActivityCount >= activityEvents.length) {
+                              setVisibleActivityCount(5);
+                            } else {
+                              setVisibleActivityCount(prev => prev + 5);
+                            }
+                          }}
+                        >
+                          <Text className="text-[12px] font-semibold text-slate-400">
+                            {visibleActivityCount >= activityEvents.length ? 'See Less' : 'See More'}
+                          </Text>
+                        </TouchableOpacity>
+                      </Animated.View>
+                    )}
                   </View>
                 )}
               </Animated.View>
