@@ -584,14 +584,16 @@ export default function ListDetails() {
           {/* Collapsible Note Input */}
           {isNoteVisible && (
             <View className="mb-6 z-10">
-              <View className="bg-slate-50 rounded-xl px-4 py-3 border border-slate-100">
+              <View className="bg-slate-50 rounded-full px-5 py-3 border border-slate-100">
                 <BottomSheetTextInput
-                  className="text-sm font-medium text-slate-900"
-                  placeholder="e.g. Organic only, 2% fat..."
+                  className="text-lg font-medium text-slate-900"
+                  placeholder="Add a note..."
                   placeholderTextColor="#94a3b8"
                   value={note}
-                  onChangeText={setNote}
+                  onChangeText={(text) => setNote(text.replace(/\n/g, ''))}
                   multiline={true}
+                  blurOnSubmit={true}
+                  onSubmitEditing={() => Keyboard.dismiss()}
                   autoFocus={true}
                   cursorColor={Colors.primary[900]}
                   selectionColor={Colors.primary[900]}
