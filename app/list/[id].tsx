@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
 import { useListsStore, useShoppingListStore, useSettingsStore } from '../../store';
 import ConfirmationSheet from '../../components/ConfirmationSheet';
+import RenameListSheet from '../../components/RenameListSheet';
 import { Colors } from '@/constants/theme';
 import { BottomSheetModal, BottomSheetView, BottomSheetBackdrop, BottomSheetTextInput, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
@@ -31,6 +32,7 @@ export default function ListDetails() {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteModalData, setDeleteModalData] = useState<any>(null);
   const [activeSuggestionTab, setActiveSuggestionTab] = useState<'quick' | 'recent' | 'catalog'>('quick');
+  const [renameSheetVisible, setRenameSheetVisible] = useState(false);
 
   const handleSheetAnimate = useCallback((fromIndex: number, toIndex: number) => {
     if (toIndex === -1) {
@@ -50,6 +52,7 @@ export default function ListDetails() {
   const listId = Number(id);
   const list = useListsStore((state) => state.lists.find((l) => l.id === listId));
   const removeList = useListsStore((state) => state.removeList);
+  const renameList = useListsStore((state) => state.renameList);
   
   const allItems = useShoppingListStore((state) => state.items);
   const items = useMemo(() => allItems.filter(item => item.listId === listId), [allItems, listId]);
@@ -305,7 +308,13 @@ export default function ListDetails() {
         >
           <ArrowLeft size={20} color="#0f172a" strokeWidth={2.5} />
         </TouchableOpacity>
-        <View className="flex-1 items-center px-4">
+        <TouchableOpacity 
+          className="flex-1 items-center px-4"
+          onPress={() => {
+            hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+            setRenameSheetVisible(true);
+          }}
+        >
           <Text 
             className="text-[24px] font-bold text-slate-900 tracking-tight" 
             numberOfLines={1}
@@ -313,7 +322,7 @@ export default function ListDetails() {
           >
             {list.name}
           </Text>
-        </View>
+        </TouchableOpacity>
         <TouchableOpacity onPress={handleDeleteList} className="bg-slate-100 p-3 rounded-full">
           <Trash2 size={20} color="#f87171" strokeWidth={2.5} />
         </TouchableOpacity>
@@ -332,8 +341,8 @@ export default function ListDetails() {
             className="flex-1 bg-white border border-slate-100 rounded-[24px] py-5 px-4 items-center justify-center" 
             
           >
-            <View className="bg-slate-900/5 p-3 rounded-full mb-2">
-              <ShoppingBag size={20} color="#0f172a" />
+            <View className="bg-blue-500/10 p-3 rounded-full mb-2">
+              <ShoppingBag size={20} color="#3b82f6" />
             </View>
             <Text className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Total</Text>
             <Text className="text-2xl font-bold text-slate-900 mt-1">{items.length}</Text>
@@ -685,6 +694,13 @@ export default function ListDetails() {
         visible={deleteModalVisible}
         data={deleteModalData}
         onDismiss={() => setDeleteModalVisible(false)}
+      />
+
+      <RenameListSheet
+        visible={renameSheetVisible}
+        initialName={list.name}
+        onClose={() => setRenameSheetVisible(false)}
+        onRenameList={(newName) => renameList(listId, newName)}
       />
       
     </View>

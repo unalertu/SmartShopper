@@ -16,6 +16,7 @@ interface ListsStoreState {
   addList: (name: string) => number;
   removeList: (id: number) => void;
   updateListCount: (id: number, count: number) => void;
+  renameList: (id: number, newName: string) => void;
 
   /**
    * Check if the user can create a new list.
@@ -72,6 +73,12 @@ export const useListsStore = create<ListsStoreState>()(
         set((state) => ({
           lists: state.lists.map((list) =>
             list.id === id ? { ...list, count } : list
+          ),
+        })),
+      renameList: (id, newName) =>
+        set((state) => ({
+          lists: state.lists.map((list) =>
+            list.id === id ? { ...list, name: newName } : list
           ),
         })),
 
