@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { History, Clock, ListPlus, PackagePlus, Trash2, CheckCircle, Sparkles, RotateCcw } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { History, Clock, ListPlus, Trash2, Sparkles, ShoppingBag } from 'lucide-react-native';
 import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { hapticImpact } from '../services/haptics';
@@ -25,24 +25,42 @@ const getRelativeDate = (timestamp?: number): string => {
   return `${Math.floor(days / 30)} months ago`;
 };
 
-/** Returns the appropriate icon for a group */
+/**
+ * Returns the icon for a group:
+ * - Shopping sessions → always a neutral ShoppingBag
+ * - List-level events → action-specific colored icon
+ */
 const getGroupIcon = (group: ActivityGroup) => {
-  if (group.isListLevel) {
-    // Determine from summary
-    const summary = group.summaryLines[0]?.toLowerCase() || '';
-    if (summary.includes('created')) return <ListPlus size={14} color="#64748b" strokeWidth={2.5} />;
-    if (summary.includes('deleted')) return <Trash2 size={14} color="#64748b" strokeWidth={2.5} />;
-    if (summary.includes('cleared')) return <Sparkles size={14} color="#64748b" strokeWidth={2.5} />;
-    return <Clock size={14} color="#64748b" strokeWidth={2} />;
+  if (!group.isListLevel) {
+    // All shopping sessions get a single neutral icon in blue
+    return <ShoppingBag size={14} color="#3b82f6" strokeWidth={2.5} />;
   }
 
-  // For item-level groups, pick icon based on dominant action
-  const summary = group.summaryLines.join(' ').toLowerCase();
-  if (summary.includes('added')) return <PackagePlus size={14} color="#64748b" strokeWidth={2.5} />;
-  if (summary.includes('purchased')) return <CheckCircle size={14} color="#64748b" strokeWidth={2.5} />;
-  if (summary.includes('removed')) return <Trash2 size={14} color="#64748b" strokeWidth={2.5} />;
-  if (summary.includes('restored')) return <RotateCcw size={14} color="#64748b" strokeWidth={2.5} />;
-  return <Clock size={14} color="#64748b" strokeWidth={2} />;
+  // List-level events get specific colored icons
+  const type = group.actionTypes[0];
+  switch (type) {
+    case 'list_created':
+      return <ListPlus size={14} color="#10b981" strokeWidth={2.5} />;
+    case 'list_removed':
+      return <Trash2 size={14} color="#ef4444" strokeWidth={2.5} />;
+    case 'purchased_cleared':
+    case 'list_cleared':
+      return <Sparkles size={14} color="#eab308" strokeWidth={2.5} />;
+    default:
+      return <Clock size={14} color="#64748b" strokeWidth={2} />;
+  }
+};
+
+/** Returns icon background color for list-level events */
+const getListLevelIconBg = (group: ActivityGroup) => {
+  const type = group.actionTypes[0];
+  switch (type) {
+    case 'list_created': return 'rgba(209,250,229,0.5)';
+    case 'list_removed': return 'rgba(254,226,226,0.5)';
+    case 'purchased_cleared':
+    case 'list_cleared': return 'rgba(254,249,195,0.5)';
+    default: return 'rgba(241,245,249,0.6)';
+  }
 };
 
 interface ActivityGroupCardProps {
@@ -60,6 +78,89 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
 
   const canNavigate = group.listId != null && lists.some(l => l.id === group.listId);
 
+  // List-level events — more prominent style with colored icon
+  if (group.isListLevel) {
+    return (
+      <Animated.View
+        entering={FadeInDown.duration(200).delay(baseDelay + index * 25).springify()}
+      >
+        <TouchableOpacity
+          activeOpacity={canNavigate ? 0.7 : 1}
+          onPress={() => {
+            if (canNavigate) {
+              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+              router.push(`/list/${group.listId}`);
+            }
+          }}
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 18,
+            paddingHorizontal: 14,
+            paddingVertical: 13,
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: 'rgba(226,232,240,0.8)',
+          }}
+        >
+          {/* Colored icon */}
+          <View
+            style={{
+              width: 32,
+              height: 32,
+              backgroundColor: getListLevelIconBg(group),
+              borderRadius: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 12,
+            }}
+          >
+            {getGroupIcon(group)}
+          </View>
+
+          {/* Content */}
+          <View style={{ flex: 1, marginRight: 8 }}>
+            <Text
+              style={{
+                fontSize: 15,
+                fontWeight: '700',
+                color: '#0f172a',
+                letterSpacing: -0.2,
+              }}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {group.listName}
+            </Text>
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: '500',
+                color: '#64748b',
+                marginTop: 2,
+              }}
+            >
+              {group.summaryLines[0]}
+            </Text>
+          </View>
+
+          {/* Timestamp */}
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: '500',
+              color: 'rgba(148,163,184,0.5)',
+              flexShrink: 0,
+            }}
+          >
+            {timeStr}
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  }
+
+  // Shopping session card — neutral icon
   return (
     <Animated.View
       entering={FadeInDown.duration(200).delay(baseDelay + index * 25).springify()}
@@ -83,12 +184,12 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
           borderColor: 'rgba(241,245,249,0.6)',
         }}
       >
-        {/* Icon */}
+        {/* Neutral icon */}
         <View
           style={{
             width: 28,
             height: 28,
-            backgroundColor: 'rgba(241,245,249,0.6)',
+            backgroundColor: 'rgba(219,234,254,0.6)',
             borderRadius: 8,
             alignItems: 'center',
             justifyContent: 'center',
@@ -109,6 +210,7 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
               letterSpacing: -0.2,
             }}
             numberOfLines={1}
+            ellipsizeMode="tail"
           >
             {group.listName}
           </Text>
@@ -138,6 +240,7 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
             fontWeight: '500',
             color: 'rgba(148,163,184,0.5)',
             marginTop: 2,
+            flexShrink: 0,
           }}
         >
           {timeStr}
@@ -149,15 +252,19 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
 
 export default function ActivityTimeline() {
   const activityEvents = useActivityStore((state) => state.activities);
+  const lists = useListsStore((state) => state.lists);
   const [visibleGroupCount, setVisibleGroupCount] = useState(GROUPS_PER_PAGE);
 
-  useFocusEffect(
-    useCallback(() => {
-      setVisibleGroupCount(GROUPS_PER_PAGE);
-    }, [])
-  );
+  // Build a lookup map of listId → listName from existing lists
+  const listsLookup = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const list of lists) {
+      map.set(list.id, list.name);
+    }
+    return map;
+  }, [lists]);
 
-  const allGroups = groupActivities(activityEvents);
+  const allGroups = groupActivities(activityEvents, listsLookup);
   const visibleGroups = allGroups.slice(0, visibleGroupCount);
 
   // Group the visible groups by relative date for section headers
@@ -203,8 +310,6 @@ export default function ActivityTimeline() {
       </Animated.View>
     );
   }
-
-  let runningIndex = 0;
 
   return (
     <Animated.View layout={LinearTransition.springify()} style={{ paddingHorizontal: 24, marginTop: 24, marginBottom: 8 }}>

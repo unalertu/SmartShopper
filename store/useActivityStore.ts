@@ -45,6 +45,8 @@ export interface ActivityGroup {
   isListLevel: boolean;
   /** Total number of individual events in this group */
   eventCount: number;
+  /** Distinct action types in this group (for icon selection) */
+  actionTypes: ActivityEventType[];
 }
 
 /** Maximum time gap (ms) between events in the same shopping session */
@@ -60,8 +62,14 @@ const SESSION_GAP_MS = 5 * 60 * 1000; // 5 minutes
  *    - Consecutive (no event from another list in between)
  *    - Within 5 minutes of the group's latest timestamp
  * 3. Events are assumed to be sorted newest-first (as stored).
+ *
+ * @param events - Activity events (newest-first)
+ * @param listsLookup - Map of listId → listName for resolving names of existing lists
  */
-export function groupActivities(events: ActivityEvent[]): ActivityGroup[] {
+export function groupActivities(
+  events: ActivityEvent[],
+  listsLookup?: Map<number, string>
+): ActivityGroup[] {
   if (events.length === 0) return [];
 
   const groups: ActivityGroup[] = [];
@@ -73,7 +81,7 @@ export function groupActivities(events: ActivityEvent[]): ActivityGroup[] {
     if (isListLevel) {
       // Flush any open group
       if (currentGroup) {
-        groups.push(buildGroup(currentGroup.events));
+        groups.push(buildGroup(currentGroup.events, listsLookup));
         currentGroup = null;
       }
       // List-level events are always standalone
@@ -93,7 +101,7 @@ export function groupActivities(events: ActivityEvent[]): ActivityGroup[] {
       }
 
       // Can't merge — flush current group
-      groups.push(buildGroup(currentGroup.events));
+      groups.push(buildGroup(currentGroup.events, listsLookup));
       currentGroup = null;
     }
 
@@ -103,15 +111,15 @@ export function groupActivities(events: ActivityEvent[]): ActivityGroup[] {
 
   // Flush the last open group
   if (currentGroup) {
-    groups.push(buildGroup(currentGroup.events));
+    groups.push(buildGroup(currentGroup.events, listsLookup));
   }
 
   return groups;
 }
 
-function buildGroup(events: ActivityEvent[]): ActivityGroup {
+function buildGroup(events: ActivityEvent[], listsLookup?: Map<number, string>): ActivityGroup {
   const latestEvent = events[0]; // events are newest-first
-  const listName = latestEvent.listName || latestEvent.title || 'Unknown List';
+  const listName = resolveListName(events, listsLookup);
 
   // Count events by type, respecting the `count` field for aggregated events
   const counts: Record<string, number> = {};
@@ -122,6 +130,7 @@ function buildGroup(events: ActivityEvent[]): ActivityGroup {
 
   const summaryLines = buildSummaryLines(counts);
   const totalCount = events.reduce((sum, e) => sum + (e.count || 1), 0);
+  const actionTypes = [...new Set(events.map(e => e.type))];
 
   return {
     id: `group_${latestEvent.id}`,
@@ -131,11 +140,32 @@ function buildGroup(events: ActivityEvent[]): ActivityGroup {
     timestamp: latestEvent.timestamp,
     isListLevel: false,
     eventCount: totalCount,
+    actionTypes,
   };
 }
 
+/**
+ * Resolves the list name from events, never falling back to item names.
+ * Uses the listsLookup map (listId → name) to find names of existing lists.
+ */
+function resolveListName(events: ActivityEvent[], listsLookup?: Map<number, string>): string {
+  // 1. Check if any event has listName set
+  for (const e of events) {
+    if (e.listName) return e.listName;
+  }
+  // 2. Look up from the provided lists map by listId
+  const listId = events[0]?.listId;
+  if (listId != null && listsLookup) {
+    const name = listsLookup.get(listId);
+    if (name) return name;
+  }
+  // 3. Last resort
+  return 'Shopping List';
+}
+
 function buildListLevelGroup(event: ActivityEvent): ActivityGroup {
-  const listName = event.listName || event.title || 'Unknown List';
+  // Resolve list name — for list-level events, title is the list name
+  const listName = event.listName || event.title || 'Shopping List';
 
   let summaryLine: string;
   switch (event.type) {
@@ -163,6 +193,7 @@ function buildListLevelGroup(event: ActivityEvent): ActivityGroup {
     timestamp: event.timestamp,
     isListLevel: true,
     eventCount: event.count || 1,
+    actionTypes: [event.type],
   };
 }
 
