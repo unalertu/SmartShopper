@@ -635,13 +635,14 @@ export default function ListDetails() {
 
           {/* Dynamic Quick Add */}
           <View className="z-10 flex-1">
-            <View className="flex-row items-center gap-4 mb-3">
+            <View className="flex-row items-center gap-8 mb-3">
               <TouchableOpacity 
                 hitSlop={{ top: 15, bottom: 15, left: 10, right: 10 }}
                 onPress={() => {
                   hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                   setActiveSuggestionTab('recent');
                 }}
+                className={`pb-1 border-b ${activeSuggestionTab === 'recent' ? 'border-slate-900' : 'border-transparent'}`}
               >
                 <Text className={`text-[15px] font-bold ${activeSuggestionTab === 'recent' ? 'text-slate-900' : 'text-slate-500'}`}>Recent Items</Text>
               </TouchableOpacity>
@@ -651,6 +652,7 @@ export default function ListDetails() {
                   hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                   setActiveSuggestionTab('catalog');
                 }}
+                className={`pb-1 border-b ${activeSuggestionTab === 'catalog' ? 'border-slate-900' : 'border-transparent'}`}
               >
                 <Text className={`text-[15px] font-bold ${activeSuggestionTab === 'catalog' ? 'text-slate-900' : 'text-slate-500'}`}>Catalog</Text>
               </TouchableOpacity>
