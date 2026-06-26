@@ -24,7 +24,7 @@ export default function ListDetails() {
   
   const [newItemText, setNewItemText] = useState('');
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState('General');
+  const [selectedCategory, setSelectedCategory] = useState('🛒 General');
   const [quantity, setQuantity] = useState(1);
   const [selectedUnit, setSelectedUnit] = useState('pcs');
   const [note, setNote] = useState('');
@@ -126,47 +126,53 @@ export default function ListDetails() {
       useNativeDriver: true}).start();
   }, [newItemText]);
 
-  const categories = ['General', '🍎 Fruits', '🥛 Dairy', '🍞 Bakery', '🥩 Meat', '🧼 Cleaning'];
+  const categories = [
+    '🛒 General', '🍎 Fruits', '🥦 Vegetables', '🥛 Dairy', '🍞 Bakery', 
+    '🥩 Meat', '🐟 Seafood', '🥤 Drinks', '🍬 Snacks', '🧂 Pantry', 
+    '❄️ Frozen', '🧹 Household', '🧴 Personal Care'
+  ];
   const units = distanceUnit === 'imperial' ? ['pcs', 'lb', 'oz', 'pack'] : ['pcs', 'kg', 'lt', 'pack'];
 
   const CATEGORY_SUGGESTIONS: Record<string, string[]> = {
-    'General': [
-      'Milk', 'Eggs', 'Bread', 'Water', 'Chicken', 'Banana', 'Rice', 'Cheese',
-      'Butter', 'Pasta', 'Tomatoes', 'Onions', 'Potatoes', 'Coffee', 'Tea',
-      'Sugar', 'Salt', 'Olive Oil', 'Flour', 'Yogurt', 'Apples', 'Cereal',
-      'Toilet Paper', 'Paper Towels', 'Dish Soap'
+    '🛒 General': [
+      'Water', 'Sparkling Water', 'Bread', 'Eggs', 'Milk', 'Butter', 'Cheese', 'Yogurt', 'Rice', 'Pasta', 'Flour', 'Sugar', 'Salt', 'Black Pepper', 'Cooking Oil', 'Olive Oil', 'Vinegar', 'Ketchup', 'Mustard', 'Mayonnaise', 'Soy Sauce', 'Honey', 'Jam', 'Peanut Butter', 'Cereal', 'Oats', 'Coffee', 'Tea', 'Chips', 'Crackers', 'Popcorn', 'Chocolate', 'Candy', 'Cookies', 'Ice Cream', 'Frozen Pizza', 'Frozen Vegetables', 'Paper Towels', 'Toilet Paper', 'Trash Bags', 'Dish Soap', 'Laundry Detergent', 'Sponges', 'Aluminum Foil', 'Plastic Wrap', 'Batteries'
     ],
     '🍎 Fruits': [
-      'Apple', 'Banana', 'Avocado', 'Strawberry', 'Orange', 'Grapes',
-      'Lemon', 'Lime', 'Blueberry', 'Raspberry', 'Blackberry', 'Peach',
-      'Plum', 'Cherry', 'Pear', 'Watermelon', 'Cantaloupe', 'Pineapple',
-      'Mango', 'Kiwi', 'Pomegranate', 'Grapefruit', 'Papaya'
+      'Apples', 'Bananas', 'Oranges', 'Lemons', 'Limes', 'Grapes', 'Strawberries', 'Blueberries', 'Raspberries', 'Blackberries', 'Cherries', 'Peaches', 'Pears', 'Plums', 'Nectarines', 'Mangoes', 'Pineapple', 'Watermelon', 'Cantaloupe', 'Kiwi', 'Avocados', 'Coconut', 'Papaya', 'Pomegranate', 'Dragon Fruit', 'Figs', 'Dates', 'Apricots', 'Cranberries', 'Passion Fruit', 'Tangerines', 'Clementines', 'Grapefruit'
+    ],
+    '🥦 Vegetables': [
+      'Potatoes', 'Sweet Potatoes', 'Tomatoes', 'Onions', 'Garlic', 'Carrots', 'Cucumbers', 'Bell Peppers', 'Chili Peppers', 'Broccoli', 'Cauliflower', 'Lettuce', 'Spinach', 'Kale', 'Cabbage', 'Celery', 'Mushrooms', 'Zucchini', 'Eggplant', 'Corn', 'Green Beans', 'Peas', 'Asparagus', 'Brussels Sprouts', 'Radishes', 'Beets', 'Pumpkin', 'Leeks', 'Ginger', 'Fresh Herbs'
     ],
     '🥛 Dairy': [
-      'Milk', 'Cheese', 'Yogurt', 'Butter', 'Cream', 'Eggs',
-      'Sour Cream', 'Cottage Cheese', 'Cream Cheese', 'Whipping Cream',
-      'Parmesan', 'Cheddar', 'Mozzarella', 'Feta', 'Brie', 'Gouda',
-      'Almond Milk', 'Oat Milk', 'Soy Milk', 'Half & Half', 'Margarine'
+      'Whole Milk', 'Skim Milk', 'Almond Milk', 'Oat Milk', 'Soy Milk', 'Butter', 'Cream Cheese', 'Sour Cream', 'Heavy Cream', 'Cottage Cheese', 'Greek Yogurt', 'Yogurt', 'Cheddar Cheese', 'Mozzarella', 'Parmesan', 'Swiss Cheese', 'Feta', 'Gouda', 'Eggs', 'Whipping Cream'
     ],
     '🍞 Bakery': [
-      'Bread', 'Croissant', 'Bagel', 'Muffin', 'Baguette', 'Rolls',
-      'Buns', 'Pita', 'Tortillas', 'Donut', 'Cake', 'Cookies',
-      'Pie', 'Pastry', 'Sourdough', 'Ciabatta', 'Focaccia', 'Pretzel',
-      'English Muffin', 'Crackers', 'Brownie'
+      'White Bread', 'Whole Wheat Bread', 'Baguette', 'Bagels', 'Croissants', 'Hamburger Buns', 'Hot Dog Buns', 'Tortillas', 'Pita Bread', 'Muffins', 'Donuts', 'Cinnamon Rolls', 'Cake', 'Cupcakes', 'Cookies', 'Brownies', 'Pie', 'Puff Pastry'
     ],
     '🥩 Meat': [
-      'Chicken', 'Beef', 'Salmon', 'Turkey', 'Sausage', 'Pork',
-      'Bacon', 'Ham', 'Lamb', 'Steak', 'Ground Beef', 'Chicken Breast',
-      'Chicken Thighs', 'Shrimp', 'Tuna', 'Cod', 'Tilapia', 'Crab',
-      'Lobster', 'Hot Dogs', 'Deli Meat', 'Pepperoni', 'Prosciutto'
+      'Chicken Breast', 'Chicken Thighs', 'Ground Beef', 'Beef Steak', 'Beef Roast', 'Pork Chops', 'Bacon', 'Sausage', 'Turkey Breast', 'Ground Turkey', 'Lamb Chops', 'Ham', 'Salami', 'Pepperoni', 'Deli Turkey', 'Deli Ham'
     ],
-    '🧼 Cleaning': [
-      'Dish Soap', 'Sponge', 'Bleach', 'Trash Bags', 'Detergent',
-      'Fabric Softener', 'Glass Cleaner', 'All-Purpose Cleaner', 'Toilet Cleaner',
-      'Paper Towels', 'Napkins', 'Tissues', 'Broom', 'Mop', 'Dustpan',
-      'Disinfectant Wipes', 'Air Freshener', 'Laundry Pods', 'Stain Remover',
-      'Hand Soap', 'Rubber Gloves'
+    '🐟 Seafood': [
+      'Salmon', 'Tuna', 'Shrimp', 'Cod', 'Tilapia', 'Sardines', 'Crab', 'Lobster', 'Mussels', 'Scallops', 'Fish Sticks', 'Smoked Salmon'
     ],
+    '🥤 Drinks': [
+      'Water', 'Sparkling Water', 'Cola', 'Lemon Soda', 'Orange Soda', 'Energy Drink', 'Sports Drink', 'Orange Juice', 'Apple Juice', 'Cranberry Juice', 'Grape Juice', 'Iced Tea', 'Coffee', 'Tea', 'Coconut Water'
+    ],
+    '🍬 Snacks': [
+      'Potato Chips', 'Tortilla Chips', 'Pretzels', 'Popcorn', 'Crackers', 'Trail Mix', 'Mixed Nuts', 'Almonds', 'Cashews', 'Pistachios', 'Peanuts', 'Beef Jerky', 'Protein Bars', 'Granola Bars', 'Chocolate', 'Gummies', 'Candy'
+    ],
+    '🧂 Pantry': [
+      'Rice', 'Pasta', 'Spaghetti', 'Macaroni', 'Flour', 'Sugar', 'Brown Sugar', 'Salt', 'Black Pepper', 'Paprika', 'Garlic Powder', 'Onion Powder', 'Cinnamon', 'Oregano', 'Basil', 'Thyme', 'Curry Powder', 'Chili Powder', 'Cumin', 'Olive Oil', 'Vegetable Oil', 'Vinegar', 'Soy Sauce', 'Pasta Sauce', 'Tomato Paste', 'Canned Tomatoes', 'Beans', 'Lentils', 'Chickpeas'
+    ],
+    '❄️ Frozen': [
+      'Frozen Pizza', 'Frozen Fries', 'Frozen Vegetables', 'Frozen Fruit', 'Ice Cream', 'Frozen Chicken Nuggets', 'Frozen Fish', 'Frozen Burgers', 'Frozen Waffles', 'Frozen Breakfast Sandwiches'
+    ],
+    '🧹 Household': [
+      'Toilet Paper', 'Paper Towels', 'Tissues', 'Trash Bags', 'Dish Soap', 'Dishwasher Pods', 'Laundry Detergent', 'Fabric Softener', 'Bleach', 'Multi-Surface Cleaner', 'Glass Cleaner', 'Bathroom Cleaner', 'Sponges', 'Scrub Brushes', 'Aluminum Foil', 'Plastic Wrap', 'Zip Bags', 'Parchment Paper', 'Light Bulbs', 'Batteries'
+    ],
+    '🧴 Personal Care': [
+      'Shampoo', 'Conditioner', 'Body Wash', 'Soap', 'Toothpaste', 'Toothbrush', 'Dental Floss', 'Mouthwash', 'Deodorant', 'Lotion', 'Sunscreen', 'Shaving Cream', 'Razors', 'Hand Soap', 'Hand Sanitizer', 'Lip Balm', 'Cotton Swabs', 'Facial Tissues'
+    ]
   };
 
   const recentItems = useMemo(() => {
@@ -185,7 +191,7 @@ export default function ListDetails() {
 
   const displayedSuggestions = useMemo(() => {
     if (activeSuggestionTab === 'recent') return recentItems;
-    const catItems = CATEGORY_SUGGESTIONS[selectedCategory] || CATEGORY_SUGGESTIONS['General'];
+    const catItems = CATEGORY_SUGGESTIONS[selectedCategory] || CATEGORY_SUGGESTIONS['🛒 General'];
     return catItems;
   }, [activeSuggestionTab, recentItems, selectedCategory]);
 
@@ -211,7 +217,7 @@ export default function ListDetails() {
     setSelectedUnit('pcs');
     setNote('');
     setIsNoteVisible(false);
-    setSelectedCategory('General');
+    setSelectedCategory('🛒 General');
     setActiveSuggestionTab('quick');
   };
 
@@ -390,7 +396,7 @@ export default function ListDetails() {
                       setNewItemText(item.name);
                       setQuantity(item.quantity);
                       setSelectedUnit(item.unit || 'pcs');
-                      setSelectedCategory(item.category || 'General');
+                      setSelectedCategory(item.category || '🛒 General');
                       addBottomSheetRef.current?.present();
                     }}
                   >
@@ -402,7 +408,7 @@ export default function ListDetails() {
                       {item.name}
                     </Text>
                     <Text className="text-[13px] text-slate-400 font-medium mt-0.5">
-                      {item.quantity} {item.unit} {item.category !== 'General' ? `• ${item.category}` : ''}
+                      {item.quantity} {item.unit} {item.category !== '🛒 General' && item.category !== 'General' ? `• ${item.category}` : ''}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -607,22 +613,35 @@ export default function ListDetails() {
           {/* Categories */}
           <View className="mb-6 -mx-6 z-10 relative">
             <Text className="text-[15px] font-bold text-slate-500 mb-2 px-6">Category</Text>
-            <BottomSheetScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" className="px-6" contentContainerStyle={{ paddingRight: 48, gap: 8 }}>
-              {categories.map((cat, index) => {
-                const isSelected = selectedCategory === cat;
-                return (
-                  <TouchableOpacity 
-                    key={index}
-                    onPress={() => {
-                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                      setSelectedCategory(cat);
-                    }}
-                    className={`px-3.5 py-[7px] rounded-full border ${isSelected ? 'bg-slate-900 border-slate-900' : 'bg-transparent border-slate-200'}`}
-                  >
-                    <Text className={`text-[13px] font-semibold ${isSelected ? 'text-white' : 'text-slate-500'}`}>{cat}</Text>
-                  </TouchableOpacity>
-                );
-              })}
+            <BottomSheetScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingLeft: 24, paddingRight: 48 }}>
+              <View className="gap-2">
+                {[0, 1].map(rowIndex => {
+                  const rowItems = categories.filter((_, idx) => idx % 2 === rowIndex);
+                  if (rowItems.length === 0) return null;
+                  return (
+                    <View key={`category-row-${rowIndex}`} className="flex-row gap-2">
+                      {rowItems.map((cat, idx) => {
+                        const isSelected = selectedCategory === cat;
+                        return (
+                          <TouchableOpacity 
+                            key={`category-${rowIndex}-${idx}`}
+                            onPress={() => {
+                              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                              setSelectedCategory(cat);
+                              if (activeSuggestionTab === 'recent') {
+                                setActiveSuggestionTab('catalog');
+                              }
+                            }}
+                            className={`px-3.5 py-[7px] rounded-full border ${isSelected ? 'bg-slate-900 border-slate-900' : 'bg-transparent border-slate-200'}`}
+                          >
+                            <Text className={`text-[13px] font-semibold ${isSelected ? 'text-white' : 'text-slate-500'}`}>{cat}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  );
+                })}
+              </View>
             </BottomSheetScrollView>
             <LinearGradient
               colors={['rgba(255,255,255,0)', 'rgba(255,255,255,1)']}

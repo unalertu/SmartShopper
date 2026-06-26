@@ -1,14 +1,17 @@
 export const CATEGORIES = [
-  { label: "Fruits & Vegetables", value: "fruits-vegetables", icon: "🍎" },
-  { label: "Dairy & Eggs", value: "dairy-eggs", icon: "🥛" },
-  { label: "Meat & Fish", value: "meat-fish", icon: "🥩" },
-  { label: "Bakery", value: "bakery", icon: "🍞" },
-  { label: "Beverages", value: "beverages", icon: "🥤" },
-  { label: "Snacks", value: "snacks", icon: "🍿" },
-  { label: "Frozen", value: "frozen", icon: "🧊" },
-  { label: "Household", value: "household", icon: "🧹" },
-  { label: "Personal Care", value: "personal-care", icon: "🧴" },
-  { label: "Other", value: "other", icon: "📦" },
+  { label: "General", value: "🛒 General", icon: "🛒" },
+  { label: "Fruits", value: "🍎 Fruits", icon: "🍎" },
+  { label: "Vegetables", value: "🥦 Vegetables", icon: "🥦" },
+  { label: "Dairy", value: "🥛 Dairy", icon: "🥛" },
+  { label: "Bakery", value: "🍞 Bakery", icon: "🍞" },
+  { label: "Meat", value: "🥩 Meat", icon: "🥩" },
+  { label: "Seafood", value: "🐟 Seafood", icon: "🐟" },
+  { label: "Drinks", value: "🥤 Drinks", icon: "🥤" },
+  { label: "Snacks", value: "🍬 Snacks", icon: "🍬" },
+  { label: "Pantry", value: "🧂 Pantry", icon: "🧂" },
+  { label: "Frozen", value: "❄️ Frozen", icon: "❄️" },
+  { label: "Household", value: "🧹 Household", icon: "🧹" },
+  { label: "Personal Care", value: "🧴 Personal Care", icon: "🧴" },
 ] as const;
 
 export const UNITS = [
@@ -25,9 +28,9 @@ export const UNITS = [
 ] as const;
 
 export const getCategoryIcon = (categoryValue: string): string => {
-  return CATEGORIES.find((c) => c.value === categoryValue)?.icon ?? "📦";
+  return CATEGORIES.find((c) => c.value === categoryValue)?.icon ?? "🛒";
 };
 
 export const getCategoryLabel = (categoryValue: string): string => {
-  return CATEGORIES.find((c) => c.value === categoryValue)?.label ?? "Other";
+  return CATEGORIES.find((c) => c.value === categoryValue)?.label ?? "General";
 };

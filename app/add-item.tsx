@@ -21,7 +21,7 @@ export default function AddItemScreen() {
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [selectedUnit, setSelectedUnit] = useState("pcs");
-  const [selectedCategory, setSelectedCategory] = useState("other");
+  const [selectedCategory, setSelectedCategory] = useState("🛒 General");
   const [isFocused, setIsFocused] = useState(false);
 
   const suggestedItems = ['Avocado', 'Milk', 'Eggs', 'Bread', 'Water', 'Cheese', 'Chicken', 'Apples', 'Bananas'];
