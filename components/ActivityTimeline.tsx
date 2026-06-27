@@ -102,8 +102,6 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
             paddingVertical: 13,
             flexDirection: 'row',
             alignItems: 'center',
-            borderWidth: 1,
-            borderColor: 'rgba(226,232,240,0.8)',
           }}
         >
           {/* Colored icon */}
@@ -183,8 +181,6 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
           paddingVertical: 12,
           flexDirection: 'row',
           alignItems: 'flex-start',
-          borderWidth: 1,
-          borderColor: 'rgba(241,245,249,0.6)',
         }}
       >
         {/* Neutral icon */}
@@ -298,8 +294,6 @@ export default function ActivityTimeline() {
             backgroundColor: '#ffffff',
             borderRadius: 20,
             padding: 20,
-            borderWidth: 1,
-            borderColor: 'rgba(226,232,240,0.6)',
             alignItems: 'center',
           }}
         >

@@ -523,11 +523,17 @@ export default function ListDetails() {
               style={{ textAlignVertical: "center" }}
             />
             <TouchableOpacity 
+              onPress={() => setNewItemText('')}
+              className="ml-2 p-2"
+            >
+              <X size={18} color={Colors.primary[900]} strokeWidth={3} />
+            </TouchableOpacity>
+            <TouchableOpacity 
               onPress={() => {
                 hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                 handleAddItem();
               }} 
-              className="ml-3 p-2 bg-slate-900 rounded-full"
+              className="ml-2 p-2 bg-slate-900 rounded-full"
             >
               <Plus size={20} color="#ffffff" strokeWidth={2.5} />
             </TouchableOpacity>

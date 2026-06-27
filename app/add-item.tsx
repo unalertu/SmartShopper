@@ -106,6 +106,16 @@ export default function AddItemScreen() {
                 selectionColor={Colors.primary[900]}
                 style={{ textAlignVertical: "center" }}
               />
+              {name.length > 0 && (
+                <Pressable
+                  onPress={() => setName("")}
+                  className="pr-5 h-full justify-center items-center"
+                >
+                  <View className="bg-surface-200 rounded-full p-1">
+                    <X size={14} color={Colors.surface[600]} strokeWidth={2.5} />
+                  </View>
+                </Pressable>
+              )}
             </View>
           </View>
 
