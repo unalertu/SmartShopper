@@ -9,6 +9,8 @@ import "react-native-reanimated";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { enableFreeze } from "react-native-screens";
+import Purchases from 'react-native-purchases';
+import { Platform } from 'react-native';
 
 enableFreeze(false);
 
@@ -52,6 +54,23 @@ export default function RootLayout() {
       }, 100);
     }
   }, [_hasHydrated]);
+
+  // Initialize RevenueCat
+  useEffect(() => {
+    try {
+      Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
+      const appleKey = 'test_ekQnmmklJNsRbinvPyXIYfVBPBJ'; // Sizin verdiğiniz test anahtarı
+      const googleKey = 'test_ekQnmmklJNsRbinvPyXIYfVBPBJ'; // Android için de şimdilik aynısını koyduk
+      
+      if (Platform.OS === 'ios' && appleKey !== 'YOUR_APPLE_API_KEY_HERE') {
+        Purchases.configure({ apiKey: appleKey });
+      } else if (Platform.OS === 'android' && googleKey !== 'YOUR_GOOGLE_API_KEY_HERE') {
+        Purchases.configure({ apiKey: googleKey });
+      }
+    } catch (e) {
+      console.warn('Error configuring Purchases:', e);
+    }
+  }, []);
 
   // Auto-delete purchased items older than 7 days when the setting is enabled
   useEffect(() => {
@@ -136,15 +155,6 @@ export default function RootLayout() {
                 gestureEnabled: true,
                 fullScreenGestureEnabled: true,
                 title: "Add Location",
-                headerShown: false}}
-            />
-            <Stack.Screen
-              name="paywall"
-              options={{
-                presentation: "transparentModal",
-                animation: "fade",
-                gestureEnabled: true,
-                fullScreenGestureEnabled: true,
                 headerShown: false}}
             />
             <Stack.Screen

@@ -9,6 +9,7 @@ import { useSettingsStore } from '../store';
 import { hapticImpact } from '../services/haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
 import ConfirmationSheet, { ConfirmationSheetData } from '../components/ConfirmationSheet';
+import { showPaywall } from "@/services/paywallService";
 
 // ── Per-setting descriptions for enable / disable states ──
 const SETTING_DESCRIPTIONS: Record<string, { enable: string; disable: string }> = {
@@ -153,7 +154,7 @@ export default function NotificationPreferencesScreen() {
 
   const handleProUpsell = (featureName: string) => {
     hapticImpact(ImpactFeedbackStyle.Light);
-    router.push('/paywall');
+    showPaywall();
   };
 
   const SENSITIVITY_OPTIONS = {

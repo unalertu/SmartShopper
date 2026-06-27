@@ -24,6 +24,7 @@ import { useLocationStore, useSettingsStore } from "@/store";
 import { getCurrentLocation } from "@/services/locationService";
 import { Colors, GEOFENCE_DEFAULT_RADIUS } from "@/constants/theme";
 import { FREE_TIER, getMaxSavedStores } from "@/constants/tierConfig";
+import { showPaywall } from "@/services/paywallService";
 
 export default function AddLocationScreen() {
   const router = useRouter();
@@ -76,7 +77,7 @@ export default function AddLocationScreen() {
               { text: 'OK', style: 'cancel' },
               {
                 text: 'Upgrade to Pro',
-                onPress: () => router.push('/paywall'),
+                onPress: () => showPaywall(),
               },
             ]
       );
@@ -100,7 +101,7 @@ export default function AddLocationScreen() {
         { text: 'OK', style: 'cancel' },
         {
           text: 'Upgrade to Pro',
-          onPress: () => router.push('/paywall'),
+          onPress: () => showPaywall(),
         },
       ]
     );
@@ -153,7 +154,7 @@ export default function AddLocationScreen() {
               </Text>
               {!isPro && (
                 <Pressable
-                  onPress={() => router.push('/paywall')}
+                  onPress={() => showPaywall()}
                   className="flex-row items-center gap-1"
                 >
                   <Sparkles size={12} color="#D4AF37" />

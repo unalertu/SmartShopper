@@ -23,6 +23,7 @@ import StoreMarker from '../../components/StoreMarker';
 import CreateListSheet from '../../components/CreateListSheet';
 import ConfirmationSheet from '../../components/ConfirmationSheet';
 import { getSuggestionCards, SuggestionCard } from '@/constants/events';
+import { showPaywall } from "@/services/paywallService";
 
 const getRelativeDate = (timestamp?: number): string => {
   if (!timestamp) return 'today';
@@ -294,7 +295,7 @@ export default function HomeScreen() {
           ? [{ text: 'OK' }]
           : [
               { text: 'OK', style: 'cancel' },
-              { text: 'Upgrade to Pro', onPress: () => router.push('/paywall') },
+              { text: 'Upgrade to Pro', onPress: () => showPaywall() },
             ]
       );
       return;
@@ -413,7 +414,7 @@ export default function HomeScreen() {
           ? [{ text: 'OK' }]
           : [
               { text: 'OK', style: 'cancel' },
-              { text: 'Upgrade to Pro', onPress: () => router.push('/paywall') },
+              { text: 'Upgrade to Pro', onPress: () => showPaywall() },
             ]
       );
       return;

@@ -65,6 +65,7 @@ import { hapticImpact, hapticNotification } from '../../services/haptics';
 import * as Haptics from 'expo-haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
 import { NotificationFeedbackType } from 'expo-haptics';
+import { showPaywall } from "@/services/paywallService";
 
 // ─── Reusable Components ──────────────────────────────────────────────────────
 
@@ -222,7 +223,7 @@ export default function SettingsScreen() {
     if (isPro) {
       router.push('/pro');
     } else {
-      router.push('/paywall');
+      showPaywall();
     }
   };
 
@@ -492,7 +493,7 @@ export default function SettingsScreen() {
               sublabel="Unlock all premium features"
               onPress={() => {
                 hapticImpact(ImpactFeedbackStyle.Light);
-                router.push('/paywall');
+                showPaywall();
               }}
             />
             <SettingsRow

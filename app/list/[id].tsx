@@ -13,6 +13,7 @@ import ConfirmationSheet from '../../components/ConfirmationSheet';
 import RenameListSheet from '../../components/RenameListSheet';
 import { Colors } from '@/constants/theme';
 import { BottomSheetModal, BottomSheetView, BottomSheetBackdrop, BottomSheetTextInput, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { showPaywall } from "@/services/paywallService";
 
 export default function ListDetails() {
   const { id } = useLocalSearchParams();
@@ -248,7 +249,7 @@ export default function ListDetails() {
               { text: 'OK', style: 'cancel' },
               { text: 'Upgrade to Pro', onPress: () => {
                   setIsAddModalVisible(false);
-                  router.push('/paywall');
+                  showPaywall();
                 }
               },
             ]

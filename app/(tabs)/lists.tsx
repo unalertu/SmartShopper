@@ -41,6 +41,7 @@ import { useScrollToTop } from '@react-navigation/native';
 import CreateListSheet from '../../components/CreateListSheet';
 import ConfirmationSheet from '../../components/ConfirmationSheet';
 import ActivityTimeline from '../../components/ActivityTimeline';
+import { showPaywall } from "@/services/paywallService";
 
 const getRelativeDate = (timestamp?: number): string => {
   if (!timestamp) return 'today';
@@ -102,7 +103,7 @@ export default function ListsScreen() {
           ? [{ text: 'OK' }]
           : [
               { text: 'OK', style: 'cancel' },
-              { text: 'Upgrade to Pro', onPress: () => router.push('/paywall') },
+              { text: 'Upgrade to Pro', onPress: () => showPaywall() },
             ]
       );
       return;
@@ -235,7 +236,7 @@ export default function ListsScreen() {
                                   ? [{ text: 'OK' }]
                                   : [
                                       { text: 'OK', style: 'cancel' },
-                                      { text: 'Upgrade to Pro', onPress: () => router.push('/paywall') },
+                                      { text: 'Upgrade to Pro', onPress: () => showPaywall() },
                                     ]
                               );
                               return;

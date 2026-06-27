@@ -25,6 +25,7 @@ import { create } from 'zustand';
 import { Alert } from 'react-native';
 import { FREE_TIER, getMaxSavedStores } from '@/constants/tierConfig';
 import ConfirmationSheet from '../../components/ConfirmationSheet';
+import { showPaywall } from "@/services/paywallService";
 
 interface LocalUIState {
   selectedShopToSave: any | null;
@@ -1077,7 +1078,7 @@ export default function StoresScreen() {
                                 { text: 'OK', style: 'cancel' },
                                 {
                                   text: 'Upgrade to Pro',
-                                  onPress: () => router.push('/paywall'),
+                                  onPress: () => showPaywall(),
                                 },
                               ]
                         );
@@ -1175,7 +1176,7 @@ export default function StoresScreen() {
                                     { text: 'OK', style: 'cancel' },
                                     {
                                       text: 'Upgrade to Pro',
-                                      onPress: () => router.push('/paywall'),
+                                      onPress: () => showPaywall(),
                                     },
                                   ]
                                 );
@@ -1390,7 +1391,7 @@ export default function StoresScreen() {
                                     { text: 'OK', style: 'cancel' },
                                     {
                                       text: 'Upgrade to Pro',
-                                      onPress: () => router.push('/paywall'),
+                                      onPress: () => showPaywall(),
                                     },
                                   ]
                                 );
