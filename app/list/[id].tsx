@@ -261,7 +261,7 @@ export default function ListDetails() {
     const newItem = {
       id: Date.now().toString(),
       name: newItemText.trim(),
-      quantity: typeof quantity === 'number' ? quantity : (parseInt(quantity as string, 10) || 1),
+      quantity: typeof quantity === 'number' ? quantity : (parseFloat((quantity as string).replace(',', '.')) || 1),
       unit: selectedUnit,
       category: selectedCategory,
       isChecked: false
@@ -554,42 +554,20 @@ export default function ListDetails() {
             <View className="flex-row items-center relative -mx-6">
               <BottomSheetScrollView horizontal showsHorizontalScrollIndicator={false} className="px-6" contentContainerStyle={{ paddingRight: 48, gap: 10 }}>
                 {/* Quantity */}
-                <View className="bg-slate-100 rounded-full px-4 py-2 flex-row items-center gap-4">
-                  <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} onPress={() => {
-                    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                    setQuantity(prev => {
-                      const current = typeof prev === 'number' ? prev : (parseInt(prev as string, 10) || 1);
-                      return Math.max(1, current - 1);
-                    });
-                  }}>
-                    <Minus size={16} color="#0f172a" strokeWidth={3} />
-                  </TouchableOpacity>
+                <View className="bg-slate-100 rounded-full px-6 py-2 justify-center min-w-[70px]">
                   <BottomSheetTextInput
                     value={quantity.toString()}
                     onChangeText={(text) => {
-                      if (text === '') {
-                        setQuantity('');
-                      } else {
-                        const num = parseInt(text.replace(/[^0-9]/g, ''), 10);
-                        if (!isNaN(num)) {
-                          setQuantity(num);
-                        }
-                      }
+                      const cleaned = text.replace(/[^0-9.,]/g, '');
+                      setQuantity(cleaned);
                     }}
-                    keyboardType="numeric"
-                    className="text-lg font-bold text-slate-900 min-w-[24px] text-center p-0 m-0"
-                    style={{ padding: 0, margin: 0, textAlignVertical: 'center', transform: [{ translateY: -2.5 }] }}
-                    maxLength={4}
+                    keyboardType="decimal-pad"
+                    placeholder="1"
+                    placeholderTextColor="#94a3b8"
+                    className="text-lg font-bold text-slate-900 text-center p-0 m-0 min-w-[30px]"
+                    style={{ padding: 0, margin: 0, textAlignVertical: 'center', transform: [{ translateY: -2 }] }}
+                    maxLength={7}
                   />
-                  <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} onPress={() => {
-                    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                    setQuantity(prev => {
-                      const current = typeof prev === 'number' ? prev : (parseInt(prev as string, 10) || 0);
-                      return current + 1;
-                    });
-                  }}>
-                    <Plus size={16} color="#0f172a" strokeWidth={3} />
-                  </TouchableOpacity>
                 </View>
 
                 {/* Units */}

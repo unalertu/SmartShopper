@@ -124,18 +124,7 @@ export default function AddItemScreen() {
             <Text className="text-[13px] font-bold text-surface-400 uppercase tracking-wider mb-2 ml-1">
               Quantity
             </Text>
-            <View className="bg-[#f8fafc] rounded-[24px] p-5 flex-row items-center justify-between border border-surface-100">
-              <Pressable
-                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-                onPress={() => {
-                  const prevStr = typeof quantity === 'string' ? quantity.replace(',', '.') : quantity.toString();
-                  const current = parseFloat(prevStr) || 1;
-                  setQuantity(Math.max(1, parseFloat((current - 1).toFixed(2))));
-                }}
-                className="w-12 h-12 rounded-full bg-white border border-surface-200 items-center justify-center shadow-sm"
-              >
-                <Minus size={20} color={Colors.surface[700]} />
-              </Pressable>
+            <View className="bg-[#f8fafc] rounded-[24px] border border-surface-100 h-16 justify-center">
               <TextInput
                 value={quantity.toString()}
                 onChangeText={(text) => {
@@ -143,21 +132,13 @@ export default function AddItemScreen() {
                   setQuantity(cleaned);
                 }}
                 keyboardType="decimal-pad"
-                className="text-3xl font-bold text-surface-900 tabular-nums tracking-tight text-center min-w-[60px] p-0 m-0"
-                style={{ padding: 0, margin: 0, textAlignVertical: 'center' }}
-                maxLength={5}
+                placeholder="1"
+                placeholderTextColor={Colors.surface[400]}
+                className="flex-1 px-6 py-0 text-lg text-surface-900 font-semibold h-full"
+                cursorColor={Colors.primary[900]}
+                selectionColor={Colors.primary[900]}
+                style={{ textAlignVertical: 'center' }}
               />
-              <Pressable
-                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-                onPress={() => {
-                  const prevStr = typeof quantity === 'string' ? quantity.replace(',', '.') : quantity.toString();
-                  const current = parseFloat(prevStr) || 0;
-                  setQuantity(parseFloat((current + 1).toFixed(2)));
-                }}
-                className="w-12 h-12 rounded-full bg-primary-50 items-center justify-center border border-primary-100 shadow-sm"
-              >
-                <Plus size={20} color={Colors.primary[600]} />
-              </Pressable>
             </View>
           </View>
 
