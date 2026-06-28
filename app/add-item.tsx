@@ -19,7 +19,7 @@ export default function AddItemScreen() {
   const addItem = useShoppingListStore((s) => s.addItem);
 
   const [name, setName] = useState("");
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState<number | string>(1);
   const [selectedUnit, setSelectedUnit] = useState("pcs");
   const [selectedCategory, setSelectedCategory] = useState("🛒 General");
   const [isFocused, setIsFocused] = useState(false);
@@ -39,7 +39,7 @@ export default function AddItemScreen() {
 
     addItem(1, { // Added dummy listId 1, though this screen seems unused
       name: name.trim(),
-      quantity,
+      quantity: typeof quantity === 'number' ? quantity : (parseFloat((quantity as string).replace(',', '.')) || 1),
       unit: selectedUnit,
       category: selectedCategory});
     router.back();
@@ -126,16 +126,34 @@ export default function AddItemScreen() {
             </Text>
             <View className="bg-[#f8fafc] rounded-[24px] p-5 flex-row items-center justify-between border border-surface-100">
               <Pressable
-                onPress={() => setQuantity(Math.max(1, quantity - 1))}
+                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                onPress={() => {
+                  const prevStr = typeof quantity === 'string' ? quantity.replace(',', '.') : quantity.toString();
+                  const current = parseFloat(prevStr) || 1;
+                  setQuantity(Math.max(1, parseFloat((current - 1).toFixed(2))));
+                }}
                 className="w-12 h-12 rounded-full bg-white border border-surface-200 items-center justify-center shadow-sm"
               >
                 <Minus size={20} color={Colors.surface[700]} />
               </Pressable>
-              <Text className="text-3xl font-bold text-surface-900 tabular-nums tracking-tight">
-                {quantity}
-              </Text>
+              <TextInput
+                value={quantity.toString()}
+                onChangeText={(text) => {
+                  const cleaned = text.replace(/[^0-9.,]/g, '');
+                  setQuantity(cleaned);
+                }}
+                keyboardType="decimal-pad"
+                className="text-3xl font-bold text-surface-900 tabular-nums tracking-tight text-center min-w-[60px] p-0 m-0"
+                style={{ padding: 0, margin: 0, textAlignVertical: 'center' }}
+                maxLength={5}
+              />
               <Pressable
-                onPress={() => setQuantity(quantity + 1)}
+                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                onPress={() => {
+                  const prevStr = typeof quantity === 'string' ? quantity.replace(',', '.') : quantity.toString();
+                  const current = parseFloat(prevStr) || 0;
+                  setQuantity(parseFloat((current + 1).toFixed(2)));
+                }}
                 className="w-12 h-12 rounded-full bg-primary-50 items-center justify-center border border-primary-100 shadow-sm"
               >
                 <Plus size={20} color={Colors.primary[600]} />

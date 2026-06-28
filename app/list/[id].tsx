@@ -26,7 +26,7 @@ export default function ListDetails() {
   const [newItemText, setNewItemText] = useState('');
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('🛒 General');
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState<number | string>(1);
   const [selectedUnit, setSelectedUnit] = useState('pcs');
   const [note, setNote] = useState('');
   const [isNoteVisible, setIsNoteVisible] = useState(false);
@@ -228,7 +228,7 @@ export default function ListDetails() {
     if (editingItemId) {
       updateItem(editingItemId, {
         name: newItemText.trim(),
-        quantity,
+        quantity: typeof quantity === 'number' ? quantity : (parseInt(quantity as string, 10) || 1),
         unit: selectedUnit,
         category: selectedCategory
       });
@@ -258,11 +258,15 @@ export default function ListDetails() {
     }
 
     hapticNotification(Haptics.NotificationFeedbackType.Success);
-    addItem(listId, {
+    const newItem = {
+      id: Date.now().toString(),
       name: newItemText.trim(),
-      quantity,
+      quantity: typeof quantity === 'number' ? quantity : (parseInt(quantity as string, 10) || 1),
       unit: selectedUnit,
-      category: selectedCategory});
+      category: selectedCategory,
+      isChecked: false
+    };
+    addItem(listId, newItem);
     closeModal();
   };
 
@@ -543,19 +547,47 @@ export default function ListDetails() {
           {/* Compact Controls (Quantity, Units, Note) */}
           <View className="mb-6 z-10">
             {/* Section Labels */}
-            <View className="flex-row mb-2">
+            <View className="flex-row mb-4">
               <Text className="text-[15px] font-bold text-slate-500" style={{ width: 100 }}>Quantity</Text>
-              <Text className="text-[15px] font-bold text-slate-500">Unit</Text>
+            <Text className="text-[15px] font-bold text-slate-500">Unit</Text>
             </View>
             <View className="flex-row items-center relative -mx-6">
               <BottomSheetScrollView horizontal showsHorizontalScrollIndicator={false} className="px-6" contentContainerStyle={{ paddingRight: 48, gap: 10 }}>
                 {/* Quantity */}
-                <View className="bg-slate-100 rounded-full px-3 py-2 flex-row items-center gap-3">
-                  <TouchableOpacity onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); setQuantity(prev => Math.max(1, prev - 1)); }}>
+                <View className="bg-slate-100 rounded-full px-4 py-2 flex-row items-center gap-4">
+                  <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} onPress={() => {
+                    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                    setQuantity(prev => {
+                      const current = typeof prev === 'number' ? prev : (parseInt(prev as string, 10) || 1);
+                      return Math.max(1, current - 1);
+                    });
+                  }}>
                     <Minus size={16} color="#0f172a" strokeWidth={3} />
                   </TouchableOpacity>
-                  <Text className="text-base font-bold text-slate-900 min-w-[20px] text-center">{quantity}</Text>
-                  <TouchableOpacity onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); setQuantity(prev => prev + 1); }}>
+                  <BottomSheetTextInput
+                    value={quantity.toString()}
+                    onChangeText={(text) => {
+                      if (text === '') {
+                        setQuantity('');
+                      } else {
+                        const num = parseInt(text.replace(/[^0-9]/g, ''), 10);
+                        if (!isNaN(num)) {
+                          setQuantity(num);
+                        }
+                      }
+                    }}
+                    keyboardType="numeric"
+                    className="text-lg font-bold text-slate-900 min-w-[24px] text-center p-0 m-0"
+                    style={{ padding: 0, margin: 0, textAlignVertical: 'center', transform: [{ translateY: -2.5 }] }}
+                    maxLength={4}
+                  />
+                  <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} onPress={() => {
+                    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                    setQuantity(prev => {
+                      const current = typeof prev === 'number' ? prev : (parseInt(prev as string, 10) || 0);
+                      return current + 1;
+                    });
+                  }}>
                     <Plus size={16} color="#0f172a" strokeWidth={3} />
                   </TouchableOpacity>
                 </View>
