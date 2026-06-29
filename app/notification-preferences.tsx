@@ -255,11 +255,11 @@ export default function NotificationPreferencesScreen() {
         <SettingsGroup title="Advanced">
           <SettingsRow
             icon={<Activity size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
-            label="Notification Sensitivity"
-            sublabel="Radius for store alerts"
+            label="Alert Distance"
+            sublabel="How close you are before alerts"
             isProOnly={!isPro}
             isLocked={!isPro}
-            onLockedPress={() => handleProUpsell('Notification Sensitivity')}
+            onLockedPress={() => handleProUpsell('Alert Distance')}
             rightElement={
               isPro ? (
                 <TouchableOpacity
@@ -275,11 +275,11 @@ export default function NotificationPreferencesScreen() {
           />
           <SettingsRow
             icon={<Clock size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
-            label="Quiet Hours"
-            sublabel="Mute notifications during set hours"
+            label="Allowed Hours"
+            sublabel="Only receive notifications during set hours"
             isProOnly={!isPro}
             isLocked={!isPro}
-            onLockedPress={() => handleProUpsell('Quiet Hours')}
+            onLockedPress={() => handleProUpsell('Allowed Hours')}
             onPress={isPro ? () => setQuietHoursSheetVisible(true) : undefined}
             rightElement={<ChevronRight size={20} color="#cbd5e1" />}
           />

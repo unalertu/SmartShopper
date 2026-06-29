@@ -86,14 +86,14 @@ const QuietHoursSheet = memo(function QuietHoursSheet({
     >
       <BottomSheetView style={[styles.content, { paddingBottom: Math.max(insets.bottom, 16) + 8 }]}>
         <View style={styles.header}>
-          <Text style={styles.title}>Quiet Hours</Text>
-          <Text style={styles.description}>Set specific hours for notifications.</Text>
+          <Text style={styles.title}>Allowed Hours</Text>
+          <Text style={styles.description}>Set specific hours to receive notifications.</Text>
         </View>
 
         <View style={{ paddingBottom: 20 }}>
           <View style={styles.section}>
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>Enable Quiet Hours</Text>
+              <Text style={styles.rowLabel}>Enable Allowed Hours</Text>
               <Switch
                 value={quietHoursEnabled}
                 onValueChange={toggleQuietHours}
@@ -106,7 +106,7 @@ const QuietHoursSheet = memo(function QuietHoursSheet({
 
           {quietHoursEnabled && (
             <>
-              <Text style={styles.sectionTitle}>Allowed Hours</Text>
+              <Text style={styles.sectionTitle}>Time Window</Text>
               <View style={styles.card}>
                 <View style={[styles.row, styles.borderBottom]}>
                   <Text style={styles.rowLabel}>Start Time</Text>
@@ -230,15 +230,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 16,
     paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
   },
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
     paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
   },
   row: {
     flexDirection: 'row',
@@ -247,8 +243,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   borderBottom: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
   },
   rowLabel: {
     fontSize: 16,

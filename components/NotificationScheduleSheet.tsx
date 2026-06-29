@@ -209,15 +209,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 16,
     paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
   },
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
     paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
   },
   row: {
     flexDirection: 'row',
@@ -226,8 +222,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   borderBottom: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
   },
   rowLabel: {
     fontSize: 16,
