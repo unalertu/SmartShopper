@@ -178,6 +178,12 @@ export const geofenceManager = {
         return;
       }
 
+      const { status } = await Location.getBackgroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.warn("Background location permission is required for geofencing.");
+        return;
+      }
+
       await Location.startGeofencingAsync(GEOFENCE_TASK, regionsToRegister);
       activeRegionIds = newIds;
     } catch (e) {
