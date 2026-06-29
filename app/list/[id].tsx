@@ -196,6 +196,25 @@ export default function ListDetails() {
     return catItems;
   }, [activeSuggestionTab, recentItems, selectedCategory]);
 
+  const balancedSuggestions = useMemo(() => {
+    const rowWidths = [0, 0, 0, 0];
+    const rowAssignments: string[][] = [[], [], [], []];
+    
+    displayedSuggestions.forEach(item => {
+      const estWidth = item.length * 8 + 40;
+      let minRow = 0;
+      for (let i = 1; i < 4; i++) {
+        if (rowWidths[i] < rowWidths[minRow]) {
+          minRow = i;
+        }
+      }
+      rowAssignments[minRow].push(item);
+      rowWidths[minRow] += estWidth;
+    });
+    
+    return rowAssignments;
+  }, [displayedSuggestions]);
+
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
   // Reset placeholder index when category or tab changes
@@ -703,8 +722,8 @@ export default function ListDetails() {
               <BottomSheetScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingLeft: 24, paddingRight: 48, paddingBottom: 16 }}>
                 <View className="gap-2">
                   {[0, 1, 2, 3].map(rowIndex => {
-                    const rowItems = displayedSuggestions.filter((_, idx) => idx % 4 === rowIndex);
-                    if (rowItems.length === 0) return null;
+                    const rowItems = balancedSuggestions[rowIndex];
+                    if (!rowItems || rowItems.length === 0) return null;
                     return (
                       <View key={`${activeSuggestionTab}-${selectedCategory}-row-${rowIndex}`} className="flex-row gap-2">
                         {rowItems.map((suggestion, idx) => (
