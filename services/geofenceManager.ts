@@ -96,6 +96,7 @@ async function processGeofenceEnter(region: Location.LocationRegion) {
       storeId: store.id,
       isPro: settings.isPro,
       nightNotificationsEnabled: settings.nightNotificationsEnabled,
+      mutedDays: settings.mutedDays,
     });
     if (!decision.allowed) return;
 

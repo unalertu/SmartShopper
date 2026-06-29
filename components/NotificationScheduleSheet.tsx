@@ -183,10 +183,10 @@ const styles = StyleSheet.create({
   button: {
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#0f172a',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#1e293b',
+    shadowColor: '#0f172a',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,

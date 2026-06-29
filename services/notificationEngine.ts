@@ -9,6 +9,7 @@ export const notificationEngine = {
     storeId: string;
     isPro: boolean;
     nightNotificationsEnabled: boolean;
+    mutedDays?: number[];
   }): Promise<{ allowed: boolean; reason?: string }> => {
     const state = await notificationAnalytics.getState();
 
@@ -27,6 +28,14 @@ export const notificationEngine = {
     // 3. Quiet Hours Check
     if (notificationEngine.isInQuietHours(params.nightNotificationsEnabled)) {
       return { allowed: false, reason: "quiet_hours" };
+    }
+
+    // 3.5. Muted Days Check
+    if (params.mutedDays && params.mutedDays.length > 0) {
+      const currentDay = new Date().getDay();
+      if (params.mutedDays.includes(currentDay)) {
+        return { allowed: false, reason: "muted_day" };
+      }
     }
 
     // 4. Daily Limit Check

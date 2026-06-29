@@ -68,6 +68,7 @@ export const getSettingsFromStorage = async () => {
         backgroundNotifications: state.backgroundNotifications !== false,
         savedStoresOnly: state.savedStoresOnly === true,
         nightNotificationsEnabled: false, // Could be added to store later
+        mutedDays: Array.isArray(state.mutedDays) ? state.mutedDays : [],
       };
     }
   } catch (e) {
@@ -79,6 +80,7 @@ export const getSettingsFromStorage = async () => {
     backgroundNotifications: true,
     savedStoresOnly: false,
     nightNotificationsEnabled: false,
+    mutedDays: [],
   };
 };
 
@@ -275,6 +277,7 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
     storeId: bestStore.id,
     isPro: settings.isPro,
     nightNotificationsEnabled: settings.nightNotificationsEnabled,
+    mutedDays: settings.mutedDays,
   });
 
   if (!decision.allowed) {
