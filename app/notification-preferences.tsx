@@ -4,11 +4,13 @@ import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { LinearTransition } from 'react-native-reanimated';
-import { MapPin, Menu, Vibrate, ChevronLeft, Lock, Clock, Calendar, SlidersHorizontal, Activity } from 'lucide-react-native';
+import { MapPin, Menu, Vibrate, ChevronLeft, Lock, Clock, Calendar, SlidersHorizontal, Activity, ChevronRight } from 'lucide-react-native';
 import { useSettingsStore } from '../store';
 import { hapticImpact } from '../services/haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
 import ConfirmationSheet, { ConfirmationSheetData } from '../components/ConfirmationSheet';
+import ComingSoonSheet from '../components/ComingSoonSheet';
+import NotificationScheduleSheet from '../components/NotificationScheduleSheet';
 import { showPaywall } from "@/services/paywallService";
 
 // ── Per-setting descriptions for enable / disable states ──
@@ -44,7 +46,8 @@ function SettingsRow({
   isLast,
   isProOnly,
   isLocked,
-  onLockedPress
+  onLockedPress,
+  onPress
 }: {
   icon: React.ReactNode;
   label: string;
@@ -54,6 +57,7 @@ function SettingsRow({
   isProOnly?: boolean;
   isLocked?: boolean;
   onLockedPress?: () => void;
+  onPress?: () => void;
 }) {
   const content = (
     <View className={`flex-row justify-between items-center p-4 ${!isLast ? 'border-b border-slate-50' : ''}`}
@@ -80,6 +84,14 @@ function SettingsRow({
   if (isLocked && onLockedPress) {
     return (
       <TouchableOpacity activeOpacity={0.6} onPress={onLockedPress}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  if (onPress) {
+    return (
+      <TouchableOpacity activeOpacity={0.6} onPress={onPress}>
         {content}
       </TouchableOpacity>
     );
@@ -124,7 +136,20 @@ export default function NotificationPreferencesScreen() {
   const [sheetVisible, setSheetVisible] = useState(false);
   const [sheetData, setSheetData] = useState<ConfirmationSheetData | null>(null);
 
-  const switchTrackColor = { false: '#e2e8f0', true: '#0f172a' };
+  // ── Coming Soon Sheet state ──
+  const [comingSoonVisible, setComingSoonVisible] = useState(false);
+  const [comingSoonData, setComingSoonData] = useState({ title: '', description: '' });
+
+  // ── Notification Schedule Sheet state ──
+  const [scheduleSheetVisible, setScheduleSheetVisible] = useState(false);
+
+  const showComingSoon = useCallback((title: string, description: string) => {
+    hapticImpact(ImpactFeedbackStyle.Light);
+    setComingSoonData({ title, description });
+    setComingSoonVisible(true);
+  }, []);
+
+  const switchTrackColor = { false: '#E5E7EB', true: '#0f172a' };
 
   const requestToggle = useCallback((
     settingName: string,
@@ -201,6 +226,7 @@ export default function NotificationPreferencesScreen() {
                 onValueChange={() => requestToggle('Saved Stores Only', savedStoresOnly, setSavedStoresOnly)}
                 trackColor={switchTrackColor}
                 thumbColor="#ffffff"
+                ios_backgroundColor="#E5E7EB"
               />
             }
           />
@@ -215,6 +241,7 @@ export default function NotificationPreferencesScreen() {
                 onValueChange={() => requestToggle('Shopping List Reminders', shoppingListReminders, setShoppingListReminders)}
                 trackColor={switchTrackColor}
                 thumbColor="#ffffff"
+                ios_backgroundColor="#E5E7EB"
               />
             }
           />
@@ -249,16 +276,8 @@ export default function NotificationPreferencesScreen() {
             isProOnly={!isPro}
             isLocked={!isPro}
             onLockedPress={() => handleProUpsell('Quiet Hours')}
-            rightElement={
-              isPro ? (
-                <Switch
-                  value={false}
-                  onValueChange={() => requestToggle('Quiet Hours', false, null)}
-                  trackColor={switchTrackColor}
-                  thumbColor="#ffffff"
-                />
-              ) : undefined
-            }
+            onPress={isPro ? () => showComingSoon('Quiet Hours', 'Customizing quiet hours will be available in a future update.') : undefined}
+            rightElement={<ChevronRight size={20} color="#cbd5e1" />}
           />
           <SettingsRow
             icon={<Calendar size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
@@ -268,16 +287,8 @@ export default function NotificationPreferencesScreen() {
             isProOnly={!isPro}
             isLocked={!isPro}
             onLockedPress={() => handleProUpsell('Notification Schedule')}
-            rightElement={
-              isPro ? (
-                <Switch
-                  value={false}
-                  onValueChange={() => requestToggle('Notification Schedule', false, null)}
-                  trackColor={switchTrackColor}
-                  thumbColor="#ffffff"
-                />
-              ) : undefined
-            }
+            onPress={isPro ? () => setScheduleSheetVisible(true) : undefined}
+            rightElement={<ChevronRight size={20} color="#cbd5e1" />}
           />
         </SettingsGroup>
 
@@ -294,6 +305,20 @@ export default function NotificationPreferencesScreen() {
         visible={sheetVisible}
         data={sheetData}
         onDismiss={dismissSheet}
+      />
+
+      {/* Coming Soon Sheet */}
+      <ComingSoonSheet
+        visible={comingSoonVisible}
+        title={comingSoonData.title}
+        description={comingSoonData.description}
+        onDismiss={() => setComingSoonVisible(false)}
+      />
+
+      {/* Notification Schedule Sheet */}
+      <NotificationScheduleSheet
+        visible={scheduleSheetVisible}
+        onDismiss={() => setScheduleSheetVisible(false)}
       />
     </View>
   );

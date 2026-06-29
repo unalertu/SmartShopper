@@ -40,6 +40,9 @@ interface SettingsState {
   
   notificationSensitivity: NotificationSensitivity;
 
+  // ── Notification Schedule ──
+  mutedDays: number[];
+
   // ── Actions ──
   setNotificationsEnabled: (enabled: boolean) => void;
   setSoundEnabled: (enabled: boolean) => void;
@@ -51,6 +54,7 @@ interface SettingsState {
   setLowPowerMode: (enabled: boolean) => void;
   setAutoOpenNearbyList: (enabled: boolean) => void;
   setNotificationSensitivity: (sensitivity: NotificationSensitivity) => void;
+  setMutedDays: (days: number[]) => void;
 
   setLocationEnabled: (enabled: boolean) => void;
 
@@ -74,6 +78,7 @@ const DEFAULT_SETTINGS = {
   lowPowerMode: false,
   autoOpenNearbyList: false,
   notificationSensitivity: "balanced" as const,
+  mutedDays: [] as number[],
 
   locationEnabled: false,
 
@@ -101,6 +106,7 @@ export const useSettingsStore = create<SettingsState>()(
       setLowPowerMode: (enabled: boolean) => set({ lowPowerMode: enabled }),
       setAutoOpenNearbyList: (enabled: boolean) => set({ autoOpenNearbyList: enabled }),
       setNotificationSensitivity: (sensitivity: NotificationSensitivity) => set({ notificationSensitivity: sensitivity }),
+      setMutedDays: (days: number[]) => set({ mutedDays: days }),
 
       setLocationEnabled: (enabled: boolean) => set({ locationEnabled: enabled }),
 

@@ -266,7 +266,7 @@ export default function SettingsScreen() {
   }, [syncNotificationStatus, syncLocationStatus]);
 
   // ── Switch styling ──
-  const switchTrackColor = { false: '#e2e8f0', true: '#0f172a' };
+  const switchTrackColor = { false: '#E5E7EB', true: '#0f172a' };
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
@@ -523,6 +523,7 @@ export default function SettingsScreen() {
                   onValueChange={handleLocationToggle}
                   trackColor={switchTrackColor}
                   thumbColor="#ffffff"
+                  ios_backgroundColor="#E5E7EB"
                 />
               }
             />
@@ -540,6 +541,7 @@ export default function SettingsScreen() {
                   onValueChange={handleNotificationToggle}
                   trackColor={switchTrackColor}
                   thumbColor="#ffffff"
+                  ios_backgroundColor="#E5E7EB"
                 />
               }
             />
@@ -579,6 +581,7 @@ export default function SettingsScreen() {
                   onValueChange={handleHapticToggle}
                   trackColor={switchTrackColor}
                   thumbColor="#ffffff"
+                  ios_backgroundColor="#E5E7EB"
                 />
               }
             />
