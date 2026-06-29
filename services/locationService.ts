@@ -14,14 +14,17 @@ import { NOTIFICATION_CONSTANTS } from "../constants";
 import { useStatsStore } from "../store/useStatsStore";
 import { useLocationStore } from "../store/useLocationStore";
 import { fetchMarkets } from "./overpassService";
+import { notificationEngine } from "./notificationEngine";
 
 const SEARCH_RADIUS = 1000;
 const OVERPASS_FETCH_RADIUS = 2500;
 const MIN_NEARBY_CACHE_THRESHOLD = 3;
 
-let consecutiveHighSpeedCount = 0;
-const REQUIRED_HIGH_SPEED_COUNT = 3;
-const HIGH_SPEED_THRESHOLD = 6.94; // ~25 km/h
+let speedHistory: { speed: number; timestamp: number }[] = [];
+const geofenceState: Map<string, 'outside' | 'inside'> = new Map();
+const dwellTimers = new Map<string, number>();
+const exitGraceTimers = new Map<string, number>();
+const notifiedStores = new Map<string, { lat: number; lon: number; timestamp: number }>();
 
 export const requestLocationPermissions = async (): Promise<boolean> => {
   const { status: foreground } = await Location.requestForegroundPermissionsAsync();
@@ -46,9 +49,6 @@ export const getCurrentLocation = async (): Promise<Location.LocationObject | nu
 
 export const BACKGROUND_LOCATION_TASK = "background-location-task";
 
-// Module-level in-memory Map — lost on app kill
-const dwellTimers = new Map<string, number>();
-
 export const getDwellTimersState = () => {
   return Array.from(dwellTimers.entries()).map(([id, entryTime]) => ({
     id,
@@ -56,7 +56,7 @@ export const getDwellTimersState = () => {
   }));
 };
 
-const getSettingsFromStorage = async () => {
+export const getSettingsFromStorage = async () => {
   try {
     const data = await AsyncStorage.getItem("settings-storage");
     if (data) {
@@ -82,127 +82,169 @@ const getSettingsFromStorage = async () => {
   };
 };
 
+import { geofenceManager } from "./geofenceManager";
+
 export const processLocationUpdate = async (location: Location.LocationObject) => {
   const { addDebugLog, incrementDebugMetric, setDebugMetric } = useLocationStore.getState();
   incrementDebugMetric("backgroundExecutions");
   addDebugLog("Background task started");
 
-  const { latitude, longitude, speed } = location.coords;
-  addDebugLog(`Speed: ${speed ? speed.toFixed(2) : '0.00'} m/s`);
+  const { latitude, longitude, speed, accuracy } = location.coords;
+  addDebugLog(`Speed: ${speed ? speed.toFixed(2) : '0.00'} m/s, Acc: ${accuracy ? accuracy.toFixed(0) : '?'}m`);
 
-  // 1. Read settings
+  // 1. Settings Guard
   const settings = await getSettingsFromStorage();
-
-  // 2. GUARD: Ensure notifications are enabled globally and for background
   if (!settings.notificationsEnabled || !settings.backgroundNotifications) {
     addDebugLog("Notifications disabled in settings");
     return;
   }
 
-  // 3. SPEED CHECK
-  if (speed !== null && speed > HIGH_SPEED_THRESHOLD) {
-    consecutiveHighSpeedCount++;
-    addDebugLog(`High speed detected: ${speed.toFixed(2)}m/s. Count: ${consecutiveHighSpeedCount}`);
-    setDebugMetric("consecutiveHighSpeedCount", consecutiveHighSpeedCount);
-    if (consecutiveHighSpeedCount >= REQUIRED_HIGH_SPEED_COUNT) {
-      addDebugLog("Ignored update due to sustained high speed");
-      return;
-    }
-  } else {
-    consecutiveHighSpeedCount = 0;
-    setDebugMetric("consecutiveHighSpeedCount", 0);
-  }
-
-  // 4. FIND NEARBY STORES (CACHE-FIRST)
-  let nearbyStores = await geoEngine.getNearbyStores(latitude, longitude, settings.savedStoresOnly, SEARCH_RADIUS);
-  addDebugLog(`Nearby cached stores: ${nearbyStores.length}`);
-  
-  // 5. CACHE MISS & THROTTLE LOGIC
-  if (nearbyStores.length < MIN_NEARBY_CACHE_THRESHOLD && !settings.savedStoresOnly) {
-    addDebugLog("Threshold miss");
-    
-    // Check if there are active unpurchased items before doing ANY network requests
-    const hasActiveList = await geoEngine.hasActiveShoppingList();
-    addDebugLog(`Active list: ${hasActiveList ? 'Yes' : 'No'}`);
-    if (!hasActiveList) {
-      addDebugLog("No active lists. Skipping Overpass fetch.");
-    } else {
-      // Check throttle (1.5km from last fetch)
-      const lastCoords = useLocationStore.getState().lastBackgroundFetchCoords;
-      let shouldFetch = true;
-      if (lastCoords) {
-        const distFromLastFetch = getDistance(latitude, longitude, lastCoords.latitude, lastCoords.longitude);
-        if (distFromLastFetch < 1500) {
-          addDebugLog(`Fetch throttled: Yes (${distFromLastFetch.toFixed(0)}m from last fetch)`);
-          setDebugMetric("fetchThrottled", true);
-          shouldFetch = false;
-        }
-      }
-
-      if (shouldFetch) {
-        setDebugMetric("fetchThrottled", false);
-        addDebugLog("Fetch throttled: No");
-        addDebugLog("Overpass fetch started");
-        incrementDebugMetric("overpassRequests");
-        try {
-          const bbox = geoEngine.getBoundingBox(latitude, longitude, OVERPASS_FETCH_RADIUS);
-          const newMarkets = await fetchMarkets(bbox.south, bbox.west, bbox.north, bbox.east);
-          addDebugLog(`Overpass fetch completed (${newMarkets.length} stores)`);
-          
-          if (newMarkets.length > 0) {
-            useLocationStore.getState().appendCachedMarkets(newMarkets);
-            useLocationStore.getState().setLastBackgroundFetchCoords({ latitude, longitude });
-            addDebugLog(`Cache size: ${useLocationStore.getState().cachedMarkets.length}`);
-            
-            // Re-evaluate nearby stores with updated cache
-            nearbyStores = await geoEngine.getNearbyStores(latitude, longitude, settings.savedStoresOnly, SEARCH_RADIUS);
-            addDebugLog(`Re-evaluated: Found ${nearbyStores.length} nearby stores in cache.`);
-          }
-        } catch (e: any) {
-          addDebugLog(`Overpass fetch failed: ${e.message}`);
-        }
-      }
-    }
-  } else {
-    // If we didn't go through the threshold miss block, just log active list status for clarity
-    const hasActiveList = await geoEngine.hasActiveShoppingList();
-    addDebugLog(`Active list: ${hasActiveList ? 'Yes' : 'No'}`);
-  }
-
-  const insideStores = nearbyStores.filter(s => s.distance <= s.radius);
-
-  if (insideStores.length === 0) {
-    addDebugLog("Not inside any store geofence, clearing dwell timers");
-    dwellTimers.clear();
+  // 2. GPS Accuracy Filter
+  if (accuracy && accuracy > NOTIFICATION_CONSTANTS.MAX_GPS_ACCURACY) {
+    addDebugLog(`GPS accuracy too low: ${accuracy.toFixed(0)}m. Ignoring.`);
     return;
   }
 
-  // 6. ACTIVE LIST CHECK (For notification evaluation)
-  const hasActiveListFinal = await geoEngine.hasActiveShoppingList();
-  if (!hasActiveListFinal) return;
+  // 3. Timestamp Validation
+  const now = Date.now();
+  if (now - location.timestamp > NOTIFICATION_CONSTANTS.MAX_LOCATION_AGE_MS) {
+    addDebugLog(`Location too old: ${now - location.timestamp}ms. Ignoring.`);
+    return;
+  }
 
-  // 6. DWELL TIME VALIDATION (in-memory)
-  const insideIds = new Set(insideStores.map((s) => s.id));
-  
-  // Clean up old timers
-  for (const [id] of dwellTimers) {
-    if (!insideIds.has(id)) {
-      dwellTimers.delete(id);
+  // 4. Moving Average Speed
+  if (speed !== null) {
+    speedHistory.push({ speed, timestamp: now });
+    // Keep only last N
+    if (speedHistory.length > NOTIFICATION_CONSTANTS.SPEED_WINDOW_SIZE) {
+      speedHistory.shift();
+    }
+    const avgSpeed = speedHistory.reduce((sum, h) => sum + h.speed, 0) / speedHistory.length;
+    
+    if (avgSpeed > NOTIFICATION_CONSTANTS.SPEED_THRESHOLD_MS) {
+      addDebugLog(`High avg speed detected: ${avgSpeed.toFixed(2)}m/s. Ignoring.`);
+      return;
     }
   }
 
-  const dwelledStores: typeof nearbyStores = [];
-  const now = Date.now();
+  // 5. Clean up old notified stores (> 24h)
+  for (const [id, data] of notifiedStores) {
+    if (now - data.timestamp > 24 * 60 * 60 * 1000) {
+      notifiedStores.delete(id);
+    }
+  }
 
+  // 6. Unpurchased Items (Single read)
+  const unpurchasedItems = await geoEngine.getUnpurchasedItems();
+  if (unpurchasedItems.length === 0) {
+    addDebugLog("No active lists. Skipping Overpass fetch and geofencing.");
+    return;
+  }
+
+  // 7. FIND NEARBY STORES (Exclude saved)
+  let nearbyStores = await geoEngine.getNearbyStores(latitude, longitude, settings.savedStoresOnly, SEARCH_RADIUS, true);
+  addDebugLog(`Nearby cached unsaved stores: ${nearbyStores.length}`);
+
+  // 8. OVERPASS FETCH (Cache miss)
+  if (nearbyStores.length < MIN_NEARBY_CACHE_THRESHOLD && !settings.savedStoresOnly) {
+    const lastCoords = useLocationStore.getState().lastBackgroundFetchCoords;
+    let shouldFetch = true;
+    if (lastCoords) {
+      const distFromLastFetch = getDistance(latitude, longitude, lastCoords.latitude, lastCoords.longitude);
+      if (distFromLastFetch < 1500) {
+        addDebugLog(`Fetch throttled: Yes (${distFromLastFetch.toFixed(0)}m from last fetch)`);
+        setDebugMetric("fetchThrottled", true);
+        shouldFetch = false;
+      }
+    }
+
+    if (shouldFetch) {
+      setDebugMetric("fetchThrottled", false);
+      addDebugLog("Overpass fetch started");
+      incrementDebugMetric("overpassRequests");
+      try {
+        const bbox = geoEngine.getBoundingBox(latitude, longitude, OVERPASS_FETCH_RADIUS);
+        const newMarkets = await fetchMarkets(bbox.south, bbox.west, bbox.north, bbox.east);
+        addDebugLog(`Overpass fetch completed (${newMarkets.length} stores)`);
+        
+        if (newMarkets.length > 0) {
+          useLocationStore.getState().appendCachedMarkets(newMarkets);
+          useLocationStore.getState().setLastBackgroundFetchCoords({ latitude, longitude });
+          nearbyStores = await geoEngine.getNearbyStores(latitude, longitude, settings.savedStoresOnly, SEARCH_RADIUS, true);
+        }
+      } catch (e: any) {
+        addDebugLog(`Overpass fetch failed: ${e.message}`);
+      }
+    }
+  }
+
+  // 9. FILTER INSIDE STORES & MIN EXIT DISTANCE
+  const insideStores = nearbyStores.filter(s => {
+    if (s.distance > (s.radius || NOTIFICATION_CONSTANTS.DEFAULT_GEOFENCE_RADIUS)) return false;
+    
+    const notified = notifiedStores.get(s.id);
+    if (notified) {
+      const distFromNotify = getDistance(latitude, longitude, notified.lat, notified.lon);
+      if (distFromNotify < NOTIFICATION_CONSTANTS.MIN_EXIT_DISTANCE) {
+        addDebugLog(`Still too close to notified coords for ${s.name} (${distFromNotify.toFixed(0)}m)`);
+        return false;
+      } else {
+        notifiedStores.delete(s.id); // cleared min exit distance
+      }
+    }
+    return true;
+  });
+
+  const currentInsideIds = new Set(insideStores.map(s => s.id));
+
+  // 10. ENTER DETECTION STATE MACHINE
+  const enterEvents: string[] = [];
+  const exitEvents: string[] = [];
+  
+  for (const id of currentInsideIds) {
+    if (geofenceState.get(id) !== 'inside') {
+      enterEvents.push(id);
+      geofenceState.set(id, 'inside');
+    }
+  }
+  for (const [id, state] of geofenceState) {
+    if (state === 'inside' && !currentInsideIds.has(id)) {
+      exitEvents.push(id);
+      geofenceState.set(id, 'outside');
+    }
+  }
+
+  // 11. EXIT GRACE PERIOD
+  for (const id of exitEvents) {
+    if (!exitGraceTimers.has(id)) {
+      exitGraceTimers.set(id, now);
+      addDebugLog(`Exit grace started for ${id}`);
+    }
+  }
+
+  for (const [id, exitTime] of exitGraceTimers) {
+    if (currentInsideIds.has(id)) {
+      exitGraceTimers.delete(id); // re-entered
+      addDebugLog(`Re-entered ${id}, cleared exit grace`);
+    } else if (now - exitTime > NOTIFICATION_CONSTANTS.EXIT_GRACE_PERIOD_MS) {
+      dwellTimers.delete(id);
+      exitGraceTimers.delete(id);
+      addDebugLog(`Exit grace expired for ${id}, cleared dwell timer`);
+    }
+  }
+
+  // 12. DWELL TIME
+  const dwelledStores: typeof nearbyStores = [];
   for (const store of insideStores) {
-    if (!dwellTimers.has(store.id)) {
-      addDebugLog(`Started dwell timer for ${store.name}`);
-      // Start timer
-      dwellTimers.set(store.id, now);
-    } else {
+    // We only process unsaved stores in this pipeline
+    if (enterEvents.includes(store.id)) {
+      if (!dwellTimers.has(store.id)) {
+        addDebugLog(`Started dwell timer for ${store.name}`);
+        dwellTimers.set(store.id, now);
+      }
+    } else if (dwellTimers.has(store.id)) {
       const entryTime = dwellTimers.get(store.id)!;
       const elapsed = now - entryTime;
-      addDebugLog(`Dwell time for ${store.name}: ${elapsed}ms (target: ${NOTIFICATION_CONSTANTS.DWELL_TIME_MS}ms)`);
       if (elapsed >= NOTIFICATION_CONSTANTS.DWELL_TIME_MS) {
         dwelledStores.push(store);
       }
@@ -210,25 +252,25 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
   }
 
   if (dwelledStores.length === 0) {
-    addDebugLog("Dwell time not met");
+    addDebugLog("No stores meeting dwell time");
+    void geofenceManager.rebalanceGeofences(latitude, longitude);
     return;
   }
   addDebugLog(`Stores meeting dwell time: ${dwelledStores.map(s => s.name).join(', ')}`);
-  
-  // Record store visits (independent of notification logic)
+
+  // Record store visits
   for (const store of dwelledStores) {
     useStatsStore.getState().recordStoreVisit(store.id);
   }
 
-  // 7. PICK BEST STORE
-  const bestStore = await notificationEngine.pickBestStore(dwelledStores);
+  // 13. PICK BEST STORE
+  const bestStore = await notificationEngine.pickBestStore(dwelledStores, unpurchasedItems.length);
   if (!bestStore) {
-    addDebugLog("No best store picked (cooldowns, etc.)");
+    void geofenceManager.rebalanceGeofences(latitude, longitude);
     return;
   }
 
-  addDebugLog(`Checking restrictions for ${bestStore.name}`);
-  // 8. SHOULD SEND (Cooldowns, Tier limits, Quiet hours)
+  // 14. SHOULD SEND
   const decision = await notificationEngine.shouldSendLocationNotification({
     storeId: bestStore.id,
     isPro: settings.isPro,
@@ -237,26 +279,28 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
 
   if (!decision.allowed) {
     addDebugLog(`Notification blocked: ${decision.reason}`);
+    void geofenceManager.rebalanceGeofences(latitude, longitude);
     return;
   }
 
+  // 15. SEND NOTIFICATION
   addDebugLog("Notification triggered");
-  const { incrementDebugMetric: idm } = useLocationStore.getState();
-  idm("notificationsTriggered");
+  incrementDebugMetric("notificationsTriggered");
 
-  // 9. SEND NOTIFICATION
-  const content = notificationEngine.buildNotificationContent(bestStore.name);
+  const content = await notificationEngine.buildNotificationContent(bestStore.name, unpurchasedItems);
   await sendLocalNotification(content.title, content.body, "geofence-alerts");
 
-  // 10. RECORD in analytics store
   await notificationAnalytics.recordNotification(
     content.title,
     content.body,
     bestStore.id
   );
   
-  // Once sent, remove from dwell timer to avoid immediate re-evaluation if cooldowns fail for some reason
   dwellTimers.delete(bestStore.id);
+  notifiedStores.set(bestStore.id, { lat: latitude, lon: longitude, timestamp: now });
+
+  // 16. TRIGGER REBALANCE
+  void geofenceManager.rebalanceGeofences(latitude, longitude);
 };
 
 TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {

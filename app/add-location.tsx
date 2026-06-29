@@ -23,7 +23,7 @@ import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useLocationStore, useSettingsStore } from "@/store";
 import { getCurrentLocation } from "@/services/locationService";
 import { Colors, GEOFENCE_DEFAULT_RADIUS } from "@/constants/theme";
-import { FREE_TIER, getMaxSavedStores } from "@/constants/tierConfig";
+import { FREE_TIER, getMaxSavedStores, getGeofenceRadiusOptions } from "@/constants/tierConfig";
 import { showPaywall } from "@/services/paywallService";
 
 export default function AddLocationScreen() {
@@ -286,47 +286,27 @@ export default function AddLocationScreen() {
               className="bg-white rounded-2xl p-4 shadow-sm"
               style={!canAdjustRadius ? { opacity: 0.6 } : undefined}
             >
-              <View className="flex-row items-center justify-between">
-                <Pressable
-                  onPress={() => {
-                    if (!canAdjustRadius) { handleRadiusUpsell(); return; }
-                    setRadius(Math.max(50, radius - 50));
-                  }}
-                  className="w-10 h-10 rounded-xl bg-surface-100 items-center justify-center"
-                >
-                  <Minus size={18} color={Colors.surface[600]} />
-                </Pressable>
-                <View className="items-center">
-                  <Text className="text-2xl font-bold text-surface-900">
-                    {canAdjustRadius ? radius : GEOFENCE_DEFAULT_RADIUS}
-                  </Text>
-                  <Text className="text-xs text-surface-400">meters{!canAdjustRadius ? ' (fixed)' : ''}</Text>
-                </View>
-                <Pressable
-                  onPress={() => {
-                    if (!canAdjustRadius) { handleRadiusUpsell(); return; }
-                    setRadius(Math.min(1000, radius + 50));
-                  }}
-                  className="w-10 h-10 rounded-xl bg-primary-100 items-center justify-center"
-                >
-                  <Plus size={18} color={Colors.primary[500]} />
-                </Pressable>
+              <View className="flex-row items-center justify-center mb-4">
+                <Text className="text-3xl font-bold text-surface-900">
+                  {canAdjustRadius ? radius : GEOFENCE_DEFAULT_RADIUS}
+                </Text>
+                <Text className="text-sm text-surface-400 ml-1">meters{!canAdjustRadius ? ' (fixed)' : ''}</Text>
               </View>
-              <View className="flex-row justify-between mt-3 px-2">
-                {[100, 200, 300, 500].map((r) => (
+              <View className="flex-row justify-between px-1">
+                {getGeofenceRadiusOptions(isPro).map((r) => (
                   <Pressable
                     key={r}
                     onPress={() => {
                       if (!canAdjustRadius) { handleRadiusUpsell(); return; }
                       setRadius(r);
                     }}
-                    className={`px-3 py-1.5 rounded-lg ${
-                      (canAdjustRadius ? radius : GEOFENCE_DEFAULT_RADIUS) === r ? "bg-primary-100" : "bg-surface-50"
+                    className={`flex-1 mx-1 py-3 rounded-xl items-center justify-center ${
+                      (canAdjustRadius ? radius : GEOFENCE_DEFAULT_RADIUS) === r ? "bg-primary-500 shadow-sm" : "bg-surface-50 border border-surface-100"
                     }`}
                   >
                     <Text
-                      className={`text-xs font-semibold ${
-                        (canAdjustRadius ? radius : GEOFENCE_DEFAULT_RADIUS) === r ? "text-primary-500" : "text-surface-400"
+                      className={`text-sm font-bold ${
+                        (canAdjustRadius ? radius : GEOFENCE_DEFAULT_RADIUS) === r ? "text-white" : "text-surface-500"
                       }`}
                     >
                       {r}m

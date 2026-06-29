@@ -30,7 +30,7 @@ export const PRO_TIER = {
   maxItemsPerList: 500,
   maxLocationNotificationsPerDay: Infinity,
   maxMutedShops: Infinity,
-  geofenceRadiusOptions: [100, 200, 300, 500] as const,
+  geofenceRadiusOptions: [100, 150, 250, 500] as const,
   canCustomizeGeofenceRadius: true,
   canCustomizeNotifications: true,
   canSetQuietHours: true,
@@ -75,3 +75,9 @@ export const getMaxItemsPerList = (isPro: boolean): number =>
  */
 export const getMaxMutedShops = (isPro: boolean): number =>
   isPro ? PRO_TIER.maxMutedShops : FREE_TIER.maxMutedShops;
+
+/**
+ * Returns the available geofence radius options for the given tier.
+ */
+export const getGeofenceRadiusOptions = (isPro: boolean): readonly number[] =>
+  isPro ? PRO_TIER.geofenceRadiusOptions : [FREE_TIER.fixedGeofenceRadius];

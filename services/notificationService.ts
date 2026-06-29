@@ -65,7 +65,7 @@ export const sendLocalNotification = async (
     content: {
       title,
       body,
-      sound: soundEnabled ? "default" : null,
+      sound: soundEnabled ? "default" : undefined,
       ...(Platform.OS === "android" && {
         channelId,
       }),

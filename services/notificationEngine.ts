@@ -10,8 +10,37 @@ export const notificationEngine = {
     isPro: boolean;
     nightNotificationsEnabled: boolean;
   }): Promise<{ allowed: boolean; reason?: string }> => {
-    // TEST MODE: Bypass all restrictions
-    console.log(`[TEST] Bypassing restrictions for store: ${params.storeId}`);
+    const state = await notificationAnalytics.getState();
+
+    // 1. Global Cooldown Check
+    const isGlobalCooling = notificationAnalytics.isGlobalCooldownActive(state);
+    if (isGlobalCooling) {
+      return { allowed: false, reason: "global_cooldown" };
+    }
+
+    // 2. Store Cooldown Check
+    const isStoreCooling = notificationAnalytics.isStoreCoolingDown(state, params.storeId);
+    if (isStoreCooling) {
+      return { allowed: false, reason: "store_cooldown" };
+    }
+
+    // 3. Quiet Hours Check
+    if (notificationEngine.isInQuietHours(params.nightNotificationsEnabled)) {
+      return { allowed: false, reason: "quiet_hours" };
+    }
+
+    // 4. Daily Limit Check
+    const canSend = notificationAnalytics.canSendDailyNotification(state, params.isPro);
+    if (!canSend) {
+      return { allowed: false, reason: "daily_limit_reached" };
+    }
+
+    // 5. Fingerprint Deduplication Check
+    const hasSent = notificationAnalytics.hasFingerprint(state, params.storeId);
+    if (hasSent) {
+      return { allowed: false, reason: "fingerprint_dedup" };
+    }
+
     return { allowed: true };
   },
 
@@ -19,19 +48,45 @@ export const notificationEngine = {
    * Pick the best store from a list of candidates.
    */
   pickBestStore: async (
-    nearbyStores: (SavedLocation & { distance: number })[]
+    nearbyStores: (SavedLocation & { distance: number })[],
+    unpurchasedItemCount: number
   ): Promise<(SavedLocation & { distance: number }) | null> => {
     if (nearbyStores.length === 0) return null;
 
-    // TEST MODE: Bypass store cooldown checks
-    console.log(`[TEST] Picking best store from: ${nearbyStores.map(s => s.name).join(", ")}`);
-    return nearbyStores[0];
+    const scoredStores = nearbyStores.map(store => {
+      let score = 0;
+      // Saved store bonus (isUnsaved will be set by geoEngine for background discoveries)
+      score += (store as any).isUnsaved ? 0 : 100;
+      // Proximity bonus: (1 - distance/radius) * 30
+      const radius = store.radius || 150;
+      score += Math.max(0, (1 - store.distance / radius) * 30);
+      // Item count bonus: up to 50 points
+      score += 5 * Math.min(unpurchasedItemCount, 10);
+
+      return { ...store, score };
+    });
+
+    // Sort descending by score
+    scoredStores.sort((a, b) => b.score - a.score);
+    return scoredStores[0];
   },
 
-  buildNotificationContent: (storeName: string): { title: string; body: string } => {
+  buildNotificationContent: async (
+    storeName: string,
+    unpurchasedItems: { name: string }[]
+  ): Promise<{ title: string; body: string }> => {
+    const maxShow = 3;
+    const names = unpurchasedItems.slice(0, maxShow).map((i) => i.name);
+    const remaining = unpurchasedItems.length - maxShow;
+
+    let body = `You still need: ${names.join(", ")}`;
+    if (remaining > 0) {
+      body += ` (+${remaining} more)`;
+    }
+
     return {
-      title: "You're Near a Saved Store",
-      body: `You still have items waiting on your shopping list.`,
+      title: `You're near ${storeName}`,
+      body,
     };
   },
 

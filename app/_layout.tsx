@@ -10,7 +10,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { enableFreeze } from "react-native-screens";
 import Purchases from 'react-native-purchases';
-import { Platform } from 'react-native';
+import { Platform, AppState } from 'react-native';
 
 enableFreeze(false);
 
@@ -24,6 +24,7 @@ import { useShoppingListStore } from "@/store/useShoppingListStore";
 import { useNotificationsStore } from "@/store/useNotificationsStore";
 import { notificationEngine } from "@/services/notificationEngine";
 import { startBackgroundLocationTracking } from "@/services/locationService";
+import { geofenceManager } from "@/services/geofenceManager";
 
 // Prevent splash screen auto-hide
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -55,6 +56,16 @@ export default function RootLayout() {
     }
   }, [_hasHydrated]);
 
+  // Foreground sync for geofences
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState === "active") {
+        void geofenceManager.syncSavedStores();
+      }
+    });
+    return () => subscription.remove();
+  }, []);
+
   // Initialize RevenueCat
   useEffect(() => {
     try {
@@ -62,9 +73,9 @@ export default function RootLayout() {
       const appleKey = 'test_ekQnmmklJNsRbinvPyXIYfVBPBJ'; // Sizin verdiğiniz test anahtarı
       const googleKey = 'test_ekQnmmklJNsRbinvPyXIYfVBPBJ'; // Android için de şimdilik aynısını koyduk
       
-      if (Platform.OS === 'ios' && appleKey !== 'YOUR_APPLE_API_KEY_HERE') {
+      if (Platform.OS === 'ios') {
         Purchases.configure({ apiKey: appleKey });
-      } else if (Platform.OS === 'android' && googleKey !== 'YOUR_GOOGLE_API_KEY_HERE') {
+      } else if (Platform.OS === 'android') {
         Purchases.configure({ apiKey: googleKey });
       }
     } catch (e) {
@@ -98,7 +109,10 @@ export default function RootLayout() {
     // Sync notifications from analytics to Zustand
     await useNotificationsStore.getState().syncFromAnalytics();
     
-    // Attempt to start background location tracking
+    // Sync saved store native geofences first
+    await geofenceManager.syncSavedStores();
+
+    // Attempt to start background location tracking for unsaved discovery pipeline
     await startBackgroundLocationTracking();
 
     // Check if we should show the notification pre-permission screen
@@ -131,10 +145,8 @@ export default function RootLayout() {
               gestureEnabled: true,
               fullScreenGestureEnabled: true,
               animationDuration: 350,
-              // Prevent previous screen from being detached/unmounted during navigation.
-              // This avoids the blank/white screen flash during swipe-back gestures,
               // especially when the previous screen contains heavy components like MapView.
-              detachPreviousScreen: false}}
+              }}
           >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen

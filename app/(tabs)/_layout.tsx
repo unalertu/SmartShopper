@@ -292,7 +292,7 @@ export default function TabLayout() {
         ),
         sceneStyle: { backgroundColor: '#F2F2F7' },
         freezeOnBlur: false,
-        unmountOnBlur: false}}
+        }}
     >
       <Tabs.Screen name="index" options={{ title: "Home" }} />
       <Tabs.Screen name="stores" options={{ title: "Shops", headerShown: false }} />

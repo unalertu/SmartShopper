@@ -1,7 +1,7 @@
 import React from 'react';
 import Svg, { Path, Circle } from 'react-native-svg';
 
-export default function AppLogo({ width = 110, height = 110, color = '#0f172a', strokeWidth = 5, style }) {
+export default function AppLogo({ width = 110, height = 110, color = '#0f172a', strokeWidth = 5, style }: any) {
   return (
     <Svg width={width} height={height} viewBox="0 0 100 100" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={style}>
       {/* Handle and back vertical line */}

@@ -115,7 +115,7 @@ export default function HomeScreen() {
             
             // Collect all area-based descriptors (excluding street)
             const candidates = [
-              loc.neighborhood,
+              (loc as any).neighborhood,
               loc.district,
               loc.subregion,
               loc.city

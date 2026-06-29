@@ -68,7 +68,7 @@ export default function ListDetails() {
   const { isPro, distanceUnit } = useSettingsStore();
 
   const [deletedItem, setDeletedItem] = useState<any>(null);
-  const hideToastTimeout = useRef<NodeJS.Timeout | null>(null);
+  const hideToastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastOpacity = useRef(new Animated.Value(0)).current;
 
   const handleRemoveItem = (item: any) => {
@@ -238,7 +238,7 @@ export default function ListDetails() {
     setNote('');
     setIsNoteVisible(false);
     setSelectedCategory('🛒 General');
-    setActiveSuggestionTab('quick');
+    setActiveSuggestionTab('recent');
   };
 
   const handleAddItem = () => {
@@ -267,7 +267,7 @@ export default function ListDetails() {
           : [
               { text: 'OK', style: 'cancel' },
               { text: 'Upgrade to Pro', onPress: () => {
-                  setIsAddModalVisible(false);
+                  closeModal();
                   showPaywall();
                 }
               },

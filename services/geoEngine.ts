@@ -58,6 +58,25 @@ export const geoEngine = {
     return false;
   },
 
+  getUnpurchasedItems: async (): Promise<{ name: string }[]> => {
+    try {
+      const data = await AsyncStorage.getItem("shopping-list-storage");
+      if (data) {
+        const parsed = JSON.parse(data);
+        const items: ShoppingItem[] = parsed?.state?.items || [];
+        return items.filter((item: ShoppingItem) => !item.isPurchased).map((item) => ({ name: item.name }));
+      }
+    } catch (e) {
+      console.error("geoEngine getUnpurchasedItems error", e);
+    }
+    return [];
+  },
+
+  getUnpurchasedItemCount: async (): Promise<number> => {
+    const items = await geoEngine.getUnpurchasedItems();
+    return items.length;
+  },
+
   hasActiveShoppingList: async (): Promise<boolean> => {
     try {
       // Must have at least one list
@@ -77,18 +96,23 @@ export const geoEngine = {
 
   /**
    * Get nearby stores sorted by distance (closest first).
-   * Supports both saved locations and unsaved markets (if savedStoresOnly is false).
+   * Supports both saved locations and unsaved markets.
+   * If excludeSaved is true, it only returns unsaved cached markets.
    */
   getNearbyStores: async (
     lat: number,
     lon: number,
     savedStoresOnly: boolean,
-    searchRadius?: number
+    searchRadius?: number,
+    excludeSaved?: boolean
   ): Promise<(SavedLocation & { distance: number })[]> => {
-    const locations = await geoEngine.getLocations();
-    const activeLocations = locations.filter((loc: SavedLocation) => loc.isActive);
+    let allCandidates: SavedLocation[] = [];
 
-    let allCandidates = [...activeLocations];
+    if (!excludeSaved) {
+      const locations = await geoEngine.getLocations();
+      const activeLocations = locations.filter((loc: SavedLocation) => loc.isActive);
+      allCandidates = [...activeLocations];
+    }
 
     if (!savedStoresOnly) {
       const cachedMarkets = await geoEngine.getCachedMarkets();

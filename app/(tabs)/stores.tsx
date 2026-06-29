@@ -23,7 +23,7 @@ import StoreMarker from '../../components/StoreMarker';
 import { MapSearchIndicator } from '../../components/MapSearchIndicator';
 import { create } from 'zustand';
 import { Alert } from 'react-native';
-import { FREE_TIER, getMaxSavedStores } from '@/constants/tierConfig';
+import { FREE_TIER, getMaxSavedStores, GEOFENCE_DEFAULT_RADIUS } from '@/constants';
 import ConfirmationSheet from '../../components/ConfirmationSheet';
 import { showPaywall } from "@/services/paywallService";
 
@@ -117,7 +117,7 @@ async function reverseGeocodeAddress(latitude: number, longitude: number): Promi
     if (result && result.length > 0) {
       const loc = result[0];
       const candidates = [
-        loc.neighborhood,
+        (loc as any).neighborhood,
         loc.district,
         loc.subregion,
         loc.city
@@ -988,9 +988,8 @@ export default function StoresScreen() {
           stiffness: 300,
           mass: 1,
           overshootClamping: true,
-          restDisplacementThreshold: 0.1,
-          restSpeedThreshold: 0.1,
         }}
+
         enableDynamicSizing={false}
         enablePanDownToClose={false}
         handleStyle={{ paddingBottom: 4, paddingTop: 12 }}
@@ -1089,7 +1088,7 @@ export default function StoresScreen() {
                         address: selectedShopToSave.address || 'Unknown Address',
                         latitude: selectedShopToSave.latitude,
                         longitude: selectedShopToSave.longitude,
-                        radius: 500});
+                        radius: GEOFENCE_DEFAULT_RADIUS});
                       setSelectedShopToSave(null);
                     }}
                   >

@@ -89,29 +89,29 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       ...DEFAULT_SETTINGS,
 
-      setHasHydrated: (state) => set({ _hasHydrated: state }),
-      setNotificationsEnabled: (enabled) =>
+      setHasHydrated: (state: boolean) => set({ _hasHydrated: state }),
+      setNotificationsEnabled: (enabled: boolean) =>
         set({ notificationsEnabled: enabled }),
-      setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
-      setHapticEnabled: (enabled) => set({ hapticEnabled: enabled }),
+      setSoundEnabled: (enabled: boolean) => set({ soundEnabled: enabled }),
+      setHapticEnabled: (enabled: boolean) => set({ hapticEnabled: enabled }),
       
-      setSavedStoresOnly: (enabled) => set({ savedStoresOnly: enabled }),
-      setShoppingListReminders: (enabled) => set({ shoppingListReminders: enabled }),
-      setBackgroundNotifications: (enabled) => set({ backgroundNotifications: enabled }),
-      setLowPowerMode: (enabled) => set({ lowPowerMode: enabled }),
-      setAutoOpenNearbyList: (enabled) => set({ autoOpenNearbyList: enabled }),
-      setNotificationSensitivity: (sensitivity) => set({ notificationSensitivity: sensitivity }),
+      setSavedStoresOnly: (enabled: boolean) => set({ savedStoresOnly: enabled }),
+      setShoppingListReminders: (enabled: boolean) => set({ shoppingListReminders: enabled }),
+      setBackgroundNotifications: (enabled: boolean) => set({ backgroundNotifications: enabled }),
+      setLowPowerMode: (enabled: boolean) => set({ lowPowerMode: enabled }),
+      setAutoOpenNearbyList: (enabled: boolean) => set({ autoOpenNearbyList: enabled }),
+      setNotificationSensitivity: (sensitivity: NotificationSensitivity) => set({ notificationSensitivity: sensitivity }),
 
-      setLocationEnabled: (enabled) => set({ locationEnabled: enabled }),
+      setLocationEnabled: (enabled: boolean) => set({ locationEnabled: enabled }),
 
-      setDistanceUnit: (unit) => set({ distanceUnit: unit }),
-      setTheme: (theme) => set({ theme }),
-      setSmartSuggestionsEnabled: (enabled) =>
+      setDistanceUnit: (unit: DistanceUnit) => set({ distanceUnit: unit }),
+      setTheme: (theme: ThemeOption) => set({ theme }),
+      setSmartSuggestionsEnabled: (enabled: boolean) =>
         set({ smartSuggestionsEnabled: enabled }),
-      setAutoDeletePurchased: (enabled) =>
+      setAutoDeletePurchased: (enabled: boolean) =>
         set({ autoDeletePurchased: enabled }),
-      setIsPro: (enabled) => set({ isPro: enabled }),
-      resetSettings: () => set((state) => ({ ...DEFAULT_SETTINGS, isPro: state.isPro })),
+      setIsPro: (enabled: boolean) => set({ isPro: enabled }),
+      resetSettings: () => set((state: SettingsState) => ({ ...DEFAULT_SETTINGS, isPro: state.isPro })),
     }),
     {
       name: "settings-storage",

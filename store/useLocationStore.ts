@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getMaxSavedStores, FREE_TIER, PRO_TIER } from "../constants/tierConfig";
+import { geofenceManager } from "../services/geofenceManager";
+import { NOTIFICATION_CONSTANTS } from "../constants";
 
 export interface SavedLocation {
   id: string;
@@ -99,10 +101,29 @@ export const useLocationStore = create<LocationStoreState>()(
 
       setCachedMarkets: (markets) => set({ cachedMarkets: markets }),
       appendCachedMarkets: (markets) => set((state) => {
-        // deduplicate by ID
+        const now = Date.now();
+        // deduplicate by ID and add lastSeenAt
         const existingIds = new Set(state.cachedMarkets.map(m => m.id));
-        const newUnique = markets.filter(m => !existingIds.has(m.id));
-        return { cachedMarkets: [...state.cachedMarkets, ...newUnique] };
+        const newUnique = markets
+          .filter(m => !existingIds.has(m.id))
+          .map(m => ({ ...m, lastSeenAt: now }));
+          
+        let updatedMarkets = [...state.cachedMarkets, ...newUnique];
+        
+        // Cleanup cache
+        // 1. TTL: remove markets older than CACHE_TTL_MS
+        updatedMarkets = updatedMarkets.filter(m => {
+           if (!m.lastSeenAt) return true; // keep legacy ones or default to true
+           return (now - m.lastSeenAt) < NOTIFICATION_CONSTANTS.CACHE_TTL_MS;
+        });
+
+        // 2. LRU: keep max MAX_CACHED_MARKETS
+        if (updatedMarkets.length > NOTIFICATION_CONSTANTS.MAX_CACHED_MARKETS) {
+           updatedMarkets.sort((a, b) => (b.lastSeenAt || 0) - (a.lastSeenAt || 0));
+           updatedMarkets = updatedMarkets.slice(0, NOTIFICATION_CONSTANTS.MAX_CACHED_MARKETS);
+        }
+
+        return { cachedMarkets: updatedMarkets };
       }),
       setIsFetchingMarkets: (isFetching, center = null) => set({ 
         isFetchingMarkets: isFetching,
@@ -133,22 +154,26 @@ export const useLocationStore = create<LocationStoreState>()(
       clearDebugLogs: () => set({ debugLogs: [] }),
 
       addLocation: (location) =>
-        set((state) => ({
-          locations: [
-            {
-              ...location,
-              id: generateId(),
-              isActive: true,
-              createdAt: Date.now(),
-            },
-            ...state.locations,
-          ],
-        })),
+        set((state) => {
+          const newLoc = {
+            ...location,
+            id: generateId(),
+            isActive: true,
+            createdAt: Date.now(),
+          };
+          void geofenceManager.registerSavedStore(newLoc);
+          return {
+            locations: [newLoc, ...state.locations],
+          };
+        }),
 
       removeLocation: (id) =>
-        set((state) => ({
-          locations: state.locations.filter((loc) => loc.id !== id),
-        })),
+        set((state) => {
+          void geofenceManager.unregisterSavedStore(id);
+          return {
+            locations: state.locations.filter((loc) => loc.id !== id),
+          };
+        }),
 
       updateLocation: (id, updates) =>
         set((state) => ({
@@ -158,11 +183,20 @@ export const useLocationStore = create<LocationStoreState>()(
         })),
 
       toggleActive: (id) =>
-        set((state) => ({
-          locations: state.locations.map((loc) =>
+        set((state) => {
+          const updated = state.locations.map((loc) =>
             loc.id === id ? { ...loc, isActive: !loc.isActive } : loc
-          ),
-        })),
+          );
+          const toggled = updated.find(loc => loc.id === id);
+          if (toggled) {
+            if (toggled.isActive) {
+              void geofenceManager.registerSavedStore(toggled);
+            } else {
+              void geofenceManager.unregisterSavedStore(id);
+            }
+          }
+          return { locations: updated };
+        }),
 
       getActiveLocations: () =>
         get().locations.filter((loc) => loc.isActive),

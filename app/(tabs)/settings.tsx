@@ -435,7 +435,7 @@ export default function SettingsScreen() {
       }
       
       const bestStore = nearbyStores[0];
-      const content = notificationEngine.buildNotificationContent(bestStore.name);
+      const content = await notificationEngine.buildNotificationContent(bestStore.name, []);
       await sendLocalNotification(content.title, content.body, "geofence-alerts");
       
       console.log(`[TEST] Manually triggered test notification for ${bestStore.name}`);
@@ -492,11 +492,8 @@ export default function SettingsScreen() {
             <SettingsRow
               icon={<Sparkles size={20} color="#D4AF37" />}
               label="GeoCart Pro"
-              sublabel="Unlock all premium features"
-              onPress={() => {
-                hapticImpact(ImpactFeedbackStyle.Light);
-                showPaywall();
-              }}
+              sublabel={isPro ? undefined : "Unlock all premium features"}
+              onPress={handleProCardPress}
             />
             <SettingsRow
               icon={<RefreshCw size={20} color="#64748b" />}

@@ -96,7 +96,6 @@ function ManagementRow({
 export default function ProScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [featuresExpanded, setFeaturesExpanded] = useState(false);
   
   const { lifetimeRemindersSent, lifetimeTripsAssisted, lifetimeStoresVisited } = useStatsStore();
   const estimatedTimeSavedHours = (lifetimeTripsAssisted * 0.5).toFixed(1).replace('.0', '');
@@ -169,7 +168,7 @@ export default function ProScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 300,
+          paddingBottom: insets.bottom + 100,
           paddingTop: insets.top + 60,
           paddingHorizontal: 24,
         }}
@@ -248,10 +247,10 @@ export default function ProScreen() {
           entering={FadeInDown.duration(500).delay(250).springify()}
           className="bg-white border border-slate-100 rounded-3xl mb-8 px-5 py-2"
         >
-          {(featuresExpanded ? features : features.slice(0, 5)).map((feature, index) => (
+          {features.map((feature, index) => (
             <View
               key={index}
-              className={index < (featuresExpanded ? features.length : 5) - 1 ? 'border-b border-slate-50' : ''}
+              className={index < features.length - 1 ? 'border-b border-slate-50' : ''}
             >
               <FeatureRow
                 icon={feature.icon}
@@ -260,20 +259,6 @@ export default function ProScreen() {
               />
             </View>
           ))}
-          {!featuresExpanded && (
-            <TouchableOpacity
-              onPress={() => {
-                hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                setFeaturesExpanded(true);
-              }}
-              className="py-4 flex-row items-center justify-center border-t border-slate-50"
-            >
-              <Text className="text-[14px] font-medium text-[#C6A24B] mr-1">
-                +3 more premium features
-              </Text>
-              <ChevronDown size={16} color="#C6A24B" />
-            </TouchableOpacity>
-          )}
         </Animated.View>
 
         {/* Your GeoCart Impact */}
