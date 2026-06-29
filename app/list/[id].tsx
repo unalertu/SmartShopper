@@ -515,24 +515,26 @@ export default function ListDetails() {
           <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()} accessible={false}>
             <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 24) + 12 }}>
               {/* Focal Point (Input) */}
-          <View className="mb-5 z-10 border-b-2 border-slate-100 flex-row items-center h-14">
-            <BottomSheetTextInput
-              className="flex-1 text-2xl font-bold text-slate-900 py-0 h-full"
-              placeholder="Add item..."
-              placeholderTextColor="#94a3b8"
-              value={newItemText}
-              onChangeText={setNewItemText}
-              autoFocus={true}
-              cursorColor={Colors.primary[900]}
-              selectionColor={Colors.primary[900]}
-              style={{ textAlignVertical: "center" }}
-            />
-            <TouchableOpacity 
-              onPress={() => setNewItemText('')}
-              className="ml-2 p-2"
-            >
-              <X size={18} color={Colors.primary[900]} strokeWidth={3} />
-            </TouchableOpacity>
+          <View className="mb-5 z-10 flex-row items-center h-14">
+            <View className="flex-1 flex-row items-center h-full border-b-2 border-slate-100">
+              <BottomSheetTextInput
+                className="flex-1 text-2xl font-bold text-slate-900 py-0 h-full"
+                placeholder="Add item..."
+                placeholderTextColor="#94a3b8"
+                value={newItemText}
+                onChangeText={setNewItemText}
+                autoFocus={true}
+                cursorColor={Colors.primary[900]}
+                selectionColor={Colors.primary[900]}
+                style={{ textAlignVertical: "center" }}
+              />
+              <TouchableOpacity 
+                onPress={() => setNewItemText('')}
+                className="ml-2 p-2"
+              >
+                <X size={18} color={Colors.primary[900]} strokeWidth={3} />
+              </TouchableOpacity>
+            </View>
             <Animated.View style={{ transform: [{ scale: buttonScale as any }] }}>
               <TouchableOpacity 
                 disabled={!isButtonActive}
@@ -540,7 +542,7 @@ export default function ListDetails() {
                   hapticImpact(Haptics.ImpactFeedbackStyle.Light);
                   handleAddItem();
                 }} 
-                className={`ml-2 p-3 rounded-full ${isButtonActive ? 'bg-slate-900' : 'bg-slate-100'}`}
+                className={`ml-4 p-3 rounded-full ${isButtonActive ? 'bg-slate-900' : 'bg-slate-100'}`}
               >
                 <Plus size={24} color={isButtonActive ? "#ffffff" : "#94a3b8"} strokeWidth={2.5} />
               </TouchableOpacity>
