@@ -159,8 +159,8 @@ const ProStatusCard = React.memo(({ animatedStyle, isPro }: { animatedStyle: any
       </View>
       <View className="flex-row items-center gap-2">
         <View className={`${isPro ? 'bg-[#D4AF37]/15' : 'bg-[#0f172a]/10'} px-3 py-1 rounded-full flex-row items-center`}>
-          <Text className={`${isPro ? 'text-[#D4AF37]' : 'text-[#0f172a]'} font-medium text-[11px] uppercase tracking-wider`}>
-            {isPro ? 'Pro Active' : 'Free'}
+          <Text className={`${isPro ? 'text-[#D4AF37]' : 'text-[#0f172a]'} font-bold text-[14px] uppercase tracking-wider`}>
+            {isPro ? 'Pro' : 'Free'}
           </Text>
         </View>
         <ChevronRight size={16} color="#94a3b8" />
