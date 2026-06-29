@@ -276,8 +276,11 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
   const decision = await notificationEngine.shouldSendLocationNotification({
     storeId: bestStore.id,
     isPro: settings.isPro,
-    nightNotificationsEnabled: settings.nightNotificationsEnabled,
-    mutedDays: settings.mutedDays,
+    scheduleEnabled: settings.scheduleEnabled,
+    allowedDays: settings.allowedDays,
+    quietHoursEnabled: settings.quietHoursEnabled,
+    allowedHoursStart: settings.allowedHoursStart,
+    allowedHoursEnd: settings.allowedHoursEnd,
   });
 
   if (!decision.allowed) {

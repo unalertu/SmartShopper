@@ -41,7 +41,13 @@ interface SettingsState {
   notificationSensitivity: NotificationSensitivity;
 
   // ── Notification Schedule ──
-  mutedDays: number[];
+  scheduleEnabled: boolean;
+  allowedDays: number[];
+  
+  // ── Quiet Hours ──
+  quietHoursEnabled: boolean;
+  allowedHoursStart: number;
+  allowedHoursEnd: number;
 
   // ── Actions ──
   setNotificationsEnabled: (enabled: boolean) => void;
@@ -54,7 +60,11 @@ interface SettingsState {
   setLowPowerMode: (enabled: boolean) => void;
   setAutoOpenNearbyList: (enabled: boolean) => void;
   setNotificationSensitivity: (sensitivity: NotificationSensitivity) => void;
-  setMutedDays: (days: number[]) => void;
+  setScheduleEnabled: (enabled: boolean) => void;
+  setAllowedDays: (days: number[]) => void;
+  setQuietHoursEnabled: (enabled: boolean) => void;
+  setAllowedHoursStart: (hour: number) => void;
+  setAllowedHoursEnd: (hour: number) => void;
 
   setLocationEnabled: (enabled: boolean) => void;
 
@@ -78,7 +88,11 @@ const DEFAULT_SETTINGS = {
   lowPowerMode: false,
   autoOpenNearbyList: false,
   notificationSensitivity: "balanced" as const,
-  mutedDays: [] as number[],
+  scheduleEnabled: false,
+  allowedDays: [0, 1, 2, 3, 4, 5, 6], // All days allowed by default
+  quietHoursEnabled: false,
+  allowedHoursStart: 8, // 8 AM
+  allowedHoursEnd: 22, // 10 PM
 
   locationEnabled: false,
 
@@ -106,7 +120,11 @@ export const useSettingsStore = create<SettingsState>()(
       setLowPowerMode: (enabled: boolean) => set({ lowPowerMode: enabled }),
       setAutoOpenNearbyList: (enabled: boolean) => set({ autoOpenNearbyList: enabled }),
       setNotificationSensitivity: (sensitivity: NotificationSensitivity) => set({ notificationSensitivity: sensitivity }),
-      setMutedDays: (days: number[]) => set({ mutedDays: days }),
+      setScheduleEnabled: (enabled: boolean) => set({ scheduleEnabled: enabled }),
+      setAllowedDays: (days: number[]) => set({ allowedDays: days }),
+      setQuietHoursEnabled: (enabled: boolean) => set({ quietHoursEnabled: enabled }),
+      setAllowedHoursStart: (hour: number) => set({ allowedHoursStart: hour }),
+      setAllowedHoursEnd: (hour: number) => set({ allowedHoursEnd: hour }),
 
       setLocationEnabled: (enabled: boolean) => set({ locationEnabled: enabled }),
 

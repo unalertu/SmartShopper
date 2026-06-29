@@ -5,34 +5,33 @@ import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from '@gorhom/
 import { useSettingsStore } from '../store';
 import { hapticImpact } from '../services/haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
+import { Minus, Plus } from 'lucide-react-native';
 
-interface NotificationScheduleSheetProps {
+interface QuietHoursSheetProps {
   visible: boolean;
   onDismiss: () => void;
 }
 
-const DAYS = [
-  { label: 'Monday', value: 1 },
-  { label: 'Tuesday', value: 2 },
-  { label: 'Wednesday', value: 3 },
-  { label: 'Thursday', value: 4 },
-  { label: 'Friday', value: 5 },
-  { label: 'Saturday', value: 6 },
-  { label: 'Sunday', value: 0 },
-];
+function formatHour(hour: number) {
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const h = hour % 12 || 12;
+  return `${h}:00 ${ampm}`;
+}
 
-const NotificationScheduleSheet = memo(function NotificationScheduleSheet({
+const QuietHoursSheet = memo(function QuietHoursSheet({
   visible,
   onDismiss,
-}: NotificationScheduleSheetProps) {
+}: QuietHoursSheetProps) {
   const insets = useSafeAreaInsets();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const isSheetOpenRef = useRef(false);
   const { 
-    scheduleEnabled, 
-    setScheduleEnabled,
-    allowedDays, 
-    setAllowedDays
+    quietHoursEnabled, 
+    setQuietHoursEnabled,
+    allowedHoursStart,
+    setAllowedHoursStart,
+    allowedHoursEnd,
+    setAllowedHoursEnd
   } = useSettingsStore();
 
   useEffect(() => {
@@ -54,22 +53,10 @@ const NotificationScheduleSheet = memo(function NotificationScheduleSheet({
     onDismiss();
   }, [onDismiss]);
 
-  const toggleDay = useCallback((dayValue: number) => {
+  const toggleQuietHours = useCallback(() => {
     hapticImpact(ImpactFeedbackStyle.Light);
-    const safeAllowedDays = allowedDays || [];
-    if (safeAllowedDays.includes(dayValue)) {
-      // Prevent deselecting the last day
-      if (safeAllowedDays.length <= 1) return;
-      setAllowedDays(safeAllowedDays.filter(d => d !== dayValue));
-    } else {
-      setAllowedDays([...safeAllowedDays, dayValue]);
-    }
-  }, [allowedDays, setAllowedDays]);
-
-  const toggleSchedule = useCallback(() => {
-    hapticImpact(ImpactFeedbackStyle.Light);
-    setScheduleEnabled(!scheduleEnabled);
-  }, [scheduleEnabled, setScheduleEnabled]);
+    setQuietHoursEnabled(!quietHoursEnabled);
+  }, [quietHoursEnabled, setQuietHoursEnabled]);
 
   const renderBackdrop = useCallback(
     (props: any) => (
@@ -83,7 +70,7 @@ const NotificationScheduleSheet = memo(function NotificationScheduleSheet({
     []
   );
 
-  const modalName = React.useMemo(() => `schedule-sheet-${Math.random().toString(36).substr(2, 9)}`, []);
+  const modalName = React.useMemo(() => `quiet-hours-sheet-${Math.random().toString(36).substr(2, 9)}`, []);
   const switchTrackColor = { false: '#E5E7EB', true: '#0f172a' };
 
   return (
@@ -99,17 +86,17 @@ const NotificationScheduleSheet = memo(function NotificationScheduleSheet({
     >
       <BottomSheetView style={[styles.content, { paddingBottom: Math.max(insets.bottom, 16) + 8 }]}>
         <View style={styles.header}>
-          <Text style={styles.title}>Notification Schedule</Text>
-          <Text style={styles.description}>Set specific days for notifications.</Text>
+          <Text style={styles.title}>Quiet Hours</Text>
+          <Text style={styles.description}>Set specific hours for notifications.</Text>
         </View>
 
         <View style={{ paddingBottom: 20 }}>
           <View style={styles.section}>
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>Enable Custom Schedule</Text>
+              <Text style={styles.rowLabel}>Enable Quiet Hours</Text>
               <Switch
-                value={scheduleEnabled}
-                onValueChange={toggleSchedule}
+                value={quietHoursEnabled}
+                onValueChange={toggleQuietHours}
                 trackColor={switchTrackColor}
                 thumbColor="#ffffff"
                 ios_backgroundColor="#E5E7EB"
@@ -117,28 +104,62 @@ const NotificationScheduleSheet = memo(function NotificationScheduleSheet({
             </View>
           </View>
 
-          {scheduleEnabled && (
+          {quietHoursEnabled && (
             <>
-              <Text style={styles.sectionTitle}>Allowed Days</Text>
+              <Text style={styles.sectionTitle}>Allowed Hours</Text>
               <View style={styles.card}>
-                {DAYS.map((day, index) => {
-                  const isEnabled = (allowedDays || []).includes(day.value);
-                  const isLastDay = isEnabled && (allowedDays || []).length === 1;
-                  return (
-                    <View key={day.value} style={[styles.row, index !== DAYS.length - 1 && styles.borderBottom]}>
-                      <Text style={[styles.rowLabel, isLastDay && styles.disabledText]}>{day.label}</Text>
-                      <Switch
-                        value={isEnabled}
-                        onValueChange={() => toggleDay(day.value)}
-                        disabled={isLastDay}
-                        trackColor={switchTrackColor}
-                        thumbColor="#ffffff"
-                        ios_backgroundColor="#E5E7EB"
-                      />
-                    </View>
-                  );
-                })}
+                <View style={[styles.row, styles.borderBottom]}>
+                  <Text style={styles.rowLabel}>Start Time</Text>
+                  <View style={styles.hourSelector}>
+                    <TouchableOpacity
+                      style={styles.hourButton}
+                      onPress={() => {
+                        hapticImpact(ImpactFeedbackStyle.Light);
+                        setAllowedHoursStart(allowedHoursStart === 0 ? 23 : allowedHoursStart - 1);
+                      }}
+                    >
+                      <Minus size={16} color="#64748b" />
+                    </TouchableOpacity>
+                    <Text style={styles.hourText}>{formatHour(allowedHoursStart)}</Text>
+                    <TouchableOpacity
+                      style={styles.hourButton}
+                      onPress={() => {
+                        hapticImpact(ImpactFeedbackStyle.Light);
+                        setAllowedHoursStart((allowedHoursStart + 1) % 24);
+                      }}
+                    >
+                      <Plus size={16} color="#64748b" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>End Time</Text>
+                  <View style={styles.hourSelector}>
+                    <TouchableOpacity
+                      style={styles.hourButton}
+                      onPress={() => {
+                        hapticImpact(ImpactFeedbackStyle.Light);
+                        setAllowedHoursEnd(allowedHoursEnd === 0 ? 23 : allowedHoursEnd - 1);
+                      }}
+                    >
+                      <Minus size={16} color="#64748b" />
+                    </TouchableOpacity>
+                    <Text style={styles.hourText}>{formatHour(allowedHoursEnd)}</Text>
+                    <TouchableOpacity
+                      style={styles.hourButton}
+                      onPress={() => {
+                        hapticImpact(ImpactFeedbackStyle.Light);
+                        setAllowedHoursEnd((allowedHoursEnd + 1) % 24);
+                      }}
+                    >
+                      <Plus size={16} color="#64748b" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
+              {allowedHoursStart === allowedHoursEnd && (
+                <Text style={styles.hintText}>24-hour schedule: Notifications allowed all day.</Text>
+              )}
             </>
           )}
         </View>
@@ -160,7 +181,7 @@ const NotificationScheduleSheet = memo(function NotificationScheduleSheet({
   );
 });
 
-export default NotificationScheduleSheet;
+export default QuietHoursSheet;
 
 const styles = StyleSheet.create({
   sheet: {
@@ -236,6 +257,42 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: '#94a3b8',
+  },
+  hourSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  hourButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  hourText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#0f172a',
+    width: 75,
+    textAlign: 'center',
+  },
+  hintText: {
+    fontSize: 13,
+    color: '#64748b',
+    marginTop: 10,
+    marginHorizontal: 12,
+    textAlign: 'center',
   },
   button: {
     height: 50,

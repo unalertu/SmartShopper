@@ -8,8 +8,11 @@ export const notificationEngine = {
   shouldSendLocationNotification: async (params: {
     storeId: string;
     isPro: boolean;
-    nightNotificationsEnabled: boolean;
-    mutedDays?: number[];
+    scheduleEnabled: boolean;
+    allowedDays: number[];
+    quietHoursEnabled: boolean;
+    allowedHoursStart: number;
+    allowedHoursEnd: number;
   }): Promise<{ allowed: boolean; reason?: string }> => {
     const state = await notificationAnalytics.getState();
 
@@ -25,17 +28,15 @@ export const notificationEngine = {
       return { allowed: false, reason: "store_cooldown" };
     }
 
-    // 3. Quiet Hours Check
-    if (notificationEngine.isInQuietHours(params.nightNotificationsEnabled)) {
-      return { allowed: false, reason: "quiet_hours" };
-    }
-
-    // 3.5. Muted Days Check
-    if (params.mutedDays && params.mutedDays.length > 0) {
-      const currentDay = new Date().getDay();
-      if (params.mutedDays.includes(currentDay)) {
-        return { allowed: false, reason: "muted_day" };
-      }
+    // 3. Schedule Check (Days and Hours)
+    if (!notificationEngine.isScheduleAllowed({
+      scheduleEnabled: params.scheduleEnabled,
+      allowedDays: params.allowedDays,
+      quietHoursEnabled: params.quietHoursEnabled,
+      allowedHoursStart: params.allowedHoursStart,
+      allowedHoursEnd: params.allowedHoursEnd,
+    })) {
+      return { allowed: false, reason: "outside_schedule" };
     }
 
     // 4. Daily Limit Check
@@ -105,10 +106,40 @@ export const notificationEngine = {
     return `location:${storeId}:${today}`;
   },
 
-  isInQuietHours: (nightNotificationsEnabled: boolean): boolean => {
-    if (nightNotificationsEnabled) return false;
-    const hour = new Date().getHours();
-    return hour >= 22 || hour < 8;
+  isScheduleAllowed: (params: {
+    scheduleEnabled: boolean;
+    allowedDays: number[];
+    quietHoursEnabled: boolean;
+    allowedHoursStart: number;
+    allowedHoursEnd: number;
+  }): boolean => {
+    // Check Allowed Days
+    if (params.scheduleEnabled) {
+      const currentDay = new Date().getDay();
+      if (!params.allowedDays.includes(currentDay)) {
+        return false; // Day is not allowed
+      }
+    }
+
+    // Check Quiet Hours
+    if (params.quietHoursEnabled) {
+      const hour = new Date().getHours();
+      
+      // 24-hour schedule (always allowed on allowed days)
+      if (params.allowedHoursStart === params.allowedHoursEnd) {
+        return true;
+      }
+
+      if (params.allowedHoursStart < params.allowedHoursEnd) {
+        // Standard schedule (e.g. 8 AM to 10 PM)
+        if (!(hour >= params.allowedHoursStart && hour < params.allowedHoursEnd)) return false;
+      } else {
+        // Overnight schedule (e.g. 10 PM to 8 AM)
+        if (!(hour >= params.allowedHoursStart || hour < params.allowedHoursEnd)) return false;
+      }
+    }
+    
+    return true;
   },
 
   isUserLikelyWalking: (speedMs: number | null): boolean => {

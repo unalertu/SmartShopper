@@ -11,6 +11,7 @@ import { ImpactFeedbackStyle } from 'expo-haptics';
 import ConfirmationSheet, { ConfirmationSheetData } from '../components/ConfirmationSheet';
 import ComingSoonSheet from '../components/ComingSoonSheet';
 import NotificationScheduleSheet from '../components/NotificationScheduleSheet';
+import QuietHoursSheet from '../components/QuietHoursSheet';
 import { showPaywall } from "@/services/paywallService";
 
 // ── Per-setting descriptions for enable / disable states ──
@@ -142,6 +143,9 @@ export default function NotificationPreferencesScreen() {
 
   // ── Notification Schedule Sheet state ──
   const [scheduleSheetVisible, setScheduleSheetVisible] = useState(false);
+
+  // ── Quiet Hours Sheet state ──
+  const [quietHoursSheetVisible, setQuietHoursSheetVisible] = useState(false);
 
   const showComingSoon = useCallback((title: string, description: string) => {
     hapticImpact(ImpactFeedbackStyle.Light);
@@ -276,7 +280,7 @@ export default function NotificationPreferencesScreen() {
             isProOnly={!isPro}
             isLocked={!isPro}
             onLockedPress={() => handleProUpsell('Quiet Hours')}
-            onPress={isPro ? () => showComingSoon('Quiet Hours', 'Customizing quiet hours will be available in a future update.') : undefined}
+            onPress={isPro ? () => setQuietHoursSheetVisible(true) : undefined}
             rightElement={<ChevronRight size={20} color="#cbd5e1" />}
           />
           <SettingsRow
@@ -319,6 +323,12 @@ export default function NotificationPreferencesScreen() {
       <NotificationScheduleSheet
         visible={scheduleSheetVisible}
         onDismiss={() => setScheduleSheetVisible(false)}
+      />
+
+      {/* Quiet Hours Sheet */}
+      <QuietHoursSheet
+        visible={quietHoursSheetVisible}
+        onDismiss={() => setQuietHoursSheetVisible(false)}
       />
     </View>
   );
