@@ -511,7 +511,9 @@ export default function HomeScreen() {
           style={{ paddingTop: insets.top + 8, paddingBottom: 4 }}
         >
           <View className="flex-row items-center gap-0">
-            <Text style={{ fontSize: 36, fontWeight: '700', letterSpacing: -0.8, color: '#0f172a' }}>GeoCart</Text>
+            <Text style={{ fontSize: 40, fontWeight: '700', letterSpacing: -0.8, color: '#0f172a' }}>
+              GeoCart{isPro && <Text style={{ fontSize: 30, fontWeight: '600', color: '#D4AF37' }}> Pro</Text>}
+            </Text>
           </View>
           
           <TouchableOpacity

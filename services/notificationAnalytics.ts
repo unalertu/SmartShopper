@@ -14,6 +14,7 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NOTIFICATION_CONSTANTS } from "../constants";
+import { useStatsStore } from "../store/useStatsStore";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -185,6 +186,10 @@ export const notificationAnalytics = {
 
     // Increment daily counter
     state.dailyLocationCount += 1;
+
+    // Increment lifetime counter for stats UI and start a session
+    useStatsStore.getState().incrementRemindersSent();
+    useStatsStore.getState().startShoppingSession();
 
     // Add fingerprint
     notificationAnalytics.addFingerprint(state, storeId);

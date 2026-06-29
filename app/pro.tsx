@@ -20,7 +20,7 @@ import {
   ChevronDown,
   AlertCircle,
   Crown,
-  Zap,
+  Target,
   ShieldCheck,
   CalendarDays,
   ExternalLink,
@@ -35,6 +35,7 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { hapticImpact } from '../services/haptics';
+import { useStatsStore } from '../store/useStatsStore';
 
 // ─── Feature Row (compact) ─────────────────────────────────────────────────────
 
@@ -96,6 +97,9 @@ export default function ProScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [featuresExpanded, setFeaturesExpanded] = useState(false);
+  
+  const { lifetimeRemindersSent, lifetimeTripsAssisted, lifetimeStoresVisited } = useStatsStore();
+  const estimatedTimeSavedHours = (lifetimeTripsAssisted * 0.5).toFixed(1).replace('.0', '');
 
   // Mock data for new features
   const nextBillingDate = 'Oct 24, 2026';
@@ -106,7 +110,7 @@ export default function ProScreen() {
     { icon: <PackagePlus size={16} color="#D4AF37" />, title: '500 Items Per List' },
     { icon: <MapPin size={16} color="#D4AF37" />, title: '20 Saved Stores' },
     { icon: <Bell size={16} color="#D4AF37" />, title: 'Unlimited Notifications' },
-    { icon: <Zap size={16} color="#D4AF37" />, title: 'Custom Geofence Radius' },
+    { icon: <Target size={16} color="#D4AF37" />, title: 'Custom Geofence Radius' },
     { icon: <Clock size={16} color="#D4AF37" />, title: 'Quiet Hours & Schedules' },
     { icon: <SlidersHorizontal size={16} color="#D4AF37" />, title: 'Advanced Controls' },
     { icon: <ShieldCheck size={16} color="#D4AF37" />, title: 'All Future Features' },
@@ -273,34 +277,47 @@ export default function ProScreen() {
         </Animated.View>
 
         {/* Your GeoCart Impact */}
-        <Animated.View
-          entering={FadeInDown.duration(500).delay(350).springify()}
-          className="mb-2"
-        >
-          <Text className="text-[13px] font-semibold text-slate-400 tracking-wider ml-2 mb-2">
-            Your GeoCart Impact
-          </Text>
-        </Animated.View>
+        {(lifetimeRemindersSent > 0 || lifetimeTripsAssisted > 0 || lifetimeStoresVisited > 0) && (
+          <>
+            <Animated.View
+              entering={FadeInDown.duration(500).delay(350).springify()}
+              className="mb-2"
+            >
+              <Text className="text-[13px] font-semibold text-slate-400 tracking-wider ml-2 mb-2">
+                Your GeoCart Impact
+              </Text>
+            </Animated.View>
 
-        <Animated.View
-          entering={FadeInDown.duration(500).delay(400).springify()}
-          className="bg-white border border-slate-100 rounded-3xl mb-8 px-5 py-5 flex-row justify-between"
-        >
-           <View className="items-center flex-1">
-             <Text className="text-[22px] font-bold text-[#C6A24B] mb-1">142</Text>
-             <Text className="text-[11px] text-slate-500 text-center font-medium">Reminders Sent</Text>
-           </View>
-           <View className="w-[1px] bg-slate-100 my-1" />
-           <View className="items-center flex-1">
-             <Text className="text-[22px] font-bold text-[#C6A24B] mb-1">28</Text>
-             <Text className="text-[11px] text-slate-500 text-center font-medium">Trips Assisted</Text>
-           </View>
-           <View className="w-[1px] bg-slate-100 my-1" />
-           <View className="items-center flex-1">
-             <Text className="text-[22px] font-bold text-[#C6A24B] mb-1">12h</Text>
-             <Text className="text-[11px] text-slate-500 text-center font-medium">Hours Saved</Text>
-           </View>
-        </Animated.View>
+            <Animated.View
+              entering={FadeInDown.duration(500).delay(400).springify()}
+              className="bg-white border border-slate-100 rounded-3xl mb-8 px-4 py-5"
+            >
+              <View className="flex-row justify-between mb-4">
+                <View className="items-center flex-1">
+                  <Text className="text-[22px] font-bold text-[#C6A24B] mb-1">{lifetimeRemindersSent}</Text>
+                  <Text className="text-[11px] text-slate-500 text-center font-medium">Reminders Sent</Text>
+                </View>
+                <View className="w-[1px] bg-slate-100 my-1" />
+                <View className="items-center flex-1">
+                  <Text className="text-[22px] font-bold text-[#C6A24B] mb-1">{lifetimeTripsAssisted}</Text>
+                  <Text className="text-[11px] text-slate-500 text-center font-medium">Trips Assisted</Text>
+                </View>
+              </View>
+              <View className="h-[1px] bg-slate-100 mx-4 mb-4" />
+              <View className="flex-row justify-between">
+                <View className="items-center flex-1">
+                  <Text className="text-[22px] font-bold text-[#C6A24B] mb-1">{lifetimeStoresVisited}</Text>
+                  <Text className="text-[11px] text-slate-500 text-center font-medium">Stores Visited</Text>
+                </View>
+                <View className="w-[1px] bg-slate-100 my-1" />
+                <View className="items-center flex-1">
+                  <Text className="text-[22px] font-bold text-[#C6A24B] mb-1">{estimatedTimeSavedHours}h</Text>
+                  <Text className="text-[11px] text-slate-500 text-center font-medium">Estimated Time Saved</Text>
+                </View>
+              </View>
+            </Animated.View>
+          </>
+        )}
 
         {/* Manage Subscription */}
         <Animated.View

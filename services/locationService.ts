@@ -7,10 +7,11 @@ import * as Location from "expo-location";
 import * as TaskManager from "expo-task-manager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { geoEngine } from "./geoEngine";
-import { notificationEngine } from "./notificationEngine";
-import { sendLocalNotification } from "./notificationService";
 import { notificationAnalytics } from "./notificationAnalytics";
+import { sendLocalNotification } from "./notificationService";
+import { useSettingsStore } from "../store/useSettingsStore";
 import { NOTIFICATION_CONSTANTS } from "../constants";
+import { useStatsStore } from "../store/useStatsStore";
 import { useLocationStore } from "../store/useLocationStore";
 import { fetchMarkets } from "./overpassService";
 
@@ -213,6 +214,11 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
     return;
   }
   addDebugLog(`Stores meeting dwell time: ${dwelledStores.map(s => s.name).join(', ')}`);
+  
+  // Record store visits (independent of notification logic)
+  for (const store of dwelledStores) {
+    useStatsStore.getState().recordStoreVisit(store.id);
+  }
 
   // 7. PICK BEST STORE
   const bestStore = await notificationEngine.pickBestStore(dwelledStores);

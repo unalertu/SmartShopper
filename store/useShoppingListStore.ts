@@ -4,6 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useListsStore } from "./useListsStore";
 import { getMaxItemsPerList } from '@/constants/tierConfig';
 import { useActivityStore } from "./useActivityStore";
+import { useStatsStore } from "./useStatsStore";
 
 export interface ShoppingItem {
   id: string;
@@ -113,6 +114,7 @@ export const useShoppingListStore = create<ShoppingListState>()(
           if (targetItem) {
             const listName = useListsStore.getState().lists.find(l => l.id === targetItem.listId)?.name || 'Unknown List';
             if (!targetItem.isPurchased) {
+              useStatsStore.getState().recordTripAssisted();
               useActivityStore.getState().logActivity({
                 type: 'item_completed',
                 title: targetItem.name,
