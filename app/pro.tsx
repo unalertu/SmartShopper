@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -14,8 +14,11 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Sparkles,
+  Award,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  AlertCircle,
   Crown,
   Zap,
   ShieldCheck,
@@ -58,12 +61,14 @@ function ManagementRow({
   sublabel,
   onPress,
   isLast,
+  destructive,
 }: {
   icon: React.ReactNode;
   label: string;
   sublabel?: string;
   onPress?: () => void;
   isLast?: boolean;
+  destructive?: boolean;
 }) {
   return (
     <TouchableOpacity
@@ -74,7 +79,7 @@ function ManagementRow({
       <View className="flex-row items-center flex-1 pr-4">
         {icon}
         <View className="ml-3 flex-shrink">
-          <Text className="text-[15px] font-medium text-slate-900">{label}</Text>
+          <Text className={`text-[15px] font-medium ${destructive ? 'text-red-500' : 'text-slate-900'}`}>{label}</Text>
           {sublabel && (
             <Text className="text-[12px] text-slate-400 mt-0.5">{sublabel}</Text>
           )}
@@ -90,6 +95,11 @@ function ManagementRow({
 export default function ProScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [featuresExpanded, setFeaturesExpanded] = useState(false);
+
+  // Mock data for new features
+  const nextBillingDate = 'Oct 24, 2026';
+  const memberSinceDate = 'Oct 24, 2023';
 
   const features = [
     { icon: <List size={16} color="#D4AF37" />, title: 'Unlimited Shopping Lists' },
@@ -177,23 +187,15 @@ export default function ProScreen() {
           className="mb-8"
         >
           <LinearGradient
-            colors={['#D4AF37', '#B38B22']}
+            colors={['#C6A24B', '#B38B22']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={{ borderRadius: 32, padding: 20 }}
           >
             <View className="flex-row items-center mb-4" style={{ paddingHorizontal: 6 }}>
-              <View className="h-14 w-14 rounded-2xl bg-white/20 items-center justify-center mr-4">
-                <Sparkles size={28} color="#FFFFFF" />
-              </View>
               <View className="flex-1">
                 <View className="flex-row items-center gap-2 mb-1.5">
                   <Text className="text-white font-bold text-[18px]">Pro Active</Text>
-                  <View className="bg-white/20 px-2.5 py-1 rounded-full">
-                    <Text className="text-white font-bold text-[10px] uppercase tracking-wider">
-                      Premium
-                    </Text>
-                  </View>
                 </View>
                 <Text className="text-white/70 text-[14px]">
                   All premium features unlocked
@@ -201,11 +203,29 @@ export default function ProScreen() {
               </View>
             </View>
 
-            <View className="bg-white/10 rounded-2xl p-3.5 flex-row items-center" style={{ marginHorizontal: 6 }}>
-              <CalendarDays size={16} color="rgba(255,255,255,0.7)" />
-              <Text className="text-white/70 text-[13px] ml-2.5">
-                Yearly Plan • Renews annually
-              </Text>
+            <View className="bg-white/10 rounded-2xl p-3.5 flex-col gap-2" style={{ marginHorizontal: 6 }}>
+              <View className="flex-row items-center">
+                <CalendarDays size={16} color="rgba(255,255,255,0.7)" />
+                <Text className="text-white/70 text-[13px] ml-2.5 flex-1">
+                  Yearly Plan • Renews annually
+                </Text>
+              </View>
+              {nextBillingDate && (
+                <View className="flex-row items-center">
+                  <Clock size={16} color="rgba(255,255,255,0.7)" />
+                  <Text className="text-white/70 text-[13px] ml-2.5">
+                    Next Billing: {nextBillingDate}
+                  </Text>
+                </View>
+              )}
+              {memberSinceDate && (
+                <View className="flex-row items-center">
+                  <Award size={16} color="rgba(255,255,255,0.7)" />
+                  <Text className="text-white/70 text-[13px] ml-2.5">
+                    Member Since: {memberSinceDate}
+                  </Text>
+                </View>
+              )}
             </View>
           </LinearGradient>
         </Animated.View>
@@ -215,7 +235,7 @@ export default function ProScreen() {
           entering={FadeInDown.duration(500).delay(200).springify()}
           className="mb-2"
         >
-          <Text className="text-[13px] font-semibold text-slate-400 uppercase tracking-wider ml-2 mb-2">
+          <Text className="text-[13px] font-semibold text-slate-400 tracking-wider ml-2 mb-2">
             Included Features
           </Text>
         </Animated.View>
@@ -224,10 +244,10 @@ export default function ProScreen() {
           entering={FadeInDown.duration(500).delay(250).springify()}
           className="bg-white border border-slate-100 rounded-3xl mb-8 px-5 py-2"
         >
-          {features.map((feature, index) => (
+          {(featuresExpanded ? features : features.slice(0, 5)).map((feature, index) => (
             <View
               key={index}
-              className={index < features.length - 1 ? 'border-b border-slate-50' : ''}
+              className={index < (featuresExpanded ? features.length : 5) - 1 ? 'border-b border-slate-50' : ''}
             >
               <FeatureRow
                 icon={feature.icon}
@@ -236,6 +256,50 @@ export default function ProScreen() {
               />
             </View>
           ))}
+          {!featuresExpanded && (
+            <TouchableOpacity
+              onPress={() => {
+                hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                setFeaturesExpanded(true);
+              }}
+              className="py-4 flex-row items-center justify-center border-t border-slate-50"
+            >
+              <Text className="text-[14px] font-medium text-[#C6A24B] mr-1">
+                +3 more premium features
+              </Text>
+              <ChevronDown size={16} color="#C6A24B" />
+            </TouchableOpacity>
+          )}
+        </Animated.View>
+
+        {/* Your GeoCart Impact */}
+        <Animated.View
+          entering={FadeInDown.duration(500).delay(350).springify()}
+          className="mb-2"
+        >
+          <Text className="text-[13px] font-semibold text-slate-400 tracking-wider ml-2 mb-2">
+            Your GeoCart Impact
+          </Text>
+        </Animated.View>
+
+        <Animated.View
+          entering={FadeInDown.duration(500).delay(400).springify()}
+          className="bg-white border border-slate-100 rounded-3xl mb-8 px-5 py-5 flex-row justify-between"
+        >
+           <View className="items-center flex-1">
+             <Text className="text-[22px] font-bold text-[#C6A24B] mb-1">142</Text>
+             <Text className="text-[11px] text-slate-500 text-center font-medium">Reminders Sent</Text>
+           </View>
+           <View className="w-[1px] bg-slate-100 my-1" />
+           <View className="items-center flex-1">
+             <Text className="text-[22px] font-bold text-[#C6A24B] mb-1">28</Text>
+             <Text className="text-[11px] text-slate-500 text-center font-medium">Trips Assisted</Text>
+           </View>
+           <View className="w-[1px] bg-slate-100 my-1" />
+           <View className="items-center flex-1">
+             <Text className="text-[22px] font-bold text-[#C6A24B] mb-1">12h</Text>
+             <Text className="text-[11px] text-slate-500 text-center font-medium">Hours Saved</Text>
+           </View>
         </Animated.View>
 
         {/* Manage Subscription */}
@@ -243,7 +307,7 @@ export default function ProScreen() {
           entering={FadeInDown.duration(500).delay(500).springify()}
           className="mb-2"
         >
-          <Text className="text-[13px] font-semibold text-slate-400 uppercase tracking-wider ml-2 mb-2">
+          <Text className="text-[13px] font-semibold text-slate-400 tracking-wider ml-2 mb-2">
             Manage
           </Text>
         </Animated.View>
@@ -268,10 +332,11 @@ export default function ProScreen() {
             }}
           />
           <ManagementRow
-            icon={<Sparkles size={20} color="#ef4444" />}
+            icon={<AlertCircle size={20} color="#ef4444" />}
             label="Cancel Subscription"
             sublabel="Your benefits last until the billing period ends"
             isLast
+            destructive
             onPress={handleCancelSubscription}
           />
         </Animated.View>
@@ -281,8 +346,8 @@ export default function ProScreen() {
           entering={FadeInDown.duration(500).delay(650).springify()}
           className="items-center mt-2 mb-4"
         >
-          <Text className="text-[12px] text-slate-300 text-center">
-            Thank you for supporting GeoCart ✨
+          <Text className="text-[12px] text-slate-400 text-center font-medium">
+            Thank you for supporting GeoCart.
           </Text>
         </Animated.View>
       </ScrollView>

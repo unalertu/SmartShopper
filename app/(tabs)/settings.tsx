@@ -200,6 +200,7 @@ export default function SettingsScreen() {
     setLocationEnabled,
     setDistanceUnit,
     setTheme,
+    setIsPro,
     resetSettings} = useSettingsStore();
 
   // ── Animated Values for Pro Card ──
@@ -252,6 +253,7 @@ export default function SettingsScreen() {
   useEffect(() => {
     syncNotificationStatus();
     syncLocationStatus();
+    setIsPro(true); // Automatically activate Pro plan
 
     const subscription = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'active') {

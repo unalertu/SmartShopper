@@ -81,7 +81,7 @@ const DEFAULT_SETTINGS = {
   theme: "system" as ThemeOption,
   smartSuggestionsEnabled: true,
   autoDeletePurchased: false,
-  isPro: false,
+  isPro: true,
 };
 
 export const useSettingsStore = create<SettingsState>()(
@@ -123,7 +123,7 @@ export const useSettingsStore = create<SettingsState>()(
       merge: (persistedState: any, currentState: any) => ({
         ...currentState,
         ...persistedState,
-        isPro: false,
+        isPro: true,
       }),
     }
   )
