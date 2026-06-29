@@ -533,15 +533,18 @@ export default function ListDetails() {
             >
               <X size={18} color={Colors.primary[900]} strokeWidth={3} />
             </TouchableOpacity>
-            <TouchableOpacity 
-              onPress={() => {
-                hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                handleAddItem();
-              }} 
-              className="ml-2 p-2 bg-slate-900 rounded-full"
-            >
-              <Plus size={20} color="#ffffff" strokeWidth={2.5} />
-            </TouchableOpacity>
+            <Animated.View style={{ transform: [{ scale: buttonScale as any }] }}>
+              <TouchableOpacity 
+                disabled={!isButtonActive}
+                onPress={() => {
+                  hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                  handleAddItem();
+                }} 
+                className={`ml-2 p-3 rounded-full ${isButtonActive ? 'bg-slate-900' : 'bg-slate-100'}`}
+              >
+                <Plus size={24} color={isButtonActive ? "#ffffff" : "#94a3b8"} strokeWidth={2.5} />
+              </TouchableOpacity>
+            </Animated.View>
           </View>
 
           {/* Compact Controls (Quantity, Units, Note) */}
@@ -697,8 +700,8 @@ export default function ListDetails() {
             <View className="-mx-6 relative">
               <BottomSheetScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingLeft: 24, paddingRight: 48, paddingBottom: 16 }}>
                 <View className="gap-2">
-                  {[0, 1, 2].map(rowIndex => {
-                    const rowItems = displayedSuggestions.filter((_, idx) => idx % 3 === rowIndex);
+                  {[0, 1, 2, 3].map(rowIndex => {
+                    const rowItems = displayedSuggestions.filter((_, idx) => idx % 4 === rowIndex);
                     if (rowItems.length === 0) return null;
                     return (
                       <View key={`${activeSuggestionTab}-${selectedCategory}-row-${rowIndex}`} className="flex-row gap-2">
@@ -734,20 +737,6 @@ export default function ListDetails() {
               />
             </View>
           </View>
-
-          {/* Action Button — pinned at bottom */}
-          <Animated.View style={{ transform: [{ scale: buttonScale as any }] }} className="z-10 mt-4">
-            <TouchableOpacity 
-              disabled={!isButtonActive}
-              className={`h-16 rounded-[24px] flex-row items-center justify-center shadow-xl ${isButtonActive ? 'bg-slate-900' : 'bg-slate-100'}`}
-              onPress={handleAddItem}
-            >
-              <Plus size={24} color={isButtonActive ? "#ffffff" : "#94a3b8"} strokeWidth={2.5} className="mr-2" />
-              <Text className={`font-bold text-lg tracking-wide ${isButtonActive ? 'text-white' : 'text-slate-400'}`} numberOfLines={1}>
-                {isButtonActive ? `${editingItemId ? 'Save' : 'Add'} "${newItemText.trim()}"` : (editingItemId ? 'Save Changes' : 'Add to List')}
-              </Text>
-            </TouchableOpacity>
-          </Animated.View>
             </View>
           </TouchableWithoutFeedback>
         </BottomSheetView>

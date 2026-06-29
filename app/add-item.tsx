@@ -119,54 +119,73 @@ export default function AddItemScreen() {
             </View>
           </View>
 
-          {/* Quantity */}
+          {/* Quantity & Unit Row */}
           <View className="mb-8">
-            <Text className="text-[13px] font-bold text-surface-400 uppercase tracking-wider mb-2 ml-1">
-              Quantity
-            </Text>
-            <View className="bg-[#f8fafc] rounded-[24px] border border-surface-100 h-16 justify-center">
-              <TextInput
-                value={quantity.toString()}
-                onChangeText={(text) => {
-                  const cleaned = text.replace(/[^0-9.,]/g, '');
-                  setQuantity(cleaned);
-                }}
-                keyboardType="decimal-pad"
-                placeholder="1"
-                placeholderTextColor={Colors.surface[400]}
-                className="flex-1 px-6 py-0 text-lg text-surface-900 font-semibold h-full"
-                cursorColor={Colors.primary[900]}
-                selectionColor={Colors.primary[900]}
-                style={{ textAlignVertical: 'center' }}
-              />
+            {/* Labels */}
+            <View className="flex-row mb-2">
+              <View className="w-[120px] mr-4">
+                <Text className="text-[13px] font-bold text-surface-400 uppercase tracking-wider ml-1">
+                  Quantity
+                </Text>
+              </View>
+              <View className="flex-1">
+                <Text className="text-[13px] font-bold text-surface-400 uppercase tracking-wider ml-1">
+                  Unit
+                </Text>
+              </View>
             </View>
-          </View>
 
-          {/* Unit */}
-          <View className="mb-8">
-            <Text className="text-[13px] font-bold text-surface-400 uppercase tracking-wider mb-2 ml-1">
-              Unit Format
-            </Text>
-            <View className="flex-row flex-wrap gap-2.5">
-              {UNITS.map((unit) => (
-                <Pressable
-                  key={unit.value}
-                  onPress={() => setSelectedUnit(unit.value)}
-                  className={`px-5 py-3 rounded-full border justify-center items-center ${
-                    selectedUnit === unit.value
-                      ? "bg-primary-500 border-primary-500"
-                      : "bg-[#f8fafc] border-surface-100"
-                  }`}
-                >
-                  <Text
-                    className={`text-[15px] font-semibold text-center ${
-                      selectedUnit === unit.value ? "text-white" : "text-surface-600"
-                    }`}
-                  >
-                    {unit.label}
-                  </Text>
-                </Pressable>
-              ))}
+            {/* Content Row */}
+            <View className="h-16">
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                stickyHeaderIndices={[0]}
+                className="flex-1"
+              >
+                {/* 0th element - Fixed Quantity Pill */}
+                <View className="w-[136px] bg-white pr-4 justify-center">
+                  <View className="bg-[#f8fafc] rounded-[24px] border border-surface-100 h-16 justify-center">
+                    <TextInput
+                      value={quantity.toString()}
+                      onChangeText={(text) => {
+                        const cleaned = text.replace(/[^0-9.,]/g, '');
+                        setQuantity(cleaned);
+                      }}
+                      keyboardType="decimal-pad"
+                      placeholder="1"
+                      placeholderTextColor={Colors.surface[400]}
+                      className="flex-1 px-6 py-0 text-lg text-surface-900 font-semibold h-full"
+                      cursorColor={Colors.primary[900]}
+                      selectionColor={Colors.primary[900]}
+                      style={{ textAlignVertical: 'center' }}
+                    />
+                  </View>
+                </View>
+
+                {/* 1st element - Unit Pills */}
+                <View className="flex-row gap-2.5 pr-6 items-center">
+                  {UNITS.map((unit) => (
+                    <Pressable
+                      key={unit.value}
+                      onPress={() => setSelectedUnit(unit.value)}
+                      className={`px-5 h-16 rounded-[24px] border justify-center items-center ${
+                        selectedUnit === unit.value
+                          ? "bg-primary-500 border-primary-500"
+                          : "bg-[#f8fafc] border-surface-100"
+                      }`}
+                    >
+                      <Text
+                        className={`text-[15px] font-semibold text-center ${
+                          selectedUnit === unit.value ? "text-white" : "text-surface-600"
+                        }`}
+                      >
+                        {unit.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </ScrollView>
             </View>
           </View>
 
