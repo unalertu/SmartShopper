@@ -147,6 +147,34 @@ async function reverseGeocodeAddress(latitude: number, longitude: number): Promi
   return '';
 }
 
+const AsyncAddressText = ({ latitude, longitude, initialAddress, fallbackText = 'Saved Shop', style }: { latitude: number; longitude: number; initialAddress?: string; fallbackText?: string; style?: any }) => {
+  const [address, setAddress] = useState(initialAddress || '');
+  const [loading, setLoading] = useState(!initialAddress);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!initialAddress && latitude && longitude) {
+      reverseGeocodeAddress(latitude, longitude).then(addr => {
+        if (mounted) {
+          if (addr) setAddress(addr);
+          setLoading(false);
+        }
+      });
+    } else {
+      setLoading(false);
+    }
+    return () => { mounted = false; };
+  }, [latitude, longitude, initialAddress]);
+
+  if (loading || (!address && !fallbackText)) return null;
+
+  return (
+    <Text style={[{ fontSize: 14, fontWeight: '400', marginTop: 2 }, style]} numberOfLines={1}>
+      {address || fallbackText}
+    </Text>
+  );
+};
+
 export default function StoresScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -1145,7 +1173,12 @@ export default function StoresScreen() {
                             </View>
                           )}
                         </View>
-                        <Text style={{ fontSize: 14, fontWeight: '400', color: '#64748b', marginTop: 2 }} numberOfLines={1}>{loc.address || 'Saved Shop'}</Text>
+                        <AsyncAddressText 
+                          latitude={loc.latitude} 
+                          longitude={loc.longitude} 
+                          initialAddress={loc.address} 
+                          style={{ color: '#64748b' }} 
+                        />
                       </View>
                     </View>
                     <TouchableOpacity
@@ -1360,7 +1393,13 @@ export default function StoresScreen() {
                             </View>
                           )}
                         </View>
-                        <Text style={{ fontSize: 14, fontWeight: '400', color: '#94a3b8', marginTop: 2 }} numberOfLines={1}>{loc.address || 'Saved Shop'}</Text>
+                        <AsyncAddressText 
+                          latitude={loc.latitude} 
+                          longitude={loc.longitude} 
+                          initialAddress={loc.address} 
+                          fallbackText={loc.isUnsaved ? '' : 'Saved Shop'} 
+                          style={{ color: '#94a3b8' }} 
+                        />
                       </View>
                     </View>
                     <TouchableOpacity
