@@ -58,6 +58,68 @@ const getRelativeDate = (timestamp?: number): string => {
   return `${Math.floor(days / 30)} months ago`;
 };
 
+const getTemplateItems = (templateName: string) => {
+  const templates: Record<string, Array<{ name: string, quantity: number, unit: string, category: string }>> = {
+    'Weekly Groceries': [
+      { name: 'Milk', quantity: 1, unit: 'gallon', category: 'Dairy' },
+      { name: 'Eggs', quantity: 12, unit: 'pcs', category: 'Dairy' },
+      { name: 'Bread', quantity: 1, unit: 'loaf', category: 'Bakery' }
+    ],
+    'Dinner Party': [
+      { name: 'Wine', quantity: 2, unit: 'bottles', category: 'Beverages' },
+      { name: 'Cheese', quantity: 1, unit: 'block', category: 'Dairy' },
+      { name: 'Crackers', quantity: 1, unit: 'box', category: 'Snacks' }
+    ],
+    'Office Supplies': [
+      { name: 'Printer Paper', quantity: 1, unit: 'ream', category: 'Office' },
+      { name: 'Pens', quantity: 1, unit: 'pack', category: 'Office' },
+      { name: 'Sticky Notes', quantity: 1, unit: 'pack', category: 'Office' }
+    ],
+    'Breakfast': [
+      { name: 'Eggs', quantity: 12, unit: 'pcs', category: 'Dairy' },
+      { name: 'Cereal', quantity: 1, unit: 'box', category: 'Breakfast' },
+      { name: 'Coffee', quantity: 1, unit: 'bag', category: 'Beverages' }
+    ],
+    'Cleaning': [
+      { name: 'All-Purpose Cleaner', quantity: 1, unit: 'bottle', category: 'Cleaning' },
+      { name: 'Paper Towels', quantity: 1, unit: 'pack', category: 'Cleaning' },
+      { name: 'Trash Bags', quantity: 1, unit: 'box', category: 'Cleaning' }
+    ],
+    'Pet Supplies': [
+      { name: 'Pet Food', quantity: 1, unit: 'bag', category: 'Pets' },
+      { name: 'Treats', quantity: 1, unit: 'bag', category: 'Pets' },
+      { name: 'Waste Bags', quantity: 1, unit: 'box', category: 'Pets' }
+    ],
+    'Personal Care': [
+      { name: 'Shampoo', quantity: 1, unit: 'bottle', category: 'Personal Care' },
+      { name: 'Toothpaste', quantity: 1, unit: 'tube', category: 'Personal Care' },
+      { name: 'Body Wash', quantity: 1, unit: 'bottle', category: 'Personal Care' }
+    ],
+    'BBQ': [
+      { name: 'Burgers', quantity: 1, unit: 'pack', category: 'Meat' },
+      { name: 'Buns', quantity: 1, unit: 'pack', category: 'Bakery' },
+      { name: 'Charcoal', quantity: 1, unit: 'bag', category: 'Household' }
+    ],
+    'Snacks': [
+      { name: 'Chips', quantity: 1, unit: 'bag', category: 'Snacks' },
+      { name: 'Popcorn', quantity: 1, unit: 'box', category: 'Snacks' },
+      { name: 'Cookies', quantity: 1, unit: 'pack', category: 'Snacks' }
+    ],
+    'Pharmacy': [
+      { name: 'Pain Reliever', quantity: 1, unit: 'bottle', category: 'Health' },
+      { name: 'Bandages', quantity: 1, unit: 'box', category: 'Health' },
+      { name: 'Vitamins', quantity: 1, unit: 'bottle', category: 'Health' }
+    ],
+    'Baking': [
+      { name: 'Flour', quantity: 1, unit: 'bag', category: 'Baking' },
+      { name: 'Sugar', quantity: 1, unit: 'bag', category: 'Baking' },
+      { name: 'Butter', quantity: 1, unit: 'pack', category: 'Dairy' }
+    ]
+  };
+
+  return templates[templateName] || [];
+};
+
 export default function ListsScreen() {
   const scrollRef = useRef<Animated.ScrollView>(null);
   const quickStartScrollRef = useRef<ScrollView>(null);
@@ -73,6 +135,7 @@ export default function ListsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { lists: shoppingLists, addList, removeList, canCreateList } = useListsStore();
+  const { addItem } = useShoppingListStore();
   const activityCount = useActivityStore((state) => state.activities.length);
   const { templates, incrementUsage } = useQuickStartStore();
   const { isPro } = useSettingsStore();
@@ -242,8 +305,13 @@ export default function ListsScreen() {
                               return;
                             }
                             hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                            addList(template);
+                            const newListId = addList(template);
                             incrementUsage(template);
+                            
+                            const items = getTemplateItems(template);
+                            items.forEach(item => {
+                              addItem(newListId, item);
+                            });
                           }}
                           className="bg-white border border-slate-100/70 rounded-[12px] px-3.5 py-2 flex-row items-center gap-1.5"
                         >

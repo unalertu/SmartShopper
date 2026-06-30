@@ -119,6 +119,19 @@ export default function ListDetails() {
   const completedCount = items.filter(item => item.isPurchased).length;
   const remainingCount = items.length - completedCount;
 
+  const groupedItems = useMemo(() => {
+    return items.reduce((acc, item) => {
+      const cat = item.category || '🛒 General';
+      if (!acc[cat]) {
+        acc[cat] = [];
+      }
+      acc[cat].push(item);
+      return acc;
+    }, {} as Record<string, typeof items>);
+  }, [items]);
+
+  const sortedCategories = Object.keys(groupedItems).sort();
+
   useEffect(() => {
     Animated.spring(buttonScale, {
       toValue: newItemText.length > 0 ? 1 : 0.95,
@@ -403,77 +416,85 @@ export default function ListDetails() {
         </View>
 
         {/* 4. The Shopping Items */}
-        <View 
-          className="mx-6 bg-white rounded-[24px] border border-slate-100 px-5 py-2 mb-8" 
-          
-        >
-          {items.map((item, index) => (
-            <View key={item.id}>
-              <View className="flex-row items-center justify-between py-4 bg-white">
-                <View className="flex-row items-center gap-4 flex-1 pr-4">
-                  {/* Item Text */}
-                  <TouchableOpacity 
-                    className="flex-1"
-                    onPress={() => {
-                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                      setEditingItemId(item.id);
-                      setNewItemText(item.name);
-                      setQuantity(item.quantity);
-                      setSelectedUnit(item.unit || 'pcs');
-                      setSelectedCategory(item.category || '🛒 General');
-                      addBottomSheetRef.current?.present();
-                    }}
-                  >
-                    <Text 
-                      className={`text-[16px] font-bold ${
-                        item.isPurchased ? 'text-slate-400 line-through' : 'text-slate-800'
-                      }`}
-                    >
-                      {item.name}
-                    </Text>
-                    <Text className="text-[13px] text-slate-400 font-medium mt-0.5">
-                      {item.quantity} {item.unit} {item.category !== '🛒 General' && item.category !== 'General' ? `• ${item.category}` : ''}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+        <View className="mb-8">
+          {sortedCategories.map((category) => (
+            <View key={category} className="mb-6">
+              <Text className="mx-8 mb-2 text-sm font-bold text-slate-500 tracking-wider">
+                {category}
+              </Text>
+              <View className="mx-6 bg-white rounded-[24px] border border-slate-100 px-5 py-2">
+                {groupedItems[category].map((item, index) => (
+                  <View key={item.id}>
+                    <View className="flex-row items-center justify-between py-4 bg-white">
+                      <View className="flex-row items-center gap-4 flex-1 pr-4">
+                        {/* Item Text */}
+                        <TouchableOpacity 
+                          className="flex-1"
+                          onPress={() => {
+                            hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                            setEditingItemId(item.id);
+                            setNewItemText(item.name);
+                            setQuantity(item.quantity);
+                            setSelectedUnit(item.unit || 'pcs');
+                            setSelectedCategory(item.category || '🛒 General');
+                            addBottomSheetRef.current?.present();
+                          }}
+                        >
+                          <Text 
+                            className={`text-[16px] font-bold ${
+                              item.isPurchased ? 'text-slate-400 line-through' : 'text-slate-800'
+                            }`}
+                          >
+                            {item.name}
+                          </Text>
+                          <Text className="text-[13px] text-slate-400 font-medium mt-0.5">
+                            {item.quantity} {item.unit}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
 
-                {/* Right Actions */}
-                <View className="flex-row items-center gap-2">
-                  <TouchableOpacity 
-                    onPress={() => handleRemoveItem(item)}
-                    className="p-2"
-                  >
-                    <Trash2 size={18} color="#cbd5e1" />
-                  </TouchableOpacity>
+                      {/* Right Actions */}
+                      <View className="flex-row items-center gap-2">
+                        <TouchableOpacity 
+                          onPress={() => handleRemoveItem(item)}
+                          className="p-2"
+                        >
+                          <Trash2 size={18} color="#cbd5e1" />
+                        </TouchableOpacity>
 
-                  {/* Minimal Checkbox */}
-                  <TouchableOpacity 
-                    onPress={() => {
-                      hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-                      togglePurchased(item.id);
-                    }}
-                    className="justify-center items-center w-8 h-8"
-                    hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
-                  >
-                    {item.isPurchased ? (
-                      <Check size={24} color="#0f172a" strokeWidth={3} />
-                    ) : (
-                      <View className="w-6 h-6 rounded-full border-[2px] border-slate-300" />
+                        {/* Minimal Checkbox */}
+                        <TouchableOpacity 
+                          onPress={() => {
+                            hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                            togglePurchased(item.id);
+                          }}
+                          className="justify-center items-center w-8 h-8"
+                          hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+                        >
+                          {item.isPurchased ? (
+                            <Check size={24} color="#0f172a" strokeWidth={3} />
+                          ) : (
+                            <View className="w-6 h-6 rounded-full border-[2px] border-slate-300" />
+                          )}
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    {/* Divider (hide for last item) */}
+                    {index < groupedItems[category].length - 1 && (
+                      <View className="h-[1px] bg-slate-50 ml-10 mr-2" />
                     )}
-                  </TouchableOpacity>
-                </View>
+                  </View>
+                ))}
               </View>
-
-              {/* Divider (hide for last item) */}
-              {index < items.length - 1 && (
-                <View className="h-[1px] bg-slate-50 ml-10 mr-2" />
-              )}
             </View>
           ))}
           {items.length === 0 && (
-            <View className="py-6 px-4 items-center justify-center">
-              <ShoppingBag size={48} color="#94a3b8" strokeWidth={1.5} />
-              <Text className="text-slate-500 font-semibold text-[15px] mt-3 text-center">No items yet.{'\n'}Tap the button below to add.</Text>
+            <View className="mx-6 bg-white rounded-[24px] border border-slate-100 px-5 py-2">
+              <View className="py-6 px-4 items-center justify-center">
+                <ShoppingBag size={48} color="#94a3b8" strokeWidth={1.5} />
+                <Text className="text-slate-500 font-semibold text-[15px] mt-3 text-center">No items yet.{'\n'}Tap the button below to add.</Text>
+              </View>
             </View>
           )}
         </View>
