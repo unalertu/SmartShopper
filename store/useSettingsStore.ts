@@ -5,6 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export type DistanceUnit = "metric" | "imperial";
 export type ThemeOption = "system" | "light" | "dark";
 export type NotificationSensitivity = "near" | "balanced" | "far";
+export type MaxAlertsPerDay = 1 | 3 | 5 | 10 | "unlimited";
 
 interface SettingsState {
   // ── Hydration ──
@@ -39,6 +40,7 @@ interface SettingsState {
   isPro: boolean;
   
   notificationSensitivity: NotificationSensitivity;
+  maxAlertsPerDay: MaxAlertsPerDay;
 
   // ── Notification Schedule ──
   scheduleEnabled: boolean;
@@ -60,6 +62,7 @@ interface SettingsState {
   setLowPowerMode: (enabled: boolean) => void;
   setAutoOpenNearbyList: (enabled: boolean) => void;
   setNotificationSensitivity: (sensitivity: NotificationSensitivity) => void;
+  setMaxAlertsPerDay: (maxAlerts: MaxAlertsPerDay) => void;
   setScheduleEnabled: (enabled: boolean) => void;
   setAllowedDays: (days: number[]) => void;
   setQuietHoursEnabled: (enabled: boolean) => void;
@@ -88,6 +91,7 @@ const DEFAULT_SETTINGS = {
   lowPowerMode: false,
   autoOpenNearbyList: false,
   notificationSensitivity: "balanced" as const,
+  maxAlertsPerDay: "unlimited" as const,
   scheduleEnabled: false,
   allowedDays: [0, 1, 2, 3, 4, 5, 6], // All days allowed by default
   quietHoursEnabled: false,
@@ -120,6 +124,7 @@ export const useSettingsStore = create<SettingsState>()(
       setLowPowerMode: (enabled: boolean) => set({ lowPowerMode: enabled }),
       setAutoOpenNearbyList: (enabled: boolean) => set({ autoOpenNearbyList: enabled }),
       setNotificationSensitivity: (sensitivity: NotificationSensitivity) => set({ notificationSensitivity: sensitivity }),
+      setMaxAlertsPerDay: (maxAlerts: MaxAlertsPerDay) => set({ maxAlertsPerDay: maxAlerts }),
       setScheduleEnabled: (enabled: boolean) => set({ scheduleEnabled: enabled }),
       setAllowedDays: (days: number[]) => set({ allowedDays: days }),
       setQuietHoursEnabled: (enabled: boolean) => set({ quietHoursEnabled: enabled }),

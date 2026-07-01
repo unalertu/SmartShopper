@@ -13,6 +13,7 @@ import ComingSoonSheet from '../components/ComingSoonSheet';
 import NotificationScheduleSheet from '../components/NotificationScheduleSheet';
 import QuietHoursSheet from '../components/QuietHoursSheet';
 import AlertDistanceSheet from '../components/AlertDistanceSheet';
+import MaxAlertsPerDaySheet from '../components/MaxAlertsPerDaySheet';
 import { showPaywall } from "@/services/paywallService";
 
 // ── Per-setting descriptions for enable / disable states ──
@@ -151,6 +152,9 @@ export default function NotificationPreferencesScreen() {
   // ── Alert Distance Sheet state ──
   const [alertDistanceSheetVisible, setAlertDistanceSheetVisible] = useState(false);
 
+  // ── Max Alerts Sheet state ──
+  const [maxAlertsSheetVisible, setMaxAlertsSheetVisible] = useState(false);
+
   const showComingSoon = useCallback((title: string, description: string) => {
     hapticImpact(ImpactFeedbackStyle.Light);
     setComingSoonData({ title, description });
@@ -264,6 +268,16 @@ export default function NotificationPreferencesScreen() {
             rightElement={<ChevronRight size={20} color="#cbd5e1" />}
           />
           <SettingsRow
+            icon={<Activity size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
+            label="Maximum Alerts"
+            sublabel="Limit notifications per day"
+            isProOnly={!isPro}
+            isLocked={!isPro}
+            onLockedPress={() => handleProUpsell('Maximum Alerts')}
+            onPress={isPro ? () => setMaxAlertsSheetVisible(true) : undefined}
+            rightElement={<ChevronRight size={20} color="#cbd5e1" />}
+          />
+          <SettingsRow
             icon={<Calendar size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
             label="Notification Schedule"
             sublabel="Set specific days for notifications"
@@ -315,6 +329,12 @@ export default function NotificationPreferencesScreen() {
       <AlertDistanceSheet
         visible={alertDistanceSheetVisible}
         onDismiss={() => setAlertDistanceSheetVisible(false)}
+      />
+
+      {/* Max Alerts Sheet */}
+      <MaxAlertsPerDaySheet
+        visible={maxAlertsSheetVisible}
+        onDismiss={() => setMaxAlertsSheetVisible(false)}
       />
     </View>
   );
