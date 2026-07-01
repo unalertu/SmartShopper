@@ -23,7 +23,7 @@ import { useSettingsStore } from "@/store/useSettingsStore";
 import { useShoppingListStore } from "@/store/useShoppingListStore";
 import { useNotificationsStore } from "@/store/useNotificationsStore";
 import { notificationEngine } from "@/services/notificationEngine";
-import { startBackgroundLocationTracking } from "@/services/locationService";
+import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from "@/services/locationService";
 import { geofenceManager } from "@/services/geofenceManager";
 
 // Prevent splash screen auto-hide
@@ -46,6 +46,19 @@ export default function RootLayout() {
   const [showLaunchScreen, setShowLaunchScreen] = useState(true);
   const [showNotificationPermission, setShowNotificationPermission] = useState(false);
   const _hasHydrated = useSettingsStore((state) => state._hasHydrated);
+  const savedStoresOnly = useSettingsStore((state) => state.savedStoresOnly);
+
+  // Dynamically start/stop background location tracking based on savedStoresOnly setting
+  useEffect(() => {
+    if (!_hasHydrated) return;
+    if (savedStoresOnly) {
+      void stopBackgroundLocationTracking();
+      void geofenceManager.syncSavedStores();
+    } else {
+      void startBackgroundLocationTracking();
+      void geofenceManager.syncSavedStores();
+    }
+  }, [savedStoresOnly, _hasHydrated]);
 
   useEffect(() => {
     // Hide native splash screen so custom launch screen takes over

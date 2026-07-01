@@ -323,7 +323,19 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
 
 export const startBackgroundLocationTracking = async () => {
   try {
+    const settings = await getSettingsFromStorage();
     const hasStarted = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+    
+    if (settings.savedStoresOnly) {
+      if (hasStarted) {
+        await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+        useLocationStore.getState().addDebugLog("[Location] Background tracking stopped (Saved Stores Only enabled)");
+      } else {
+        useLocationStore.getState().addDebugLog("[Location] Background tracking skipped (Saved Stores Only already enabled)");
+      }
+      return;
+    }
+
     if (!hasStarted) {
       const { status } = await Location.getBackgroundPermissionsAsync();
       if (status === "granted") {
@@ -333,10 +345,37 @@ export const startBackgroundLocationTracking = async () => {
           distanceInterval: 300,
           showsBackgroundLocationIndicator: true,
         });
+        useLocationStore.getState().addDebugLog("[Location] Background tracking started");
       }
     }
   } catch (e) {
     console.warn("Failed to start background tracking (possibly denied mode fallback):", e);
+  }
+};
+
+export const stopBackgroundLocationTracking = async () => {
+  try {
+    const hasStarted = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+    if (hasStarted) {
+      await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+      
+      // Verify that it actually stopped
+      const isStillRunning = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+      if (!isStillRunning) {
+        useLocationStore.getState().addDebugLog("[Location] Background tracking successfully stopped");
+      } else {
+        useLocationStore.getState().addDebugLog("[Location] WARNING: Background tracking is still active after stop request");
+      }
+    }
+    
+    // Clean up background location memory state
+    speedHistory = [];
+    geofenceState.clear();
+    dwellTimers.clear();
+    exitGraceTimers.clear();
+    notifiedStores.clear();
+  } catch (e) {
+    console.warn("Failed to stop background tracking:", e);
   }
 };
 

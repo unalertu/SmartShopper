@@ -4,7 +4,7 @@ import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { LinearTransition } from 'react-native-reanimated';
-import { MapPin, Menu, Vibrate, ChevronLeft, Lock, Clock, Calendar, SlidersHorizontal, Activity, ChevronRight } from 'lucide-react-native';
+import { MapPin, Menu, Vibrate, ChevronLeft, Lock, Clock, Calendar, SlidersHorizontal, Activity, ChevronRight, Target } from 'lucide-react-native';
 import { useSettingsStore } from '../store';
 import { hapticImpact } from '../services/haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
@@ -12,6 +12,7 @@ import ConfirmationSheet, { ConfirmationSheetData } from '../components/Confirma
 import ComingSoonSheet from '../components/ComingSoonSheet';
 import NotificationScheduleSheet from '../components/NotificationScheduleSheet';
 import QuietHoursSheet from '../components/QuietHoursSheet';
+import AlertDistanceSheet from '../components/AlertDistanceSheet';
 import { showPaywall } from "@/services/paywallService";
 
 // ── Per-setting descriptions for enable / disable states ──
@@ -147,6 +148,9 @@ export default function NotificationPreferencesScreen() {
   // ── Quiet Hours Sheet state ──
   const [quietHoursSheetVisible, setQuietHoursSheetVisible] = useState(false);
 
+  // ── Alert Distance Sheet state ──
+  const [alertDistanceSheetVisible, setAlertDistanceSheetVisible] = useState(false);
+
   const showComingSoon = useCallback((title: string, description: string) => {
     hapticImpact(ImpactFeedbackStyle.Light);
     setComingSoonData({ title, description });
@@ -184,20 +188,6 @@ export default function NotificationPreferencesScreen() {
   const handleProUpsell = (featureName: string) => {
     hapticImpact(ImpactFeedbackStyle.Light);
     showPaywall();
-  };
-
-  const SENSITIVITY_OPTIONS = {
-    near: "Near (100m)",
-    balanced: "Balanced (150m)",
-    far: "Far (300m)",
-  };
-
-  const handleSensitivityPress = () => {
-    hapticImpact(ImpactFeedbackStyle.Light);
-    const order: ("near" | "balanced" | "far")[] = ['near', 'balanced', 'far'];
-    const currentIndex = order.indexOf(notificationSensitivity);
-    const nextIndex = (currentIndex + 1) % order.length;
-    setNotificationSensitivity(order[nextIndex]);
   };
 
   return (
@@ -254,24 +244,14 @@ export default function NotificationPreferencesScreen() {
         {/* Advanced Notification Settings — Pro Only */}
         <SettingsGroup title="Advanced">
           <SettingsRow
-            icon={<Activity size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
+            icon={<Target size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
             label="Alert Distance"
             sublabel="How close you are before alerts"
             isProOnly={!isPro}
             isLocked={!isPro}
             onLockedPress={() => handleProUpsell('Alert Distance')}
-            rightElement={
-              isPro ? (
-                <TouchableOpacity
-                  onPress={handleSensitivityPress}
-                  className="bg-slate-100 px-3 py-1.5 rounded-full"
-                >
-                  <Text className="text-[13px] font-medium text-slate-700">
-                    {SENSITIVITY_OPTIONS[notificationSensitivity]}
-                  </Text>
-                </TouchableOpacity>
-              ) : undefined
-            }
+            onPress={isPro ? () => setAlertDistanceSheetVisible(true) : undefined}
+            rightElement={<ChevronRight size={20} color="#cbd5e1" />}
           />
           <SettingsRow
             icon={<Clock size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
@@ -329,6 +309,12 @@ export default function NotificationPreferencesScreen() {
       <QuietHoursSheet
         visible={quietHoursSheetVisible}
         onDismiss={() => setQuietHoursSheetVisible(false)}
+      />
+
+      {/* Alert Distance Sheet */}
+      <AlertDistanceSheet
+        visible={alertDistanceSheetVisible}
+        onDismiss={() => setAlertDistanceSheetVisible(false)}
       />
     </View>
   );

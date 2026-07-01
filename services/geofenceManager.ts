@@ -188,6 +188,11 @@ export const geofenceManager = {
         return;
       }
 
+      // Explicitly stop any existing geofences before registering new ones
+      // This prevents stale/duplicate regions from accumulating on OS level
+      const hasStarted = await Location.hasStartedGeofencingAsync(GEOFENCE_TASK);
+      if (hasStarted) await Location.stopGeofencingAsync(GEOFENCE_TASK);
+
       await Location.startGeofencingAsync(GEOFENCE_TASK, regionsToRegister);
       activeRegionIds = newIds;
     } catch (e) {
