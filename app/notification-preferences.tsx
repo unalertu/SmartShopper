@@ -4,7 +4,7 @@ import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { LinearTransition } from 'react-native-reanimated';
-import { MapPin, Menu, Vibrate, ChevronLeft, Lock, Clock, Calendar, SlidersHorizontal, Activity, ChevronRight, Target } from 'lucide-react-native';
+import { MapPin, Menu, Vibrate, ChevronLeft, Lock, Clock, Calendar, SlidersHorizontal, BellDot, ChevronRight, Target } from 'lucide-react-native';
 import { useSettingsStore } from '../store';
 import { hapticImpact } from '../services/haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
@@ -268,7 +268,7 @@ export default function NotificationPreferencesScreen() {
             rightElement={<ChevronRight size={20} color="#cbd5e1" />}
           />
           <SettingsRow
-            icon={<Activity size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
+            icon={<BellDot size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
             label="Maximum Alerts"
             sublabel="Limit notifications per day"
             isProOnly={!isPro}
