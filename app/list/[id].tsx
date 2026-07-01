@@ -121,7 +121,8 @@ export default function ListDetails() {
 
   const groupedItems = useMemo(() => {
     return items.reduce((acc, item) => {
-      const cat = item.category || '🛒 General';
+      let cat = item.category || '🛒 General';
+      if (cat === 'General') cat = '🛒 General';
       if (!acc[cat]) {
         acc[cat] = [];
       }
@@ -130,7 +131,20 @@ export default function ListDetails() {
     }, {} as Record<string, typeof items>);
   }, [items]);
 
-  const sortedCategories = Object.keys(groupedItems).sort();
+  const categories = [
+    '🛒 General', '🍎 Fruits', '🥦 Vegetables', '🥛 Dairy', '🍞 Bakery', 
+    '🥩 Meat', '🐟 Seafood', '🧂 Pantry', '🥤 Drinks', '🍬 Snacks', 
+    '❄️ Frozen', '🧹 Household', '🧴 Personal Care'
+  ];
+
+  const sortedCategories = Object.keys(groupedItems).sort((a, b) => {
+    const indexA = categories.indexOf(a);
+    const indexB = categories.indexOf(b);
+    if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    return indexA - indexB;
+  });
 
   useEffect(() => {
     Animated.spring(buttonScale, {
@@ -140,11 +154,6 @@ export default function ListDetails() {
       useNativeDriver: true}).start();
   }, [newItemText]);
 
-  const categories = [
-    '🛒 General', '🍎 Fruits', '🥦 Vegetables', '🥛 Dairy', '🍞 Bakery', 
-    '🥩 Meat', '🐟 Seafood', '🥤 Drinks', '🍬 Snacks', '🧂 Pantry', 
-    '❄️ Frozen', '🧹 Household', '🧴 Personal Care'
-  ];
   const units = distanceUnit === 'imperial' ? ['pcs', 'lb', 'oz', 'pack'] : ['pcs', 'kg', 'lt', 'pack'];
 
   const CATEGORY_SUGGESTIONS: Record<string, string[]> = {
