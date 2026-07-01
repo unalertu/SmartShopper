@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Keyboard, Alert, Animated, Ke
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { FREE_TIER, getMaxItemsPerList } from '@/constants/tierConfig';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, MoreHorizontal, ShoppingBag, CheckCircle, Check, Clock, Trash2, Plus, Mic, ScanBarcode, Minus, AlignLeft, X } from 'lucide-react-native';
+import { ArrowLeft, MoreHorizontal, ShoppingBag, CheckCircle, Check, Clock, Trash2, Plus, Mic, ScanBarcode, Minus, AlignLeft, X, Pencil } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -360,19 +360,22 @@ export default function ListDetails() {
           <ArrowLeft size={20} color="#0f172a" strokeWidth={2.5} />
         </TouchableOpacity>
         <TouchableOpacity 
-          className="flex-1 items-center px-4"
+          className="flex-1 flex-row justify-center items-center px-4 gap-1.5"
+          hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
           onPress={() => {
             hapticImpact(Haptics.ImpactFeedbackStyle.Light);
             setRenameSheetVisible(true);
           }}
         >
           <Text 
-            className="text-[24px] font-bold text-slate-900 tracking-tight" 
+            className="text-[24px] font-bold text-slate-900 tracking-tight text-center" 
             numberOfLines={1}
             adjustsFontSizeToFit
+            style={{ flexShrink: 1 }}
           >
             {list.name}
           </Text>
+          <Pencil size={16} color="#94a3b8" />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleDeleteList} className="bg-slate-100 p-3 rounded-full">
           <Trash2 size={20} color="#f87171" strokeWidth={2.5} />
