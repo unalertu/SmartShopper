@@ -22,7 +22,7 @@ const SETTING_DESCRIPTIONS: Record<string, { enable: string; disable: string }> 
     enable: "You'll only receive notifications from stores you've saved instead of all nearby stores.",
     disable: "You'll receive notifications from all nearby stores instead of only your saved stores.",
   },
-  'Shopping List Reminders': {
+  'Enable Nearby Shops Alerts': {
     enable: "You'll be notified when a nearby store has items on your shopping list.",
     disable: "You won't receive reminders when passing stores that carry your list items.",
   },
@@ -230,13 +230,13 @@ export default function NotificationPreferencesScreen() {
           />
           <SettingsRow
             icon={<Menu size={20} color="#64748b" />}
-            label="Shopping List Reminders"
+            label="Enable Nearby Shops Alerts"
             sublabel="Notify for nearby stores"
             isLast
             rightElement={
               <Switch
                 value={shoppingListReminders}
-                onValueChange={() => requestToggle('Shopping List Reminders', shoppingListReminders, setShoppingListReminders)}
+                onValueChange={() => requestToggle('Enable Nearby Shops Alerts', shoppingListReminders, setShoppingListReminders)}
                 trackColor={switchTrackColor}
                 thumbColor="#ffffff"
                 ios_backgroundColor="#E5E7EB"

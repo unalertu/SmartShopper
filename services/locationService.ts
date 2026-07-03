@@ -74,6 +74,7 @@ export const getSettingsFromStorage = async () => {
         quietHoursEnabled: state.quietHoursEnabled === true,
         allowedHoursStart: typeof state.allowedHoursStart === 'number' ? state.allowedHoursStart : 8,
         allowedHoursEnd: typeof state.allowedHoursEnd === 'number' ? state.allowedHoursEnd : 22,
+        shoppingListReminders: state.shoppingListReminders !== false,
       };
     }
   } catch (e) {
@@ -91,6 +92,7 @@ export const getSettingsFromStorage = async () => {
     quietHoursEnabled: false,
     allowedHoursStart: 8,
     allowedHoursEnd: 22,
+    shoppingListReminders: true,
   };
 };
 
@@ -106,8 +108,8 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
 
   // 1. Settings Guard
   const settings = await getSettingsFromStorage();
-  if (!settings.notificationsEnabled || !settings.backgroundNotifications) {
-    addDebugLog("Notifications disabled in settings");
+  if (!settings.notificationsEnabled || !settings.backgroundNotifications || !settings.shoppingListReminders) {
+    addDebugLog("Notifications or location-based alerts disabled in settings");
     return;
   }
 
@@ -291,6 +293,7 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
     quietHoursEnabled: settings.quietHoursEnabled,
     allowedHoursStart: settings.allowedHoursStart,
     allowedHoursEnd: settings.allowedHoursEnd,
+    shoppingListReminders: settings.shoppingListReminders,
   });
 
   if (!decision.allowed) {

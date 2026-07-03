@@ -13,7 +13,12 @@ export const notificationEngine = {
     quietHoursEnabled: boolean;
     allowedHoursStart: number;
     allowedHoursEnd: number;
+    shoppingListReminders: boolean;
   }): Promise<{ allowed: boolean; reason?: string }> => {
+    if (!params.shoppingListReminders) {
+      return { allowed: false, reason: "location_alerts_disabled" };
+    }
+
     const state = await notificationAnalytics.getState();
 
     // 1. Global Cooldown Check

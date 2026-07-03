@@ -137,7 +137,7 @@ async function processGeofenceEnter(region: Location.LocationRegion) {
 
     // 4. Settings
     const settings = await getSettingsFromStorage();
-    if (!settings.notificationsEnabled) return;
+    if (!settings.notificationsEnabled || !settings.shoppingListReminders) return;
 
     // 5. Unpurchased items (Single read)
     const unpurchasedItems = await geoEngine.getUnpurchasedItems();
@@ -152,6 +152,7 @@ async function processGeofenceEnter(region: Location.LocationRegion) {
       quietHoursEnabled: settings.quietHoursEnabled,
       allowedHoursStart: settings.allowedHoursStart,
       allowedHoursEnd: settings.allowedHoursEnd,
+      shoppingListReminders: settings.shoppingListReminders,
     });
     if (!decision.allowed) return;
 
