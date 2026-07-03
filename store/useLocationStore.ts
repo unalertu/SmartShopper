@@ -3,7 +3,8 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getMaxSavedStores, FREE_TIER, PRO_TIER } from "../constants/tierConfig";
 import { geofenceManager } from "../services/geofenceManager";
-import { NOTIFICATION_CONSTANTS } from "../constants";
+import { NOTIFICATION_CONSTANTS, getAlertDistanceMeters } from "../constants";
+import { useSettingsStore } from "./useSettingsStore";
 
 export interface SavedLocation {
   id: string;
@@ -11,7 +12,6 @@ export interface SavedLocation {
   address: string;
   latitude: number;
   longitude: number;
-  radius: number; // geofence radius in meters
   isActive: boolean;
   createdAt: number;
 }
@@ -25,7 +25,6 @@ interface LocationStoreState {
   getActiveLocations: () => SavedLocation[];
   mutedUnsavedShops: string[];
   toggleMuteUnsavedShop: (id: string) => void;
-  resetRadiuses: () => void;
 
   /**
    * Check if the user can add a new saved store.
@@ -162,7 +161,9 @@ export const useLocationStore = create<LocationStoreState>()(
             isActive: true,
             createdAt: Date.now(),
           };
-          void geofenceManager.registerSavedStore(newLoc);
+          const sensitivity = useSettingsStore.getState().notificationSensitivity;
+          const alertDistance = getAlertDistanceMeters(sensitivity);
+          void geofenceManager.registerSavedStore(newLoc, alertDistance);
           return {
             locations: [newLoc, ...state.locations],
           };
@@ -177,27 +178,11 @@ export const useLocationStore = create<LocationStoreState>()(
         }),
 
       updateLocation: (id, updates) =>
-        set((state) => {
-          const newLocations = state.locations.map((loc) => {
-            if (loc.id === id) {
-              const updated = { ...loc, ...updates };
-              void geofenceManager.registerSavedStore(updated);
-              return updated;
-            }
-            return loc;
-          });
-          return { locations: newLocations };
-        }),
-
-      resetRadiuses: () =>
-        set((state) => {
-          const newLocations = state.locations.map((loc) => {
-            const updated = { ...loc, radius: 400 };
-            void geofenceManager.registerSavedStore(updated);
-            return updated;
-          });
-          return { locations: newLocations };
-        }),
+        set((state) => ({
+          locations: state.locations.map((loc) =>
+            loc.id === id ? { ...loc, ...updates } : loc
+          ),
+        })),
 
       toggleActive: (id) =>
         set((state) => {
@@ -207,7 +192,9 @@ export const useLocationStore = create<LocationStoreState>()(
           const toggled = updated.find(loc => loc.id === id);
           if (toggled) {
             if (toggled.isActive) {
-              void geofenceManager.registerSavedStore(toggled);
+              const sensitivity = useSettingsStore.getState().notificationSensitivity;
+              const alertDistance = getAlertDistanceMeters(sensitivity);
+              void geofenceManager.registerSavedStore(toggled, alertDistance);
             } else {
               void geofenceManager.unregisterSavedStore(id);
             }

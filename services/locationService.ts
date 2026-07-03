@@ -9,8 +9,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { geoEngine } from "./geoEngine";
 import { notificationAnalytics } from "./notificationAnalytics";
 import { sendLocalNotification } from "./notificationService";
-import { useSettingsStore } from "../store/useSettingsStore";
-import { NOTIFICATION_CONSTANTS } from "../constants";
+import { useSettingsStore, NotificationSensitivity } from "../store/useSettingsStore";
+import { NOTIFICATION_CONSTANTS, getAlertDistanceMeters } from "../constants";
 import { useStatsStore } from "../store/useStatsStore";
 import { useLocationStore } from "../store/useLocationStore";
 import { fetchMarkets } from "./overpassService";
@@ -75,6 +75,8 @@ export const getSettingsFromStorage = async () => {
         allowedHoursStart: typeof state.allowedHoursStart === 'number' ? state.allowedHoursStart : 8,
         allowedHoursEnd: typeof state.allowedHoursEnd === 'number' ? state.allowedHoursEnd : 22,
         shoppingListReminders: state.shoppingListReminders !== false,
+        notificationSensitivity: (state.notificationSensitivity || 'balanced') as NotificationSensitivity,
+        maxAlertsPerDay: state.maxAlertsPerDay ?? 5,
       };
     }
   } catch (e) {
@@ -93,6 +95,8 @@ export const getSettingsFromStorage = async () => {
     allowedHoursStart: 8,
     allowedHoursEnd: 22,
     shoppingListReminders: true,
+    notificationSensitivity: 'balanced' as NotificationSensitivity,
+    maxAlertsPerDay: 5 as number | 'unlimited',
   };
 };
 
@@ -112,6 +116,10 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
     addDebugLog("Notifications or location-based alerts disabled in settings");
     return;
   }
+
+  // 1b. RESOLVE ALERT DISTANCE (single source of truth)
+  const alertDistance = getAlertDistanceMeters(settings.notificationSensitivity);
+  addDebugLog(`Alert distance: ${alertDistance}m (${settings.notificationSensitivity})`);
 
   // 2. GPS Accuracy Filter
   if (accuracy && accuracy > NOTIFICATION_CONSTANTS.MAX_GPS_ACCURACY) {
@@ -194,7 +202,7 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
 
   // 9. FILTER INSIDE STORES & MIN EXIT DISTANCE
   const insideStores = nearbyStores.filter(s => {
-    if (s.distance > (s.radius || NOTIFICATION_CONSTANTS.DEFAULT_GEOFENCE_RADIUS)) return false;
+    if (s.distance > alertDistance) return false;
     
     const notified = notifiedStores.get(s.id);
     if (notified) {
@@ -278,7 +286,7 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
   }
 
   // 13. PICK BEST STORE
-  const bestStore = await notificationEngine.pickBestStore(dwelledStores, unpurchasedItems.length);
+  const bestStore = await notificationEngine.pickBestStore(dwelledStores, unpurchasedItems.length, alertDistance);
   if (!bestStore) {
     void geofenceManager.rebalanceGeofences(latitude, longitude);
     return;
@@ -414,4 +422,52 @@ export const getDistance = (
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return R * c;
+};
+
+/**
+ * Handle a native geofence enter event.
+ * Validates settings and dispatches notifications if conditions are met.
+ */
+export const handleGeofenceEnter = async (storeId: string) => {
+  try {
+    // 1. Memory lookup
+    const store = geofenceManager.getStoreFromCache(storeId);
+    if (!store) return; // Deleted
+
+    // 2. Is Active?
+    if (!store.isActive) return;
+
+    // 3. Has Active List?
+    const hasActiveList = await geoEngine.hasActiveShoppingList();
+    if (!hasActiveList) return;
+
+    // 4. Settings
+    const settings = await getSettingsFromStorage();
+    if (!settings.notificationsEnabled || !settings.shoppingListReminders) return;
+
+    // 5. Unpurchased items
+    const unpurchasedItems = await geoEngine.getUnpurchasedItems();
+    if (unpurchasedItems.length === 0) return;
+
+    // 6. Should Send?
+    const decision = await notificationEngine.shouldSendLocationNotification({
+      storeId: store.id,
+      isPro: settings.isPro,
+      maxAlertsPerDay: settings.maxAlertsPerDay,
+      scheduleEnabled: settings.scheduleEnabled,
+      allowedDays: settings.allowedDays,
+      quietHoursEnabled: settings.quietHoursEnabled,
+      allowedHoursStart: settings.allowedHoursStart,
+      allowedHoursEnd: settings.allowedHoursEnd,
+      shoppingListReminders: settings.shoppingListReminders,
+    });
+    if (!decision.allowed) return;
+
+    // SEND
+    const content = await notificationEngine.buildNotificationContent(store.name, unpurchasedItems);
+    await sendLocalNotification(content.title, content.body, 'geofence-alerts');
+    await notificationAnalytics.recordNotification(content.title, content.body, store.id);
+  } catch (e) {
+    console.error("handleGeofenceEnter error", e);
+  }
 };

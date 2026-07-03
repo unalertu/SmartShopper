@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAlertDistanceMeters } from "../constants";
 
 export type DistanceUnit = "metric" | "imperial";
 export type ThemeOption = "system" | "light" | "dark";
@@ -123,7 +124,15 @@ export const useSettingsStore = create<SettingsState>()(
       setBackgroundNotifications: (enabled: boolean) => set({ backgroundNotifications: enabled }),
       setLowPowerMode: (enabled: boolean) => set({ lowPowerMode: enabled }),
       setAutoOpenNearbyList: (enabled: boolean) => set({ autoOpenNearbyList: enabled }),
-      setNotificationSensitivity: (sensitivity: NotificationSensitivity) => set({ notificationSensitivity: sensitivity }),
+      setNotificationSensitivity: (sensitivity: NotificationSensitivity) => {
+        set({ notificationSensitivity: sensitivity });
+        try {
+          const { geofenceManager } = require('../services/geofenceManager');
+          void geofenceManager.syncSavedStores(getAlertDistanceMeters(sensitivity));
+        } catch (e) {
+          console.error("Failed to sync radiuses", e);
+        }
+      },
       setMaxAlertsPerDay: (maxAlerts: MaxAlertsPerDay) => set({ maxAlertsPerDay: maxAlerts }),
       setScheduleEnabled: (enabled: boolean) => set({ scheduleEnabled: enabled }),
       setAllowedDays: (days: number[]) => set({ allowedDays: days }),
@@ -139,16 +148,14 @@ export const useSettingsStore = create<SettingsState>()(
         set({ smartSuggestionsEnabled: enabled }),
       setAutoDeletePurchased: (enabled: boolean) =>
         set({ autoDeletePurchased: enabled }),
-      setIsPro: (enabled: boolean) => set((state) => {
+      setIsPro: (enabled: boolean) => set((state: SettingsState) => {
         if (state.isPro && !enabled) {
           // Reset Pro-specific settings when downgrading to Free
-          
-          // Reset Map specific settings
           try {
-            const { useLocationStore } = require('./useLocationStore');
-            useLocationStore.getState().resetRadiuses();
+            const { geofenceManager } = require('../services/geofenceManager');
+            void geofenceManager.syncSavedStores(getAlertDistanceMeters(DEFAULT_SETTINGS.notificationSensitivity));
           } catch (e) {
-            console.error("Failed to reset location radiuses", e);
+            console.error("Failed to sync radiuses", e);
           }
 
           return {

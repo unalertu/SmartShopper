@@ -82,4 +82,3 @@ export const FontSize = {
   "4xl": 36,
 } as const;
 
-export const GEOFENCE_DEFAULT_RADIUS = 150; // meters

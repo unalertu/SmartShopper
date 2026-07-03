@@ -1,11 +1,8 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { SavedLocation, useLocationStore } from '../store/useLocationStore';
-import { getDistance, getSettingsFromStorage, getCurrentLocation } from './locationService';
+import { getDistance, getCurrentLocation, handleGeofenceEnter } from './locationService';
 import { geoEngine } from './geoEngine';
-import { notificationEngine } from './notificationEngine';
-import { sendLocalNotification } from './notificationService';
-import { notificationAnalytics } from './notificationAnalytics';
 import { NOTIFICATION_CONSTANTS } from '../constants';
 
 const GEOFENCE_TASK = 'saved-store-geofence-task';
@@ -16,8 +13,8 @@ const storeCache: Map<string, SavedLocation> = new Map();
 // Desired regions (not yet committed to native)
 let desiredRegions: Location.LocationRegion[] = [];
 
-// Currently active region IDs in native
-let activeRegionIds: Set<string> = new Set();
+// Currently active region signatures in native (id_radius)
+let activeRegionSignatures: Set<string> = new Set();
 
 // Rebalance throttle state
 let lastRebalanceCoords: { latitude: number; longitude: number } | null = null;
@@ -26,19 +23,12 @@ let commitTimer: ReturnType<typeof setTimeout> | null = null;
 
 // ─── Helpers ───────────────────────────────────────────────
 
-function clampRadius(radius: number): number {
-  return Math.max(
-    NOTIFICATION_CONSTANTS.MIN_GEOFENCE_RADIUS,
-    Math.min(NOTIFICATION_CONSTANTS.MAX_GEOFENCE_RADIUS, radius)
-  );
-}
-
-function buildRegion(location: SavedLocation): Location.LocationRegion {
+function buildRegion(location: SavedLocation, alertDistance: number): Location.LocationRegion {
   return {
     identifier: location.id,
     latitude: location.latitude,
     longitude: location.longitude,
-    radius: clampRadius(location.radius || NOTIFICATION_CONSTANTS.DEFAULT_GEOFENCE_RADIUS),
+    radius: alertDistance,
     notifyOnEnter: true,
     notifyOnExit: false,
   };
@@ -116,62 +106,18 @@ TaskManager.defineTask(GEOFENCE_TASK, async ({ data, error }) => {
   const { eventType, region } = data as { eventType: Location.GeofencingEventType; region: Location.LocationRegion };
   
   if (eventType === Location.GeofencingEventType.Enter) {
-    await processGeofenceEnter(region);
+    if (region.identifier) {
+      await handleGeofenceEnter(region.identifier);
+    }
   }
 });
 
-async function processGeofenceEnter(region: Location.LocationRegion) {
-  try {
-    if (!region.identifier) return;
-
-    // 1. Memory lookup
-    const store = geofenceManager.getStoreFromCache(region.identifier);
-    if (!store) return; // Deleted
-
-    // 2. Is Active?
-    if (!store.isActive) return;
-
-    // 3. Has Active List?
-    const hasActiveList = await geoEngine.hasActiveShoppingList();
-    if (!hasActiveList) return;
-
-    // 4. Settings
-    const settings = await getSettingsFromStorage();
-    if (!settings.notificationsEnabled || !settings.shoppingListReminders) return;
-
-    // 5. Unpurchased items (Single read)
-    const unpurchasedItems = await geoEngine.getUnpurchasedItems();
-    if (unpurchasedItems.length === 0) return;
-
-    // 6. Should Send?
-    const decision = await notificationEngine.shouldSendLocationNotification({
-      storeId: store.id,
-      isPro: settings.isPro,
-      maxAlertsPerDay: settings.maxAlertsPerDay,
-      scheduleEnabled: settings.scheduleEnabled,
-      allowedDays: settings.allowedDays,
-      quietHoursEnabled: settings.quietHoursEnabled,
-      allowedHoursStart: settings.allowedHoursStart,
-      allowedHoursEnd: settings.allowedHoursEnd,
-      shoppingListReminders: settings.shoppingListReminders,
-    });
-    if (!decision.allowed) return;
-
-    // SEND
-    const content = await notificationEngine.buildNotificationContent(store.name, unpurchasedItems);
-    await sendLocalNotification(content.title, content.body, 'geofence-alerts');
-    await notificationAnalytics.recordNotification(content.title, content.body, store.id);
-  } catch (e) {
-    console.error("processGeofenceEnter error", e);
-  }
-}
-
-// ─── Geofence Manager ─────────────────────────────────────
+// ─── Geofence Manager (Pure) ────────────────────────────────
 
 export const geofenceManager = {
-  registerSavedStore(location: SavedLocation): void {
+  registerSavedStore(location: SavedLocation, alertDistance: number): void {
     storeCache.set(location.id, location);
-    const region = buildRegion(location);
+    const region = buildRegion(location, alertDistance);
     desiredRegions = desiredRegions.filter((r) => r.identifier !== location.id);
     desiredRegions.push(region);
     log(`Store registered: ${location.name} (total desired: ${desiredRegions.length})`);
@@ -186,7 +132,7 @@ export const geofenceManager = {
     scheduleCommit();
   },
 
-  async syncSavedStores(): Promise<void> {
+  async syncSavedStores(alertDistance: number): Promise<void> {
     try {
       const locations = await geoEngine.getLocations();
       storeCache.clear();
@@ -194,11 +140,11 @@ export const geofenceManager = {
       for (const loc of locations) {
         storeCache.set(loc.id, loc);
         if (loc.isActive) {
-          desiredRegions.push(buildRegion(loc));
+          desiredRegions.push(buildRegion(loc, alertDistance));
         }
       }
 
-      log(`Sync: ${locations.length} saved shops, ${desiredRegions.length} active`);
+      log(`Sync: ${locations.length} saved shops, ${desiredRegions.length} active (dist: ${alertDistance}m)`);
 
       // Resolve location for distance-based sorting
       const location = await resolveLocation();
@@ -251,13 +197,15 @@ export const geofenceManager = {
         regionsToRegister = regionsToRegister.slice(0, NOTIFICATION_CONSTANTS.MAX_NATIVE_GEOFENCES);
       }
 
-      const newIds = new Set(
-        regionsToRegister.map((r) => r.identifier).filter((id): id is string => id !== undefined)
+      const newSignatures = new Set(
+        regionsToRegister
+          .filter((r) => r.identifier !== undefined)
+          .map((r) => `${r.identifier}_${r.radius}`)
       );
 
       // ─── Unchanged optimization: skip if active set hasn't changed ───
-      if (setsEqual(newIds, activeRegionIds)) {
-        log(`Commit skipped (${reason}): active ${activeRegionIds.size} regions unchanged`);
+      if (setsEqual(newSignatures, activeRegionSignatures)) {
+        log(`Commit skipped (${reason}): active ${activeRegionSignatures.size} regions unchanged`);
         return;
       }
 
@@ -265,7 +213,7 @@ export const geofenceManager = {
       if (regionsToRegister.length === 0) {
         const hasStarted = await Location.hasStartedGeofencingAsync(GEOFENCE_TASK);
         if (hasStarted) await Location.stopGeofencingAsync(GEOFENCE_TASK);
-        activeRegionIds.clear();
+        activeRegionSignatures.clear();
         log(`Commit (${reason}): all regions removed, geofencing stopped`);
         return;
       }
@@ -283,15 +231,15 @@ export const geofenceManager = {
       // calling start with a new list atomically replaces the old one.
       await Location.startGeofencingAsync(GEOFENCE_TASK, regionsToRegister);
 
-      const previousCount = activeRegionIds.size;
-      activeRegionIds = newIds;
+      const previousCount = activeRegionSignatures.size;
+      activeRegionSignatures = newSignatures;
 
       // ─── Detailed logging ───
       const totalSaved = storeCache.size;
       log(
         `Commit (${reason}): ` +
         `Saved shops: ${totalSaved} | ` +
-        `Active geofences: ${previousCount} → ${activeRegionIds.size} | ` +
+        `Active geofences: ${previousCount} → ${activeRegionSignatures.size} | ` +
         `Desired: ${desiredRegions.length}`
       );
 

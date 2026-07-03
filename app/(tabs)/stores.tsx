@@ -23,7 +23,7 @@ import StoreMarker from '../../components/StoreMarker';
 import { MapSearchIndicator } from '../../components/MapSearchIndicator';
 import { create } from 'zustand';
 import { Alert } from 'react-native';
-import { FREE_TIER, getMaxSavedStores, GEOFENCE_DEFAULT_RADIUS } from '@/constants';
+import { FREE_TIER, getMaxSavedStores } from '@/constants';
 import ConfirmationSheet from '../../components/ConfirmationSheet';
 import { showPaywall } from "@/services/paywallService";
 
@@ -1115,8 +1115,7 @@ export default function StoresScreen() {
                         name: selectedShopToSave.name || 'Unknown Store',
                         address: selectedShopToSave.address || 'Unknown Address',
                         latitude: selectedShopToSave.latitude,
-                        longitude: selectedShopToSave.longitude,
-                        radius: GEOFENCE_DEFAULT_RADIUS});
+                        longitude: selectedShopToSave.longitude});
                       setSelectedShopToSave(null);
                     }}
                   >

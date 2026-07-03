@@ -95,9 +95,6 @@ export default function LocationsScreen() {
                   >
                     {location.address || "No address"}
                   </Text>
-                  <Text className="text-xs text-surface-300 mt-1">
-                    Radius: {location.radius}m
-                  </Text>
                 </View>
                 <View className="items-end gap-2">
                   <Switch

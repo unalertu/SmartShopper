@@ -2,7 +2,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SavedLocation } from "../store/useLocationStore";
 import { ShoppingItem } from "../store/useShoppingListStore";
 import { getDistance } from "./locationService";
-import { GEOFENCE_DEFAULT_RADIUS } from "../constants";
 
 export const geoEngine = {
   getLocations: async (): Promise<SavedLocation[]> => {
@@ -98,12 +97,14 @@ export const geoEngine = {
    * Get nearby stores sorted by distance (closest first).
    * Supports both saved locations and unsaved markets.
    * If excludeSaved is true, it only returns unsaved cached markets.
+   * 
+   * @param alertDistance - The global Alert Distance in meters, derived from notificationSensitivity
    */
   getNearbyStores: async (
     lat: number,
     lon: number,
     savedStoresOnly: boolean,
-    searchRadius?: number,
+    alertDistance: number,
     excludeSaved?: boolean
   ): Promise<(SavedLocation & { distance: number })[]> => {
     let allCandidates: SavedLocation[] = [];
@@ -125,7 +126,6 @@ export const geoEngine = {
           name: market.name,
           latitude: market.latitude,
           longitude: market.longitude,
-          radius: GEOFENCE_DEFAULT_RADIUS,
           isActive: true,
           isUnsaved: true // Flag to identify unsaved locations
         } as unknown as SavedLocation));
@@ -138,7 +138,7 @@ export const geoEngine = {
         const distance = getDistance(lat, lon, loc.latitude, loc.longitude);
         return { ...loc, distance };
       })
-      .filter((loc) => loc.distance <= (searchRadius || loc.radius || 500));
+      .filter((loc) => loc.distance <= alertDistance);
 
     // Sort by distance (closest first)
     nearbyWithDistance.sort((a, b) => a.distance - b.distance);

@@ -1,6 +1,6 @@
-export { Colors, Spacing, BorderRadius, FontSize, GEOFENCE_DEFAULT_RADIUS } from "./theme";
+export { Colors, Spacing, BorderRadius, FontSize } from "./theme";
 export { CATEGORIES, UNITS, getCategoryIcon, getCategoryLabel } from "./Categories";
-export { FREE_TIER, PRO_TIER, getTierConfig, getMaxSavedStores, getMaxLocationNotificationsPerDay, getMaxLists, getMaxItemsPerList, getGeofenceRadiusOptions } from "./tierConfig";
+export { FREE_TIER, PRO_TIER, getTierConfig, getMaxSavedStores, getMaxLocationNotificationsPerDay, getMaxLists, getMaxItemsPerList, getAlertDistanceMeters } from "./tierConfig";
 
 export const NOTIFICATION_CONSTANTS = {
   // Cooldowns
@@ -16,9 +16,6 @@ export const NOTIFICATION_CONSTANTS = {
   QUIET_HOURS_START: 22,
   QUIET_HOURS_END: 8,
   // Geofence
-  DEFAULT_GEOFENCE_RADIUS: 150,
-  MIN_GEOFENCE_RADIUS: 100,
-  MAX_GEOFENCE_RADIUS: 500,
   MAX_NATIVE_GEOFENCES: 20,
   // GPS
   MAX_GPS_ACCURACY: 80,

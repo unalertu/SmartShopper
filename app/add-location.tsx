@@ -15,15 +15,12 @@ import {
   X,
   Check,
   Crosshair,
-  Minus,
-  Plus,
-  Lock,
   Sparkles} from "lucide-react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useLocationStore, useSettingsStore } from "@/store";
 import { getCurrentLocation } from "@/services/locationService";
-import { Colors, GEOFENCE_DEFAULT_RADIUS } from "@/constants/theme";
-import { FREE_TIER, getMaxSavedStores, getGeofenceRadiusOptions } from "@/constants/tierConfig";
+import { Colors } from "@/constants/theme";
+import { FREE_TIER, getMaxSavedStores } from "@/constants/tierConfig";
 import { showPaywall } from "@/services/paywallService";
 
 export default function AddLocationScreen() {
@@ -37,11 +34,7 @@ export default function AddLocationScreen() {
   const [address, setAddress] = useState("");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
-  const [radius, setRadius] = useState(GEOFENCE_DEFAULT_RADIUS);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
-
-  // Free users are locked to the default radius
-  const canAdjustRadius = isPro;
 
   const handleUseCurrentLocation = async () => {
     setIsLoadingLocation(true);
@@ -89,22 +82,8 @@ export default function AddLocationScreen() {
       address: address.trim(),
       latitude: Number(latitude),
       longitude: Number(longitude),
-      radius: canAdjustRadius ? radius : GEOFENCE_DEFAULT_RADIUS});
+    });
     router.back();
-  };
-
-  const handleRadiusUpsell = () => {
-    Alert.alert(
-      'Pro Feature',
-      'Custom geofence radius is available with GeoCart Pro. Free users use a fixed 100m radius.',
-      [
-        { text: 'OK', style: 'cancel' },
-        {
-          text: 'Upgrade to Pro',
-          onPress: () => showPaywall(),
-        },
-      ]
-    );
   };
 
   return (
@@ -230,7 +209,7 @@ export default function AddLocationScreen() {
           {/* Coordinates */}
           <Animated.View
             entering={FadeInDown.duration(400).delay(400)}
-            className="mt-5"
+            className="mt-5 mb-8"
           >
             <Text className="text-sm font-semibold text-surface-400 uppercase tracking-wide mb-2">
               Coordinates
@@ -259,60 +238,6 @@ export default function AddLocationScreen() {
                   cursorColor={Colors.primary[900]}
                   selectionColor={Colors.primary[900]}
                 />
-              </View>
-            </View>
-          </Animated.View>
-
-          {/* Radius */}
-          <Animated.View
-            entering={FadeInDown.duration(400).delay(500)}
-            className="mt-5 mb-8"
-          >
-            <View className="flex-row items-center justify-between mb-2">
-              <Text className="text-sm font-semibold text-surface-400 uppercase tracking-wide">
-                Geofence Radius
-              </Text>
-              {!canAdjustRadius && (
-                <Pressable
-                  onPress={handleRadiusUpsell}
-                  className="flex-row items-center gap-1 bg-[#D4AF37]/10 px-2 py-1 rounded-lg border border-[#D4AF37]/20"
-                >
-                  <Lock size={10} color="#D4AF37" />
-                  <Text className="text-[10px] font-bold text-[#D4AF37] uppercase tracking-wider">Pro</Text>
-                </Pressable>
-              )}
-            </View>
-            <View
-              className="bg-white rounded-2xl p-4 shadow-sm"
-              style={!canAdjustRadius ? { opacity: 0.6 } : undefined}
-            >
-              <View className="flex-row items-center justify-center mb-4">
-                <Text className="text-3xl font-bold text-surface-900">
-                  {canAdjustRadius ? radius : GEOFENCE_DEFAULT_RADIUS}
-                </Text>
-                <Text className="text-sm text-surface-400 ml-1">meters{!canAdjustRadius ? ' (fixed)' : ''}</Text>
-              </View>
-              <View className="flex-row justify-between px-1">
-                {getGeofenceRadiusOptions(isPro).map((r) => (
-                  <Pressable
-                    key={r}
-                    onPress={() => {
-                      if (!canAdjustRadius) { handleRadiusUpsell(); return; }
-                      setRadius(r);
-                    }}
-                    className={`flex-1 mx-1 py-3 rounded-xl items-center justify-center ${
-                      (canAdjustRadius ? radius : GEOFENCE_DEFAULT_RADIUS) === r ? "bg-primary-500 shadow-sm" : "bg-surface-50 border border-surface-100"
-                    }`}
-                  >
-                    <Text
-                      className={`text-sm font-bold ${
-                        (canAdjustRadius ? radius : GEOFENCE_DEFAULT_RADIUS) === r ? "text-white" : "text-surface-500"
-                      }`}
-                    >
-                      {r}m
-                    </Text>
-                  </Pressable>
-                ))}
               </View>
             </View>
           </Animated.View>

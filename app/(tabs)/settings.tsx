@@ -57,11 +57,11 @@ import { notificationEngine } from '../../services/notificationEngine';
 import { sendLocalNotification } from '../../services/notificationService';
 import {
   useShoppingListStore,
-  useLocationStore,
-  useListsStore,
   useSettingsStore,
-  useNotificationsStore} from '../../store';
-import type { ThemeOption } from '../../store';
+  DistanceUnit,
+  ThemeOption } from '@/store';
+import { getAlertDistanceMeters } from '@/constants';
+import { useLocationStore, useListsStore, useNotificationsStore} from '../../store';
 import { hapticImpact, hapticNotification } from '../../services/haptics';
 import * as Haptics from 'expo-haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
@@ -427,8 +427,9 @@ export default function SettingsScreen() {
       });
       const lat = loc.coords.latitude;
       const lon = loc.coords.longitude;
+      const alertDistance = getAlertDistanceMeters(useSettingsStore.getState().notificationSensitivity);
       
-      const nearbyStores = await geoEngine.getNearbyStores(lat, lon, false);
+      const nearbyStores = await geoEngine.getNearbyStores(lat, lon, false, alertDistance);
       if (nearbyStores.length === 0) {
         Alert.alert("Test Flow", "No stores nearby to trigger the flow. Try adding one nearby first.");
         return;

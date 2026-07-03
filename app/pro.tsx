@@ -111,7 +111,7 @@ export default function ProScreen() {
     { icon: <SlidersHorizontal size={16} color="#D4AF37" />, title: 'Advanced Controls' },
     { icon: <MapPin size={16} color="#D4AF37" />, title: 'Unlimited Saved Stores' },
     { icon: <PackagePlus size={16} color="#D4AF37" />, title: 'Unlimited Items Per List' },
-    { icon: <Target size={16} color="#D4AF37" />, title: 'Custom Geofence Radius' },
+    { icon: <Target size={16} color="#D4AF37" />, title: 'Custom Alert Distance' },
     { icon: <ShieldCheck size={16} color="#D4AF37" />, title: 'All Future Features' },
   ];
 

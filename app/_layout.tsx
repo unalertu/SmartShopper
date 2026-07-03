@@ -25,6 +25,7 @@ import { useNotificationsStore } from "@/store/useNotificationsStore";
 import { notificationEngine } from "@/services/notificationEngine";
 import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from "@/services/locationService";
 import { geofenceManager } from "@/services/geofenceManager";
+import { getAlertDistanceMeters } from "@/constants";
 
 // Prevent splash screen auto-hide
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -53,10 +54,10 @@ export default function RootLayout() {
     if (!_hasHydrated) return;
     if (savedStoresOnly) {
       void stopBackgroundLocationTracking();
-      void geofenceManager.syncSavedStores();
+      void geofenceManager.syncSavedStores(getAlertDistanceMeters(useSettingsStore.getState().notificationSensitivity));
     } else {
       void startBackgroundLocationTracking();
-      void geofenceManager.syncSavedStores();
+      void geofenceManager.syncSavedStores(getAlertDistanceMeters(useSettingsStore.getState().notificationSensitivity));
     }
   }, [savedStoresOnly, _hasHydrated]);
 
@@ -73,7 +74,7 @@ export default function RootLayout() {
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextState) => {
       if (nextState === "active") {
-        void geofenceManager.syncSavedStores();
+        void geofenceManager.syncSavedStores(getAlertDistanceMeters(useSettingsStore.getState().notificationSensitivity));
       }
     });
     return () => subscription.remove();
@@ -149,7 +150,7 @@ export default function RootLayout() {
     await useNotificationsStore.getState().syncFromAnalytics();
     
     // Sync saved store native geofences first
-    await geofenceManager.syncSavedStores();
+    await geofenceManager.syncSavedStores(getAlertDistanceMeters(useSettingsStore.getState().notificationSensitivity));
 
     // Attempt to start background location tracking for unsaved discovery pipeline
     await startBackgroundLocationTracking();

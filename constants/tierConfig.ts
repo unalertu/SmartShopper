@@ -7,14 +7,14 @@
  * Pro is a power upgrade, not a requirement.
  */
 
+import { NotificationSensitivity } from '../store/useSettingsStore';
+
 export const FREE_TIER = {
   maxSavedStores: 4,
   maxLists: 4,
   maxItemsPerList: 25,
   maxLocationNotificationsPerDay: 4,
   maxMutedShops: 5,
-  fixedGeofenceRadius: 150, // meters
-  canCustomizeGeofenceRadius: false,
   canCustomizeNotifications: false,
   canSetQuietHours: false,
   canSetNotificationSchedules: false,
@@ -30,8 +30,6 @@ export const PRO_TIER = {
   maxItemsPerList: Infinity,
   maxLocationNotificationsPerDay: Infinity,
   maxMutedShops: Infinity,
-  geofenceRadiusOptions: [100, 150, 250, 500] as const,
-  canCustomizeGeofenceRadius: true,
   canCustomizeNotifications: true,
   canSetQuietHours: true,
   canSetNotificationSchedules: true,
@@ -40,6 +38,18 @@ export const PRO_TIER = {
   canUseAdvancedNotificationSettings: true,
   canDisableQuietHours: true,
 } as const;
+
+/**
+ * Maps a NotificationSensitivity value to its corresponding distance in meters.
+ * This is the single source of truth for all notification distance calculations.
+ */
+export const getAlertDistanceMeters = (sensitivity: NotificationSensitivity): number => {
+  switch (sensitivity) {
+    case 'near': return 100;
+    case 'balanced': return 150;
+    case 'far': return 300;
+  }
+};
 
 /**
  * Returns the appropriate tier config based on subscription status.
@@ -75,9 +85,3 @@ export const getMaxItemsPerList = (isPro: boolean): number =>
  */
 export const getMaxMutedShops = (isPro: boolean): number =>
   isPro ? PRO_TIER.maxMutedShops : FREE_TIER.maxMutedShops;
-
-/**
- * Returns the available geofence radius options for the given tier.
- */
-export const getGeofenceRadiusOptions = (isPro: boolean): readonly number[] =>
-  isPro ? PRO_TIER.geofenceRadiusOptions : [FREE_TIER.fixedGeofenceRadius];

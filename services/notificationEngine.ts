@@ -62,10 +62,12 @@ export const notificationEngine = {
 
   /**
    * Pick the best store from a list of candidates.
+   * @param alertDistance - The global Alert Distance in meters, derived from notificationSensitivity
    */
   pickBestStore: async (
     nearbyStores: (SavedLocation & { distance: number })[],
-    unpurchasedItemCount: number
+    unpurchasedItemCount: number,
+    alertDistance: number
   ): Promise<(SavedLocation & { distance: number }) | null> => {
     if (nearbyStores.length === 0) return null;
 
@@ -73,9 +75,8 @@ export const notificationEngine = {
       let score = 0;
       // Saved store bonus (isUnsaved will be set by geoEngine for background discoveries)
       score += (store as any).isUnsaved ? 0 : 100;
-      // Proximity bonus: (1 - distance/radius) * 30
-      const radius = store.radius || 150;
-      score += Math.max(0, (1 - store.distance / radius) * 30);
+      // Proximity bonus: (1 - distance/alertDistance) * 30
+      score += Math.max(0, (1 - store.distance / alertDistance) * 30);
       // Item count bonus: up to 50 points
       score += 5 * Math.min(unpurchasedItemCount, 10);
 
