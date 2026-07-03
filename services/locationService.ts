@@ -288,6 +288,7 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
   const decision = await notificationEngine.shouldSendLocationNotification({
     storeId: bestStore.id,
     isPro: settings.isPro,
+    maxAlertsPerDay: settings.maxAlertsPerDay,
     scheduleEnabled: settings.scheduleEnabled,
     allowedDays: settings.allowedDays,
     quietHoursEnabled: settings.quietHoursEnabled,

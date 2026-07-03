@@ -91,7 +91,7 @@ const DEFAULT_SETTINGS = {
   lowPowerMode: false,
   autoOpenNearbyList: false,
   notificationSensitivity: "balanced" as const,
-  maxAlertsPerDay: "unlimited" as const,
+  maxAlertsPerDay: 5 as MaxAlertsPerDay,
   scheduleEnabled: false,
   allowedDays: [0, 1, 2, 3, 4, 5, 6], // All days allowed by default
   quietHoursEnabled: false,
@@ -104,7 +104,7 @@ const DEFAULT_SETTINGS = {
   theme: "system" as ThemeOption,
   smartSuggestionsEnabled: true,
   autoDeletePurchased: false,
-  isPro: true,
+  isPro: false,
 };
 
 export const useSettingsStore = create<SettingsState>()(
@@ -139,8 +139,45 @@ export const useSettingsStore = create<SettingsState>()(
         set({ smartSuggestionsEnabled: enabled }),
       setAutoDeletePurchased: (enabled: boolean) =>
         set({ autoDeletePurchased: enabled }),
-      setIsPro: (enabled: boolean) => set({ isPro: enabled }),
-      resetSettings: () => set((state: SettingsState) => ({ ...DEFAULT_SETTINGS, isPro: state.isPro })),
+      setIsPro: (enabled: boolean) => set((state) => {
+        if (state.isPro && !enabled) {
+          // Reset Pro-specific settings when downgrading to Free
+          
+          // Reset Map specific settings
+          try {
+            const { useLocationStore } = require('./useLocationStore');
+            useLocationStore.getState().resetRadiuses();
+          } catch (e) {
+            console.error("Failed to reset location radiuses", e);
+          }
+
+          return {
+            isPro: false,
+            notificationSensitivity: DEFAULT_SETTINGS.notificationSensitivity,
+            maxAlertsPerDay: 5,
+            scheduleEnabled: DEFAULT_SETTINGS.scheduleEnabled,
+            allowedDays: DEFAULT_SETTINGS.allowedDays,
+            quietHoursEnabled: DEFAULT_SETTINGS.quietHoursEnabled,
+            allowedHoursStart: DEFAULT_SETTINGS.allowedHoursStart,
+            allowedHoursEnd: DEFAULT_SETTINGS.allowedHoursEnd,
+          };
+        }
+        
+        if (!state.isPro && enabled) {
+          // Grant unlimited alerts when upgrading to Pro
+          return {
+            isPro: true,
+            maxAlertsPerDay: "unlimited",
+          };
+        }
+
+        return { isPro: enabled };
+      }),
+      resetSettings: () => set((state: SettingsState) => ({ 
+        ...DEFAULT_SETTINGS, 
+        isPro: state.isPro,
+        maxAlertsPerDay: state.isPro ? "unlimited" : 5 
+      })),
     }),
     {
       name: "settings-storage",

@@ -25,6 +25,7 @@ interface LocationStoreState {
   getActiveLocations: () => SavedLocation[];
   mutedUnsavedShops: string[];
   toggleMuteUnsavedShop: (id: string) => void;
+  resetRadiuses: () => void;
 
   /**
    * Check if the user can add a new saved store.
@@ -176,11 +177,27 @@ export const useLocationStore = create<LocationStoreState>()(
         }),
 
       updateLocation: (id, updates) =>
-        set((state) => ({
-          locations: state.locations.map((loc) =>
-            loc.id === id ? { ...loc, ...updates } : loc
-          ),
-        })),
+        set((state) => {
+          const newLocations = state.locations.map((loc) => {
+            if (loc.id === id) {
+              const updated = { ...loc, ...updates };
+              void geofenceManager.registerSavedStore(updated);
+              return updated;
+            }
+            return loc;
+          });
+          return { locations: newLocations };
+        }),
+
+      resetRadiuses: () =>
+        set((state) => {
+          const newLocations = state.locations.map((loc) => {
+            const updated = { ...loc, radius: 400 };
+            void geofenceManager.registerSavedStore(updated);
+            return updated;
+          });
+          return { locations: newLocations };
+        }),
 
       toggleActive: (id) =>
         set((state) => {

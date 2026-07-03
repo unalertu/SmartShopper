@@ -147,6 +147,7 @@ async function processGeofenceEnter(region: Location.LocationRegion) {
     const decision = await notificationEngine.shouldSendLocationNotification({
       storeId: store.id,
       isPro: settings.isPro,
+      maxAlertsPerDay: settings.maxAlertsPerDay,
       scheduleEnabled: settings.scheduleEnabled,
       allowedDays: settings.allowedDays,
       quietHoursEnabled: settings.quietHoursEnabled,

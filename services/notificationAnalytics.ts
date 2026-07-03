@@ -136,10 +136,13 @@ export const notificationAnalytics = {
 
   canSendDailyNotification: (
     state: NotificationAnalyticsState,
-    isPro: boolean
+    isPro: boolean,
+    maxAlertsPerDay: number | "unlimited"
   ): boolean => {
-    if (isPro) return true;
-    return state.dailyLocationCount < 4;
+    if (maxAlertsPerDay === "unlimited") {
+      return true;
+    }
+    return state.dailyLocationCount < maxAlertsPerDay;
   },
 
   // ── Fingerprint Dedup ────────────────────────────────────────────────────

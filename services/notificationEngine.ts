@@ -8,6 +8,7 @@ export const notificationEngine = {
   shouldSendLocationNotification: async (params: {
     storeId: string;
     isPro: boolean;
+    maxAlertsPerDay: number | "unlimited";
     scheduleEnabled: boolean;
     allowedDays: number[];
     quietHoursEnabled: boolean;
@@ -45,7 +46,7 @@ export const notificationEngine = {
     }
 
     // 4. Daily Limit Check
-    const canSend = notificationAnalytics.canSendDailyNotification(state, params.isPro);
+    const canSend = notificationAnalytics.canSendDailyNotification(state, params.isPro, params.maxAlertsPerDay);
     if (!canSend) {
       return { allowed: false, reason: "daily_limit_reached" };
     }
