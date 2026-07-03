@@ -1,9 +1,19 @@
 import RevenueCatUI from 'react-native-purchases-ui';
 import Purchases from 'react-native-purchases';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { router } from 'expo-router';
 
 export const showPaywall = async () => {
   try {
+    // If running in Expo Go, RevenueCatUI requires a custom dev client.
+    // Instead of crashing, redirect to the Pro screen.
+    const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+    if (isExpoGo) {
+      router.push('/pro');
+      return;
+    }
+
     const isConfigured = await Purchases.isConfigured();
     if (!isConfigured) {
       Alert.alert(
@@ -15,9 +25,7 @@ export const showPaywall = async () => {
     await RevenueCatUI.presentPaywallIfNeeded({ requiredEntitlementIdentifier: 'pro' });
   } catch (error: any) {
     console.warn('Paywall error:', error);
-    Alert.alert(
-      'Paywall Unavailable',
-      'Please make sure RevenueCat is properly configured with your API keys. Error: ' + (error.message || 'Unknown error')
-    );
+    // If presentation fails (e.g., missing native module), fallback to our Pro screen
+    router.push('/pro');
   }
 };
