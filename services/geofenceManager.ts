@@ -1,7 +1,7 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
-import { SavedLocation } from '../store/useLocationStore';
-import { getDistance, getSettingsFromStorage } from './locationService';
+import { SavedLocation, useLocationStore } from '../store/useLocationStore';
+import { getDistance, getSettingsFromStorage, getCurrentLocation } from './locationService';
 import { geoEngine } from './geoEngine';
 import { notificationEngine } from './notificationEngine';
 import { sendLocalNotification } from './notificationService';
@@ -23,6 +23,8 @@ let activeRegionIds: Set<string> = new Set();
 let lastRebalanceCoords: { latitude: number; longitude: number } | null = null;
 
 let commitTimer: ReturnType<typeof setTimeout> | null = null;
+
+// ─── Helpers ───────────────────────────────────────────────
 
 function clampRadius(radius: number): number {
   return Math.max(
@@ -48,13 +50,63 @@ function setsEqual(a: Set<string>, b: Set<string>): boolean {
   return true;
 }
 
+function log(msg: string) {
+  try {
+    useLocationStore.getState().addDebugLog(`[Geofence] ${msg}`);
+  } catch {
+    // Store might not be ready during very early boot
+  }
+}
+
+// ─── Location Fallback Chain ───────────────────────────────
+
+async function resolveLocation(): Promise<{ latitude: number; longitude: number } | null> {
+  // 1. Last known from Zustand store
+  try {
+    const storeLocation = useLocationStore.getState().userLocation;
+    if (storeLocation) {
+      log('Location source: lastKnownLocation (store)');
+      return storeLocation;
+    }
+  } catch { /* store not ready */ }
+
+  // 2. Last rebalance coords
+  if (lastRebalanceCoords) {
+    log('Location source: lastRebalanceCoords');
+    return lastRebalanceCoords;
+  }
+
+  // 3. GPS query
+  try {
+    const current = await getCurrentLocation();
+    if (current) {
+      log('Location source: getCurrentLocation (GPS)');
+      return { latitude: current.coords.latitude, longitude: current.coords.longitude };
+    }
+  } catch { /* permission denied or timeout */ }
+
+  // 4. No location available
+  log('Location source: none (alphabetical fallback)');
+  return null;
+}
+
+// ─── Debounced Commit ──────────────────────────────────────
+
+async function debouncedCommitWithLocation() {
+  // Resolve location once, then commit with it
+  const location = await resolveLocation();
+  await geofenceManager.commitGeofences(location, 'debounced_commit');
+}
+
 function scheduleCommit() {
   if (commitTimer) clearTimeout(commitTimer);
   commitTimer = setTimeout(() => {
     commitTimer = null;
-    void geofenceManager.commitGeofences();
+    void debouncedCommitWithLocation();
   }, NOTIFICATION_CONSTANTS.COMMIT_DEBOUNCE_MS);
 }
+
+// ─── Geofence Enter Task ──────────────────────────────────
 
 TaskManager.defineTask(GEOFENCE_TASK, async ({ data, error }) => {
   if (error) {
@@ -112,18 +164,23 @@ async function processGeofenceEnter(region: Location.LocationRegion) {
   }
 }
 
+// ─── Geofence Manager ─────────────────────────────────────
+
 export const geofenceManager = {
   registerSavedStore(location: SavedLocation): void {
     storeCache.set(location.id, location);
     const region = buildRegion(location);
     desiredRegions = desiredRegions.filter((r) => r.identifier !== location.id);
     desiredRegions.push(region);
+    log(`Store registered: ${location.name} (total desired: ${desiredRegions.length})`);
     scheduleCommit();
   },
 
   unregisterSavedStore(id: string): void {
+    const store = storeCache.get(id);
     storeCache.delete(id);
     desiredRegions = desiredRegions.filter((r) => r.identifier !== id);
+    log(`Store unregistered: ${store?.name || id} (total desired: ${desiredRegions.length})`);
     scheduleCommit();
   },
 
@@ -138,28 +195,42 @@ export const geofenceManager = {
           desiredRegions.push(buildRegion(loc));
         }
       }
-      await geofenceManager.commitGeofences(); // Instant commit on sync
+
+      log(`Sync: ${locations.length} saved shops, ${desiredRegions.length} active`);
+
+      // Resolve location for distance-based sorting
+      const location = await resolveLocation();
+      await geofenceManager.commitGeofences(location, 'app_launch');
     } catch (e) {
       console.error("syncSavedStores error:", e);
     }
   },
 
   async rebalanceGeofences(lat: number, lon: number): Promise<void> {
+    // Skip rebalance if we have 20 or fewer desired regions (all fit, no sorting needed)
     if (desiredRegions.length <= NOTIFICATION_CONSTANTS.MAX_NATIVE_GEOFENCES) return;
 
+    // Throttle: only rebalance if moved >= REBALANCE_MIN_DISTANCE (1000m)
     if (lastRebalanceCoords) {
       const dist = getDistance(lat, lon, lastRebalanceCoords.latitude, lastRebalanceCoords.longitude);
       if (dist < NOTIFICATION_CONSTANTS.REBALANCE_MIN_DISTANCE) return;
+      log(`Rebalance triggered: moved ${dist.toFixed(0)}m from last rebalance`);
+    } else {
+      log('Rebalance triggered: first location update');
     }
 
     lastRebalanceCoords = { latitude: lat, longitude: lon };
-    await geofenceManager.commitGeofences({ latitude: lat, longitude: lon });
+    await geofenceManager.commitGeofences({ latitude: lat, longitude: lon }, 'location_update');
   },
 
-  async commitGeofences(userLocation?: { latitude: number; longitude: number }): Promise<void> {
+  async commitGeofences(
+    userLocation: { latitude: number; longitude: number } | null,
+    reason: string = 'unknown'
+  ): Promise<void> {
     try {
       let regionsToRegister = [...desiredRegions];
 
+      // Sort by distance and pick nearest 20
       if (regionsToRegister.length > NOTIFICATION_CONSTANTS.MAX_NATIVE_GEOFENCES) {
         if (userLocation) {
           regionsToRegister.sort(
@@ -167,36 +238,71 @@ export const geofenceManager = {
               getDistance(userLocation.latitude, userLocation.longitude, a.latitude, a.longitude) -
               getDistance(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude)
           );
+        } else {
+          // Alphabetical fallback (deterministic, not random)
+          regionsToRegister.sort((a, b) => {
+            const nameA = storeCache.get(a.identifier || '')?.name || a.identifier || '';
+            const nameB = storeCache.get(b.identifier || '')?.name || b.identifier || '';
+            return nameA.localeCompare(nameB);
+          });
         }
         regionsToRegister = regionsToRegister.slice(0, NOTIFICATION_CONSTANTS.MAX_NATIVE_GEOFENCES);
       }
 
-      const newIds = new Set(regionsToRegister.map((r) => r.identifier).filter((id): id is string => id !== undefined));
+      const newIds = new Set(
+        regionsToRegister.map((r) => r.identifier).filter((id): id is string => id !== undefined)
+      );
 
-      if (setsEqual(newIds, activeRegionIds)) return; // No change
+      // ─── Unchanged optimization: skip if active set hasn't changed ───
+      if (setsEqual(newIds, activeRegionIds)) {
+        log(`Commit skipped (${reason}): active ${activeRegionIds.size} regions unchanged`);
+        return;
+      }
 
+      // ─── Empty case: stop geofencing entirely ───
       if (regionsToRegister.length === 0) {
         const hasStarted = await Location.hasStartedGeofencingAsync(GEOFENCE_TASK);
         if (hasStarted) await Location.stopGeofencingAsync(GEOFENCE_TASK);
         activeRegionIds.clear();
+        log(`Commit (${reason}): all regions removed, geofencing stopped`);
         return;
       }
 
+      // ─── Permission check ───
       const { status } = await Location.getBackgroundPermissionsAsync();
       if (status !== 'granted') {
-        console.warn("Background location permission is required for geofencing.");
+        log(`Commit blocked (${reason}): background permission not granted`);
         return;
       }
 
-      // Explicitly stop any existing geofences before registering new ones
-      // This prevents stale/duplicate regions from accumulating on OS level
-      const hasStarted = await Location.hasStartedGeofencingAsync(GEOFENCE_TASK);
-      if (hasStarted) await Location.stopGeofencingAsync(GEOFENCE_TASK);
-
+      // ─── Register new region set ───
+      // Expo/iOS replaces the entire monitored set when startGeofencingAsync is called,
+      // so we simply pass the new list. No need to manually stop first —
+      // calling start with a new list atomically replaces the old one.
       await Location.startGeofencingAsync(GEOFENCE_TASK, regionsToRegister);
+
+      const previousCount = activeRegionIds.size;
       activeRegionIds = newIds;
+
+      // ─── Detailed logging ───
+      const totalSaved = storeCache.size;
+      log(
+        `Commit (${reason}): ` +
+        `Saved shops: ${totalSaved} | ` +
+        `Active geofences: ${previousCount} → ${activeRegionIds.size} | ` +
+        `Desired: ${desiredRegions.length}`
+      );
+
+      if (userLocation && lastRebalanceCoords) {
+        const dist = getDistance(
+          userLocation.latitude, userLocation.longitude,
+          lastRebalanceCoords.latitude, lastRebalanceCoords.longitude
+        );
+        log(`Distance from last rebalance: ${dist.toFixed(0)}m`);
+      }
     } catch (e) {
       console.error("commitGeofences error:", e);
+      log(`Commit error (${reason}): ${e}`);
     }
   },
 

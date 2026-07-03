@@ -69,6 +69,11 @@ export const getSettingsFromStorage = async () => {
         savedStoresOnly: state.savedStoresOnly === true,
         nightNotificationsEnabled: false, // Could be added to store later
         mutedDays: Array.isArray(state.mutedDays) ? state.mutedDays : [],
+        scheduleEnabled: state.scheduleEnabled === true,
+        allowedDays: Array.isArray(state.allowedDays) ? state.allowedDays : [0, 1, 2, 3, 4, 5, 6],
+        quietHoursEnabled: state.quietHoursEnabled === true,
+        allowedHoursStart: typeof state.allowedHoursStart === 'number' ? state.allowedHoursStart : 8,
+        allowedHoursEnd: typeof state.allowedHoursEnd === 'number' ? state.allowedHoursEnd : 22,
       };
     }
   } catch (e) {
@@ -81,6 +86,11 @@ export const getSettingsFromStorage = async () => {
     savedStoresOnly: false,
     nightNotificationsEnabled: false,
     mutedDays: [],
+    scheduleEnabled: false,
+    allowedDays: [0, 1, 2, 3, 4, 5, 6],
+    quietHoursEnabled: false,
+    allowedHoursStart: 8,
+    allowedHoursEnd: 22,
   };
 };
 

@@ -106,12 +106,12 @@ export default function ProScreen() {
 
   const features = [
     { icon: <List size={16} color="#D4AF37" />, title: 'Unlimited Shopping Lists' },
-    { icon: <PackagePlus size={16} color="#D4AF37" />, title: '500 Items Per List' },
-    { icon: <MapPin size={16} color="#D4AF37" />, title: '20 Saved Stores' },
     { icon: <Bell size={16} color="#D4AF37" />, title: 'Unlimited Notifications' },
-    { icon: <Target size={16} color="#D4AF37" />, title: 'Custom Geofence Radius' },
     { icon: <Clock size={16} color="#D4AF37" />, title: 'Quiet Hours & Schedules' },
     { icon: <SlidersHorizontal size={16} color="#D4AF37" />, title: 'Advanced Controls' },
+    { icon: <MapPin size={16} color="#D4AF37" />, title: '20 Saved Stores' },
+    { icon: <PackagePlus size={16} color="#D4AF37" />, title: '500 Items Per List' },
+    { icon: <Target size={16} color="#D4AF37" />, title: 'Custom Geofence Radius' },
     { icon: <ShieldCheck size={16} color="#D4AF37" />, title: 'All Future Features' },
   ];
 
