@@ -13,6 +13,10 @@ interface SettingsState {
   _hasHydrated: boolean;
   setHasHydrated: (state: boolean) => void;
 
+  // ── Onboarding ──
+  hasCompletedOnboarding: boolean;
+  setHasCompletedOnboarding: (state: boolean) => void;
+
   // ── Notifications & Alerts ──
   notificationsEnabled: boolean;
   soundEnabled: boolean;
@@ -82,6 +86,7 @@ interface SettingsState {
 
 const DEFAULT_SETTINGS = {
   _hasHydrated: false,
+  hasCompletedOnboarding: false,
   notificationsEnabled: false,
   soundEnabled: true,
   hapticEnabled: true,
@@ -114,6 +119,7 @@ export const useSettingsStore = create<SettingsState>()(
       ...DEFAULT_SETTINGS,
 
       setHasHydrated: (state: boolean) => set({ _hasHydrated: state }),
+      setHasCompletedOnboarding: (state: boolean) => set({ hasCompletedOnboarding: state }),
       setNotificationsEnabled: (enabled: boolean) =>
         set({ notificationsEnabled: enabled }),
       setSoundEnabled: (enabled: boolean) => set({ soundEnabled: enabled }),

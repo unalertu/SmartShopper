@@ -1,7 +1,7 @@
 import "../global.css";
 
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState, useCallback } from "react";
 import * as SplashScreen from "expo-splash-screen";
@@ -17,8 +17,6 @@ enableFreeze(false);
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { setupNotifications } from "@/services/notificationService";
 import LaunchScreen from "@/components/LaunchScreen";
-import NotificationPermissionScreen, {
-  shouldShowNotificationPermission} from "@/components/NotificationPermissionScreen";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { useShoppingListStore } from "@/store/useShoppingListStore";
 import { useNotificationsStore } from "@/store/useNotificationsStore";
@@ -45,7 +43,7 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [showLaunchScreen, setShowLaunchScreen] = useState(true);
-  const [showNotificationPermission, setShowNotificationPermission] = useState(false);
+  const router = useRouter();
   const _hasHydrated = useSettingsStore((state) => state._hasHydrated);
   const savedStoresOnly = useSettingsStore((state) => state.savedStoresOnly);
 
@@ -143,30 +141,33 @@ export default function RootLayout() {
   const handleLaunchFinish = useCallback(async () => {
     setShowLaunchScreen(false);
 
-    // Check and send welcome notification safely (persisted check)
-    await notificationEngine.checkAndSendWelcome();
-    
-    // Sync notifications from analytics to Zustand
-    await useNotificationsStore.getState().syncFromAnalytics();
-    
-    // Sync saved store native geofences first
-    await geofenceManager.syncSavedStores(getAlertDistanceMeters(useSettingsStore.getState().notificationSensitivity));
-
-    // Attempt to start background location tracking for unsaved discovery pipeline
-    await startBackgroundLocationTracking();
-
-    // Check if we should show the notification pre-permission screen
-    const shouldShow = await shouldShowNotificationPermission();
-    if (shouldShow) {
-      setShowNotificationPermission(true);
-    } else {
-      // Permission already handled — just ensure notifications are set up
-      setupNotifications();
+    // Check if we should show onboarding FIRST
+    const { hasCompletedOnboarding } = useSettingsStore.getState();
+    if (!hasCompletedOnboarding) {
+      setTimeout(() => {
+        router.replace('/onboarding');
+      }, 0);
+      return;
     }
-  }, []);
 
-  const handleNotificationPermissionComplete = useCallback(() => {
-    setShowNotificationPermission(false);
+    try {
+      // Check and send welcome notification safely (persisted check)
+      await notificationEngine.checkAndSendWelcome();
+      
+      // Sync notifications from analytics to Zustand
+      await useNotificationsStore.getState().syncFromAnalytics();
+      
+      // Sync saved store native geofences first
+      await geofenceManager.syncSavedStores(getAlertDistanceMeters(useSettingsStore.getState().notificationSensitivity));
+
+      // Attempt to start background location tracking for unsaved discovery pipeline
+      await startBackgroundLocationTracking();
+    } catch (e) {
+      console.warn('Error during launch sync:', e);
+    }
+
+    // Ensure notifications are set up
+    setupNotifications();
   }, []);
 
   // Ensure the Root Layout only renders when Zustand is fully hydrated
@@ -234,6 +235,13 @@ export default function RootLayout() {
                 headerShown: false}}
             />
             <Stack.Screen
+              name="onboarding"
+              options={{
+                animation: "fade",
+                gestureEnabled: false,
+                headerShown: false}}
+            />
+            <Stack.Screen
               name="notification-preferences"
               options={{
                 animation: "ios_from_right",
@@ -242,16 +250,9 @@ export default function RootLayout() {
                 headerShown: false}}
             />
           </Stack>
-          <StatusBar style={showNotificationPermission ? "light" : "dark"} />
+          <StatusBar style="dark" />
         </ThemeProvider>
       </BottomSheetModalProvider>
-
-      {/* Notification Pre-Permission Screen (shown after launch, before app) */}
-      {showNotificationPermission && (
-        <NotificationPermissionScreen
-          onComplete={handleNotificationPermissionComplete}
-        />
-      )}
 
       {/* Custom Animated Launch Screen */}
       {showLaunchScreen && <LaunchScreen onFinish={handleLaunchFinish} />}
