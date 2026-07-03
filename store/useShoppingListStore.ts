@@ -29,7 +29,7 @@ interface ShoppingListState {
 
   /**
    * Check if an item can be added to a specific list.
-   * Free users: max 25 items/list. Pro users: max 500 items/list.
+   * Free users: max 25 items/list. Pro users: unlimited items/list.
    */
   canAddItemToList: (listId: number, isPro: boolean) => boolean;
 

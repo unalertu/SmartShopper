@@ -25,9 +25,9 @@ export const FREE_TIER = {
 } as const;
 
 export const PRO_TIER = {
-  maxSavedStores: 20, // aligned with iOS geofence limitations
+  maxSavedStores: Infinity, // changed to unlimited as requested
   maxLists: Infinity,
-  maxItemsPerList: 500,
+  maxItemsPerList: Infinity,
   maxLocationNotificationsPerDay: Infinity,
   maxMutedShops: Infinity,
   geofenceRadiusOptions: [100, 150, 250, 500] as const,

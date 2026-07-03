@@ -283,7 +283,7 @@ export default function ListDetails() {
         'Item Limit Reached',
         isPro
           ? `You've reached the maximum of ${getMaxItemsPerList(isPro)} items per list.`
-          : `You've reached the free limit of ${FREE_TIER.maxItemsPerList} items per list. Upgrade to Pro for up to 500 items.`,
+          : `You've reached the free limit of ${FREE_TIER.maxItemsPerList} items per list. Upgrade to Pro for unlimited items.`,
         isPro
           ? [{ text: 'OK' }]
           : [

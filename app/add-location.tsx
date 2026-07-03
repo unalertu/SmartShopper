@@ -69,8 +69,8 @@ export default function AddLocationScreen() {
       Alert.alert(
         'Store Limit Reached',
         isPro
-          ? `You've reached the maximum of ${maxStores} saved stores (iOS geofence limit).`
-          : `You've reached the free limit of ${FREE_TIER.maxSavedStores} saved stores. Upgrade to Pro for up to 20 saved stores.`,
+          ? `You've reached the maximum of ${maxStores} saved stores.`
+          : `You've reached the free limit of ${FREE_TIER.maxSavedStores} saved stores. Upgrade to Pro for unlimited saved stores.`,
         isPro
           ? [{ text: 'OK' }]
           : [
