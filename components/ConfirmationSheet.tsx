@@ -7,7 +7,7 @@ import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from '@gorhom/
 export interface ConfirmationSheetData {
   settingName?: string;
   title?: string;
-  description: string;
+  description: string | React.ReactNode;
   isEnabling?: boolean;
   isDestructive?: boolean;
   confirmLabel?: string;

@@ -3,8 +3,8 @@ import { View, Text, ScrollView, Switch, TouchableOpacity } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { LinearTransition } from 'react-native-reanimated';
-import { MapPin, Menu, Vibrate, ChevronLeft, Lock, Clock, Calendar, SlidersHorizontal, BellDot, ChevronRight, Target } from 'lucide-react-native';
+import Animated, { LinearTransition, FadeIn, FadeOut } from 'react-native-reanimated';
+import { MapPin, Menu, Vibrate, ChevronLeft, Lock, Clock, Calendar, SlidersHorizontal, BellDot, ChevronRight, Target, Battery } from 'lucide-react-native';
 import { useSettingsStore } from '../store';
 import { hapticImpact } from '../services/haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
@@ -17,10 +17,15 @@ import MaxAlertsPerDaySheet from '../components/MaxAlertsPerDaySheet';
 import { showPaywall } from "@/services/paywallService";
 
 // ── Per-setting descriptions for enable / disable states ──
-const SETTING_DESCRIPTIONS: Record<string, { enable: string; disable: string }> = {
+const SETTING_DESCRIPTIONS: Record<string, { enable: React.ReactNode; disable: React.ReactNode }> = {
   'Saved Stores Only': {
-    enable: "You'll only receive notifications from stores you've saved instead of all nearby stores.",
-    disable: "You'll receive notifications from all nearby stores instead of only your saved stores.",
+    enable: "You'll only receive notifications from stores you've saved instead of all nearby stores.\n\nThis reduces battery usage.",
+    disable: (
+      <>
+        You'll receive notifications from all nearby stores instead of only your saved stores.{"\n\n"}
+        <Text style={{ color: '#ef4444' }}>For the best experience, GeoCart should remain available in the background so it can discover nearby stores and send timely alerts.</Text>
+      </>
+    ),
   },
   'Enable Nearby Shops Alerts': {
     enable: "You'll be notified when a nearby store has items on your shopping list.",
@@ -215,24 +220,9 @@ export default function NotificationPreferencesScreen() {
         {/* Basic Notification Settings — Available to all users */}
         <SettingsGroup title="Notification Settings">
           <SettingsRow
-            icon={<MapPin size={20} color="#64748b" />}
-            label="Saved Stores Only"
-            sublabel="Only notify for stores you've saved"
-            rightElement={
-              <Switch
-                value={savedStoresOnly}
-                onValueChange={() => requestToggle('Saved Stores Only', savedStoresOnly, setSavedStoresOnly)}
-                trackColor={switchTrackColor}
-                thumbColor="#ffffff"
-                ios_backgroundColor="#E5E7EB"
-              />
-            }
-          />
-          <SettingsRow
             icon={<Menu size={20} color="#64748b" />}
             label="Enable Nearby Shops Alerts"
             sublabel="Notify for nearby stores"
-            isLast
             rightElement={
               <Switch
                 value={shoppingListReminders}
@@ -243,6 +233,33 @@ export default function NotificationPreferencesScreen() {
               />
             }
           />
+          <SettingsRow
+            icon={<MapPin size={20} color="#64748b" />}
+            label="Saved Stores Only"
+            sublabel="Only notify for stores you've saved"
+            isLast
+            rightElement={
+              <Switch
+                value={savedStoresOnly}
+                onValueChange={() => requestToggle('Saved Stores Only', savedStoresOnly, setSavedStoresOnly)}
+                trackColor={switchTrackColor}
+                thumbColor="#ffffff"
+                ios_backgroundColor="#E5E7EB"
+              />
+            }
+          />
+          {savedStoresOnly && (
+            <Animated.View
+              entering={FadeIn.duration(200)}
+              exiting={FadeOut.duration(200)}
+              className="px-4 pb-4 pt-1 flex-row items-center gap-2"
+            >
+              <View className="bg-emerald-100/50 p-1.5 rounded-full">
+                <Battery size={14} color="#059669" />
+              </View>
+              <Text className="text-[13px] text-slate-500 font-medium">Reduces battery usage</Text>
+            </Animated.View>
+          )}
         </SettingsGroup>
 
         {/* Advanced Notification Settings — Pro Only */}
