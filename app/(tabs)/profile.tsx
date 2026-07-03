@@ -28,6 +28,7 @@ import {
 import AnimatedScreen from '../../components/AnimatedScreen';
 import NotificationPermissionSheet from '../../components/NotificationPermissionSheet';
 import { useSettingsStore } from '../../store/useSettingsStore';
+import { showPaywall } from "@/services/paywallService";
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -103,7 +104,14 @@ export default function ProfileScreen() {
         {/* Premium */}
         <TouchableOpacity 
           className="bg-slate-900 rounded-3xl p-4 mb-6 flex-row items-center justify-between shadow-sm"
-          
+          onPress={() => {
+            hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+            if (isPro) {
+              router.push('/pro');
+            } else {
+              showPaywall();
+            }
+          }}
           activeOpacity={0.8}
         >
           <View className="flex-row items-center">
@@ -290,13 +298,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Log Out */}
-        <TouchableOpacity 
-          className="bg-slate-900 h-16 rounded-[24px] justify-center items-center shadow-lg mt-2 mb-10"
-          
-        >
-          <Text className="text-white font-bold text-lg">Log Out</Text>
-        </TouchableOpacity>
+
       </ScrollView>
 
       <NotificationPermissionSheet

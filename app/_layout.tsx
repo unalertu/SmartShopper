@@ -81,19 +81,43 @@ export default function RootLayout() {
 
   // Initialize RevenueCat
   useEffect(() => {
-    try {
-      Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
-      const appleKey = 'test_ekQnmmklJNsRbinvPyXIYfVBPBJ'; // Sizin verdiğiniz test anahtarı
-      const googleKey = 'test_ekQnmmklJNsRbinvPyXIYfVBPBJ'; // Android için de şimdilik aynısını koyduk
-      
-      if (Platform.OS === 'ios') {
-        Purchases.configure({ apiKey: appleKey });
-      } else if (Platform.OS === 'android') {
-        Purchases.configure({ apiKey: googleKey });
+    let isMounted = true;
+    const setupPurchases = async () => {
+      try {
+        Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
+        const appleKey = 'test_ekQnmmklJNsRbinvPyXIYfVBPBJ'; // Sizin verdiğiniz test anahtarı
+        const googleKey = 'test_ekQnmmklJNsRbinvPyXIYfVBPBJ'; // Android için de şimdilik aynısını koyduk
+        
+        if (Platform.OS === 'ios') {
+          Purchases.configure({ apiKey: appleKey });
+        } else if (Platform.OS === 'android') {
+          Purchases.configure({ apiKey: googleKey });
+        }
+
+        // 1. Initial check on startup
+        const customerInfo = await Purchases.getCustomerInfo();
+        const hasPro = !!customerInfo?.entitlements?.active?.['pro'];
+        if (isMounted) {
+          useSettingsStore.getState().setIsPro(hasPro);
+        }
+      } catch (e) {
+        console.warn('Error configuring Purchases:', e);
       }
-    } catch (e) {
-      console.warn('Error configuring Purchases:', e);
-    }
+    };
+    
+    setupPurchases();
+
+    // 2. Add listener for background changes / future purchases
+    const listener = (customerInfo: any) => {
+      const hasPro = !!customerInfo?.entitlements?.active?.['pro'];
+      useSettingsStore.getState().setIsPro(hasPro);
+    };
+    Purchases.addCustomerInfoUpdateListener(listener);
+
+    return () => {
+      isMounted = false;
+      Purchases.removeCustomerInfoUpdateListener(listener);
+    };
   }, []);
 
   // Auto-delete purchased items older than 7 days when the setting is enabled

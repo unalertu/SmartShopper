@@ -20,6 +20,7 @@ import { useScrollToTop } from '@react-navigation/native';
 import Animated, { FadeInDown, LinearTransition, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useTabBarScrollHandler } from '../../hooks/useTabBarScroll';
 import { LinearGradient } from 'expo-linear-gradient';
+import Purchases from 'react-native-purchases';
 import {
   Bell,
   ChevronRight,
@@ -253,7 +254,6 @@ export default function SettingsScreen() {
   useEffect(() => {
     syncNotificationStatus();
     syncLocationStatus();
-    setIsPro(true); // Automatically activate Pro plan
 
     const subscription = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'active') {
@@ -500,9 +500,20 @@ export default function SettingsScreen() {
               label="Restore Purchases"
               isLast
               rightElement={<View />}
-              onPress={() => {
-                hapticImpact(ImpactFeedbackStyle.Heavy);
-                Alert.alert('Purchases Restored', 'Your Pro subscription has been successfully restored.');
+              onPress={async () => {
+                hapticImpact(ImpactFeedbackStyle.Light);
+                try {
+                  const customerInfo = await Purchases.restorePurchases();
+                  const hasPro = !!customerInfo?.entitlements?.active?.['pro'];
+                  setIsPro(hasPro);
+                  if (hasPro) {
+                    Alert.alert('Purchases Restored', 'Your Pro subscription has been successfully restored.');
+                  } else {
+                    Alert.alert('Restore Failed', 'No active Pro subscription was found on this account.');
+                  }
+                } catch (e: any) {
+                  Alert.alert('Error', 'Failed to restore purchases. ' + (e.message || ''));
+                }
               }}
             />
           </SettingsGroup>
