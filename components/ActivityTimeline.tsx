@@ -283,8 +283,7 @@ export default function ActivityTimeline() {
       <Animated.View layout={LinearTransition.springify()} style={{ paddingHorizontal: 24, marginTop: 24, marginBottom: 8 }}>
         <Animated.View entering={FadeInDown.duration(200).delay(200).springify()} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <History size={14} color="#94a3b8" strokeWidth={2} />
-            <Text style={{ fontSize: 14, fontWeight: '700', color: '#64748b', letterSpacing: 0.3 }}>Recent Activity</Text>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: '#64748b', letterSpacing: 0.3 }}>Recent Activity</Text>
           </View>
         </Animated.View>
 
@@ -313,8 +312,7 @@ export default function ActivityTimeline() {
       {/* Section header */}
       <Animated.View entering={FadeInDown.duration(200).delay(200).springify()} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <History size={14} color="#94a3b8" strokeWidth={2} />
-          <Text style={{ fontSize: 14, fontWeight: '700', color: '#64748b', letterSpacing: 0.3 }}>Recent Activity</Text>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: '#64748b', letterSpacing: 0.3 }}>Recent Activity</Text>
         </View>
       </Animated.View>
 

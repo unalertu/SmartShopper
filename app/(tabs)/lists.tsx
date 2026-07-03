@@ -192,7 +192,7 @@ export default function ListsScreen() {
 
   const renderRightActions = (listId: number) => {
     return (
-      <View style={{ width: 88, height: '100%' }}>
+      <View style={{ width: 88, height: '100%', zIndex: -1, elevation: -1 }}>
         <TouchableOpacity
           activeOpacity={0.7}
           style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'center', width: 80, height: '100%', borderRadius: 24, marginLeft: 8 }}
@@ -265,8 +265,7 @@ export default function ListsScreen() {
           <Animated.View layout={LinearTransition.springify()} className={`${shoppingLists.length === 0 ? 'mb-2' : 'mb-6'}`}>
             <Animated.View entering={FadeInDown.duration(200).delay(50).springify()} className="flex-row items-center justify-between mb-3 px-6">
               <View className="flex-row items-center gap-1.5">
-                <Zap size={14} color="#94a3b8" strokeWidth={2} />
-                <Text className="text-[14px] font-bold text-slate-500 tracking-wide">Quick Start</Text>
+                <Text className="text-[16px] font-bold text-slate-500 tracking-wide">Quick Start</Text>
               </View>
             </Animated.View>
             
@@ -359,6 +358,7 @@ export default function ListsScreen() {
               >
                   <Swipeable
                     containerStyle={{ marginHorizontal: 24, marginBottom: 10 }}
+                    childrenContainerStyle={{ zIndex: 1, elevation: 1 }}
                     ref={(ref) => {
                       if (ref) {
                         swipeableRefs.current.set(list.id, ref);

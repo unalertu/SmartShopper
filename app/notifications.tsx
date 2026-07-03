@@ -180,7 +180,7 @@ export default function NotificationsScreen() {
   }, [markAsRead]);
 
   const renderRightActions = (id: string) => (
-    <View style={{ width: 88, height: '100%' }}>
+    <View style={{ width: 88, height: '100%', zIndex: -1, elevation: -1 }}>
       <TouchableOpacity
         activeOpacity={0.7}
         style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'center', width: 80, height: '100%', borderRadius: 24, marginLeft: 8 }}
@@ -344,6 +344,7 @@ export default function NotificationsScreen() {
                   layout={LinearTransition.springify()}
                 >
                   <Swipeable
+                    childrenContainerStyle={{ zIndex: 1, elevation: 1 }}
                     ref={(ref) => {
                       if (ref) {
                         swipeableRefs.current.set(item.id, ref);
@@ -393,6 +394,7 @@ export default function NotificationsScreen() {
                   layout={LinearTransition.springify()}
                 >
                   <Swipeable
+                    childrenContainerStyle={{ zIndex: 1, elevation: 1 }}
                     ref={(ref) => {
                       if (ref) {
                         swipeableRefs.current.set(item.id, ref);

@@ -322,7 +322,7 @@ export default function HomeScreen() {
 
   const renderRightActions = (listId: number) => {
     return (
-      <View style={{ width: 88, height: '100%' }}>
+      <View style={{ width: 88, height: '100%', zIndex: -1, elevation: -1 }}>
         <TouchableOpacity
           activeOpacity={0.7}
           style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'center', width: 80, height: '100%', borderRadius: 24, marginLeft: 8 }}
@@ -365,7 +365,7 @@ export default function HomeScreen() {
 
   const renderShopRightActions = (shopId: string) => {
     return (
-      <View style={{ width: 88, height: '100%' }}>
+      <View style={{ width: 88, height: '100%', zIndex: -1, elevation: -1 }}>
         <TouchableOpacity
           activeOpacity={0.7}
           style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'center', width: 80, height: '100%', borderRadius: 24, marginLeft: 8 }}
@@ -651,6 +651,7 @@ export default function HomeScreen() {
                 >
                   <Swipeable
                     containerStyle={{ marginHorizontal: 24, marginBottom: 10 }}
+                    childrenContainerStyle={{ zIndex: 1, elevation: 1 }}
                     ref={(ref) => {
                       if (ref) {
                         swipeableRefs.current.set(list.id, ref);
@@ -734,6 +735,7 @@ export default function HomeScreen() {
             >
               <Swipeable
                 containerStyle={{ marginHorizontal: 24, marginBottom: 10 }}
+                childrenContainerStyle={{ zIndex: 1, elevation: 1 }}
                 ref={(ref) => {
                   if (ref) {
                     swipeableShopRefs.current.set(shop.id, ref);

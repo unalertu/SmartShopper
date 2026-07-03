@@ -678,7 +678,7 @@ export default function StoresScreen() {
 
   const renderRightActions = (locId: string, uniqueKey: string) => {
     return (
-      <View style={{ width: 88, height: '100%' }}>
+      <View style={{ width: 88, height: '100%', zIndex: -1, elevation: -1 }}>
         <BottomSheetTouchableOpacity
           activeOpacity={0.7}
           style={{ backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'center', width: 80, height: '100%', borderRadius: 20 }}
@@ -1138,6 +1138,7 @@ export default function StoresScreen() {
                 style={{ marginBottom: 14 }}
               >
                 <Swipeable
+                  childrenContainerStyle={{ zIndex: 1, elevation: 1 }}
                   ref={(ref) => {
                     if (ref) {
                       swipeableRefs.current.set('context-' + originalId, ref);
@@ -1332,6 +1333,7 @@ export default function StoresScreen() {
               >
                 <Swipeable
                   containerStyle={{ marginBottom: 10 }}
+                  childrenContainerStyle={{ zIndex: 1, elevation: 1 }}
                   ref={(ref) => {
                     if (ref) {
                       swipeableRefs.current.set(uniqueKey, ref);
