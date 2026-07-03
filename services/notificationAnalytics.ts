@@ -36,6 +36,7 @@ export interface NotificationAnalyticsState {
   // Daily counters
   dailyCountDate: string;
   dailyLocationCount: number;
+  dailyStoreCounts: Record<string, number>;
 
   // Fingerprint dedup
   sentFingerprints: string[];
@@ -54,6 +55,7 @@ const DEFAULT_STATE: NotificationAnalyticsState = {
   lastStoreNotifications: {},
   dailyCountDate: "",
   dailyLocationCount: 0,
+  dailyStoreCounts: {},
   sentFingerprints: [],
   notificationHistory: [],
   hasSentWelcome: false,
@@ -106,6 +108,7 @@ export const notificationAnalytics = {
     if (state.dailyCountDate !== today) {
       state.dailyCountDate = today;
       state.dailyLocationCount = 0;
+      state.dailyStoreCounts = {};
       state.sentFingerprints = [];
     }
     return state;
@@ -149,17 +152,19 @@ export const notificationAnalytics = {
 
   hasFingerprint: (
     state: NotificationAnalyticsState,
-    storeId: string
+    storeId: string,
+    eventId: number
   ): boolean => {
-    const fp = `location:${storeId}:${getTodayKey()}`;
+    const fp = `location:${storeId}:${eventId}`;
     return state.sentFingerprints.includes(fp);
   },
 
   addFingerprint: (
     state: NotificationAnalyticsState,
-    storeId: string
+    storeId: string,
+    eventId: number
   ): void => {
-    const fp = `location:${storeId}:${getTodayKey()}`;
+    const fp = `location:${storeId}:${eventId}`;
     if (!state.sentFingerprints.includes(fp)) {
       state.sentFingerprints.push(fp);
     }
@@ -175,7 +180,8 @@ export const notificationAnalytics = {
   recordNotification: async (
     title: string,
     body: string,
-    storeId: string
+    storeId: string,
+    eventId: number
   ): Promise<void> => {
     const state = await notificationAnalytics.getState();
 
@@ -190,12 +196,16 @@ export const notificationAnalytics = {
     // Increment daily counter
     state.dailyLocationCount += 1;
 
+    // Increment per-store daily counter
+    if (!state.dailyStoreCounts) state.dailyStoreCounts = {};
+    state.dailyStoreCounts[storeId] = (state.dailyStoreCounts[storeId] || 0) + 1;
+
     // Increment lifetime counter for stats UI and start a session
     useStatsStore.getState().incrementRemindersSent();
     useStatsStore.getState().startShoppingSession();
 
     // Add fingerprint
-    notificationAnalytics.addFingerprint(state, storeId);
+    notificationAnalytics.addFingerprint(state, storeId, eventId);
 
     // Add to history
     const entry: NotificationHistoryEntry = {

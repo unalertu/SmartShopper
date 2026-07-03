@@ -10,7 +10,7 @@ import { geoEngine } from "./geoEngine";
 import { notificationAnalytics } from "./notificationAnalytics";
 import { sendLocalNotification } from "./notificationService";
 import { useSettingsStore, NotificationSensitivity } from "../store/useSettingsStore";
-import { NOTIFICATION_CONSTANTS, getAlertDistanceMeters } from "../constants";
+import { NOTIFICATION_CONSTANTS, getAlertDistanceMeters, getMaxNotificationsPerStorePerDay } from "../constants";
 import { useStatsStore } from "../store/useStatsStore";
 import { useLocationStore } from "../store/useLocationStore";
 import { fetchMarkets } from "./overpassService";
@@ -77,6 +77,7 @@ export const getSettingsFromStorage = async () => {
         shoppingListReminders: state.shoppingListReminders !== false,
         notificationSensitivity: (state.notificationSensitivity || 'balanced') as NotificationSensitivity,
         maxAlertsPerDay: state.maxAlertsPerDay ?? 5,
+        maxNotificationsPerStorePerDay: getMaxNotificationsPerStorePerDay(state.isPro === true),
       };
     }
   } catch (e) {
@@ -97,6 +98,7 @@ export const getSettingsFromStorage = async () => {
     shoppingListReminders: true,
     notificationSensitivity: 'balanced' as NotificationSensitivity,
     maxAlertsPerDay: 5 as number | 'unlimited',
+    maxNotificationsPerStorePerDay: getMaxNotificationsPerStorePerDay(false),
   };
 };
 
@@ -293,10 +295,13 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
   }
 
   // 14. SHOULD SEND
+  const eventId = dwellTimers.get(bestStore.id) || now;
   const decision = await notificationEngine.shouldSendLocationNotification({
     storeId: bestStore.id,
+    eventId,
     isPro: settings.isPro,
     maxAlertsPerDay: settings.maxAlertsPerDay,
+    maxNotificationsPerStorePerDay: settings.maxNotificationsPerStorePerDay,
     scheduleEnabled: settings.scheduleEnabled,
     allowedDays: settings.allowedDays,
     quietHoursEnabled: settings.quietHoursEnabled,
@@ -315,13 +320,19 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
   addDebugLog("Notification triggered");
   incrementDebugMetric("notificationsTriggered");
 
-  const content = await notificationEngine.buildNotificationContent(bestStore.name, unpurchasedItems);
+  const content = await notificationEngine.buildNotificationContent(
+    bestStore.name,
+    unpurchasedItems,
+    settings.isPro,
+    settings.maxAlertsPerDay
+  );
   await sendLocalNotification(content.title, content.body, "geofence-alerts");
 
   await notificationAnalytics.recordNotification(
     content.title,
     content.body,
-    bestStore.id
+    bestStore.id,
+    eventId
   );
   
   dwellTimers.delete(bestStore.id);
@@ -450,10 +461,13 @@ export const handleGeofenceEnter = async (storeId: string) => {
     if (unpurchasedItems.length === 0) return;
 
     // 6. Should Send?
+    const eventId = Date.now();
     const decision = await notificationEngine.shouldSendLocationNotification({
       storeId: store.id,
+      eventId,
       isPro: settings.isPro,
       maxAlertsPerDay: settings.maxAlertsPerDay,
+      maxNotificationsPerStorePerDay: settings.maxNotificationsPerStorePerDay,
       scheduleEnabled: settings.scheduleEnabled,
       allowedDays: settings.allowedDays,
       quietHoursEnabled: settings.quietHoursEnabled,
@@ -464,9 +478,14 @@ export const handleGeofenceEnter = async (storeId: string) => {
     if (!decision.allowed) return;
 
     // SEND
-    const content = await notificationEngine.buildNotificationContent(store.name, unpurchasedItems);
+    const content = await notificationEngine.buildNotificationContent(
+      store.name,
+      unpurchasedItems,
+      settings.isPro,
+      settings.maxAlertsPerDay
+    );
     await sendLocalNotification(content.title, content.body, 'geofence-alerts');
-    await notificationAnalytics.recordNotification(content.title, content.body, store.id);
+    await notificationAnalytics.recordNotification(content.title, content.body, store.id, eventId);
   } catch (e) {
     console.error("handleGeofenceEnter error", e);
   }

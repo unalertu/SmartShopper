@@ -7,8 +7,10 @@ export const notificationEngine = {
    */
   shouldSendLocationNotification: async (params: {
     storeId: string;
+    eventId: number;
     isPro: boolean;
     maxAlertsPerDay: number | "unlimited";
+    maxNotificationsPerStorePerDay: number | "unlimited";
     scheduleEnabled: boolean;
     allowedDays: number[];
     quietHoursEnabled: boolean;
@@ -51,8 +53,16 @@ export const notificationEngine = {
       return { allowed: false, reason: "daily_limit_reached" };
     }
 
+    // 4.5 Daily Store Limit Check
+    if (params.maxNotificationsPerStorePerDay !== "unlimited") {
+      const storeCount = state.dailyStoreCounts?.[params.storeId] || 0;
+      if (storeCount >= params.maxNotificationsPerStorePerDay) {
+        return { allowed: false, reason: "store_daily_limit_reached" };
+      }
+    }
+
     // 5. Fingerprint Deduplication Check
-    const hasSent = notificationAnalytics.hasFingerprint(state, params.storeId);
+    const hasSent = notificationAnalytics.hasFingerprint(state, params.storeId, params.eventId);
     if (hasSent) {
       return { allowed: false, reason: "fingerprint_dedup" };
     }
@@ -90,7 +100,9 @@ export const notificationEngine = {
 
   buildNotificationContent: async (
     storeName: string,
-    unpurchasedItems: { name: string }[]
+    unpurchasedItems: { name: string }[],
+    isPro: boolean = true,
+    maxAlertsPerDay: number | "unlimited" = "unlimited"
   ): Promise<{ title: string; body: string }> => {
     const maxShow = 3;
     const names = unpurchasedItems.slice(0, maxShow).map((i) => i.name);
@@ -101,17 +113,21 @@ export const notificationEngine = {
       body += ` (+${remaining} more)`;
     }
 
+    if (!isPro && typeof maxAlertsPerDay === 'number') {
+      const state = await notificationAnalytics.getState();
+      const currentCount = state.dailyLocationCount;
+      if (currentCount + 1 >= maxAlertsPerDay) {
+        body += `\n\nYou have reached your free daily notification limit.`;
+      }
+    }
+
     return {
       title: `You're near ${storeName}`,
       body,
     };
   },
 
-  generateFingerprint: (storeId: string): string => {
-    const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-    return `location:${storeId}:${today}`;
-  },
+
 
   isScheduleAllowed: (params: {
     scheduleEnabled: boolean;

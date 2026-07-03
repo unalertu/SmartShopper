@@ -14,6 +14,7 @@ export const FREE_TIER = {
   maxLists: 4,
   maxItemsPerList: 25,
   maxLocationNotificationsPerDay: 4,
+  maxNotificationsPerStorePerDay: 2,
   maxMutedShops: 5,
   canCustomizeNotifications: false,
   canSetQuietHours: false,
@@ -29,6 +30,7 @@ export const PRO_TIER = {
   maxLists: Infinity,
   maxItemsPerList: Infinity,
   maxLocationNotificationsPerDay: Infinity,
+  maxNotificationsPerStorePerDay: 2,
   maxMutedShops: Infinity,
   canCustomizeNotifications: true,
   canSetQuietHours: true,
@@ -67,6 +69,12 @@ export const getMaxSavedStores = (isPro: boolean): number =>
  */
 export const getMaxLocationNotificationsPerDay = (isPro: boolean): number =>
   isPro ? PRO_TIER.maxLocationNotificationsPerDay : FREE_TIER.maxLocationNotificationsPerDay;
+
+/**
+ * Returns the max notifications per store per day for the given tier.
+ */
+export const getMaxNotificationsPerStorePerDay = (isPro: boolean): number =>
+  isPro ? PRO_TIER.maxNotificationsPerStorePerDay : FREE_TIER.maxNotificationsPerStorePerDay;
 
 /**
  * Returns the max shopping lists for the given tier.

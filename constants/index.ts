@@ -1,13 +1,13 @@
 export { Colors, Spacing, BorderRadius, FontSize } from "./theme";
 export { CATEGORIES, UNITS, getCategoryIcon, getCategoryLabel } from "./Categories";
-export { FREE_TIER, PRO_TIER, getTierConfig, getMaxSavedStores, getMaxLocationNotificationsPerDay, getMaxLists, getMaxItemsPerList, getAlertDistanceMeters } from "./tierConfig";
+export { FREE_TIER, PRO_TIER, getTierConfig, getMaxSavedStores, getMaxLocationNotificationsPerDay, getMaxLists, getMaxItemsPerList, getAlertDistanceMeters, getMaxNotificationsPerStorePerDay } from "./tierConfig";
 
 export const NOTIFICATION_CONSTANTS = {
   // Cooldowns
-  GLOBAL_COOLDOWN_MS: 30 * 60 * 1000,
-  STORE_COOLDOWN_MS: 24 * 60 * 60 * 1000,
+  GLOBAL_COOLDOWN_MS: 15 * 60 * 1000,
+  STORE_COOLDOWN_MS: 8 * 60 * 60 * 1000,
   // Dwell
-  DWELL_TIME_MS: 30 * 1000,
+  DWELL_TIME_MS: 20 * 1000,
   // Speed
   SPEED_THRESHOLD_MS: 6.94,
   SPEED_WINDOW_SIZE: 3,
