@@ -112,9 +112,9 @@ function SettingsGroup({ children, title }: { children: React.ReactNode; title?:
   return (
     <>
       {title && (
-        <View className="mx-8 mb-2">
+        <Animated.View layout={LinearTransition.springify()} className="mx-8 mb-2">
           <Text className="text-[13px] font-semibold text-slate-400 tracking-wider">{title}</Text>
-        </View>
+        </Animated.View>
       )}
       <Animated.View
         layout={LinearTransition.springify()}
@@ -307,11 +307,11 @@ export default function NotificationPreferencesScreen() {
           />
         </SettingsGroup>
 
-        <View className="mx-8 mt-2 mb-8">
+        <Animated.View layout={LinearTransition.springify()} className="mx-8 mt-2 mb-8">
           <Text className="text-[13px] text-slate-400 leading-5 text-center">
             SmartShopper only checks your location periodically and intelligently reduces activity when you're driving, inactive, or have no active shopping lists. This helps minimize battery usage while still delivering timely reminders.
           </Text>
-        </View>
+        </Animated.View>
 
       </ScrollView>
 
