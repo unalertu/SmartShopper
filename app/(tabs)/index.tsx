@@ -533,7 +533,7 @@ export default function HomeScreen() {
         {/* 2. THE MAP WIDGET */}
           {/* Smart Status Card */}
           <Animated.View 
-            entering={FadeInDown.duration(400).delay(1800).springify()}
+            entering={FadeInDown.duration(400).delay(200).springify()}
             layout={LinearTransition.springify()}
             className="mx-6 mt-2 mb-3 rounded-[36px] bg-white border border-slate-100 overflow-hidden"
             
@@ -612,7 +612,7 @@ export default function HomeScreen() {
           </Animated.View>
 
           {/* 3. My Lists Section */}
-          <Animated.View entering={FadeInDown.duration(400).delay(1900).springify()} layout={LinearTransition.springify()} className="flex-row items-center justify-between mx-6 mb-3 mt-1">
+          <Animated.View entering={FadeInDown.duration(400).delay(300).springify()} layout={LinearTransition.springify()} className="flex-row items-center justify-between mx-6 mb-3 mt-1">
             <View>
               <Text style={{ fontSize: 28, fontWeight: '600', letterSpacing: -0.6, color: '#0f172a' }}>Lists</Text>
             </View>
@@ -633,7 +633,7 @@ export default function HomeScreen() {
             </View>
           </Animated.View>
           {shoppingLists.length === 0 ? (
-            <Animated.View entering={FadeInDown.duration(400).delay(1950).springify()} layout={LinearTransition.springify()} className="mb-3 mt-1">
+            <Animated.View entering={FadeInDown.duration(400).delay(350).springify()} layout={LinearTransition.springify()} className="mb-3 mt-1">
               {/* Inline Empty State */}
               <View className="px-6 pt-0 pb-6 items-center justify-center">
                 <Text className="text-[16px] font-semibold text-slate-900 tracking-tight">No lists yet</Text>
@@ -645,7 +645,7 @@ export default function HomeScreen() {
               {shoppingLists.slice(0, 3).map((list, index) => (
                 <Animated.View
                   key={list.id}
-                  entering={FadeInDown.duration(400).delay(1950 + index * 50).springify()}
+                  entering={FadeInDown.duration(400).delay(350 + index * 50).springify()}
                   layout={LinearTransition.springify()}
                   exiting={FadeOutLeft.duration(200)}
                 >
@@ -698,7 +698,7 @@ export default function HomeScreen() {
           )}
 
           {/* 4. My Shops Section */}
-          <Animated.View entering={FadeInDown.duration(400).delay(2100).springify()} layout={LinearTransition.springify()} className="flex-row items-center justify-between mx-6 mt-4 mb-3">
+          <Animated.View entering={FadeInDown.duration(400).delay(450).springify()} layout={LinearTransition.springify()} className="flex-row items-center justify-between mx-6 mt-4 mb-3">
             <View>
               <Text style={{ fontSize: 28, fontWeight: '600', letterSpacing: -0.6, color: '#0f172a' }}>Shops</Text>
             </View>
@@ -719,7 +719,7 @@ export default function HomeScreen() {
             </View>
           </Animated.View>
           {savedShops.length === 0 && (
-            <Animated.View entering={FadeInDown.duration(400).delay(2150).springify()} layout={LinearTransition.springify()} className="mb-3 mt-1">
+            <Animated.View entering={FadeInDown.duration(400).delay(500).springify()} layout={LinearTransition.springify()} className="mb-3 mt-1">
               <View className="px-6 pt-0 pb-6 items-center justify-center">
                 <Text className="text-[16px] font-semibold text-slate-900 tracking-tight">No saved shops yet</Text>
                 <Text className="text-[13px] font-medium text-slate-400 mt-1">Save shops from map</Text>
@@ -729,7 +729,7 @@ export default function HomeScreen() {
           {savedShops.slice(0, 3).map((shop, index) => (
             <Animated.View
               key={shop.id}
-              entering={FadeInDown.duration(400).delay(2150 + index * 50).springify()}
+              entering={FadeInDown.duration(400).delay(500 + index * 50).springify()}
               layout={LinearTransition.springify()}
               exiting={FadeOutLeft.duration(200)}
             >
@@ -782,7 +782,7 @@ export default function HomeScreen() {
 
 
           {/* 5. Suggestions Section */}
-          <Animated.View entering={FadeInDown.duration(400).delay(2300).springify()} layout={LinearTransition.springify()} className="mt-6 mb-2">
+          <Animated.View entering={FadeInDown.duration(400).delay(600).springify()} layout={LinearTransition.springify()} className="mt-6 mb-2">
             <View className="px-6 mb-4">
               <Text style={{ fontSize: 28, fontWeight: '600', letterSpacing: -0.6, color: '#0f172a' }}>Suggestions</Text>
             </View>

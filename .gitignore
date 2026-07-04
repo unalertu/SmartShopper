@@ -46,3 +46,7 @@ app-example
 *.pdf
 Gemini_Generated_Image_*.png
 *.exe
+
+# EAS logs
+eas_log*
+
