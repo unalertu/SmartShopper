@@ -365,13 +365,7 @@ export default function OnboardingScreen() {
         <PageIndicator scrollX={scrollX} pageCount={PAGES.length} />
         <View style={{ alignItems: 'center' }}>
           <PrimaryButton title={primaryLabel} onPress={handlePrimaryAction} />
-          {currentConfig.type !== 'personalize' ? (
-            <TouchableOpacity activeOpacity={0.7} onPress={handleSkip} style={{ marginTop: 14, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 20, borderCurve: 'continuous', backgroundColor: '#f1f5f9' }}>
-              <Text style={{ color: NAVY_COLOR, fontSize: 15, fontWeight: '600' }}>Skip</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={{ height: 40 }} />
-          )}
+          <View style={{ height: 40 }} />
         </View>
       </View>
     </SafeAreaView>
