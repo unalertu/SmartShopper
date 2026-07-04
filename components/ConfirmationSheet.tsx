@@ -35,10 +35,7 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
     if (visible) {
       actionTakenRef.current = false;
       isSheetOpenRef.current = true;
-      // Slight delay ensures the layout is ready and the modal provider can present it
-      setTimeout(() => {
-        bottomSheetRef.current?.present();
-      }, 50);
+      bottomSheetRef.current?.present();
     } else {
       if (isSheetOpenRef.current) {
         bottomSheetRef.current?.dismiss();
@@ -100,11 +97,14 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
 
   const modalName = React.useMemo(() => `confirmation-sheet-${Math.random().toString(36).substr(2, 9)}`, []);
 
+  const snapPoints = React.useMemo(() => [260], []);
+
   return (
     <BottomSheetModal
       name={modalName}
       ref={bottomSheetRef}
-      enableDynamicSizing={true}
+      snapPoints={snapPoints}
+      enableDynamicSizing={false}
       enablePanDownToClose
       backdropComponent={renderBackdrop}
       onDismiss={handleDismiss}
