@@ -143,7 +143,8 @@ export default function RootLayout() {
 
     // Check if we should show onboarding FIRST
     const { hasCompletedOnboarding } = useSettingsStore.getState();
-    if (!hasCompletedOnboarding) {
+    // Temporarily forcing onboarding for testing purposes
+    if (true || !hasCompletedOnboarding) {
       setTimeout(() => {
         router.replace('/onboarding');
       }, 0);

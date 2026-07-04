@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, Dimensions, Switch, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ShoppingCart, MapPin, Bell, Shield, Check, Crown } from 'lucide-react-native';
+import { ShoppingCart, MapPin, Bell, Shield, Check, Crown, Settings, SlidersHorizontal, Ruler } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
@@ -124,9 +124,11 @@ export default function OnboardingScreen() {
   const scrollRef = useRef<Animated.ScrollView>(null);
   const scrollX = useSharedValue(0);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [locationGranted, setLocationGranted] = useState(false);
+  const [notificationGranted, setNotificationGranted] = useState(false);
 
   // Settings state for screen 5
-  const { savedStoresOnly, setSavedStoresOnly, setHasCompletedOnboarding } = useSettingsStore();
+  const { savedStoresOnly, setSavedStoresOnly, setHasCompletedOnboarding, distanceUnit, setDistanceUnit } = useSettingsStore();
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -148,6 +150,12 @@ export default function OnboardingScreen() {
     }
   };
 
+  const goToPrevious = () => {
+    if (currentIndex > 0) {
+      scrollRef.current?.scrollTo({ x: (currentIndex - 1) * width, animated: true });
+    }
+  };
+
   const finishOnboarding = () => {
     setHasCompletedOnboarding(true);
     setupNotifications();
@@ -161,7 +169,14 @@ export default function OnboardingScreen() {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
-          await Location.requestBackgroundPermissionsAsync();
+          setLocationGranted(true);
+          try {
+            await Location.requestBackgroundPermissionsAsync();
+          } catch (err) {
+            console.warn("Background location permission error:", err);
+          }
+          setTimeout(() => goToNext(), 800);
+          return;
         }
       } catch (e) {
         console.warn(e);
@@ -169,7 +184,12 @@ export default function OnboardingScreen() {
       goToNext();
     } else if (current.type === 'notification') {
       try {
-        await Notifications.requestPermissionsAsync();
+        const { status } = await Notifications.requestPermissionsAsync();
+        if (status === 'granted') {
+          setNotificationGranted(true);
+          setTimeout(() => goToNext(), 800);
+          return;
+        }
       } catch (e) {
         console.warn(e);
       }
@@ -192,12 +212,14 @@ export default function OnboardingScreen() {
         {page.type === 'welcome' && (
           <View style={{ flex: 1 }}>
             <IllustrationBox>
-              <View style={{ width: 180, height: 180, borderRadius: 48, borderCurve: 'continuous', backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                <Image
-                  source={require('../assets/images/app-logo.png')}
-                  resizeMode="contain"
-                  style={{ width: 340, height: 227 }}
-                />
+              <View style={{ width: 180, height: 180, borderRadius: 48, borderCurve: 'continuous', backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 140, height: 140, borderRadius: 36, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', shadowColor: NAVY_COLOR, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}>
+                  <Image
+                    source={require('../assets/images/app-logo.png')}
+                    resizeMode="contain"
+                    style={{ width: 260, height: 173 }}
+                  />
+                </View>
               </View>
             </IllustrationBox>
             <View style={{ marginTop: 40, alignItems: 'center' }}>
@@ -208,7 +230,7 @@ export default function OnboardingScreen() {
         )}
 
         {page.type === 'how-it-works' && (
-          <View style={{ flex: 1, paddingTop: 32 }}>
+          <View style={{ flex: 1, justifyContent: 'center' }}>
             <Text style={{ fontSize: 28, fontWeight: '700', color: NAVY_COLOR, textAlign: 'center', letterSpacing: -0.5 }}>How It Works</Text>
             <Text style={{ fontSize: 15, color: '#64748b', textAlign: 'center', marginTop: 8, marginBottom: 28, lineHeight: 22 }}>Three simple steps, then GeoCart does the remembering for you.</Text>
 
@@ -238,7 +260,13 @@ export default function OnboardingScreen() {
               <View style={{ width: 180, height: 180, backgroundColor: '#f1f5f9', borderRadius: 48, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' }}>
                 <View style={{ width: 136, height: 136, borderRadius: 68, backgroundColor: '#e2e8f0', alignItems: 'center', justifyContent: 'center' }}>
                   <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: 'white', alignItems: 'center', justifyContent: 'center', shadowColor: NAVY_COLOR, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 2 }}>
-                    <MapPin size={50} color={NAVY_COLOR} />
+                    <MapPin size={38} color={NAVY_COLOR} style={{ marginLeft: -4, marginTop: -4 }} />
+                    <View style={{ position: 'absolute', bottom: -4, right: -4, width: 40, height: 40, borderRadius: 20, backgroundColor: NAVY_COLOR, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: 'white' }}>
+                      <ShoppingCart size={18} color="white" />
+                    </View>
+                    <View style={{ position: 'absolute', top: -2, right: 8, width: 24, height: 24, borderRadius: 12, backgroundColor: 'white', alignItems: 'center', justifyContent: 'center', shadowColor: NAVY_COLOR, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 2 }}>
+                      <Bell size={12} color={NAVY_COLOR} />
+                    </View>
                   </View>
                 </View>
                 <View style={{ position: 'absolute', top: 34, right: 34, width: 12, height: 12, borderRadius: 6, backgroundColor: NAVY_COLOR, borderWidth: 3, borderColor: '#f1f5f9' }} />
@@ -246,16 +274,16 @@ export default function OnboardingScreen() {
               </View>
             </IllustrationBox>
             <View style={{ marginTop: 32, alignItems: 'center' }}>
-              <Text style={{ fontSize: 28, fontWeight: '700', color: NAVY_COLOR, textAlign: 'center', letterSpacing: -0.5 }}>Always Allow Location</Text>
-              <Text style={{ fontSize: 15, color: '#64748b', textAlign: 'center', marginTop: 12, lineHeight: 22 }}>GeoCart uses your location to notice nearby stores and remind you at the right time.</Text>
+              <Text style={{ fontSize: 28, fontWeight: '700', color: NAVY_COLOR, textAlign: 'center', letterSpacing: -0.5 }}>Get Reminded at the{'\n'}Right Place</Text>
+              <Text style={{ fontSize: 15, color: '#64748b', textAlign: 'center', marginTop: 12, lineHeight: 22 }}>GeoCart reminds you about your shopping list{'\n'}when you're near a store.</Text>
             </View>
             <View style={{ marginTop: 'auto', backgroundColor: '#f8fafc', padding: 14, borderRadius: 28, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
               <View style={{ width: 42, height: 42, borderRadius: 17, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
                 <Shield size={22} color={NAVY_COLOR} />
               </View>
               <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: NAVY_COLOR }}>Private by design</Text>
-                <Text style={{ fontSize: 12, color: '#64748b', lineHeight: 17, marginTop: 2 }}>Your location is never sold or shared.</Text>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: NAVY_COLOR }}>Your Location Stays Private</Text>
+                <Text style={{ fontSize: 12, color: '#64748b', lineHeight: 17, marginTop: 2 }}>Used only for nearby store reminders.</Text>
               </View>
             </View>
           </View>
@@ -280,7 +308,7 @@ export default function OnboardingScreen() {
             </View>
             <View style={{ marginTop: 'auto', backgroundColor: '#f8fafc', padding: 14, borderRadius: 28, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
               <View style={{ width: 42, height: 42, borderRadius: 17, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
-                <Bell size={22} color={NAVY_COLOR} />
+                <SlidersHorizontal size={22} color={NAVY_COLOR} />
               </View>
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <Text style={{ fontSize: 14, fontWeight: '700', color: NAVY_COLOR }}>Only useful reminders</Text>
@@ -291,8 +319,9 @@ export default function OnboardingScreen() {
         )}
 
         {page.type === 'personalize' && (
-          <View style={{ flex: 1, paddingTop: 32 }}>
-            <Text style={{ fontSize: 28, fontWeight: '700', color: NAVY_COLOR, textAlign: 'center', letterSpacing: -0.5 }}>Personalize Your Experience</Text>
+          <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+              <Text style={{ fontSize: 28, fontWeight: '700', color: NAVY_COLOR, textAlign: 'center', letterSpacing: -0.5 }}>Personalize GeoCart</Text>
             <Text style={{ fontSize: 15, color: '#64748b', textAlign: 'center', marginTop: 8, marginBottom: 24, lineHeight: 22 }}>Choose how GeoCart works best for you.</Text>
 
             <View style={{ backgroundColor: '#f8fafc', padding: 16, borderRadius: 30, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center' }}>
@@ -310,25 +339,40 @@ export default function OnboardingScreen() {
               />
             </View>
 
-            <View style={{ marginTop: 'auto', backgroundColor: NAVY_COLOR, padding: 18, borderRadius: 32, borderCurve: 'continuous', marginBottom: 20 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
-                <View style={{ width: 40, height: 40, borderRadius: 17, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' }}>
-                  <Crown size={21} color="white" />
+            <View style={{ backgroundColor: '#f8fafc', padding: 16, borderRadius: 30, borderCurve: 'continuous', marginTop: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                <View style={{ width: 48, height: 48, borderRadius: 19, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
+                  <Ruler size={24} color={NAVY_COLOR} />
                 </View>
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: 'white' }}>More with GeoCart Pro</Text>
-                  <Text style={{ fontSize: 12, color: '#cbd5e1', marginTop: 2 }}>Upgrade whenever you are ready.</Text>
+                <View style={{ flex: 1, marginLeft: 14 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: NAVY_COLOR }}>Distance Unit</Text>
+                  <Text style={{ fontSize: 12, color: '#64748b', lineHeight: 17, marginTop: 3 }}>How do you measure distance?</Text>
                 </View>
               </View>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {['Unlimited stores', 'Custom distances', 'Unlimited lists', 'Advanced settings'].map((feature) => (
-                  <View key={feature} style={{ width: '48%', flexDirection: 'row', alignItems: 'center' }}>
-                    <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' }}>
-                      <Check size={12} color="white" strokeWidth={3} />
-                    </View>
-                    <Text style={{ flex: 1, fontSize: 11, color: '#e2e8f0', marginLeft: 7 }}>{feature}</Text>
-                  </View>
-                ))}
+              <View style={{ flexDirection: 'row', backgroundColor: '#e2e8f0', borderRadius: 20, padding: 4 }}>
+                <TouchableOpacity 
+                  onPress={() => setDistanceUnit('imperial')}
+                  style={{ flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: distanceUnit === 'imperial' ? 'white' : 'transparent', borderRadius: 16, shadowColor: distanceUnit === 'imperial' ? NAVY_COLOR : 'transparent', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 4, elevation: distanceUnit === 'imperial' ? 2 : 0 }}
+                >
+                  <Text style={{ fontSize: 14, fontWeight: distanceUnit === 'imperial' ? '700' : '500', color: distanceUnit === 'imperial' ? NAVY_COLOR : '#64748b' }}>Imperial (mi, ft)</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={() => setDistanceUnit('metric')}
+                  style={{ flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: distanceUnit === 'metric' ? 'white' : 'transparent', borderRadius: 16, shadowColor: distanceUnit === 'metric' ? NAVY_COLOR : 'transparent', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 4, elevation: distanceUnit === 'metric' ? 2 : 0 }}
+                >
+                  <Text style={{ fontSize: 14, fontWeight: distanceUnit === 'metric' ? '700' : '500', color: distanceUnit === 'metric' ? NAVY_COLOR : '#64748b' }}>Metric (km, m)</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            </View>
+
+            <View style={{ marginTop: 'auto', backgroundColor: '#f8fafc', padding: 14, borderRadius: 28, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+              <View style={{ width: 42, height: 42, borderRadius: 17, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
+                <Settings size={22} color={NAVY_COLOR} />
+              </View>
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: NAVY_COLOR }}>Always in Control</Text>
+                <Text style={{ fontSize: 12, color: '#64748b', lineHeight: 17, marginTop: 2 }}>You can change these anytime in Settings.</Text>
               </View>
             </View>
           </View>
@@ -341,8 +385,8 @@ export default function OnboardingScreen() {
   const currentConfig = PAGES[currentIndex];
   let primaryLabel = 'Next';
   if (currentConfig.type === 'welcome') primaryLabel = 'Get Started';
-  if (currentConfig.type === 'location') primaryLabel = 'Enable Location';
-  if (currentConfig.type === 'notification') primaryLabel = 'Enable Notifications';
+  if (currentConfig.type === 'location') primaryLabel = locationGranted ? '✓ Location Enabled' : 'Enable Location';
+  if (currentConfig.type === 'notification') primaryLabel = notificationGranted ? '✓ Notifications Enabled' : 'Enable Notifications';
   if (currentConfig.type === 'personalize') primaryLabel = 'Finish Setup';
 
   return (
@@ -351,6 +395,7 @@ export default function OnboardingScreen() {
         ref={scrollRef}
         horizontal
         pagingEnabled
+        scrollEnabled={false}
         showsHorizontalScrollIndicator={false}
         bounces={false}
         onScroll={scrollHandler}
@@ -365,7 +410,19 @@ export default function OnboardingScreen() {
         <PageIndicator scrollX={scrollX} pageCount={PAGES.length} />
         <View style={{ alignItems: 'center' }}>
           <PrimaryButton title={primaryLabel} onPress={handlePrimaryAction} />
-          <View style={{ height: 40 }} />
+          <View style={{ minHeight: 50, justifyContent: 'center', marginTop: 12 }}>
+            {currentIndex > 0 && (
+              <TouchableOpacity onPress={goToPrevious} style={{ 
+                backgroundColor: '#f1f5f9', 
+                paddingHorizontal: 32, 
+                paddingVertical: 12, 
+                borderRadius: 24, 
+                borderCurve: 'continuous'
+              }}>
+                <Text style={{ color: '#64748b', fontSize: 15, fontWeight: '700' }}>Back</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </View>
     </SafeAreaView>

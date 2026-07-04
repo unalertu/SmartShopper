@@ -2,11 +2,24 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getAlertDistanceMeters } from "../constants";
+import * as Localization from 'expo-localization';
 
 export type DistanceUnit = "metric" | "imperial";
 export type ThemeOption = "system" | "light" | "dark";
 export type NotificationSensitivity = "near" | "balanced" | "far";
 export type MaxAlertsPerDay = 1 | 3 | 5 | 10 | "unlimited";
+
+const getDefaultDistanceUnit = (): DistanceUnit => {
+  try {
+    const locales = Localization.getLocales();
+    if (locales && locales.length > 0) {
+      return locales[0].regionCode === 'US' ? 'imperial' : 'metric';
+    }
+  } catch (e) {
+    console.warn("Failed to get locale", e);
+  }
+  return 'metric';
+};
 
 interface SettingsState {
   // ── Hydration ──
@@ -106,7 +119,7 @@ const DEFAULT_SETTINGS = {
 
   locationEnabled: false,
 
-  distanceUnit: "metric" as DistanceUnit,
+  distanceUnit: getDefaultDistanceUnit(),
   theme: "system" as ThemeOption,
   smartSuggestionsEnabled: true,
   autoDeletePurchased: false,
