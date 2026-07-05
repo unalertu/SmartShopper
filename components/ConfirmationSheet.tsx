@@ -1,8 +1,9 @@
-import React, { memo, useEffect, useRef, useCallback } from 'react';
+import React, { memo, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
+import { ReduceMotion } from 'react-native-reanimated';
 
 export interface ConfirmationSheetData {
   settingName?: string;
@@ -28,56 +29,61 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
 }: ConfirmationSheetProps) {
   const insets = useSafeAreaInsets();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
-  const actionTakenRef = useRef(false);
+  const actionTakenRef = useRef<'confirm' | 'cancel' | null>(null);
   const isSheetOpenRef = useRef(false);
 
-  useEffect(() => {
-    if (visible) {
-      actionTakenRef.current = false;
-      isSheetOpenRef.current = true;
-      bottomSheetRef.current?.present();
-    } else {
-      if (isSheetOpenRef.current) {
-        bottomSheetRef.current?.dismiss();
-        isSheetOpenRef.current = false;
-      }
-    }
-  }, [visible]);
+  // Keep stable refs for callbacks to avoid re-creating handlers on every render
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
 
+  useEffect(() => {
+    if (visible && data) {
+      actionTakenRef.current = null;
+      // Use requestAnimationFrame to avoid presenting during a layout pass
+      requestAnimationFrame(() => {
+        isSheetOpenRef.current = true;
+        bottomSheetRef.current?.present();
+      });
+    } else if (!visible && isSheetOpenRef.current) {
+      bottomSheetRef.current?.dismiss();
+    }
+  }, [visible, data]);
+
+  // This is the ONLY place where state cleanup happens — after the dismiss animation completes
   const handleDismiss = useCallback(() => {
     isSheetOpenRef.current = false;
-    if (!actionTakenRef.current) {
-      actionTakenRef.current = true;
-      if (data?.onCancel) {
-        data.onCancel();
-      }
-      onDismiss();
+    const action = actionTakenRef.current;
+
+    if (action === 'confirm') {
+      dataRef.current?.onConfirm?.();
+    } else {
+      // cancel or swipe-down
+      dataRef.current?.onCancel?.();
     }
-  }, [data, onDismiss]);
+
+    // Reset for next use
+    actionTakenRef.current = null;
+    // Notify parent to set visible=false — this happens AFTER animation is done
+    onDismissRef.current();
+  }, []);
 
   const dismiss = useCallback(() => {
+    if (!isSheetOpenRef.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    actionTakenRef.current = true;
-    if (data?.onCancel) data.onCancel();
-    
-    if (isSheetOpenRef.current) {
-      bottomSheetRef.current?.dismiss();
-      isSheetOpenRef.current = false;
-    }
-    onDismiss();
-  }, [data, onDismiss]);
+    actionTakenRef.current = 'cancel';
+    // Only dismiss the modal — the handleDismiss callback will do the rest
+    bottomSheetRef.current?.dismiss();
+  }, []);
 
   const confirm = useCallback(() => {
+    if (!isSheetOpenRef.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    actionTakenRef.current = true;
-    if (data?.onConfirm) data.onConfirm();
-    
-    if (isSheetOpenRef.current) {
-      bottomSheetRef.current?.dismiss();
-      isSheetOpenRef.current = false;
-    }
-    onDismiss();
-  }, [data, onDismiss]);
+    actionTakenRef.current = 'confirm';
+    // Only dismiss the modal — the handleDismiss callback will do the rest
+    bottomSheetRef.current?.dismiss();
+  }, []);
 
   const renderBackdrop = useCallback(
     (props: any) => (
@@ -86,6 +92,7 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
         disappearsOnIndex={-1}
         appearsOnIndex={0}
         opacity={0.35}
+        pressBehavior="close"
       />
     ),
     []
@@ -95,9 +102,25 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
   const title = data?.title || (data ? `${actionLabel} ${data.settingName}?` : '');
   const description = data?.description ?? '';
 
-  const modalName = React.useMemo(() => `confirmation-sheet-${Math.random().toString(36).substr(2, 9)}`, []);
+  const modalName = useMemo(() => `confirmation-sheet-${Math.random().toString(36).substr(2, 9)}`, []);
 
-  const snapPoints = React.useMemo(() => [260], []);
+  const snapPoints = useMemo(() => [260], []);
+
+  const animationConfigs = useMemo(
+    () => ({
+      damping: 20,
+      stiffness: 200,
+      mass: 0.8,
+      overshootClamping: false,
+      restDisplacementThreshold: 0.1,
+      restSpeedThreshold: 0.1,
+      reduceMotion: ReduceMotion.System,
+    }),
+    []
+  );
+
+  // Don't mount the modal at all when there's no data — prevents ghost instances
+  if (!data) return null;
 
   return (
     <BottomSheetModal
@@ -106,6 +129,8 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
       snapPoints={snapPoints}
       enableDynamicSizing={false}
       enablePanDownToClose
+      animateOnMount
+      animationConfigs={animationConfigs}
       backdropComponent={renderBackdrop}
       onDismiss={handleDismiss}
       handleIndicatorStyle={styles.handle}

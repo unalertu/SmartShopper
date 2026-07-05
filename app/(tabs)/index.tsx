@@ -336,7 +336,6 @@ export default function HomeScreen() {
               onConfirm: () => {
                 removeList(listId);
                 swipeableRefs.current.delete(listId);
-                setDeleteModalVisible(false);
               },
               onCancel: () => {
                 swipeableRefs.current.get(listId)?.close();
@@ -379,7 +378,6 @@ export default function HomeScreen() {
               onConfirm: () => {
                 removeLocation(shopId);
                 swipeableShopRefs.current.delete(shopId);
-                setDeleteModalVisible(false);
               },
               onCancel: () => {
                 swipeableShopRefs.current.get(shopId)?.close();
@@ -897,7 +895,7 @@ export default function HomeScreen() {
         <ConfirmationSheet
           visible={deleteModalVisible}
           data={deleteModalData}
-          onDismiss={() => setDeleteModalVisible(false)}
+          onDismiss={() => { setDeleteModalVisible(false); setDeleteModalData(null); }}
         />
     </View>
     </AnimatedScreen>

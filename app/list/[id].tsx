@@ -319,7 +319,6 @@ export default function ListDetails() {
       confirmLabel: "Delete",
       onConfirm: () => {
         removeList(listId);
-        setDeleteModalVisible(false);
         router.back();
       }
     });
@@ -799,7 +798,7 @@ export default function ListDetails() {
       <ConfirmationSheet
         visible={deleteModalVisible}
         data={deleteModalData}
-        onDismiss={() => setDeleteModalVisible(false)}
+        onDismiss={() => { setDeleteModalVisible(false); setDeleteModalData(null); }}
       />
 
       <RenameListSheet

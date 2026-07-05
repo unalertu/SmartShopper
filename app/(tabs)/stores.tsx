@@ -696,7 +696,6 @@ export default function StoresScreen() {
                 if (selectedShopToSave && (selectedShopToSave.id === locId || selectedShopToSave.id === `saved-${locId}`)) {
                   setSelectedShopToSave(null);
                 }
-                setDeleteModalVisible(false);
               },
               onCancel: () => {
                 swipeableRefs.current.get(uniqueKey)?.close();
@@ -1232,7 +1231,6 @@ export default function StoresScreen() {
                                   if (selectedShopToSave && (selectedShopToSave.id === originalId || selectedShopToSave.id === `saved-${originalId}`)) {
                                     setSelectedShopToSave(null);
                                   }
-                                  setDeleteModalVisible(false);
                                 },
                                 onCancel: () => {
                                   swipeableRefs.current.get('context-' + originalId)?.close();
@@ -1458,7 +1456,6 @@ export default function StoresScreen() {
                                   if (selectedShopToSave && (selectedShopToSave.id === loc.id || selectedShopToSave.id === `saved-${loc.id}`)) {
                                     setSelectedShopToSave(null);
                                   }
-                                  setDeleteModalVisible(false);
                                 },
                                 onCancel: () => {
                                   swipeableRefs.current.get(uniqueKey)?.close();
@@ -1512,7 +1509,7 @@ export default function StoresScreen() {
       <ConfirmationSheet
         visible={deleteModalVisible}
         data={deleteModalData}
-        onDismiss={() => setDeleteModalVisible(false)}
+        onDismiss={() => { setDeleteModalVisible(false); setDeleteModalData(null); }}
       />
     </View>
     </AnimatedScreen>
