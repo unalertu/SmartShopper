@@ -215,7 +215,7 @@ export default function OnboardingScreen() {
               <View style={{ width: 180, height: 180, borderRadius: 48, borderCurve: 'continuous', backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center' }}>
                 <View style={{ width: 140, height: 140, borderRadius: 36, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', shadowColor: NAVY_COLOR, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}>
                   <Image
-                    source={require('../assets/images/app-logo.png')}
+                    source={require('../assets/images/app-logo.jpeg')}
                     resizeMode="contain"
                     style={{ width: 260, height: 173 }}
                   />

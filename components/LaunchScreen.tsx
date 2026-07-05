@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { View, Text, Image, StyleSheet, Dimensions } from "react-native";
+import AppLogo from "./AppLogo";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -67,16 +68,12 @@ export default function LaunchScreen({ onFinish }: LaunchScreenProps) {
         {/* Logo */}
         <Animated.View style={[styles.logoContainer, logoAnimatedStyle]}>
           <Image
-            source={require("../assets/images/app-logo.png")}
+            source={require("../assets/images/launch-logo.png")}
             style={styles.logo}
             resizeMode="contain"
           />
         </Animated.View>
 
-        {/* App Name */}
-        <Animated.View style={textAnimatedStyle}>
-          <Text style={styles.appName}>SmartShopper</Text>
-        </Animated.View>
       </View>
     </Animated.View>
   );
@@ -92,10 +89,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center"},
   logoContainer: {
-    marginBottom: 20},
+    marginBottom: 20
+  },
   logo: {
-    width: 80,
-    height: 80},
+    width: 240,
+    height: 160
+  },
   appName: {
     fontSize: 22,
     fontWeight: "600",
