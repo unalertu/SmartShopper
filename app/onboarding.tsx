@@ -1,12 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, Dimensions, Switch, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ShoppingCart, MapPin, Bell, Shield, Check, Crown, Settings, SlidersHorizontal, Ruler } from 'lucide-react-native';
+import { ShoppingCart, MapPin, Bell, Shield, Check, Crown, Settings, SlidersHorizontal, Ruler, Battery, AlertCircle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import * as Haptics from 'expo-haptics';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, interpolate, Extrapolation, useAnimatedScrollHandler, SharedValue, FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, interpolate, Extrapolation, useAnimatedScrollHandler, SharedValue, FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { setupNotifications } from '@/services/notificationService';
 import { Colors } from '@/constants/theme';
@@ -114,8 +114,8 @@ function IllustrationBox({ children }: { children: React.ReactNode }) {
 const PAGES = [
   { id: 'welcome', type: 'welcome' },
   { id: 'how-it-works', type: 'how-it-works' },
-  { id: 'location', type: 'location' },
   { id: 'notification', type: 'notification' },
+  { id: 'location', type: 'location' },
   { id: 'personalize', type: 'personalize' },
 ] as const;
 
@@ -277,13 +277,13 @@ export default function OnboardingScreen() {
               <Text style={{ fontSize: 28, fontWeight: '700', color: NAVY_COLOR, textAlign: 'center', letterSpacing: -0.5 }}>Get Reminded at the{'\n'}Right Place</Text>
               <Text style={{ fontSize: 15, color: '#64748b', textAlign: 'center', marginTop: 12, lineHeight: 22 }}>GeoCart reminds you about your shopping list{'\n'}when you're near a store.</Text>
             </View>
-            <View style={{ marginTop: 'auto', backgroundColor: '#f8fafc', padding: 14, borderRadius: 28, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
-              <View style={{ width: 42, height: 42, borderRadius: 17, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
-                <Shield size={22} color={NAVY_COLOR} />
+            <View style={{ marginTop: 'auto', backgroundColor: '#f8fafc', padding: 12, borderRadius: 20, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+              <View style={{ width: 36, height: 36, borderRadius: 14, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
+                <Shield size={18} color={NAVY_COLOR} />
               </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: NAVY_COLOR }}>Your Location Stays Private</Text>
-                <Text style={{ fontSize: 12, color: '#64748b', lineHeight: 17, marginTop: 2 }}>Used only for nearby store reminders.</Text>
+              <View style={{ flex: 1, marginLeft: 10 }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: NAVY_COLOR }}>Your Location Stays Private</Text>
+                <Text style={{ fontSize: 11, color: '#64748b', lineHeight: 16, marginTop: 2 }}>Used only for nearby store reminders.</Text>
               </View>
             </View>
           </View>
@@ -303,16 +303,16 @@ export default function OnboardingScreen() {
               </View>
             </IllustrationBox>
             <View style={{ marginTop: 32, alignItems: 'center' }}>
-              <Text style={{ fontSize: 28, fontWeight: '700', color: NAVY_COLOR, textAlign: 'center', letterSpacing: -0.5 }}>Enable Notifications</Text>
-              <Text style={{ fontSize: 15, color: '#64748b', textAlign: 'center', marginTop: 12, lineHeight: 22 }}>Receive your shopping list exactly when it becomes useful.</Text>
+              <Text style={{ fontSize: 28, fontWeight: '700', color: NAVY_COLOR, textAlign: 'center', letterSpacing: -0.5 }}>Enable Smart Alerts</Text>
+              <Text style={{ fontSize: 15, color: '#64748b', textAlign: 'center', marginTop: 12, lineHeight: 22 }}>GeoCart reminds you at the right place and time.</Text>
             </View>
-            <View style={{ marginTop: 'auto', backgroundColor: '#f8fafc', padding: 14, borderRadius: 28, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
-              <View style={{ width: 42, height: 42, borderRadius: 17, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
-                <SlidersHorizontal size={22} color={NAVY_COLOR} />
+            <View style={{ marginTop: 'auto', backgroundColor: '#f8fafc', padding: 12, borderRadius: 20, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+              <View style={{ width: 36, height: 36, borderRadius: 14, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
+                <SlidersHorizontal size={18} color={NAVY_COLOR} />
               </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: NAVY_COLOR }}>Only useful reminders</Text>
-                <Text style={{ fontSize: 12, color: '#64748b', lineHeight: 17, marginTop: 2 }}>No spam. You stay in control.</Text>
+              <View style={{ flex: 1, marginLeft: 10 }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: NAVY_COLOR }}>Only useful reminders</Text>
+                <Text style={{ fontSize: 11, color: '#64748b', lineHeight: 16, marginTop: 2 }}>No spam. You stay in control.</Text>
               </View>
             </View>
           </View>
@@ -320,26 +320,52 @@ export default function OnboardingScreen() {
 
         {page.type === 'personalize' && (
           <View style={{ flex: 1 }}>
-            <View style={{ flex: 1, justifyContent: 'center' }}>
+            <View style={{ flex: 1, paddingTop: height * 0.07 }}>
               <Text style={{ fontSize: 28, fontWeight: '700', color: NAVY_COLOR, textAlign: 'center', letterSpacing: -0.5 }}>Personalize GeoCart</Text>
-            <Text style={{ fontSize: 15, color: '#64748b', textAlign: 'center', marginTop: 8, marginBottom: 24, lineHeight: 22 }}>Choose how GeoCart works best for you.</Text>
+              <Text style={{ fontSize: 15, color: '#64748b', textAlign: 'center', marginTop: 8, marginBottom: 24, lineHeight: 22 }}>Choose how GeoCart works best for you.</Text>
 
-            <View style={{ backgroundColor: '#f8fafc', padding: 16, borderRadius: 30, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center' }}>
-              <View style={{ width: 48, height: 48, borderRadius: 19, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
-                <MapPin size={24} color={NAVY_COLOR} />
+            <Animated.View layout={LinearTransition.springify()} style={{ backgroundColor: '#f8fafc', padding: 16, borderRadius: 30, borderCurve: 'continuous' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                <View style={{ width: 48, height: 48, borderRadius: 19, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
+                  <MapPin size={24} color={NAVY_COLOR} />
+                </View>
+                <View style={{ flex: 1, marginLeft: 14 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: NAVY_COLOR }}>Saved Stores Only</Text>
+                  <Text style={{ fontSize: 12, color: '#64748b', lineHeight: 17, marginTop: 3 }}>Alerts only for saved stores.{'\n'}Stops nearby store discovery.</Text>
+                </View>
               </View>
-              <View style={{ flex: 1, marginLeft: 14, paddingRight: 10 }}>
-                <Text style={{ fontSize: 15, fontWeight: '700', color: NAVY_COLOR }}>Saved Stores Only</Text>
-                <Text style={{ fontSize: 12, color: '#64748b', lineHeight: 17, marginTop: 3 }}>Monitor your stores and use less battery.</Text>
+              <View style={{ flexDirection: 'row', backgroundColor: '#e2e8f0', borderRadius: 20, padding: 4 }}>
+                <TouchableOpacity 
+                  onPress={() => setSavedStoresOnly(false)}
+                  style={{ flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: !savedStoresOnly ? 'white' : 'transparent', borderRadius: 16, shadowColor: !savedStoresOnly ? NAVY_COLOR : 'transparent', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 4, elevation: !savedStoresOnly ? 2 : 0 }}
+                >
+                  <Text style={{ fontSize: 14, fontWeight: !savedStoresOnly ? '700' : '500', color: !savedStoresOnly ? NAVY_COLOR : '#64748b' }}>Off</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={() => setSavedStoresOnly(true)}
+                  style={{ flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: savedStoresOnly ? 'white' : 'transparent', borderRadius: 16, shadowColor: savedStoresOnly ? NAVY_COLOR : 'transparent', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 4, elevation: savedStoresOnly ? 2 : 0 }}
+                >
+                  <Text style={{ fontSize: 14, fontWeight: savedStoresOnly ? '700' : '500', color: savedStoresOnly ? NAVY_COLOR : '#64748b' }}>On</Text>
+                </TouchableOpacity>
               </View>
-              <Switch
-                value={savedStoresOnly}
-                onValueChange={setSavedStoresOnly}
-                trackColor={{ true: NAVY_COLOR, false: '#e2e8f0' }}
-              />
-            </View>
 
-            <View style={{ backgroundColor: '#f8fafc', padding: 16, borderRadius: 30, borderCurve: 'continuous', marginTop: 12 }}>
+              {savedStoresOnly && (
+                <Animated.View
+                  entering={FadeIn.duration(200)}
+                  exiting={FadeOut.duration(200)}
+                  style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingHorizontal: 4 }}
+                >
+                  <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', padding: 6, borderRadius: 12 }}>
+                    <Battery size={14} color="#059669" />
+                  </View>
+                  <Text style={{ fontSize: 13, fontWeight: '500', color: '#64748b', marginLeft: 8 }}>
+                    Reduces battery usage
+                  </Text>
+                </Animated.View>
+              )}
+            </Animated.View>
+
+            <Animated.View layout={LinearTransition.springify()} style={{ backgroundColor: '#f8fafc', padding: 16, borderRadius: 30, borderCurve: 'continuous', marginTop: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
                 <View style={{ width: 48, height: 48, borderRadius: 19, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
                   <Ruler size={24} color={NAVY_COLOR} />
@@ -363,18 +389,18 @@ export default function OnboardingScreen() {
                   <Text style={{ fontSize: 14, fontWeight: distanceUnit === 'metric' ? '700' : '500', color: distanceUnit === 'metric' ? NAVY_COLOR : '#64748b' }}>Metric (km, m)</Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </Animated.View>
             </View>
 
-            <View style={{ marginTop: 'auto', backgroundColor: '#f8fafc', padding: 14, borderRadius: 28, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
-              <View style={{ width: 42, height: 42, borderRadius: 17, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
-                <Settings size={22} color={NAVY_COLOR} />
+            <Animated.View layout={LinearTransition.springify()} style={{ marginTop: 'auto', backgroundColor: '#f8fafc', padding: 12, borderRadius: 20, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+              <View style={{ width: 36, height: 36, borderRadius: 14, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
+                <Settings size={18} color={NAVY_COLOR} />
               </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: NAVY_COLOR }}>Always in Control</Text>
-                <Text style={{ fontSize: 12, color: '#64748b', lineHeight: 17, marginTop: 2 }}>You can change these anytime in Settings.</Text>
+              <View style={{ flex: 1, marginLeft: 10 }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: NAVY_COLOR }}>Always in Control</Text>
+                <Text style={{ fontSize: 11, color: '#64748b', lineHeight: 16, marginTop: 2 }}>You can change these anytime in Settings.</Text>
               </View>
-            </View>
+            </Animated.View>
           </View>
         )}
 
