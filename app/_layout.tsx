@@ -60,8 +60,17 @@ export default function RootLayout() {
   }, [savedStoresOnly, _hasHydrated]);
 
   useEffect(() => {
-    // Hide native splash screen so custom launch screen takes over
     if (_hasHydrated) {
+      // Check if we need to show onboarding and redirect immediately
+      // This happens behind the LaunchScreen, preventing any flashes
+      const hasCompletedOnboarding = useSettingsStore.getState().hasCompletedOnboarding;
+      if (true || !hasCompletedOnboarding) {
+        setTimeout(() => {
+          router.replace('/onboarding');
+        }, 0);
+      }
+
+      // Hide native splash screen so custom launch screen takes over
       setTimeout(() => {
         SplashScreen.hideAsync().catch(() => {});
       }, 100);
@@ -141,13 +150,10 @@ export default function RootLayout() {
   const handleLaunchFinish = useCallback(async () => {
     setShowLaunchScreen(false);
 
-    // Check if we should show onboarding FIRST
-    const { hasCompletedOnboarding } = useSettingsStore.getState();
-    // Temporarily forcing onboarding for testing purposes
+    // If onboarding is going to be shown, we just stop here
+    // as we don't need to sync locations/notifications yet.
+    const hasCompletedOnboarding = useSettingsStore.getState().hasCompletedOnboarding;
     if (true || !hasCompletedOnboarding) {
-      setTimeout(() => {
-        router.replace('/onboarding');
-      }, 0);
       return;
     }
 
