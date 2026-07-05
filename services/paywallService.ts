@@ -22,7 +22,10 @@ export const showPaywall = async () => {
       );
       return;
     }
-    await RevenueCatUI.presentPaywallIfNeeded({ requiredEntitlementIdentifier: 'pro' });
+    const paywallResult = await RevenueCatUI.presentPaywallIfNeeded({ requiredEntitlementIdentifier: 'pro' });
+    if (paywallResult === RevenueCatUI.PAYWALL_RESULT.PURCHASED || paywallResult === RevenueCatUI.PAYWALL_RESULT.RESTORED) {
+      router.push('/purchase-success');
+    }
   } catch (error: any) {
     console.warn('Paywall error:', error);
     // If presentation fails (e.g., missing native module), fallback to our Pro screen

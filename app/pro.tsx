@@ -179,8 +179,8 @@ export default function ProScreen() {
           entering={FadeInDown.duration(400).springify()}
           className="items-center mb-6"
         >
-          <Text className="text-3xl font-extrabold text-slate-900">
-            GeoCart <Text className="text-[#D4AF37]">Pro</Text>
+          <Text style={{ fontSize: 40, fontWeight: '700', letterSpacing: -0.8, color: '#0f172a' }}>
+            GeoCart<Text style={{ fontSize: 30, fontWeight: '600', color: '#D4AF37' }}> Pro</Text>
           </Text>
         </Animated.View>
 

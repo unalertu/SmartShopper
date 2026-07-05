@@ -333,6 +333,11 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
 
 TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
   if (error) {
+    // kCLErrorDomain Code=0 is kCLErrorLocationUnknown, common in simulator or brief GPS loss
+    if ((error as any).code === 0 || error.message?.includes("kCLErrorDomain Code=0")) {
+      console.warn("Background Location Warning: Location temporarily unknown (kCLErrorDomain Code=0)");
+      return;
+    }
     console.error("Background Location Error:", error);
     return;
   }

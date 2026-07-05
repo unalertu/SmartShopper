@@ -256,6 +256,13 @@ export default function RootLayout() {
                 fullScreenGestureEnabled: true,
                 headerShown: false}}
             />
+            <Stack.Screen
+              name="purchase-success"
+              options={{
+                animation: "fade",
+                gestureEnabled: false,
+                headerShown: false}}
+            />
           </Stack>
           <StatusBar style="dark" />
         </ThemeProvider>
