@@ -108,12 +108,16 @@ function SettingsRow({
   return content;
 }
 
-function SettingsGroup({ children, title }: { children: React.ReactNode; title?: string }) {
+function SettingsGroup({ children, title }: { children: React.ReactNode; title?: string | React.ReactNode }) {
   return (
     <>
       {title && (
         <Animated.View layout={LinearTransition.springify()} className="mx-8 mb-2">
-          <Text className="text-[13px] font-semibold text-slate-400 tracking-wider">{title}</Text>
+          {typeof title === 'string' ? (
+            <Text className="text-[13px] font-semibold text-slate-400 tracking-wider">{title}</Text>
+          ) : (
+            title
+          )}
         </Animated.View>
       )}
       <Animated.View
@@ -263,7 +267,9 @@ export default function NotificationPreferencesScreen() {
         </SettingsGroup>
 
         {/* Advanced Notification Settings — Pro Only */}
-        <SettingsGroup title="Advanced">
+        <SettingsGroup title={
+          <Text className="text-[16px] font-bold tracking-wider" style={{ color: '#D4AF37' }}>Pro Settings</Text>
+        }>
           <SettingsRow
             icon={<Target size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
             label="Alert Distance"
