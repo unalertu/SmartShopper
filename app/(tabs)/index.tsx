@@ -895,7 +895,7 @@ export default function HomeScreen() {
         <ConfirmationSheet
           visible={deleteModalVisible}
           data={deleteModalData}
-          onDismiss={() => { setDeleteModalVisible(false); setDeleteModalData(null); }}
+          onDismiss={() => setDeleteModalVisible(false)}
         />
     </View>
     </AnimatedScreen>

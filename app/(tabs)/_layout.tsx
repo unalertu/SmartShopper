@@ -291,7 +291,7 @@ export default function TabLayout() {
           </View>
         ),
         sceneStyle: { backgroundColor: '#F2F2F7' },
-        freezeOnBlur: false,
+        freezeOnBlur: true,
         }}
     >
       <Tabs.Screen name="index" options={{ title: "Home" }} />

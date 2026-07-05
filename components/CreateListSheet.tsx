@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, memo } from 'react';
+import React, { useEffect, useRef, useState, useCallback, memo } from 'react';
 import {
   View,
   Text,
@@ -16,12 +16,14 @@ import Animated, {
   withTiming,
   interpolateColor,
   Easing,
+  runOnJS,
+  SlideInDown,
+  SlideOutDown,
   FadeIn,
   FadeOut,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { X } from 'lucide-react-native';
 import { Colors } from '@/constants/theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -45,9 +47,17 @@ function CreateListSheet({
 }: CreateListSheetProps) {
   const insets = useSafeAreaInsets();
   const inputRef = useRef<TextInput>(null);
-  
+
   const [listName, setListName] = useState('');
+  // Internal mounted state — stays true during exit animation
+  const [mounted, setMounted] = useState(false);
   const hasText = listName.trim().length > 0;
+
+  // Keep stable refs for callbacks
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const onCreateListRef = useRef(onCreateList);
+  onCreateListRef.current = onCreateList;
 
   const inputFocusAnim = useSharedValue(0);
   const btnActive = useSharedValue(0);
@@ -61,30 +71,46 @@ function CreateListSheet({
     });
   }, [hasText]);
 
-  // Handle visibility and focus
+  // Handle visibility — mount/unmount with animation support
   useEffect(() => {
     if (visible) {
+      setMounted(true);
       setListName('');
-      // Focus quickly so the keyboard starts appearing while sheet animates
       setTimeout(() => inputRef.current?.focus(), 80);
-    } else {
+    } else if (mounted) {
+      // Keyboard dismiss first, then let exit animation play
       Keyboard.dismiss();
+      // mounted stays true — the exit animation callback will set it false
     }
   }, [visible]);
 
-  const handleCreate = () => {
+  const handleExitComplete = useCallback(() => {
+    // Called after exit animation finishes
+    setMounted(false);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    Keyboard.dismiss();
+    onCloseRef.current();
+  }, []);
+
+  const handleCreate = useCallback(() => {
     const t = listName.trim();
     if (!t) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    onCreateList(t);
-    onClose();
-  };
+    // Close first (starts dismiss animation), then create the list after a frame
+    // so the heavy state update doesn't block the animation
+    onCloseRef.current();
+    requestAnimationFrame(() => {
+      onCreateListRef.current(t);
+    });
+  }, [listName]);
 
   const inputBorder = useAnimatedStyle(() => ({
     borderColor: interpolateColor(
       inputFocusAnim.value,
       [0, 1],
-      ['#e8ecf0', Colors.primary[900]], // Navy focus border
+      ['#e8ecf0', Colors.primary[900]],
     ),
   }));
 
@@ -92,7 +118,7 @@ function CreateListSheet({
     backgroundColor: interpolateColor(
       btnActive.value,
       [0, 1],
-      ['#f1f5f9', '#0f172a'], // Navy button
+      ['#f1f5f9', '#0f172a'],
     ),
     transform: [{ scale: btnScale.value }],
   }));
@@ -105,18 +131,21 @@ function CreateListSheet({
     ),
   }));
 
-  if (!visible) return null;
+  // Don't render anything if never opened or after exit animation completes
+  if (!mounted && !visible) return null;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {/* Backdrop */}
-      <Animated.View 
-        entering={FadeIn.duration(320).easing(Easing.out(Easing.cubic))}
-        exiting={FadeOut.duration(250).easing(Easing.out(Easing.cubic))}
-        style={styles.backdrop}
-      >
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-      </Animated.View>
+      {visible && (
+        <Animated.View
+          entering={FadeIn.duration(280)}
+          exiting={FadeOut.duration(220)}
+          style={styles.backdrop}
+        >
+          <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
+        </Animated.View>
+      )}
 
       {/* Keyboard Avoiding Container */}
       <KeyboardAvoidingView
@@ -124,66 +153,73 @@ function CreateListSheet({
         style={styles.keyboardContainer}
         pointerEvents="box-none"
       >
-        <Animated.View 
-        entering={FadeIn.duration(320).easing(Easing.out(Easing.cubic))}
-        exiting={FadeOut.duration(250).easing(Easing.out(Easing.cubic))}
-          style={[styles.pill, { marginBottom: 8 }]}
-        >
-          <DragHandle />
+        {visible && (
+          <Animated.View
+            entering={SlideInDown.duration(350).easing(Easing.out(Easing.exp))}
+            exiting={SlideOutDown.duration(250).easing(Easing.in(Easing.cubic)).withCallback((finished) => {
+              'worklet';
+              if (finished) {
+                runOnJS(handleExitComplete)();
+              }
+            })}
+            style={[styles.pill, { marginBottom: 8 }]}
+          >
+            <DragHandle />
 
-          {/* Header row */}
-          <View style={styles.header}>
-            <Text style={styles.title}>New List</Text>
-          </View>
+            {/* Header row */}
+            <View style={styles.header}>
+              <Text style={styles.title}>New List</Text>
+            </View>
 
-          {/* Input + Button row */}
-          <View style={styles.actionRow}>
-            <Animated.View style={[styles.inputWrap, inputBorder]}>
-              <TextInput
-                ref={inputRef}
-                value={listName}
-                onChangeText={setListName}
-                placeholder="List name..."
-                placeholderTextColor="#cbd5e1"
-                style={styles.input}
-                returnKeyType="done"
-                onSubmitEditing={handleCreate}
-                autoCorrect={false}
-                maxLength={40}
-                selectionColor={Colors.primary[900]}
-                cursorColor={Colors.primary[900]}
-                onFocus={() => {
-                  inputFocusAnim.value = withTiming(1, { duration: 200 });
+            {/* Input + Button row */}
+            <View style={styles.actionRow}>
+              <Animated.View style={[styles.inputWrap, inputBorder]}>
+                <TextInput
+                  ref={inputRef}
+                  value={listName}
+                  onChangeText={setListName}
+                  placeholder="List name..."
+                  placeholderTextColor="#cbd5e1"
+                  style={styles.input}
+                  returnKeyType="done"
+                  onSubmitEditing={handleCreate}
+                  autoCorrect={false}
+                  maxLength={40}
+                  selectionColor={Colors.primary[900]}
+                  cursorColor={Colors.primary[900]}
+                  onFocus={() => {
+                    inputFocusAnim.value = withTiming(1, { duration: 200 });
+                  }}
+                  onBlur={() => {
+                    inputFocusAnim.value = withTiming(0, { duration: 260 });
+                  }}
+                />
+              </Animated.View>
+
+              <AnimatedPressable
+                onPress={handleCreate}
+                disabled={!hasText}
+                onPressIn={() => {
+                  btnScale.value = withSpring(0.92, {
+                    damping: 14,
+                    stiffness: 280,
+                  });
                 }}
-                onBlur={() => {
-                  inputFocusAnim.value = withTiming(0, { duration: 260 });
+                onPressOut={() => {
+                  btnScale.value = withSpring(1, {
+                    damping: 14,
+                    stiffness: 280,
+                  });
                 }}
-              />
-            </Animated.View>
-
-            <AnimatedPressable
-              onPress={handleCreate}
-              disabled={!hasText}
-              onPressIn={() => {
-                btnScale.value = withSpring(0.92, {
-                  damping: 14,
-                  stiffness: 280,
-                });
-              }}
-              onPressOut={() => {
-                btnScale.value = withSpring(1, {
-                  damping: 14,
-                  stiffness: 280,
-                });
-              }}
-              style={[styles.createBtn, btnBg]}
-            >
-              <Animated.Text style={[styles.createBtnLabel, btnTextStyle]}>
-                Create
-              </Animated.Text>
-            </AnimatedPressable>
-          </View>
-        </Animated.View>
+                style={[styles.createBtn, btnBg]}
+              >
+                <Animated.Text style={[styles.createBtnLabel, btnTextStyle]}>
+                  Create
+                </Animated.Text>
+              </AnimatedPressable>
+            </View>
+          </Animated.View>
+        )}
       </KeyboardAvoidingView>
     </View>
   );

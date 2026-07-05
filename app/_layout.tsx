@@ -12,7 +12,7 @@ import { enableFreeze } from "react-native-screens";
 import Purchases from 'react-native-purchases';
 import { Platform, AppState } from 'react-native';
 
-enableFreeze(false);
+enableFreeze(true);
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { setupNotifications } from "@/services/notificationService";

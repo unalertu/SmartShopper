@@ -32,7 +32,7 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
   const actionTakenRef = useRef<'confirm' | 'cancel' | null>(null);
   const isSheetOpenRef = useRef(false);
 
-  // Keep stable refs for callbacks to avoid re-creating handlers on every render
+  // Keep stable refs for callbacks so handlers never go stale
   const dataRef = useRef(data);
   dataRef.current = data;
   const onDismissRef = useRef(onDismiss);
@@ -41,17 +41,14 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
   useEffect(() => {
     if (visible && data) {
       actionTakenRef.current = null;
-      // Use requestAnimationFrame to avoid presenting during a layout pass
-      requestAnimationFrame(() => {
-        isSheetOpenRef.current = true;
-        bottomSheetRef.current?.present();
-      });
+      isSheetOpenRef.current = true;
+      bottomSheetRef.current?.present();
     } else if (!visible && isSheetOpenRef.current) {
       bottomSheetRef.current?.dismiss();
     }
   }, [visible, data]);
 
-  // This is the ONLY place where state cleanup happens — after the dismiss animation completes
+  // Called by BottomSheetModal AFTER dismiss animation completes
   const handleDismiss = useCallback(() => {
     isSheetOpenRef.current = false;
     const action = actionTakenRef.current;
@@ -59,13 +56,11 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
     if (action === 'confirm') {
       dataRef.current?.onConfirm?.();
     } else {
-      // cancel or swipe-down
       dataRef.current?.onCancel?.();
     }
 
-    // Reset for next use
     actionTakenRef.current = null;
-    // Notify parent to set visible=false — this happens AFTER animation is done
+    // Notify parent AFTER animation is done
     onDismissRef.current();
   }, []);
 
@@ -73,7 +68,6 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
     if (!isSheetOpenRef.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     actionTakenRef.current = 'cancel';
-    // Only dismiss the modal — the handleDismiss callback will do the rest
     bottomSheetRef.current?.dismiss();
   }, []);
 
@@ -81,7 +75,6 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
     if (!isSheetOpenRef.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     actionTakenRef.current = 'confirm';
-    // Only dismiss the modal — the handleDismiss callback will do the rest
     bottomSheetRef.current?.dismiss();
   }, []);
 
@@ -104,7 +97,7 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
 
   const modalName = useMemo(() => `confirmation-sheet-${Math.random().toString(36).substr(2, 9)}`, []);
 
-  const snapPoints = useMemo(() => [260], []);
+  const snapPoints = useMemo(() => [210], []);
 
   const animationConfigs = useMemo(
     () => ({
@@ -118,9 +111,6 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
     }),
     []
   );
-
-  // Don't mount the modal at all when there's no data — prevents ghost instances
-  if (!data) return null;
 
   return (
     <BottomSheetModal

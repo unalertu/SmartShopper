@@ -798,7 +798,7 @@ export default function ListDetails() {
       <ConfirmationSheet
         visible={deleteModalVisible}
         data={deleteModalData}
-        onDismiss={() => { setDeleteModalVisible(false); setDeleteModalData(null); }}
+        onDismiss={() => setDeleteModalVisible(false)}
       />
 
       <RenameListSheet
