@@ -16,37 +16,64 @@ export interface ConfirmationSheetData {
   onCancel?: () => void;
 }
 
-interface ConfirmationSheetProps {
-  visible: boolean;
-  data: ConfirmationSheetData | null;
-  onDismiss: () => void;
+export interface ConfirmationSheetRef {
+  present: (data?: ConfirmationSheetData) => void;
+  dismiss: () => void;
 }
 
-const ConfirmationSheet = memo(function ConfirmationSheet({
-  visible,
-  data,
+interface ConfirmationSheetProps {
+  visible?: boolean;
+  data?: ConfirmationSheetData | null;
+  onDismiss?: () => void;
+}
+
+const ConfirmationSheet = memo(React.forwardRef<ConfirmationSheetRef, ConfirmationSheetProps>(function ConfirmationSheet({
+  visible = false,
+  data: propData = null,
   onDismiss,
-}: ConfirmationSheetProps) {
+}, ref) {
   const insets = useSafeAreaInsets();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const actionTakenRef = useRef<'confirm' | 'cancel' | null>(null);
   const isSheetOpenRef = useRef(false);
 
+  const [internalData, setInternalData] = React.useState<ConfirmationSheetData | null>(propData);
+
   // Keep stable refs for callbacks so handlers never go stale
-  const dataRef = useRef(data);
-  dataRef.current = data;
+  const dataRef = useRef(internalData);
+  dataRef.current = internalData;
   const onDismissRef = useRef(onDismiss);
   onDismissRef.current = onDismiss;
 
+  React.useImperativeHandle(ref, () => ({
+    present: (data?: ConfirmationSheetData) => {
+      if (data) {
+        setInternalData(data);
+      }
+      actionTakenRef.current = null;
+      isSheetOpenRef.current = true;
+      bottomSheetRef.current?.present();
+    },
+    dismiss: () => {
+      bottomSheetRef.current?.dismiss();
+    }
+  }));
+
   useEffect(() => {
-    if (visible && data) {
+    if (propData !== undefined) {
+      setInternalData(propData);
+    }
+  }, [propData]);
+
+  useEffect(() => {
+    if (visible && internalData) {
       actionTakenRef.current = null;
       isSheetOpenRef.current = true;
       bottomSheetRef.current?.present();
     } else if (!visible && isSheetOpenRef.current) {
       bottomSheetRef.current?.dismiss();
     }
-  }, [visible, data]);
+  }, [visible, internalData]);
 
   // Called by BottomSheetModal AFTER dismiss animation completes
   const handleDismiss = useCallback(() => {
@@ -91,9 +118,9 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
     []
   );
 
-  const actionLabel = data?.confirmLabel || (data?.isEnabling ? 'Enable' : 'Disable');
-  const title = data?.title || (data ? `${actionLabel} ${data.settingName}?` : '');
-  const description = data?.description ?? '';
+  const actionLabel = internalData?.confirmLabel || (internalData?.isEnabling ? 'Enable' : 'Disable');
+  const title = internalData?.title || (internalData ? `${actionLabel} ${internalData.settingName}?` : '');
+  const description = internalData?.description ?? '';
 
   const modalName = useMemo(() => `confirmation-sheet-${Math.random().toString(36).substr(2, 9)}`, []);
 
@@ -143,7 +170,7 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
             style={[
               styles.button,
               styles.confirmButton,
-              data?.isDestructive && styles.destructiveButton,
+              internalData?.isDestructive && styles.destructiveButton,
             ]}
             onPress={confirm}
             activeOpacity={0.7}
@@ -154,7 +181,7 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
       </BottomSheetView>
     </BottomSheetModal>
   );
-});
+}));
 
 export default ConfirmationSheet;
 

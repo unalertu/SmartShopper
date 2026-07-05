@@ -9,7 +9,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { hapticImpact, hapticNotification, hapticSelection } from '../../services/haptics';
 import { useListsStore, useShoppingListStore, useSettingsStore } from '../../store';
-import ConfirmationSheet from '../../components/ConfirmationSheet';
+import ConfirmationSheet, { ConfirmationSheetRef } from '../../components/ConfirmationSheet';
 import RenameListSheet from '../../components/RenameListSheet';
 import { Colors } from '@/constants/theme';
 import { BottomSheetModal, BottomSheetView, BottomSheetBackdrop, BottomSheetTextInput, BottomSheetScrollView } from '@gorhom/bottom-sheet';
@@ -30,8 +30,7 @@ export default function ListDetails() {
   const [selectedUnit, setSelectedUnit] = useState('pcs');
   const [note, setNote] = useState('');
   const [isNoteVisible, setIsNoteVisible] = useState(false);
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [deleteModalData, setDeleteModalData] = useState<any>(null);
+  const deleteSheetRef = useRef<ConfirmationSheetRef>(null);
   const [activeSuggestionTab, setActiveSuggestionTab] = useState<'recent' | 'catalog'>('recent');
   const [renameSheetVisible, setRenameSheetVisible] = useState(false);
 
@@ -312,7 +311,8 @@ export default function ListDetails() {
   };
 
   const handleDeleteList = () => {
-    setDeleteModalData({
+    Keyboard.dismiss();
+    deleteSheetRef.current?.present({
       title: "Delete List?",
       description: "This action cannot be undone. All items in this list will be permanently removed.",
       isDestructive: true,
@@ -322,7 +322,6 @@ export default function ListDetails() {
         router.back();
       }
     });
-    setDeleteModalVisible(true);
   };
 
   const renderBackdrop = useCallback(
@@ -795,11 +794,7 @@ export default function ListDetails() {
         </BottomSheetView>
       </BottomSheetModal>
 
-      <ConfirmationSheet
-        visible={deleteModalVisible}
-        data={deleteModalData}
-        onDismiss={() => setDeleteModalVisible(false)}
-      />
+      <ConfirmationSheet ref={deleteSheetRef} />
 
       <RenameListSheet
         visible={renameSheetVisible}

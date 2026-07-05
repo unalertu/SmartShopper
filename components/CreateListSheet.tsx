@@ -1,27 +1,7 @@
-import React, { useEffect, useRef, useState, useCallback, memo } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  Keyboard,
-  Platform,
-  StyleSheet,
-  KeyboardAvoidingView,
-} from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  interpolateColor,
-  Easing,
-  runOnJS,
-  SlideInDown,
-  SlideOutDown,
-  FadeIn,
-  FadeOut,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef, useState, useCallback, memo, useMemo } from 'react';
+import { View, Text, StyleSheet, Pressable, Keyboard, Platform } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolateColor, Easing, withSpring, ReduceMotion } from 'react-native-reanimated';
+import { BottomSheetModal, BottomSheetView, BottomSheetTextInput, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Colors } from '@/constants/theme';
@@ -34,23 +14,13 @@ interface CreateListSheetProps {
   onCreateList: (name: string) => void;
 }
 
-const DragHandle = memo(() => (
-  <View style={styles.handleRow}>
-    <View style={styles.handle} />
-  </View>
-));
-
-function CreateListSheet({
-  visible,
-  onClose,
-  onCreateList,
-}: CreateListSheetProps) {
+const CreateListSheet = memo(({ visible, onClose, onCreateList }: CreateListSheetProps) => {
   const insets = useSafeAreaInsets();
-  const inputRef = useRef<TextInput>(null);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const inputRef = useRef<any>(null);
+  const isSheetOpenRef = useRef(false);
 
   const [listName, setListName] = useState('');
-  // Internal mounted state — stays true during exit animation
-  const [mounted, setMounted] = useState(false);
   const hasText = listName.trim().length > 0;
 
   // Keep stable refs for callbacks
@@ -63,7 +33,6 @@ function CreateListSheet({
   const btnActive = useSharedValue(0);
   const btnScale = useSharedValue(1);
 
-  // Animate button color when text changes
   useEffect(() => {
     btnActive.value = withTiming(hasText ? 1 : 0, {
       duration: 180,
@@ -71,25 +40,21 @@ function CreateListSheet({
     });
   }, [hasText]);
 
-  // Handle visibility — mount/unmount with animation support
   useEffect(() => {
     if (visible) {
-      setMounted(true);
       setListName('');
-      setTimeout(() => inputRef.current?.focus(), 80);
-    } else if (mounted) {
-      // Keyboard dismiss first, then let exit animation play
+      isSheetOpenRef.current = true;
+      bottomSheetRef.current?.present();
+      // Auto-focus after a short delay to allow the sheet to open
+      setTimeout(() => inputRef.current?.focus(), 250);
+    } else if (isSheetOpenRef.current) {
       Keyboard.dismiss();
-      // mounted stays true — the exit animation callback will set it false
+      bottomSheetRef.current?.dismiss();
     }
   }, [visible]);
 
-  const handleExitComplete = useCallback(() => {
-    // Called after exit animation finishes
-    setMounted(false);
-  }, []);
-
-  const handleClose = useCallback(() => {
+  const handleDismiss = useCallback(() => {
+    isSheetOpenRef.current = false;
     Keyboard.dismiss();
     onCloseRef.current();
   }, []);
@@ -98,8 +63,7 @@ function CreateListSheet({
     const t = listName.trim();
     if (!t) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    // Close first (starts dismiss animation), then create the list after a frame
-    // so the heavy state update doesn't block the animation
+    Keyboard.dismiss();
     onCloseRef.current();
     requestAnimationFrame(() => {
       onCreateListRef.current(t);
@@ -131,149 +95,143 @@ function CreateListSheet({
     ),
   }));
 
-  // Don't render anything if never opened or after exit animation completes
-  if (!mounted && !visible) return null;
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.35}
+        pressBehavior="close"
+      />
+    ),
+    []
+  );
+
+  const snapPoints = useMemo(() => [250], []);
+
+  const animationConfigs = useMemo(
+    () => ({
+      damping: 32,
+      stiffness: 180,
+      mass: 0.8,
+      overshootClamping: true,
+      restDisplacementThreshold: 0.5,
+      restSpeedThreshold: 0.5,
+      reduceMotion: ReduceMotion.System,
+    }),
+    []
+  );
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-      {/* Backdrop */}
-      {visible && (
-        <Animated.View
-          entering={FadeIn.duration(280)}
-          exiting={FadeOut.duration(220)}
-          style={styles.backdrop}
-        >
-          <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
-        </Animated.View>
-      )}
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      enableDynamicSizing={true}
+      detached={true}
+      bottomInset={Platform.OS === 'ios' ? 24 : 8}
+      style={{ marginHorizontal: 14 }}
+      enablePanDownToClose
+      animateOnMount
+      animationConfigs={animationConfigs}
+      backdropComponent={renderBackdrop}
+      onDismiss={handleDismiss}
+      handleComponent={null}
+      backgroundStyle={{ backgroundColor: 'transparent', elevation: 0 }}
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+    >
+      <BottomSheetView style={{ paddingBottom: 16, backgroundColor: 'transparent' }}>
+        <View style={[styles.sheet, styles.content, { paddingBottom: 24 }]}>
+          <View style={{ alignItems: 'center', width: '100%' }}>
+            <View style={styles.handle} />
+          </View>
+          
+          {/* Header row */}
+          <View style={styles.header}>
+          <Text style={styles.title}>New List</Text>
+        </View>
 
-      {/* Keyboard Avoiding Container */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardContainer}
-        pointerEvents="box-none"
-      >
-        {visible && (
-          <Animated.View
-            entering={SlideInDown.duration(350).easing(Easing.out(Easing.exp))}
-            exiting={SlideOutDown.duration(250).easing(Easing.in(Easing.cubic)).withCallback((finished) => {
-              'worklet';
-              if (finished) {
-                runOnJS(handleExitComplete)();
-              }
-            })}
-            style={[styles.pill, { marginBottom: 8 }]}
-          >
-            <DragHandle />
-
-            {/* Header row */}
-            <View style={styles.header}>
-              <Text style={styles.title}>New List</Text>
-            </View>
-
-            {/* Input + Button row */}
-            <View style={styles.actionRow}>
-              <Animated.View style={[styles.inputWrap, inputBorder]}>
-                <TextInput
-                  ref={inputRef}
-                  value={listName}
-                  onChangeText={setListName}
-                  placeholder="List name..."
-                  placeholderTextColor="#cbd5e1"
-                  style={styles.input}
-                  returnKeyType="done"
-                  onSubmitEditing={handleCreate}
-                  autoCorrect={false}
-                  maxLength={40}
-                  selectionColor={Colors.primary[900]}
-                  cursorColor={Colors.primary[900]}
-                  onFocus={() => {
-                    inputFocusAnim.value = withTiming(1, { duration: 200 });
-                  }}
-                  onBlur={() => {
-                    inputFocusAnim.value = withTiming(0, { duration: 260 });
-                  }}
-                />
-              </Animated.View>
-
-              <AnimatedPressable
-                onPress={handleCreate}
-                disabled={!hasText}
-                onPressIn={() => {
-                  btnScale.value = withSpring(0.92, {
-                    damping: 14,
-                    stiffness: 280,
-                  });
-                }}
-                onPressOut={() => {
-                  btnScale.value = withSpring(1, {
-                    damping: 14,
-                    stiffness: 280,
-                  });
-                }}
-                style={[styles.createBtn, btnBg]}
-              >
-                <Animated.Text style={[styles.createBtnLabel, btnTextStyle]}>
-                  Create
-                </Animated.Text>
-              </AnimatedPressable>
-            </View>
+        {/* Input + Button row */}
+        <View style={styles.actionRow}>
+          <Animated.View style={[styles.inputWrap, inputBorder]}>
+            <BottomSheetTextInput
+              ref={inputRef}
+              value={listName}
+              onChangeText={setListName}
+              placeholder="List name..."
+              placeholderTextColor="#cbd5e1"
+              style={styles.input}
+              returnKeyType="done"
+              onSubmitEditing={handleCreate}
+              autoCorrect={false}
+              maxLength={40}
+              selectionColor={Colors.primary[900]}
+              onFocus={() => {
+                inputFocusAnim.value = withTiming(1, { duration: 200 });
+              }}
+              onBlur={() => {
+                inputFocusAnim.value = withTiming(0, { duration: 260 });
+              }}
+            />
           </Animated.View>
-        )}
-      </KeyboardAvoidingView>
-    </View>
+
+          <AnimatedPressable
+            onPress={handleCreate}
+            disabled={!hasText}
+            onPressIn={() => {
+              btnScale.value = withSpring(0.92, {
+                damping: 14,
+                stiffness: 280,
+              });
+            }}
+            onPressOut={() => {
+              btnScale.value = withSpring(1, {
+                damping: 14,
+                stiffness: 280,
+              });
+            }}
+            style={[styles.createBtn, btnBg]}
+          >
+            <Animated.Text style={[styles.createBtnLabel, btnTextStyle]}>
+              Create
+            </Animated.Text>
+          </AnimatedPressable>
+        </View>
+        </View>
+      </BottomSheetView>
+    </BottomSheetModal>
   );
-}
+});
 
-export default memo(CreateListSheet);
+export default CreateListSheet;
 
-// ── Styles ──
 const styles = StyleSheet.create({
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-    zIndex: 1,
-  },
-  keyboardContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    zIndex: 2,
-  },
-  // ── Floating pill card ──
-  pill: {
-    marginHorizontal: 14,
+  sheet: {
     backgroundColor: '#ffffff',
     borderRadius: 26,
-    paddingHorizontal: 20, // Increased padding
-    paddingBottom: 28,     // Increased padding
-    // Subtle shadow for depth
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -5 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 14,
-  },
-
-  // Handle
-  handleRow: {
-    alignItems: 'center',
-    paddingTop: 10,
-    paddingBottom: 4,
+    shadowRadius: 16,
+    elevation: 10,
   },
   handle: {
     width: 36,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: '#dfe4ea',
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#e2e8f0',
+    marginTop: 10,
   },
-
-  // Header
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 18,
     paddingBottom: 19,
+    paddingTop: 12,
   },
   title: {
     fontSize: 19,
@@ -281,17 +239,6 @@ const styles = StyleSheet.create({
     color: '#0f172a',
     letterSpacing: -0.2,
   },
-  closeBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ translateY: -2 }],
-  },
-
-  // Input + Button in one row
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -299,7 +246,7 @@ const styles = StyleSheet.create({
   },
   inputWrap: {
     flex: 1,
-    borderWidth: 1, // Reduced to 1px for a cleaner, Apple-like look
+    borderWidth: 1,
     borderRadius: 25,
     backgroundColor: '#f8fafc',
     height: 54,
@@ -314,10 +261,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#0f172a',
     letterSpacing: -0.1,
-    textAlignVertical: 'center',
   },
-
-  // Create button
   createBtn: {
     borderRadius: 25,
     height: 54,
@@ -325,7 +269,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  createBtnShadow: {},
   createBtnLabel: {
     fontSize: 15,
     fontWeight: '700',
