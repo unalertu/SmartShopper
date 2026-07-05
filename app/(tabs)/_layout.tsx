@@ -275,23 +275,24 @@ const styles = StyleSheet.create({
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
 
+  const renderTabBar = useCallback((props: BottomTabBarProps) => (
+    <CustomTabBar {...props} insets={insets} />
+  ), [insets]);
+
+  const renderHeader = useCallback(() => (
+    <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 85, zIndex: 100 }}>
+      <GradientBlurBackground />
+    </View>
+  ), []);
+
   return (
     <Tabs
-      tabBar={(props) => (
-        <CustomTabBar
-          {...props}
-          insets={insets}
-        />
-      )}
+      tabBar={renderTabBar}
       screenOptions={{
         headerTransparent: true,
-        header: () => (
-          <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 85, zIndex: 100 }}>
-            <GradientBlurBackground />
-          </View>
-        ),
+        header: renderHeader,
         sceneStyle: { backgroundColor: '#F2F2F7' },
-        freezeOnBlur: true,
+        freezeOnBlur: false,
         }}
     >
       <Tabs.Screen name="index" options={{ title: "Home" }} />

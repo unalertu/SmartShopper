@@ -1,4 +1,5 @@
 import React, { useEffect, useCallback, useRef, useState } from 'react';
+import { getEntering } from '@/utils/animationState';
 import {
   View,
   Text,
@@ -125,7 +126,7 @@ function SettingsGroup({
 }) {
   return (
     <Animated.View
-      entering={FadeInDown.duration(400).delay(delay).springify()}
+      entering={getEntering('settings_1', FadeInDown.duration(200).delay(delay).springify())}
       layout={LinearTransition.springify()}
       className="mb-6 mx-6"
     >
@@ -463,7 +464,7 @@ export default function SettingsScreen() {
         >
           {/* Header */}
           <Animated.View
-            entering={FadeInDown.duration(400).springify()}
+            entering={getEntering('settings_2', FadeInDown.duration(200).springify())}
             layout={LinearTransition.springify()}
             className="flex-row items-center mx-6 mb-6"
           >
@@ -474,7 +475,7 @@ export default function SettingsScreen() {
 
           {/* GeoCart Pro Card */}
           <Animated.View
-            entering={FadeInDown.duration(400).delay(25).springify()}
+            entering={getEntering('settings_3', FadeInDown.duration(200).delay(25).springify())}
             layout={LinearTransition.springify()}
             className="mx-6 mb-6"
           >
@@ -699,7 +700,7 @@ export default function SettingsScreen() {
 
           {/* Footer */}
           <Animated.View
-            entering={FadeInDown.duration(400).delay(500).springify()}
+            entering={getEntering('settings_4', FadeInDown.duration(200).delay(250).springify())}
             layout={LinearTransition.springify()}
             className="items-center mb-4"
           >

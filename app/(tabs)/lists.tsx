@@ -1,4 +1,5 @@
 import React, { useRef, useState, useCallback } from 'react';
+import { getEntering } from '@/utils/animationState';
 import { View, Text, ScrollView, TouchableOpacity, Alert, Pressable } from 'react-native';
 
 import { FREE_TIER, getMaxLists } from '@/constants/tierConfig';
@@ -237,7 +238,7 @@ export default function ListsScreen() {
         >
           {/* Header */}
           <Animated.View
-            entering={FadeInDown.duration(200).springify()}
+            entering={getEntering('lists_1', FadeInDown.duration(200).springify())}
             layout={LinearTransition.springify()}
             className="flex-row items-center justify-between mx-6 mb-6"
             style={{ zIndex: 10 }}
@@ -263,7 +264,7 @@ export default function ListsScreen() {
 
           {/* Quick Start Section */}
           <Animated.View layout={LinearTransition.springify()} className={`${shoppingLists.length === 0 ? 'mb-2' : 'mb-6'}`}>
-            <Animated.View entering={FadeInDown.duration(200).delay(50).springify()} className="flex-row items-center justify-between mb-3 px-6">
+            <Animated.View entering={getEntering('lists_2', FadeInDown.duration(200).delay(25).springify())} className="flex-row items-center justify-between mb-3 px-6">
               <View className="flex-row items-center gap-1.5">
                 <Text className="text-[16px] font-bold text-slate-500 tracking-wide">Quick Start</Text>
               </View>
@@ -281,7 +282,7 @@ export default function ListsScreen() {
                     key={rowIndex} 
                     className="flex-row" 
                     style={{ gap: 8 }}
-                    entering={FadeInDown.duration(200).delay(75 + rowIndex * 25).springify()}
+                    entering={getEntering('lists_3', FadeInDown.duration(200).delay(75 + rowIndex * 25).springify())}
                     layout={LinearTransition.springify()}
                   >
                     {row.map((template) => (
@@ -326,7 +327,7 @@ export default function ListsScreen() {
 
           {shoppingLists.length === 0 && (
             <Animated.View 
-              entering={FadeInDown.duration(200).delay(125).springify()}
+              entering={getEntering('lists_4', FadeInDown.duration(200).delay(62).springify())}
               layout={LinearTransition.springify()} 
               exiting={FadeOutUp.duration(200)}
               className="mt-12 flex-1"
@@ -345,7 +346,7 @@ export default function ListsScreen() {
           )}
 
           {shoppingLists.length > 0 && (
-            <Animated.View entering={FadeInDown.duration(200).delay(125).springify()} layout={LinearTransition.springify()} className="h-[3px] bg-slate-200 mx-16 mb-5 rounded-full" />
+            <Animated.View entering={getEntering('lists_5', FadeInDown.duration(200).delay(62).springify())} layout={LinearTransition.springify()} className="h-[3px] bg-slate-200 mx-16 mb-5 rounded-full" />
           )}
 
           <Animated.View layout={LinearTransition.springify()}>
@@ -353,7 +354,7 @@ export default function ListsScreen() {
               <Animated.View
                 key={list.id}
                 layout={LinearTransition.springify()}
-                entering={FadeInDown.duration(200).delay(150 + index * 25).springify()}
+                entering={getEntering('lists_6', FadeInDown.duration(200).delay(75 + index * 25).springify())}
                 exiting={FadeOutLeft.duration(200)}
               >
                   <Swipeable
@@ -403,7 +404,7 @@ export default function ListsScreen() {
           </Animated.View>
 
           {shoppingLists.length > 0 && (
-            <Animated.View entering={FadeInDown.duration(200).delay(175 + shoppingLists.length * 25).springify()} layout={LinearTransition.springify()} style={{ alignItems: 'center', marginTop: 8, marginBottom: 4 }}>
+            <Animated.View entering={getEntering('lists_7', FadeInDown.duration(200).delay(175 + shoppingLists.length * 25).springify())} layout={LinearTransition.springify()} style={{ alignItems: 'center', marginTop: 8, marginBottom: 4 }}>
               <Text style={{ fontSize: 14, fontWeight: '500', color: '#94a3b8', letterSpacing: -0.1 }}>
                 {shoppingLists.length} saved list{shoppingLists.length !== 1 ? 's' : ''}
               </Text>

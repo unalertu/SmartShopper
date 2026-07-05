@@ -336,13 +336,19 @@ export default function OnboardingScreen() {
               </View>
               <View style={{ flexDirection: 'row', backgroundColor: '#e2e8f0', borderRadius: 20, padding: 4 }}>
                 <TouchableOpacity 
-                  onPress={() => setSavedStoresOnly(false)}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setSavedStoresOnly(false);
+                  }}
                   style={{ flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: !savedStoresOnly ? 'white' : 'transparent', borderRadius: 16, shadowColor: !savedStoresOnly ? NAVY_COLOR : 'transparent', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 4, elevation: !savedStoresOnly ? 2 : 0 }}
                 >
                   <Text style={{ fontSize: 14, fontWeight: !savedStoresOnly ? '700' : '500', color: !savedStoresOnly ? NAVY_COLOR : '#64748b' }}>Off</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
-                  onPress={() => setSavedStoresOnly(true)}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setSavedStoresOnly(true);
+                  }}
                   style={{ flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: savedStoresOnly ? 'white' : 'transparent', borderRadius: 16, shadowColor: savedStoresOnly ? NAVY_COLOR : 'transparent', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 4, elevation: savedStoresOnly ? 2 : 0 }}
                 >
                   <Text style={{ fontSize: 14, fontWeight: savedStoresOnly ? '700' : '500', color: savedStoresOnly ? NAVY_COLOR : '#64748b' }}>On</Text>
@@ -377,13 +383,19 @@ export default function OnboardingScreen() {
               </View>
               <View style={{ flexDirection: 'row', backgroundColor: '#e2e8f0', borderRadius: 20, padding: 4 }}>
                 <TouchableOpacity 
-                  onPress={() => setDistanceUnit('imperial')}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setDistanceUnit('imperial');
+                  }}
                   style={{ flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: distanceUnit === 'imperial' ? 'white' : 'transparent', borderRadius: 16, shadowColor: distanceUnit === 'imperial' ? NAVY_COLOR : 'transparent', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 4, elevation: distanceUnit === 'imperial' ? 2 : 0 }}
                 >
                   <Text style={{ fontSize: 14, fontWeight: distanceUnit === 'imperial' ? '700' : '500', color: distanceUnit === 'imperial' ? NAVY_COLOR : '#64748b' }}>Imperial (mi, ft)</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
-                  onPress={() => setDistanceUnit('metric')}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setDistanceUnit('metric');
+                  }}
                   style={{ flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: distanceUnit === 'metric' ? 'white' : 'transparent', borderRadius: 16, shadowColor: distanceUnit === 'metric' ? NAVY_COLOR : 'transparent', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 4, elevation: distanceUnit === 'metric' ? 2 : 0 }}
                 >
                   <Text style={{ fontSize: 14, fontWeight: distanceUnit === 'metric' ? '700' : '500', color: distanceUnit === 'metric' ? NAVY_COLOR : '#64748b' }}>Metric (km, m)</Text>

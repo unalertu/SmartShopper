@@ -1047,7 +1047,6 @@ export default function StoresScreen() {
             {selectedShopToSave && !selectedShopToSave.isSaved && (
               <>
                 <Animated.View
-                  entering={FadeInDown.duration(300).springify()}
                   exiting={FadeOutUp.duration(200)}
                   layout={LinearTransition.springify()}
                   style={{ marginBottom: 14 }}
@@ -1075,7 +1074,6 @@ export default function StoresScreen() {
                   </View>
                 </Animated.View>
                 <Animated.View
-                  entering={FadeInDown.duration(300).springify().delay(50)}
                   exiting={FadeOutUp.duration(200)}
                   style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}
                 >
@@ -1135,7 +1133,6 @@ export default function StoresScreen() {
               return (
               <>
               <Animated.View
-                entering={FadeInDown.duration(300).springify()}
                 exiting={FadeOutUp.duration(200)}
                 layout={LinearTransition.springify()}
                 style={{ marginBottom: 14 }}
@@ -1253,7 +1250,6 @@ export default function StoresScreen() {
                 </Swipeable>
               </Animated.View>
               <Animated.View
-                entering={FadeInDown.duration(300).springify().delay(50)}
                 exiting={FadeOutUp.duration(200)}
                 style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}
               >
@@ -1288,8 +1284,7 @@ export default function StoresScreen() {
               );
             })()}
 
-            <Animated.View 
-              entering={FadeInDown.duration(400).springify()}
+            <Animated.View
               layout={LinearTransition.springify()} 
               style={{ marginTop: 0, marginBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
             >
@@ -1301,8 +1296,7 @@ export default function StoresScreen() {
           </Animated.View>
           {/* Empty state */}
           {activeSavedShops.length === 0 && (
-            <Animated.View 
-              entering={FadeInDown.duration(400).delay(100).springify()}
+            <Animated.View
               style={styles.emptyState}
             >
               <View style={styles.emptyIcon}>
@@ -1329,7 +1323,6 @@ export default function StoresScreen() {
               return (
               <Animated.View
                 key={uniqueKey}
-                entering={FadeInDown.duration(400).delay(index * 60).springify()}
                 layout={LinearTransition.springify()}
                 exiting={FadeOutLeft.duration(200)}
               >
@@ -1485,8 +1478,7 @@ export default function StoresScreen() {
                 {activeSavedShops.map((loc, index) => renderShopCard(loc, index, 'active'))}
 
                 {allMutedShops.length > 0 && (
-                  <Animated.View 
-                    entering={FadeInDown.duration(400).springify()}
+                  <Animated.View
                     layout={LinearTransition.springify()} 
                     style={{ marginTop: 24, marginBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
                   >

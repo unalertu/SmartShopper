@@ -30,7 +30,7 @@ export default function LaunchScreen({ onFinish }: LaunchScreenProps) {
     // 2. Whole screen fades out after a short hold (e.g. 1200ms instead of 800ms)
     screenOpacity.value = withDelay(
       1200,
-      withTiming(0, { duration: 300, easing: Easing.in(Easing.cubic) }, () => {
+      withTiming(0, { duration: 400, easing: Easing.out(Easing.ease) }, () => {
         runOnJS(onFinish)();
       })
     );
@@ -48,7 +48,7 @@ export default function LaunchScreen({ onFinish }: LaunchScreenProps) {
     opacity: screenOpacity.value}));
 
   return (
-    <Animated.View style={[styles.container, screenAnimatedStyle]}>
+    <Animated.View style={[styles.container, screenAnimatedStyle]} pointerEvents="none">
       <View style={styles.content}>
         {/* Logo */}
         <Animated.View style={[styles.logoContainer, logoAnimatedStyle]}>

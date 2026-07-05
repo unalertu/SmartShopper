@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { getEntering } from '@/utils/animationState';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { History, Clock, ListPlus, Trash2, Sparkles, ShoppingBag, Pencil } from 'lucide-react-native';
@@ -85,7 +86,7 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
   if (group.isListLevel) {
     return (
       <Animated.View
-        entering={FadeInDown.duration(200).delay(baseDelay + index * 25).springify()}
+        entering={getEntering('activity_1', FadeInDown.duration(200).delay(baseDelay + index * 25).springify())}
       >
         <TouchableOpacity
           activeOpacity={canNavigate ? 0.7 : 1}
@@ -164,7 +165,7 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
   // Shopping session card — neutral icon
   return (
     <Animated.View
-      entering={FadeInDown.duration(200).delay(baseDelay + index * 25).springify()}
+      entering={getEntering('activity_2', FadeInDown.duration(200).delay(baseDelay + index * 25).springify())}
     >
       <TouchableOpacity
         activeOpacity={canNavigate ? 0.7 : 1}
@@ -281,14 +282,14 @@ export default function ActivityTimeline() {
   if (visibleGroups.length === 0) {
     return (
       <Animated.View layout={LinearTransition.springify()} style={{ paddingHorizontal: 24, marginTop: 24, marginBottom: 8 }}>
-        <Animated.View entering={FadeInDown.duration(200).delay(200).springify()} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+        <Animated.View entering={getEntering('activity_3', FadeInDown.duration(200).delay(100).springify())} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Text style={{ fontSize: 16, fontWeight: '700', color: '#64748b', letterSpacing: 0.3 }}>Recent Activity</Text>
           </View>
         </Animated.View>
 
         <Animated.View
-          entering={FadeInDown.duration(200).delay(225).springify()}
+          entering={getEntering('activity_4', FadeInDown.duration(200).delay(112).springify())}
           style={{
             backgroundColor: '#ffffff',
             borderRadius: 20,
@@ -310,7 +311,7 @@ export default function ActivityTimeline() {
   return (
     <Animated.View layout={LinearTransition.springify()} style={{ paddingHorizontal: 24, marginTop: 24, marginBottom: 8 }}>
       {/* Section header */}
-      <Animated.View entering={FadeInDown.duration(200).delay(200).springify()} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+      <Animated.View entering={getEntering('activity_5', FadeInDown.duration(200).delay(100).springify())} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: '#64748b', letterSpacing: 0.3 }}>Recent Activity</Text>
         </View>
@@ -324,7 +325,7 @@ export default function ActivityTimeline() {
           return (
             <View key={dateGroup.title} style={{ gap: 8 }}>
               {/* Date header */}
-              <Animated.View entering={FadeInDown.duration(200).delay(225 + (previousGroupsCount + dateIndex) * 25).springify()}>
+              <Animated.View entering={getEntering('activity_6', FadeInDown.duration(200).delay(225 + (previousGroupsCount + dateIndex) * 25).springify())}>
                 <Text
                   style={{
                     fontSize: 12,
@@ -360,7 +361,7 @@ export default function ActivityTimeline() {
         {/* See More / See Less */}
         {allGroups.length > GROUPS_PER_PAGE && (
           <Animated.View
-            entering={FadeInDown.duration(200).delay(225 + visibleGroups.length * 25).springify()}
+            entering={getEntering('activity_7', FadeInDown.duration(200).delay(225 + visibleGroups.length * 25).springify())}
             layout={LinearTransition.springify()}
             style={{ alignItems: 'center', marginTop: 4, marginBottom: 8 }}
           >
