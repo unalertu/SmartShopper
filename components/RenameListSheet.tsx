@@ -67,7 +67,7 @@ function RenameListSheet({
     if (visible) {
       setListName(initialName);
       // Focus quickly so the keyboard starts appearing while sheet animates
-      setTimeout(() => inputRef.current?.focus(), 50);
+      setTimeout(() => inputRef.current?.focus(), 80);
     } else {
       Keyboard.dismiss();
     }
@@ -112,8 +112,8 @@ function RenameListSheet({
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {/* Backdrop */}
       <Animated.View 
-        entering={FadeIn.duration(250).easing(Easing.out(Easing.cubic))}
-        exiting={FadeOut.duration(200).easing(Easing.out(Easing.cubic))}
+        entering={FadeIn.duration(320).easing(Easing.out(Easing.cubic))}
+        exiting={FadeOut.duration(250).easing(Easing.out(Easing.cubic))}
         style={styles.backdrop}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
@@ -126,8 +126,8 @@ function RenameListSheet({
         pointerEvents="box-none"
       >
         <Animated.View 
-        entering={FadeIn.duration(250).easing(Easing.out(Easing.cubic))}
-        exiting={FadeOut.duration(200).easing(Easing.out(Easing.cubic))}
+        entering={FadeIn.duration(320).easing(Easing.out(Easing.cubic))}
+        exiting={FadeOut.duration(250).easing(Easing.out(Easing.cubic))}
           style={[styles.pill, { marginBottom: 8 }]}
         >
           <DragHandle />
