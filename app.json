@@ -4,7 +4,7 @@
     "slug": "SmartShopper",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/app-logo.png",
+    "icon": "./assets/images/app-logo.jpeg",
     "scheme": "smartshopper",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -34,7 +34,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#ffffff",
-        "foregroundImage": "./assets/images/app-logo.png"
+        "foregroundImage": "./assets/images/app-logo.jpeg"
       },
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "adjustNothing",
@@ -54,14 +54,14 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/app-logo.png"
+      "favicon": "./assets/images/app-logo.jpeg"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/app-logo.png",
+          "image": "./assets/images/launch-logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",

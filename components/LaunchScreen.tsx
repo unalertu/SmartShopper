@@ -17,35 +17,20 @@ interface LaunchScreenProps {
 }
 
 export default function LaunchScreen({ onFinish }: LaunchScreenProps) {
-  const logoScale = useSharedValue(0.6);
-  const logoOpacity = useSharedValue(0);
+  const logoScale = useSharedValue(1);
+  const logoOpacity = useSharedValue(1);
   const textOpacity = useSharedValue(0);
   const textTranslateY = useSharedValue(12);
   const screenOpacity = useSharedValue(1);
 
   useEffect(() => {
-    // 1. Logo fades in and scales up
-    logoOpacity.value = withTiming(1, {
-      duration: 600,
-      easing: Easing.out(Easing.cubic)});
-    logoScale.value = withTiming(1, {
-      duration: 700,
-      easing: Easing.out(Easing.back(1.2))});
+    // 1. Logo is now instantly visible (initial values are 1).
+    // We removed the text earlier, so we only need to fade out the screen quickly.
 
-    // 2. Text fades in and slides up (after logo)
-    textOpacity.value = withDelay(
-      400,
-      withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) })
-    );
-    textTranslateY.value = withDelay(
-      400,
-      withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) })
-    );
-
-    // 3. Whole screen fades out after holding
+    // 2. Whole screen fades out after a short hold (e.g. 1200ms instead of 800ms)
     screenOpacity.value = withDelay(
-      1800,
-      withTiming(0, { duration: 400, easing: Easing.in(Easing.cubic) }, () => {
+      1200,
+      withTiming(0, { duration: 300, easing: Easing.in(Easing.cubic) }, () => {
         runOnJS(onFinish)();
       })
     );
