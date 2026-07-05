@@ -65,6 +65,8 @@ function CreateListSheet({
   useEffect(() => {
     if (visible) {
       setListName('');
+      // Focus quickly so the keyboard starts appearing while sheet animates
+      setTimeout(() => inputRef.current?.focus(), 50);
     } else {
       Keyboard.dismiss();
     }
@@ -109,8 +111,8 @@ function CreateListSheet({
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {/* Backdrop */}
       <Animated.View 
-        entering={FadeIn.duration(500).easing(Easing.out(Easing.cubic))}
-        exiting={FadeOut.duration(400).easing(Easing.out(Easing.cubic))}
+        entering={FadeIn.duration(250).easing(Easing.out(Easing.cubic))}
+        exiting={FadeOut.duration(200).easing(Easing.out(Easing.cubic))}
         style={styles.backdrop}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
@@ -123,8 +125,8 @@ function CreateListSheet({
         pointerEvents="box-none"
       >
         <Animated.View 
-          entering={FadeIn.duration(500).easing(Easing.out(Easing.cubic))}
-          exiting={FadeOut.duration(400).easing(Easing.out(Easing.cubic))}
+          entering={FadeIn.duration(250).easing(Easing.out(Easing.cubic))}
+          exiting={FadeOut.duration(200).easing(Easing.out(Easing.cubic))}
           style={[styles.pill, { marginBottom: 8 }]}
         >
           <DragHandle />
@@ -146,7 +148,6 @@ function CreateListSheet({
                 style={styles.input}
                 returnKeyType="done"
                 onSubmitEditing={handleCreate}
-                autoFocus={true}
                 autoCorrect={false}
                 maxLength={40}
                 selectionColor={Colors.primary[900]}

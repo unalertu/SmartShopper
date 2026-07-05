@@ -66,8 +66,8 @@ function RenameListSheet({
   useEffect(() => {
     if (visible) {
       setListName(initialName);
-      // We might need to focus the input after a small delay
-      setTimeout(() => inputRef.current?.focus(), 100);
+      // Focus quickly so the keyboard starts appearing while sheet animates
+      setTimeout(() => inputRef.current?.focus(), 50);
     } else {
       Keyboard.dismiss();
     }
@@ -112,8 +112,8 @@ function RenameListSheet({
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {/* Backdrop */}
       <Animated.View 
-        entering={FadeIn.duration(500).easing(Easing.out(Easing.cubic))}
-        exiting={FadeOut.duration(400).easing(Easing.out(Easing.cubic))}
+        entering={FadeIn.duration(250).easing(Easing.out(Easing.cubic))}
+        exiting={FadeOut.duration(200).easing(Easing.out(Easing.cubic))}
         style={styles.backdrop}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
@@ -126,8 +126,8 @@ function RenameListSheet({
         pointerEvents="box-none"
       >
         <Animated.View 
-          entering={FadeIn.duration(500).easing(Easing.out(Easing.cubic))}
-          exiting={FadeOut.duration(400).easing(Easing.out(Easing.cubic))}
+        entering={FadeIn.duration(250).easing(Easing.out(Easing.cubic))}
+        exiting={FadeOut.duration(200).easing(Easing.out(Easing.cubic))}
           style={[styles.pill, { marginBottom: 8 }]}
         >
           <DragHandle />
@@ -149,7 +149,6 @@ function RenameListSheet({
                 style={styles.input}
                 returnKeyType="done"
                 onSubmitEditing={handleRename}
-                autoFocus={true}
                 autoCorrect={false}
                 maxLength={40}
                 selectionColor={Colors.primary[900]}
