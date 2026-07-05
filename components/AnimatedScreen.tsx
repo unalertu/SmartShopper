@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, InteractionManager } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -23,22 +23,26 @@ interface AnimatedScreenProps {
 export default function AnimatedScreen({ children, style }: AnimatedScreenProps) {
   const progress = useSharedValue(0);
   const hasAnimated = useRef(false);
+  const [isReady, setIsReady] = React.useState(false);
 
   useFocusEffect(
     useCallback(() => {
-      // Sadece sayfa ilk yüklendiğinde animasyonu çalıştır
-      if (!hasAnimated.current) {
-        progress.value = 0;
-        progress.value = withTiming(1, {
-          duration: 400,
-          easing: Easing.out(Easing.cubic)
-        });
-        hasAnimated.current = true;
-      }
+      const task = InteractionManager.runAfterInteractions(() => {
+        setIsReady(true);
+        if (!hasAnimated.current) {
+          progress.value = 0;
+          progress.value = withTiming(1, {
+            duration: 400,
+            easing: Easing.out(Easing.cubic)
+          });
+          hasAnimated.current = true;
+        }
+      });
       
-      // No cleanup animation — keeping the screen at full opacity prevents
-      // the blank/white flash during interactive swipe-back gestures.
-      // The screen must remain visible while the gesture is in progress.
+      return () => {
+        setIsReady(false);
+        task.cancel();
+      };
     }, [])
   );
 
@@ -53,7 +57,7 @@ export default function AnimatedScreen({ children, style }: AnimatedScreenProps)
 
   return (
     <Animated.View style={[styles.container, animatedStyle, style]}>
-      {children}
+      {isReady ? children : null}
     </Animated.View>
   );
 }

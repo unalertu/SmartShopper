@@ -17,6 +17,7 @@ import Animated, { FadeOutLeft, LinearTransition, FadeInDown } from 'react-nativ
 import { useTabBarScrollHandler } from '../../hooks/useTabBarScroll';
 import { useLocationStore, useListsStore, useSettingsStore, useQuickStartStore, useNotificationsStore, useShoppingListStore } from '../../store';
 import { useScrollToTop } from '@react-navigation/native';
+import DelayedRender from '../components/DelayedRender';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import RadarPinIcon from '../../components/RadarPinIcon';
 import StoreMarker from '../../components/StoreMarker';
@@ -545,7 +546,7 @@ export default function HomeScreen() {
                     <MapView
                       style={{ width: '100%', height: '100%' }}
                       userInterfaceStyle="light"
-                      showsUserLocation={true}
+                      showsUserLocation={false}
                       initialRegion={{
                         latitude: userLocation.latitude,
                         longitude: userLocation.longitude,
@@ -555,6 +556,12 @@ export default function HomeScreen() {
                       zoomEnabled={false}
                       pitchEnabled={false}
                       rotateEnabled={false}
+                      showsBuildings={false}
+                      showsIndoors={false}
+                      showsPointsOfInterest={false}
+                      showsCompass={false}
+                      showsTraffic={false}
+                      loadingEnabled={false}
                     >
                       {savedShops.map((shop) => (
                         <Marker

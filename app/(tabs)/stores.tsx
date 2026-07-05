@@ -228,7 +228,7 @@ export default function StoresScreen() {
   const activeSavedShops = savedShops;
   const mutedSavedShops = savedShops.filter(loc => loc.isActive === false);
 
-  const { distanceUnit, isPro } = useSettingsStore();
+  const { distanceUnit, isPro, savedStoresOnly } = useSettingsStore();
 
   const markets = cachedMarkets || [];
   const selectedShopToSave = useLocalUIStore((s) => s.selectedShopToSave);
@@ -359,6 +359,9 @@ export default function StoresScreen() {
   const MAX_CACHED_MARKETS = 500;
 
   const fetchMarketsFromOverpass = useCallback(async (region: any) => {
+    const isSavedStoresOnly = useSettingsStore.getState().savedStoresOnly;
+    if (isSavedStoresOnly) return;
+
     if (region.latitudeDelta > 0.045 || region.longitudeDelta > 0.045) {
       console.log("Zoomed out too far, skipping fetch.");
       return;
@@ -478,31 +481,33 @@ export default function StoresScreen() {
   const points = useMemo(() => {
     const allPoints: PointFeature<any>[] = [];
     
-    // Add unsaved markets
-    const uniqueMarkets = markets
-      .filter((market, index, self) => 
-        index === self.findIndex((m) => m.latitude === market.latitude && m.longitude === market.longitude)
-      )
-      .filter((market) => !isShopSaved(market));
+    if (!savedStoresOnly) {
+      // Add unsaved markets
+      const uniqueMarkets = markets
+        .filter((market, index, self) => 
+          index === self.findIndex((m) => m.latitude === market.latitude && m.longitude === market.longitude)
+        )
+        .filter((market) => !isShopSaved(market));
 
-    uniqueMarkets.forEach(market => {
-      allPoints.push({
-        type: 'Feature',
-        properties: {
-          ...market,
-          cluster: false,
-          id: market.id,
-          isSaved: false
-        },
-        geometry: {
-          type: 'Point',
-          coordinates: [market.longitude, market.latitude]
-        }
+      uniqueMarkets.forEach(market => {
+        allPoints.push({
+          type: 'Feature',
+          properties: {
+            ...market,
+            cluster: false,
+            id: market.id,
+            isSaved: false
+          },
+          geometry: {
+            type: 'Point',
+            coordinates: [market.longitude, market.latitude]
+          }
+        });
       });
-    });
+    }
 
     return allPoints;
-  }, [savedShops, markets, isShopSaved]);
+  }, [savedShops, markets, isShopSaved, savedStoresOnly]);
 
   useEffect(() => {
     superclusterRef.current.load(points);

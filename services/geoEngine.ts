@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { SavedLocation } from "../store/useLocationStore";
-import { ShoppingItem } from "../store/useShoppingListStore";
-import { getDistance } from "./locationService";
+import type { SavedLocation } from "../store/useLocationStore";
+import type { ShoppingItem } from "../store/useShoppingListStore";
+import { getDistance } from "./locationUtils";
 
 export const geoEngine = {
   getLocations: async (): Promise<SavedLocation[]> => {

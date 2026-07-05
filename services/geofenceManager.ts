@@ -1,7 +1,7 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
-import { SavedLocation, useLocationStore } from '../store/useLocationStore';
-import { getDistance, getCurrentLocation, handleGeofenceEnter } from './locationService';
+import type { SavedLocation } from '../store/useLocationStore';
+import { getDistance, getCurrentLocation } from './locationUtils';
 import { geoEngine } from './geoEngine';
 import { NOTIFICATION_CONSTANTS } from '../constants';
 
@@ -42,6 +42,7 @@ function setsEqual(a: Set<string>, b: Set<string>): boolean {
 
 function log(msg: string) {
   try {
+    const { useLocationStore } = require('../store/useLocationStore');
     useLocationStore.getState().addDebugLog(`[Geofence] ${msg}`);
   } catch {
     // Store might not be ready during very early boot
@@ -53,6 +54,7 @@ function log(msg: string) {
 async function resolveLocation(): Promise<{ latitude: number; longitude: number } | null> {
   // 1. Last known from Zustand store
   try {
+    const { useLocationStore } = require('../store/useLocationStore');
     const storeLocation = useLocationStore.getState().userLocation;
     if (storeLocation) {
       log('Location source: lastKnownLocation (store)');
@@ -107,6 +109,7 @@ TaskManager.defineTask(GEOFENCE_TASK, async ({ data, error }) => {
   
   if (eventType === Location.GeofencingEventType.Enter) {
     if (region.identifier) {
+      const { handleGeofenceEnter } = require('./locationService');
       await handleGeofenceEnter(region.identifier);
     }
   }

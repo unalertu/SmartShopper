@@ -101,12 +101,12 @@ const ConfirmationSheet = memo(function ConfirmationSheet({
 
   const animationConfigs = useMemo(
     () => ({
-      damping: 20,
-      stiffness: 200,
-      mass: 0.8,
-      overshootClamping: false,
-      restDisplacementThreshold: 0.1,
-      restSpeedThreshold: 0.1,
+      damping: 28,
+      stiffness: 280,
+      mass: 0.7,
+      overshootClamping: true,
+      restDisplacementThreshold: 0.5,
+      restSpeedThreshold: 0.5,
       reduceMotion: ReduceMotion.System,
     }),
     []
