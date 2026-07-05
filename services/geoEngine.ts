@@ -59,11 +59,50 @@ export const geoEngine = {
 
   getUnpurchasedItems: async (): Promise<{ name: string }[]> => {
     try {
-      const data = await AsyncStorage.getItem("shopping-list-storage");
-      if (data) {
-        const parsed = JSON.parse(data);
-        const items: ShoppingItem[] = parsed?.state?.items || [];
-        return items.filter((item: ShoppingItem) => !item.isPurchased).map((item) => ({ name: item.name }));
+      const listsData = await AsyncStorage.getItem("lists-storage");
+      const itemsData = await AsyncStorage.getItem("shopping-list-storage");
+
+      if (listsData && itemsData) {
+        const parsedLists = JSON.parse(listsData);
+        const parsedItems = JSON.parse(itemsData);
+
+        const lists = parsedLists?.state?.lists || [];
+        const items: ShoppingItem[] = parsedItems?.state?.items || [];
+
+        // Group unpurchased items by listId
+        const unpurchasedItemsByList: Record<number, ShoppingItem[]> = {};
+        items.forEach((item) => {
+          if (!item.isPurchased) {
+            if (!unpurchasedItemsByList[item.listId]) {
+              unpurchasedItemsByList[item.listId] = [];
+            }
+            unpurchasedItemsByList[item.listId].push(item);
+          }
+        });
+
+        // Only consider lists that have unpurchased items
+        const validLists = lists.filter((list: any) => unpurchasedItemsByList[list.id]?.length > 0);
+
+        if (validLists.length === 0) {
+          return [];
+        }
+
+        // Sort lists by:
+        // 1. Most recently updated (updatedAt or createdAt) - Descending
+        // 2. Unpurchased item count - Descending
+        validLists.sort((a: any, b: any) => {
+          const aUpdated = a.updatedAt || a.createdAt || 0;
+          const bUpdated = b.updatedAt || b.createdAt || 0;
+          if (aUpdated !== bUpdated) {
+            return bUpdated - aUpdated;
+          }
+          const aCount = unpurchasedItemsByList[a.id].length;
+          const bCount = unpurchasedItemsByList[b.id].length;
+          return bCount - aCount;
+        });
+
+        const bestListId = validLists[0].id;
+        return unpurchasedItemsByList[bestListId].map((item) => ({ name: item.name }));
       }
     } catch (e) {
       console.error("geoEngine getUnpurchasedItems error", e);

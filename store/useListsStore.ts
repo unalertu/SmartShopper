@@ -9,6 +9,7 @@ export interface ShoppingList {
   name: string;
   count: number;
   createdAt?: number;
+  updatedAt?: number;
 }
 
 interface ListsStoreState {
@@ -17,6 +18,7 @@ interface ListsStoreState {
   removeList: (id: number) => void;
   updateListCount: (id: number, count: number) => void;
   renameList: (id: number, newName: string) => void;
+  updateListTimestamp: (id: number) => void;
 
   /**
    * Check if the user can create a new list.
@@ -34,15 +36,15 @@ export const useListsStore = create<ListsStoreState>()(
   persist(
     (set, get) => ({
       lists: [
-        { id: 1, name: "Ahmet için alınacaklar", count: 4, createdAt: Date.now() }, 
-        { id: 2, name: "Kendi ihtiyaçlarım", count: 12, createdAt: Date.now() - 86400000 }, 
-        { id: 3, name: "Buse'ye alınacaklar", count: 2, createdAt: Date.now() - 172800000 }
+        { id: 1, name: "Ahmet için alınacaklar", count: 4, createdAt: Date.now(), updatedAt: Date.now() }, 
+        { id: 2, name: "Kendi ihtiyaçlarım", count: 12, createdAt: Date.now() - 86400000, updatedAt: Date.now() - 86400000 }, 
+        { id: 3, name: "Buse'ye alınacaklar", count: 2, createdAt: Date.now() - 172800000, updatedAt: Date.now() - 172800000 }
       ],
       addList: (name) => {
         const newId = Date.now();
         set((state) => ({
           lists: [
-            { id: newId, name, count: 0, createdAt: Date.now() },
+            { id: newId, name, count: 0, createdAt: Date.now(), updatedAt: Date.now() },
             ...state.lists,
           ],
         }));
@@ -72,7 +74,7 @@ export const useListsStore = create<ListsStoreState>()(
       updateListCount: (id, count) =>
         set((state) => ({
           lists: state.lists.map((list) =>
-            list.id === id ? { ...list, count } : list
+            list.id === id ? { ...list, count, updatedAt: Date.now() } : list
           ),
         })),
       renameList: (id, newName) =>
@@ -89,10 +91,16 @@ export const useListsStore = create<ListsStoreState>()(
           }
           return {
             lists: state.lists.map((list) =>
-              list.id === id ? { ...list, name: newName } : list
+              list.id === id ? { ...list, name: newName, updatedAt: Date.now() } : list
             ),
           };
         }),
+      updateListTimestamp: (id) =>
+        set((state) => ({
+          lists: state.lists.map((list) =>
+            list.id === id ? { ...list, updatedAt: Date.now() } : list
+          ),
+        })),
 
       canCreateList: (isPro: boolean) => {
         const currentCount = get().lists.length;

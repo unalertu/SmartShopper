@@ -437,13 +437,54 @@ export default function SettingsScreen() {
       }
       
       const bestStore = nearbyStores[0];
-      const content = await notificationEngine.buildNotificationContent(bestStore.name, []);
+      const unpurchasedItems = await geoEngine.getUnpurchasedItems();
+      const content = await notificationEngine.buildNotificationContent(bestStore.name, unpurchasedItems);
       await sendLocalNotification(content.title, content.body, "geofence-alerts");
       
       console.log(`[TEST] Manually triggered test notification for ${bestStore.name}`);
     } catch (e) {
       console.error(e);
       Alert.alert("Error", "Failed to trigger test flow. Please ensure location permissions are granted.");
+    }
+  }, []);
+
+  const handleCheckScheduledReminders = useCallback(async () => {
+    hapticImpact(ImpactFeedbackStyle.Light);
+    try {
+      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+      if (scheduled.length === 0) {
+        Alert.alert("Scheduled Reminders", "There are no pending scheduled reminders.");
+        return;
+      }
+
+      const summary = scheduled.map((n, index) => {
+        const title = n.content.title || 'No Title';
+        const body = n.content.body || '';
+        let triggerInfo = "Unknown time";
+        
+        if (n.trigger && typeof n.trigger === 'object') {
+          if ('seconds' in n.trigger) {
+            const secs = Number(n.trigger.seconds);
+            if (secs > 86400) {
+              triggerInfo = `In ${(secs / 86400).toFixed(1)} days`;
+            } else if (secs > 3600) {
+              triggerInfo = `In ${(secs / 3600).toFixed(1)} hours`;
+            } else {
+              triggerInfo = `In ${Math.round(secs / 60)} minutes`;
+            }
+          } else if ('date' in n.trigger) {
+            triggerInfo = new Date(Number(n.trigger.date)).toLocaleString();
+          } else {
+            triggerInfo = "Scheduled (Native)";
+          }
+        }
+        return `${index + 1}. ${title}\n${body}\nTrigger: ${triggerInfo}`;
+      }).join('\n\n');
+
+      Alert.alert(`Scheduled Reminders (${scheduled.length})`, summary);
+    } catch (e) {
+      console.error(e);
+      Alert.alert("Error", "Failed to fetch scheduled notifications.");
     }
   }, []);
 
@@ -683,6 +724,12 @@ export default function SettingsScreen() {
 
           {/* ── Debug ── */}
           <SettingsGroup title="Debug" delay={350}>
+            <SettingsRow
+              icon={<Calendar size={20} color="#8b5cf6" />}
+              label="Check Scheduled Reminders"
+              sublabel="View all pending background notifications"
+              onPress={handleCheckScheduledReminders}
+            />
             <SettingsRow
               icon={<Bug size={20} color="#8b5cf6" />}
               label="Test Notification Flow"

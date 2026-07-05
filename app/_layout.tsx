@@ -147,6 +147,18 @@ export default function RootLayout() {
     }
   }, []);
 
+  // Subscribe to shopping list changes for unfinished and empty list reminders
+  useEffect(() => {
+    if (!_hasHydrated) return;
+    const unsubscribe = useShoppingListStore.subscribe((state, prevState) => {
+      if (state.items !== prevState.items) {
+        notificationEngine.syncUnfinishedListReminder().catch(console.error);
+        notificationEngine.syncEmptyListReminder().catch(console.error);
+      }
+    });
+    return unsubscribe;
+  }, [_hasHydrated]);
+
   const handleLaunchFinish = useCallback(async () => {
     setShowLaunchScreen(false);
 

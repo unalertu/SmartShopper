@@ -131,6 +131,7 @@ export const useShoppingListStore = create<ShoppingListState>()(
                 listName,
               });
             }
+            useListsStore.getState().updateListTimestamp(targetItem.listId);
           }
           return {
             items: state.items.map((item) =>
@@ -140,11 +141,17 @@ export const useShoppingListStore = create<ShoppingListState>()(
         }),
 
       updateItem: (id, updates) =>
-        set((state) => ({
-          items: state.items.map((item) =>
-            item.id === id ? { ...item, ...updates } : item
-          ),
-        })),
+        set((state) => {
+          const targetItem = state.items.find(i => i.id === id);
+          if (targetItem) {
+            useListsStore.getState().updateListTimestamp(targetItem.listId);
+          }
+          return {
+            items: state.items.map((item) =>
+              item.id === id ? { ...item, ...updates } : item
+            ),
+          };
+        }),
 
       clearPurchased: (listId) =>
         set((state) => {

@@ -1,5 +1,7 @@
 import { notificationAnalytics } from "./notificationAnalytics";
 import { SavedLocation } from "../store/useLocationStore";
+import { useShoppingListStore } from "../store/useShoppingListStore";
+import * as Notifications from "expo-notifications";
 
 export const notificationEngine = {
   /**
@@ -108,7 +110,7 @@ export const notificationEngine = {
     const names = unpurchasedItems.slice(0, maxShow).map((i) => i.name);
     const remaining = unpurchasedItems.length - maxShow;
 
-    let body = `You still need: ${names.join(", ")}`;
+    let body = `Dont forget: ${names.join(", ")}`;
     if (remaining > 0) {
       body += ` (+${remaining} more)`;
     }
@@ -177,6 +179,136 @@ export const notificationEngine = {
         "Welcome to SmartShopper",
         "Start creating your smart shopping lists today."
       );
+    }
+  },
+
+  syncUnfinishedListReminder: async (): Promise<void> => {
+    const unpurchasedItems = useShoppingListStore.getState().items.filter(i => !i.isPurchased);
+    const state = await notificationAnalytics.getState();
+    const { unfinishedReminderId, unfinishedReminderScheduledAt } = state;
+
+    if (unpurchasedItems.length === 0) {
+      if (unfinishedReminderId) {
+        await Notifications.cancelScheduledNotificationAsync(unfinishedReminderId);
+        await notificationAnalytics.clearUnfinishedReminder();
+      }
+      return;
+    }
+
+    const maxShow = 3;
+    const names = unpurchasedItems.slice(0, maxShow).map(i => i.name);
+    const remaining = unpurchasedItems.length - maxShow;
+    let body = `Don't forget: ${names.join(", ")}`;
+    if (remaining > 0) {
+      body += ` +${remaining} more`;
+    }
+
+    const content = {
+      title: "Still need these items?",
+      body,
+      sound: "default" as const,
+    };
+
+    if (unfinishedReminderId && unfinishedReminderScheduledAt) {
+      const date = new Date(unfinishedReminderScheduledAt);
+      if (date.getTime() > Date.now()) {
+        const newId = await Notifications.scheduleNotificationAsync({
+          content,
+          trigger: { 
+            date, 
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            channelId: "geofence-alerts" 
+          },
+          identifier: unfinishedReminderId,
+        });
+        await notificationAnalytics.setUnfinishedReminder(newId, unfinishedReminderScheduledAt);
+      } else {
+        const triggerDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+        const newId = await Notifications.scheduleNotificationAsync({
+          content,
+          trigger: { 
+            date: triggerDate, 
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            channelId: "geofence-alerts" 
+          },
+        });
+        await notificationAnalytics.setUnfinishedReminder(newId, triggerDate.getTime());
+      }
+    } else {
+      const triggerDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+      const newId = await Notifications.scheduleNotificationAsync({
+        content,
+        trigger: { 
+          date: triggerDate, 
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          channelId: "geofence-alerts" 
+        },
+      });
+      await notificationAnalytics.setUnfinishedReminder(newId, triggerDate.getTime());
+    }
+  },
+
+  syncEmptyListReminder: async (): Promise<void> => {
+    const unpurchasedItems = useShoppingListStore.getState().items.filter(i => !i.isPurchased);
+    const state = await notificationAnalytics.getState();
+    const { emptyListReminderId, emptyListReminderScheduledAt } = state;
+
+    if (unpurchasedItems.length > 0) {
+      // User has unpurchased items, cancel empty list reminder if it exists
+      if (emptyListReminderId) {
+        await Notifications.cancelScheduledNotificationAsync(emptyListReminderId);
+        await notificationAnalytics.clearEmptyListReminder();
+      }
+      return;
+    }
+
+    // User has no unpurchased items
+    const content = {
+      title: "Ready for your next shopping trip?",
+      body: "Start a new list before you head to the store",
+      sound: "default" as const,
+    };
+
+    if (emptyListReminderId && emptyListReminderScheduledAt) {
+      const date = new Date(emptyListReminderScheduledAt);
+      if (date.getTime() > Date.now()) {
+        // Already scheduled in the future, don't change the time
+        // Just update content in case it changed
+        const newId = await Notifications.scheduleNotificationAsync({
+          content,
+          trigger: { 
+            date, 
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            channelId: "geofence-alerts" 
+          },
+          identifier: emptyListReminderId,
+        });
+        await notificationAnalytics.setEmptyListReminder(newId, emptyListReminderScheduledAt);
+      } else {
+        // Time has passed, reschedule 7 days out
+        const triggerDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        const newId = await Notifications.scheduleNotificationAsync({
+          content,
+          trigger: { 
+            date: triggerDate, 
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            channelId: "geofence-alerts" 
+          },
+        });
+        await notificationAnalytics.setEmptyListReminder(newId, triggerDate.getTime());
+      }
+    } else {
+      // Not scheduled yet, schedule 7 days out
+      const triggerDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const newId = await Notifications.scheduleNotificationAsync({
+        content,
+        trigger: { 
+          date: triggerDate, 
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          channelId: "geofence-alerts" 
+        },
+      });
+      await notificationAnalytics.setEmptyListReminder(newId, triggerDate.getTime());
     }
   },
 };

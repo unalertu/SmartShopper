@@ -41,6 +41,14 @@ export interface NotificationAnalyticsState {
   // Fingerprint dedup
   sentFingerprints: string[];
 
+  // Unfinished List Reminder
+  unfinishedReminderId: string | null;
+  unfinishedReminderScheduledAt: number | null;
+
+  // Empty List Reminder
+  emptyListReminderId: string | null;
+  emptyListReminderScheduledAt: number | null;
+
   // History & Flags
   notificationHistory: NotificationHistoryEntry[];
   hasSentWelcome: boolean;
@@ -57,6 +65,10 @@ const DEFAULT_STATE: NotificationAnalyticsState = {
   dailyLocationCount: 0,
   dailyStoreCounts: {},
   sentFingerprints: [],
+  unfinishedReminderId: null,
+  unfinishedReminderScheduledAt: null,
+  emptyListReminderId: null,
+  emptyListReminderScheduledAt: null,
   notificationHistory: [],
   hasSentWelcome: false,
 };
@@ -93,6 +105,36 @@ export const notificationAnalytics = {
     } catch (e) {
       console.error("notificationAnalytics saveState error:", e);
     }
+  },
+
+  // ── Unfinished List Reminder ───────────────────────────────────────────────
+
+  setUnfinishedReminder: async (id: string, scheduledAt: number): Promise<void> => {
+    const state = await notificationAnalytics.getState();
+    state.unfinishedReminderId = id;
+    state.unfinishedReminderScheduledAt = scheduledAt;
+    await notificationAnalytics.saveState(state);
+  },
+
+  clearUnfinishedReminder: async (): Promise<void> => {
+    const state = await notificationAnalytics.getState();
+    state.unfinishedReminderId = null;
+    state.unfinishedReminderScheduledAt = null;
+    await notificationAnalytics.saveState(state);
+  },
+
+  setEmptyListReminder: async (id: string, scheduledAt: number): Promise<void> => {
+    const state = await notificationAnalytics.getState();
+    state.emptyListReminderId = id;
+    state.emptyListReminderScheduledAt = scheduledAt;
+    await notificationAnalytics.saveState(state);
+  },
+
+  clearEmptyListReminder: async (): Promise<void> => {
+    const state = await notificationAnalytics.getState();
+    state.emptyListReminderId = null;
+    state.emptyListReminderScheduledAt = null;
+    await notificationAnalytics.saveState(state);
   },
 
   // ── Daily Counter Reset ──────────────────────────────────────────────────
