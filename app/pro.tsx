@@ -208,23 +208,23 @@ export default function ProScreen() {
 
             <View className="bg-white/10 rounded-2xl p-3.5 flex-col gap-2" style={{ marginHorizontal: 6 }}>
               <View className="flex-row items-center">
-                <CalendarDays size={16} color="rgba(255,255,255,0.7)" />
-                <Text className="text-white/70 text-[13px] ml-2.5 flex-1">
+                <CalendarDays size={18} color="rgba(255,255,255,0.9)" />
+                <Text className="text-white/90 text-[15px] font-medium ml-2.5 flex-1">
                   Yearly Plan • Renews annually
                 </Text>
               </View>
               {nextBillingDate && (
                 <View className="flex-row items-center">
-                  <Clock size={16} color="rgba(255,255,255,0.7)" />
-                  <Text className="text-white/70 text-[13px] ml-2.5">
+                  <Clock size={18} color="rgba(255,255,255,0.9)" />
+                  <Text className="text-white/90 text-[15px] font-medium ml-2.5">
                     Next Billing: {nextBillingDate}
                   </Text>
                 </View>
               )}
               {memberSinceDate && (
                 <View className="flex-row items-center">
-                  <Award size={16} color="rgba(255,255,255,0.7)" />
-                  <Text className="text-white/70 text-[13px] ml-2.5">
+                  <Award size={18} color="rgba(255,255,255,0.9)" />
+                  <Text className="text-white/90 text-[15px] font-medium ml-2.5">
                     Member Since: {memberSinceDate}
                   </Text>
                 </View>

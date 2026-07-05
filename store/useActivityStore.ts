@@ -55,6 +55,10 @@ export interface ActivityGroup {
 /** Maximum time gap (ms) between events in the same shopping session */
 const SESSION_GAP_MS = 5 * 60 * 1000; // 5 minutes
 
+/** Maximum retention period for activities (in days) */
+const MAX_RETENTION_DAYS = 14;
+const MAX_RETENTION_MS = MAX_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+
 /**
  * Groups activity events into shopping sessions.
  *
@@ -75,10 +79,15 @@ export function groupActivities(
 ): ActivityGroup[] {
   if (events.length === 0) return [];
 
+  const now = Date.now();
+  const validEvents = events.filter(e => (now - e.timestamp) <= MAX_RETENTION_MS);
+
+  if (validEvents.length === 0) return [];
+
   const groups: ActivityGroup[] = [];
   let currentGroup: { events: ActivityEvent[] } | null = null;
 
-  for (const event of events) {
+  for (const event of validEvents) {
     const isListLevel = LIST_LEVEL_TYPES.includes(event.type);
 
     if (isListLevel) {
@@ -255,14 +264,17 @@ export const useActivityStore = create<ActivityStoreState>()(
 
       logActivity: (event) =>
         set((state) => {
+          const now = Date.now();
           const newEvent: ActivityEvent = {
             ...event,
-            id: `activity_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-            timestamp: Date.now(),
+            id: `activity_${now}_${Math.random().toString(36).substring(2, 9)}`,
+            timestamp: now,
           };
           
-          // Keep only the last 50 activities to avoid bloat
-          const newActivities = [newEvent, ...state.activities].slice(0, 50);
+          // Keep only the last 50 activities and filter out activities older than MAX_RETENTION_DAYS
+          const newActivities = [newEvent, ...state.activities]
+            .filter(a => (now - a.timestamp) <= MAX_RETENTION_MS)
+            .slice(0, 50);
           
           return { activities: newActivities };
         }),

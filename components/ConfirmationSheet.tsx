@@ -36,6 +36,7 @@ const ConfirmationSheet = memo(React.forwardRef<ConfirmationSheetRef, Confirmati
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const actionTakenRef = useRef<'confirm' | 'cancel' | null>(null);
   const isSheetOpenRef = useRef(false);
+  const isImperativeRef = useRef(false);
 
   const [internalData, setInternalData] = React.useState<ConfirmationSheetData | null>(propData);
 
@@ -47,6 +48,7 @@ const ConfirmationSheet = memo(React.forwardRef<ConfirmationSheetRef, Confirmati
 
   React.useImperativeHandle(ref, () => ({
     present: (data?: ConfirmationSheetData) => {
+      isImperativeRef.current = true;
       if (data) {
         setInternalData(data);
       }
@@ -67,10 +69,11 @@ const ConfirmationSheet = memo(React.forwardRef<ConfirmationSheetRef, Confirmati
 
   useEffect(() => {
     if (visible && internalData) {
+      isImperativeRef.current = false;
       actionTakenRef.current = null;
       isSheetOpenRef.current = true;
       bottomSheetRef.current?.present();
-    } else if (!visible && isSheetOpenRef.current) {
+    } else if (!visible && isSheetOpenRef.current && !isImperativeRef.current) {
       bottomSheetRef.current?.dismiss();
     }
   }, [visible, internalData]);
@@ -78,6 +81,7 @@ const ConfirmationSheet = memo(React.forwardRef<ConfirmationSheetRef, Confirmati
   // Called by BottomSheetModal AFTER dismiss animation completes
   const handleDismiss = useCallback(() => {
     isSheetOpenRef.current = false;
+    isImperativeRef.current = false;
     const action = actionTakenRef.current;
 
     if (action === 'confirm') {
@@ -88,7 +92,7 @@ const ConfirmationSheet = memo(React.forwardRef<ConfirmationSheetRef, Confirmati
 
     actionTakenRef.current = null;
     // Notify parent AFTER animation is done
-    onDismissRef.current();
+    onDismissRef.current?.();
   }, []);
 
   const dismiss = useCallback(() => {
