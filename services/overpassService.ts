@@ -30,9 +30,12 @@ export const fetchMarkets = async (
 ): Promise<MarketElement[]> => {
   const query = `[out:json][timeout:20];
 (
-  node["shop"~"supermarket|convenience|grocery|greengrocer|mall|department_store|general"](${south},${west},${north},${east});
-  way["shop"~"supermarket|convenience|grocery|greengrocer|mall|department_store|general"](${south},${west},${north},${east});
-  relation["shop"~"supermarket|convenience|grocery|greengrocer|mall|department_store|general"](${south},${west},${north},${east});
+  node["shop"~"supermarket|convenience|grocery|department_store"](${south},${west},${north},${east});
+  way["shop"~"supermarket|convenience|grocery|department_store"](${south},${west},${north},${east});
+  relation["shop"~"supermarket|convenience|grocery|department_store"](${south},${west},${north},${east});
+  node["amenity"="pharmacy"](${south},${west},${north},${east});
+  way["amenity"="pharmacy"](${south},${west},${north},${east});
+  relation["amenity"="pharmacy"](${south},${west},${north},${east});
 );
 out center;`;
 

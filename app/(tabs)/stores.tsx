@@ -1056,10 +1056,12 @@ export default function StoresScreen() {
           {/* Header Content moved from CustomHandle */}
           <Animated.View layout={LinearTransition.springify()} className="w-full pt-3 pb-2">
             {selectedShopToSave && !selectedShopToSave.isSaved && (
-              <>
-                <Animated.View
-                  exiting={FadeOutUp.duration(200)}
-                  layout={LinearTransition.springify()}
+              <Animated.View
+                entering={FadeInDown.duration(200).springify()}
+                exiting={FadeOutUp.duration(200)}
+                layout={LinearTransition.springify()}
+              >
+                <View
                   style={{ marginBottom: 14 }}
                 >
                   <View
@@ -1083,9 +1085,8 @@ export default function StoresScreen() {
                       </View>
                     </View>
                   </View>
-                </Animated.View>
-                <Animated.View
-                  exiting={FadeOutUp.duration(200)}
+                </View>
+                <View
                   style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}
                 >
 
@@ -1134,18 +1135,20 @@ export default function StoresScreen() {
                   >
                     <Plus size={24} color="#fff" />
                   </TouchableOpacity>
-                </Animated.View>
-              </>
+                </View>
+              </Animated.View>
             )}
             {selectedShopToSave && selectedShopToSave.isSaved && (() => {
               const loc = savedShops.find(s => `saved-${s.id}` === selectedShopToSave.id);
               if (!loc) return null;
               const originalId = loc.id;
               return (
-              <>
               <Animated.View
+                entering={FadeInDown.duration(200).springify()}
                 exiting={FadeOutUp.duration(200)}
                 layout={LinearTransition.springify()}
+              >
+              <View
                 style={{ marginBottom: 14 }}
               >
                 <Swipeable
@@ -1259,9 +1262,8 @@ export default function StoresScreen() {
                     </TouchableOpacity>
                   </TouchableOpacity>
                 </Swipeable>
-              </Animated.View>
-              <Animated.View
-                exiting={FadeOutUp.duration(200)}
+              </View>
+              <View
                 style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}
               >
 
@@ -1290,8 +1292,8 @@ export default function StoresScreen() {
                   <Trash2 size={18} color="#fff" />
                   <Text style={styles.contextSaveBtnText}>Remove</Text>
                 </TouchableOpacity>
+              </View>
               </Animated.View>
-              </>
               );
             })()}
 
@@ -1301,7 +1303,7 @@ export default function StoresScreen() {
             >
               <Text style={{ fontSize: 28, fontWeight: '600', letterSpacing: -0.6, color: '#0f172a' }}>Saved Shops</Text>
               <Text style={{ fontSize: 14, fontWeight: '600', color: '#64748b', letterSpacing: -0.1 }}>
-                {activeSavedShops.length === 0 ? 'No shops' : `${activeSavedShops.length} ${activeSavedShops.length === 1 ? 'shop' : 'shops'}`}
+                {activeSavedShops.length === 0 ? '' : `${activeSavedShops.length} ${activeSavedShops.length === 1 ? 'shop' : 'shops'}`}
               </Text>
             </Animated.View>
           </Animated.View>
@@ -1310,9 +1312,6 @@ export default function StoresScreen() {
             <Animated.View
               style={styles.emptyState}
             >
-              <View style={styles.emptyIcon}>
-                <Store size={26} color="#475569" strokeWidth={1.5} />
-              </View>
               <Text style={styles.emptyTitle}>No saved shops yet</Text>
               <Text style={styles.emptySub}>Tap a shop marker to save it</Text>
             </Animated.View>
@@ -1335,6 +1334,7 @@ export default function StoresScreen() {
               <Animated.View
                 key={uniqueKey}
                 layout={LinearTransition.springify()}
+                entering={FadeInDown.duration(300).springify()}
                 exiting={FadeOutLeft.duration(200)}
               >
                 <Swipeable

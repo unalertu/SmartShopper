@@ -56,7 +56,7 @@ const LocationPermissionSheet = memo(function LocationPermissionSheet({
       setTimeout(() => {
         Alert.alert(
           'Location Access Required',
-          "SmartShopper needs location access to notify you when you're near stores. You can enable location permissions anytime in Settings.",
+          "GeoCart needs location access to notify you when you're near stores. You can enable location permissions anytime in Settings.",
           [
             { text: 'Cancel', style: 'cancel' },
             {
@@ -98,7 +98,7 @@ const LocationPermissionSheet = memo(function LocationPermissionSheet({
           </View>
           <Text style={styles.title}>Enable Location Reminders</Text>
           <Text style={styles.description}>
-            SmartShopper uses your location to remind you when you&apos;re near stores on your shopping list. Location updates are optimized to minimize battery usage. Your location is never shared or sold.
+            GeoCart uses your location to remind you when you&apos;re near stores on your shopping list. Location updates are optimized to minimize battery usage. Your location is never shared or sold.
           </Text>
           <TouchableOpacity
             style={styles.primaryButton}

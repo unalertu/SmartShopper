@@ -56,7 +56,7 @@ const NotificationPermissionSheet = memo(function NotificationPermissionSheet({
       setTimeout(() => {
         Alert.alert(
           'Notifications Required',
-          "SmartShopper needs notification access to remind you when you're near stores. You can enable notifications anytime in Settings.",
+          "GeoCart needs notification access to remind you when you're near stores. You can enable notifications anytime in Settings.",
           [
             { text: 'Cancel', style: 'cancel' },
             {
@@ -98,7 +98,7 @@ const NotificationPermissionSheet = memo(function NotificationPermissionSheet({
           </View>
           <Text style={styles.title}>Enable Notifications</Text>
           <Text style={styles.description}>
-            SmartShopper uses notifications to gently remind you when you&apos;re near stores on your shopping list. We only notify you when it matters.
+            GeoCart uses notifications to gently remind you when you&apos;re near stores on your shopping list. We only notify you when it matters.
           </Text>
           <TouchableOpacity
             style={styles.primaryButton}

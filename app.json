@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "SmartShopper",
-    "slug": "SmartShopper",
+    "name": "GeoCart",
+    "slug": "GeoCart",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/app-logo.jpeg",
@@ -11,9 +11,9 @@
       "bundleIdentifier": "com.unalertu.smartshopper",
       "supportsTablet": true,
       "infoPlist": {
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "SmartShopper needs your location to remind you about your shopping list when you're near saved stores.",
-        "NSLocationAlwaysUsageDescription": "SmartShopper needs background location access to detect when you're near saved stores.",
-        "NSLocationWhenInUseUsageDescription": "SmartShopper needs your location to find nearby stores.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "GeoCart needs your location to remind you about your shopping list when you're near saved stores.",
+        "NSLocationAlwaysUsageDescription": "GeoCart needs background location access to detect when you're near saved stores.",
+        "NSLocationWhenInUseUsageDescription": "GeoCart needs your location to find nearby stores.",
         "UIBackgroundModes": [
           "location",
           "fetch"
@@ -68,9 +68,9 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "SmartShopper needs your location to remind you about your shopping list when you're near saved stores.",
-          "locationAlwaysPermission": "SmartShopper needs background location to detect when you're near saved stores.",
-          "locationWhenInUsePermission": "SmartShopper needs your location to find nearby stores.",
+          "locationAlwaysAndWhenInUsePermission": "GeoCart needs your location to remind you about your shopping list when you're near saved stores.",
+          "locationAlwaysPermission": "GeoCart needs background location to detect when you're near saved stores.",
+          "locationWhenInUsePermission": "GeoCart needs your location to find nearby stores.",
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true
         }

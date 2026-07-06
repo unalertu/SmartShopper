@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { hapticImpact } from '../services/haptics';
 import {
@@ -24,6 +24,8 @@ import Animated, {
   FadeInDown,
   FadeOutLeft,
   LinearTransition,
+  FadeIn,
+  FadeOut,
 } from 'react-native-reanimated';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useNotificationsStore, AppNotification } from '../store';
@@ -40,6 +42,10 @@ function getNotificationIcon(type: AppNotification['type']) {
       return <MapPin size={20} color="#22c55e" />;
     case 'welcome':
       return <Sparkles size={20} color="#8b5cf6" />;
+    case 'reminder':
+      return <ShoppingBag size={20} color="#3b82f6" />;
+    case 'update':
+      return <Sparkles size={20} color="#8b5cf6" />;
   }
 }
 
@@ -49,6 +55,10 @@ function getNotificationIconBg(type: AppNotification['type']) {
       return 'rgba(34, 197, 94, 0.1)';
     case 'welcome':
       return 'rgba(139, 92, 246, 0.1)';
+    case 'reminder':
+      return 'rgba(59, 130, 246, 0.1)';
+    case 'update':
+      return 'rgba(139, 92, 246, 0.1)';
   }
 }
 
@@ -57,12 +67,12 @@ function getNotificationIconBg(type: AppNotification['type']) {
 function formatRelativeTime(timestamp: number): string {
   const diff = Date.now() - timestamp;
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 60) return minutes <= 1 ? 'Just now' : `${minutes}m ago`;
+  if (minutes < 60) return minutes <= 1 ? 'now' : `${minutes}m`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours}h`;
   const days = Math.floor(hours / 24);
   if (days === 1) return 'Yesterday';
-  if (days < 7) return `${days} days ago`;
+  if (days < 7) return `${days}d`;
   return new Date(timestamp).toLocaleDateString();
 }
 
@@ -82,6 +92,7 @@ function NotificationRow({
       onPress={onPress}
       activeOpacity={0.6}
       className={`flex-row items-center p-4 ${!isLast ? 'border-b border-slate-50' : ''}`}
+      style={{ opacity: notification.read ? 0.55 : 1 }}
     >
       <View className="flex-row items-center flex-1 pr-4">
         <View
@@ -97,7 +108,7 @@ function NotificationRow({
           {getNotificationIcon(notification.type)}
         </View>
         <View className="ml-3 flex-shrink flex-1">
-          <Text className={`text-[15px] ${notification.read ? 'font-medium' : 'font-semibold'} text-slate-900`}>
+          <Text className="text-[15px] font-semibold text-slate-900">
             {notification.title}
           </Text>
           <Text className="text-[12px] text-slate-400 mt-0.5" numberOfLines={2}>
@@ -105,18 +116,16 @@ function NotificationRow({
           </Text>
         </View>
       </View>
-      <View className="items-end gap-1.5">
-        <Text className="text-[11px] font-medium text-slate-300">{formatRelativeTime(notification.timestamp)}</Text>
-        {!notification.read && (
-          <View
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: 4,
-              backgroundColor: '#3b82f6',
-            }}
-          />
-        )}
+      <View className="flex-row items-center gap-1.5">
+        <View
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: 4,
+            backgroundColor: notification.read ? 'transparent' : '#3b82f6',
+          }}
+        />
+        <Text className="text-[11px] font-medium text-slate-400">{formatRelativeTime(notification.timestamp)}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -150,8 +159,32 @@ function groupNotifications(notifications: AppNotification[]) {
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { notifications, removeNotification, markAllAsRead, markAsRead } = useNotificationsStore();
+  const { notifications, removeNotification, markAllAsRead, markAsRead, syncFromAnalytics } = useNotificationsStore();
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
+
+  useFocusEffect(
+    useCallback(() => {
+      syncFromAnalytics().then(() => {
+        const { notifications } = useNotificationsStore.getState();
+        if (!notifications.find(n => n.id === 'mock_reminder')) {
+          useNotificationsStore.setState({
+            notifications: [
+              {
+                id: 'mock_reminder',
+                type: 'reminder',
+                title: 'Ready for your next trip?',
+                body: 'Start a new list before you head to the store.',
+                timestamp: Date.now() + 1000,
+                read: false,
+              },
+              ...notifications
+            ]
+          });
+        }
+      });
+    }, [syncFromAnalytics])
+  );
+
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -211,14 +244,16 @@ export default function NotificationsScreen() {
         </TouchableOpacity>
 
         <View className="flex-row items-center gap-2 mr-2">
-          {notifications.length > 0 && (
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={handleMarkAllRead}
-              className="h-10 w-10 bg-white items-center justify-center rounded-full shadow-sm"
-            >
-              <CheckCheck size={20} color="#3b82f6" />
-            </TouchableOpacity>
+          {unreadCount > 0 && (
+            <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(300)}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleMarkAllRead}
+                className="h-10 w-10 bg-white items-center justify-center rounded-full shadow-sm"
+              >
+                <CheckCheck size={20} color="#3b82f6" />
+              </TouchableOpacity>
+            </Animated.View>
           )}
           <TouchableOpacity
             activeOpacity={0.7}
@@ -243,24 +278,10 @@ export default function NotificationsScreen() {
         {/* Large Title */}
         <Animated.View
           entering={FadeInDown.duration(400).springify()}
-          className="px-8 mb-2"
+          className="px-8 mb-6"
         >
           <Text style={{ fontSize: 28, fontWeight: '600', letterSpacing: -0.6, color: '#0f172a' }}>Notifications</Text>
         </Animated.View>
-
-        {/* Subtitle */}
-        {notifications.length > 0 && (
-          <Animated.View
-            entering={FadeInDown.duration(500).delay(50).springify()}
-            className="mx-8 mb-4"
-          >
-            <Text className="text-[13px] font-medium text-slate-400">
-              {unreadCount > 0
-                ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`
-                : `${notifications.length} notification${notifications.length !== 1 ? 's' : ''}`}
-            </Text>
-          </Animated.View>
-        )}
 
         {/* Empty State */}
         {notifications.length === 0 && (
@@ -297,22 +318,13 @@ export default function NotificationsScreen() {
                   <Text className="text-[12px] text-slate-400 mt-0.5">Get alerted when you're close to a saved shop</Text>
                 </View>
               </View>
-              <View className="flex-row items-center p-4 border-b border-slate-50">
+              <View className="flex-row items-center p-4">
                 <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
                   <ShoppingBag size={20} color="#3b82f6" />
                 </View>
                 <View className="ml-3 flex-shrink flex-1">
                   <Text className="text-[15px] font-semibold text-slate-900">List Reminders</Text>
                   <Text className="text-[12px] text-slate-400 mt-0.5">Reminders about your shopping lists</Text>
-                </View>
-              </View>
-              <View className="flex-row items-center p-4">
-                <View style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
-                  <Sparkles size={20} color="#8b5cf6" />
-                </View>
-                <View className="ml-3 flex-shrink flex-1">
-                  <Text className="text-[15px] font-semibold text-slate-900">Smart Updates</Text>
-                  <Text className="text-[12px] text-slate-400 mt-0.5">Helpful tips and important updates</Text>
                 </View>
               </View>
             </Animated.View>
@@ -327,7 +339,7 @@ export default function NotificationsScreen() {
               entering={FadeInDown.duration(500).delay(100).springify()}
               className="mx-8 mb-2"
             >
-              <Text className="text-[13px] font-semibold text-slate-400 uppercase tracking-wider">
+              <Text className="text-[13px] font-semibold text-slate-400 tracking-wide">
                 Today
               </Text>
             </Animated.View>
@@ -377,7 +389,7 @@ export default function NotificationsScreen() {
               entering={FadeInDown.duration(500).delay(250).springify()}
               className="mx-8 mb-2"
             >
-              <Text className="text-[13px] font-semibold text-slate-400 uppercase tracking-wider">
+              <Text className="text-[13px] font-semibold text-slate-400 tracking-wide">
                 Earlier
               </Text>
             </Animated.View>
@@ -424,6 +436,7 @@ export default function NotificationsScreen() {
         {notifications.length > 0 && (
           <Animated.View
             entering={FadeInDown.duration(500).delay(400).springify()}
+            layout={LinearTransition.springify()}
             className="items-center mt-2 mb-4"
           >
             <Text className="text-[12px] font-medium text-slate-300 tracking-wide text-center">

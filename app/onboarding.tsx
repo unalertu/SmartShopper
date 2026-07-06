@@ -192,7 +192,7 @@ export default function OnboardingScreen() {
           if (!canAskAgain) {
             Alert.alert(
               'Location Access Required',
-              'SmartShopper needs location access to notify you when you\'re near stores. Please enable "Always" in Settings.',
+              'GeoCart needs location access to notify you when you\'re near stores. Please enable "Always" in Settings.',
               [
                 { text: 'Cancel', style: 'cancel', onPress: () => goToNext() },
                 {
@@ -297,7 +297,7 @@ export default function OnboardingScreen() {
                 <View style={{ position: 'absolute', bottom: 36, left: 38, width: 9, height: 9, borderRadius: 5, backgroundColor: '#94a3b8' }} />
               </View>
             </IllustrationBox>
-            <View style={{ marginTop: 32, alignItems: 'center' }}>
+            <View style={{ marginTop: 16, alignItems: 'center' }}>
               <Text style={{ fontSize: 28, fontWeight: '700', color: NAVY_COLOR, textAlign: 'center', letterSpacing: -0.5 }}>Get Reminded at the{'\n'}Right Place</Text>
               <Text style={{ fontSize: 15, color: '#64748b', textAlign: 'center', marginTop: 12, lineHeight: 22 }}>GeoCart reminds you about your shopping list{'\n'}when you're near a store.</Text>
             </View>

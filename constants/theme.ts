@@ -1,5 +1,5 @@
 /**
- * Design tokens for the SmartShopper app.
+ * Design tokens for the GeoCart app.
  * These values align with our Tailwind config for use in
  * non-className contexts (e.g., Reanimated, inline styles).
  */

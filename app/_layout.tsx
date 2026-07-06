@@ -64,7 +64,7 @@ export default function RootLayout() {
       // Check if we need to show onboarding and redirect immediately
       // This happens behind the LaunchScreen, preventing any flashes
       const hasCompletedOnboarding = useSettingsStore.getState().hasCompletedOnboarding;
-      if (true || !hasCompletedOnboarding) {
+      if (!hasCompletedOnboarding) {
         setTimeout(() => {
           router.replace('/onboarding');
         }, 0);
@@ -165,14 +165,11 @@ export default function RootLayout() {
     // If onboarding is going to be shown, we just stop here
     // as we don't need to sync locations/notifications yet.
     const hasCompletedOnboarding = useSettingsStore.getState().hasCompletedOnboarding;
-    if (true || !hasCompletedOnboarding) {
+    if (!hasCompletedOnboarding) {
       return;
     }
 
     try {
-      // Check and send welcome notification safely (persisted check)
-      await notificationEngine.checkAndSendWelcome();
-      
       // Sync notifications from analytics to Zustand
       await useNotificationsStore.getState().syncFromAnalytics();
       

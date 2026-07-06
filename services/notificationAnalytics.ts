@@ -20,7 +20,7 @@ import { useStatsStore } from "../store/useStatsStore";
 
 export interface NotificationHistoryEntry {
   id: string;
-  type: "location" | "welcome";
+  type: "location" | "welcome" | "reminder" | "update";
   title: string;
   body: string;
   storeId?: string;

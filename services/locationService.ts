@@ -459,6 +459,9 @@ export const handleGeofenceEnter = async (storeId: string) => {
     );
     await sendLocalNotification(content.title, content.body, 'geofence-alerts');
     await notificationAnalytics.recordNotification(content.title, content.body, store.id, eventId);
+    
+    // Record store visit for stats
+    useStatsStore.getState().recordStoreVisit(store.id);
   } catch (e) {
     console.error("handleGeofenceEnter error", e);
   }

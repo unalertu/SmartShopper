@@ -315,7 +315,7 @@ export default function NotificationPreferencesScreen() {
 
         <Animated.View layout={LinearTransition.springify()} className="mx-8 mt-2 mb-8">
           <Text className="text-[13px] text-slate-400 leading-5 text-center">
-            SmartShopper only checks your location periodically and intelligently reduces activity when you're driving, inactive, or have no active shopping lists. This helps minimize battery usage while still delivering timely reminders.
+            GeoCart only checks your location periodically and intelligently reduces activity when you're driving, inactive, or have no active shopping lists. This helps minimize battery usage while still delivering timely reminders.
           </Text>
         </Animated.View>
 

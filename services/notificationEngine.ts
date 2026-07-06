@@ -172,15 +172,7 @@ export const notificationEngine = {
     return speedMs < 6.94; // 25 km/h limit
   },
 
-  checkAndSendWelcome: async (): Promise<void> => {
-    const state = await notificationAnalytics.getState();
-    if (!state.hasSentWelcome) {
-      await notificationAnalytics.addWelcomeNotification(
-        "Welcome to SmartShopper",
-        "Start creating your smart shopping lists today."
-      );
-    }
-  },
+
 
   syncUnfinishedListReminder: async (): Promise<void> => {
     const unpurchasedItems = useShoppingListStore.getState().items.filter(i => !i.isPurchased);

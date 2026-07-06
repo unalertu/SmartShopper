@@ -3,7 +3,7 @@ import { notificationAnalytics } from "../services/notificationAnalytics";
 
 export interface AppNotification {
   id: string;
-  type: 'location' | 'welcome';
+  type: 'location' | 'welcome' | 'reminder' | 'update';
   title: string;
   body: string;
   storeId?: string;
