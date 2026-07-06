@@ -26,6 +26,7 @@ import CreateListSheet from '../../components/CreateListSheet';
 import ConfirmationSheet from '../../components/ConfirmationSheet';
 import { getSuggestionCards, SuggestionCard } from '@/constants/events';
 import { showPaywall } from "@/services/paywallService";
+import { CATEGORIES } from '@/constants/Categories';
 
 const getRelativeDate = (timestamp?: number): string => {
   if (!timestamp) return 'today';
@@ -65,7 +66,9 @@ export default function HomeScreen() {
     const unpurchased = allShoppingItems.filter((i: any) => !i.isPurchased);
     const uniqueNames = new Set<string>();
     for (const item of unpurchased) {
-      uniqueNames.add(item.name.trim().toLowerCase());
+      if (item.name && item.name.trim()) {
+        uniqueNames.add(item.name.trim().toLowerCase());
+      }
     }
     return uniqueNames.size;
   }, [allShoppingItems]);
@@ -73,7 +76,7 @@ export default function HomeScreen() {
   const topPurchasedNames = useMemo(() => {
     const frequency: Record<string, number> = {};
     allShoppingItems.forEach((item: any) => {
-      if (item.isPurchased && item.name) {
+      if (item.name) {
         const nameKey = item.name.trim();
         if (nameKey) {
           frequency[nameKey] = (frequency[nameKey] || 0) + 1;
@@ -427,7 +430,7 @@ export default function HomeScreen() {
       const frequency: Record<string, { count: number, item: any }> = {};
       
       allItems.forEach((item: any) => {
-        if (item.isPurchased) {
+        if (item.name) {
           const nameKey = item.name.trim().toLowerCase();
           if (!frequency[nameKey]) {
             frequency[nameKey] = { count: 0, item };
@@ -440,11 +443,12 @@ export default function HomeScreen() {
       const topItems = sortedNames.slice(0, 10).map(key => frequency[key].item);
       
       topItems.forEach((item: any) => {
+        const catValue = CATEGORIES.find(c => c.label === item.category || c.value === item.category)?.value || '🛒 General';
         useShoppingListStore.getState().addItem(listId, {
           name: item.name,
           quantity: item.quantity,
           unit: item.unit,
-          category: item.category
+          category: catValue
         });
       });
     } else if (suggestionCards.some(c => c.name === name)) {
@@ -453,32 +457,41 @@ export default function HomeScreen() {
         useShoppingListStore.getState().addItem(listId, {
           name: itemName,
           quantity: 1,
-          unit: "unit",
-          category: "Other"
+          unit: "pcs",
+          category: "🛒 General"
         });
       });
-    } else if (name === "Did you forget?") {
+    } else if (name === "Forgotten Items") {
       const allItems = useShoppingListStore.getState().items;
-      const unpurchased = allItems.filter((i: any) => !i.isPurchased);
-      unpurchased.sort((a: any, b: any) => a.createdAt - b.createdAt);
       
-      const uniqueNames = new Set<string>();
-      const topForgot = [];
-      for (const item of unpurchased) {
+      const unpurchased = allItems.filter((i: any) => !i.isPurchased);
+      unpurchased.sort((a: any, b: any) => (a.createdAt || 0) - (b.createdAt || 0));
+      
+      const groupedItems: Record<string, any> = {};
+      
+      unpurchased.forEach((item: any) => {
+        if (!item.name || !item.name.trim()) return;
         const lowerName = item.name.trim().toLowerCase();
-        if (!uniqueNames.has(lowerName)) {
-          uniqueNames.add(lowerName);
-          topForgot.push(item);
+        
+        if (!groupedItems[lowerName]) {
+          groupedItems[lowerName] = { ...item };
+        } else {
+          // If units match, sum quantities. Otherwise, just keep the first one
+          if (groupedItems[lowerName].unit === item.unit) {
+            groupedItems[lowerName].quantity = Number(groupedItems[lowerName].quantity || 0) + Number(item.quantity || 0);
+          }
         }
-        if (topForgot.length >= 8) break;
-      }
+      });
+      
+      const topForgot = Object.values(groupedItems);
       
       topForgot.forEach((item: any) => {
+        const catValue = CATEGORIES.find(c => c.label === item.category || c.value === item.category)?.value || '🛒 General';
         useShoppingListStore.getState().addItem(listId, {
           name: item.name,
           quantity: item.quantity,
           unit: item.unit,
-          category: item.category
+          category: catValue
         });
       });
     }
@@ -829,17 +842,17 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               )}
 
-              {/* Did you forget High-Value Card */}
+              {/* Forgotten Items High-Value Card */}
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={() => handleCreateSuggestedList("Did you forget?")}
+                onPress={() => handleCreateSuggestedList("Forgotten Items")}
                 className="bg-amber-50 border border-amber-100 rounded-[20px] px-4 py-4 flex-row items-center gap-3 w-full"
               >
                 <View className="w-9 h-9 rounded-full bg-amber-100 items-center justify-center">
                   <Lightbulb size={18} color="#d97706" strokeWidth={2.5} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-[15px] font-bold text-amber-900 leading-tight">Did you forget?</Text>
+                  <Text className="text-[15px] font-bold text-amber-900 leading-tight">Forgotten Items</Text>
                   {forgottenCount > 0 && (
                     <Text className="text-[13px] font-medium text-amber-700 mt-0.5">{forgottenCount} {forgottenCount === 1 ? 'item' : 'items'}</Text>
                   )}

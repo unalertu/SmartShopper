@@ -12,6 +12,13 @@ export const CATEGORIES = [
   { label: "Frozen", value: "❄️ Frozen", icon: "❄️" },
   { label: "Household", value: "🧹 Household", icon: "🧹" },
   { label: "Personal Care", value: "🧴 Personal Care", icon: "🧴" },
+  { label: "Beverages", value: "☕️ Beverages", icon: "☕️" },
+  { label: "Office", value: "📎 Office", icon: "📎" },
+  { label: "Breakfast", value: "🥞 Breakfast", icon: "🥞" },
+  { label: "Cleaning", value: "🧽 Cleaning", icon: "🧽" },
+  { label: "Pets", value: "🐾 Pets", icon: "🐾" },
+  { label: "Health", value: "💊 Health", icon: "💊" },
+  { label: "Baking", value: "🥣 Baking", icon: "🥣" },
 ] as const;
 
 export const UNITS = [

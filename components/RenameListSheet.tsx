@@ -109,7 +109,7 @@ function RenameListSheet({
   if (!visible) return null;
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+    <View style={[StyleSheet.absoluteFill, { zIndex: 100, elevation: 100 }]} pointerEvents="box-none">
       {/* Backdrop */}
       <Animated.View 
         entering={FadeIn.duration(320).easing(Easing.out(Easing.cubic))}

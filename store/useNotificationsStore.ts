@@ -26,7 +26,13 @@ export const useNotificationsStore = create<NotificationsStoreState>((set, get) 
 
   syncFromAnalytics: async () => {
     const history = await notificationAnalytics.getHistory();
-    set({ notifications: history as AppNotification[] });
+    set((state) => {
+      const mock = state.notifications.find((n) => n.id === 'mock_reminder');
+      const newNotifications = history as AppNotification[];
+      return {
+        notifications: mock ? [mock, ...newNotifications] : newNotifications,
+      };
+    });
   },
 
   removeNotification: async (id) => {

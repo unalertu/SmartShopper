@@ -432,7 +432,7 @@ export default function ListDetails() {
         <View className="mb-8">
           {sortedCategories.map((category) => (
             <View key={category} className="mb-6">
-              <Text className="mx-8 mb-2 text-sm font-bold text-slate-500 tracking-wider">
+              <Text className="mx-8 mb-2 text-[17px] font-bold text-slate-600 tracking-wider">
                 {category}
               </Text>
               <View className="mx-6 bg-white rounded-[24px] border border-slate-100 px-5 py-2">

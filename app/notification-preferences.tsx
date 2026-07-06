@@ -268,10 +268,10 @@ export default function NotificationPreferencesScreen() {
 
         {/* Advanced Notification Settings — Pro Only */}
         <SettingsGroup title={
-          <Text className="text-[16px] font-bold tracking-wider" style={{ color: '#D4AF37' }}>Pro Settings</Text>
+          <Text className="text-[13px] font-bold tracking-wider" style={{ color: '#D4AF37' }}>Pro Settings</Text>
         }>
           <SettingsRow
-            icon={<Target size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
+            icon={<Target size={20} color={isPro ? "#D4AF37" : "#cbd5e1"} />}
             label="Alert Distance"
             sublabel="How close you are before alerts"
             isProOnly={!isPro}
@@ -281,7 +281,7 @@ export default function NotificationPreferencesScreen() {
             rightElement={<ChevronRight size={20} color="#cbd5e1" />}
           />
           <SettingsRow
-            icon={<Clock size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
+            icon={<Clock size={20} color={isPro ? "#D4AF37" : "#cbd5e1"} />}
             label="Allowed Hours"
             sublabel="Only receive notifications during set hours"
             isProOnly={!isPro}
@@ -291,7 +291,7 @@ export default function NotificationPreferencesScreen() {
             rightElement={<ChevronRight size={20} color="#cbd5e1" />}
           />
           <SettingsRow
-            icon={<BellDot size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
+            icon={<BellDot size={20} color={isPro ? "#D4AF37" : "#cbd5e1"} />}
             label="Maximum Alerts"
             sublabel="Limit notifications per day"
             isProOnly={!isPro}
@@ -301,7 +301,7 @@ export default function NotificationPreferencesScreen() {
             rightElement={<ChevronRight size={20} color="#cbd5e1" />}
           />
           <SettingsRow
-            icon={<Calendar size={20} color={isPro ? "#64748b" : "#cbd5e1"} />}
+            icon={<Calendar size={20} color={isPro ? "#D4AF37" : "#cbd5e1"} />}
             label="Notification Schedule"
             sublabel="Set specific days for notifications"
             isLast
