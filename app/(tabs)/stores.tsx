@@ -40,28 +40,30 @@ const useLocalUIStore = create<LocalUIState>((set) => ({
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// TrackedMarker Wrapper for isolating tracksViewChanges logic
-const TrackedMarker = React.forwardRef(({ children, forceTrack, ...props }: any, ref: any) => {
-  const [tracksViewChanges, setTracksViewChanges] = useState(true);
+const MARKER_ANCHOR = { x: 0.5, y: 0.5 };
+const CALLOUT_ANCHOR = { x: 0.5, y: 0.15 };
 
-  useEffect(() => {
-    if (forceTrack) {
-      setTracksViewChanges(true);
-    } else {
-      const timer = setTimeout(() => {
-        setTracksViewChanges(false);
-      }, 250);
-      return () => clearTimeout(timer);
-    }
-  }, [forceTrack]);
+// Bulletproof TrackedMarker for iOS New Architecture:
+// Prevents the "0,0 top-left ghost flash" by keeping the marker invisible 
+// until its custom children have completed their initial Yoga layout.
+const TrackedMarker = React.forwardRef(({ children, forceTrack, ...props }: any, ref: any) => {
+  const [isReady, setIsReady] = useState(false);
 
   return (
-    <Marker ref={ref} tracksViewChanges={tracksViewChanges} {...props}>
-      {children}
+    <Marker 
+      ref={ref} 
+      {...props} 
+      style={[props.style, { opacity: isReady ? 1 : 0 }]}
+      tracksViewChanges={forceTrack || !isReady}
+    >
+      <View onLayout={() => setIsReady(true)}>
+        {children}
+      </View>
     </Marker>
   );
 });
 TrackedMarker.displayName = 'TrackedMarker';
+
 
 
 // Helper: show directions action sheet for a shop
@@ -472,7 +474,7 @@ export default function StoresScreen() {
         updateClusters(region);
       }
       isAnimatingRef.current = false;
-    }, isAnimatingRef.current ? 200 : 50);
+    }, isAnimatingRef.current ? 420 : 50);
 
     // Add a 1 second debounce specifically for fetching from Overpass API
     // so we don't exhaust the service when the user drags repeatedly
@@ -744,7 +746,7 @@ export default function StoresScreen() {
        *                           keeps the UI clean like delivery/store-style apps.
        * showsUserLocation={true} → Retained: essential for store proximity UX.
        */}
-      {initialRegion ? (
+      {initialRegion && typeof initialRegion.latitude === 'number' && !isNaN(initialRegion.latitude) ? (
       <MapView
         ref={mapRef}
         userInterfaceStyle="light"
@@ -796,8 +798,8 @@ export default function StoresScreen() {
                 else delete markerRefs.current[shopId];
               }}
               coordinate={{ latitude, longitude }}
-              anchor={{ x: 0.5, y: 0.5 }}
-              calloutAnchor={{ x: 0.5, y: 0.15 }}
+              anchor={MARKER_ANCHOR}
+              calloutAnchor={CALLOUT_ANCHOR}
               forceTrack={needsTracking}
               onPress={(e: any) => {
                 e.stopPropagation();
@@ -839,16 +841,6 @@ export default function StoresScreen() {
               }}
             >
               <StoreMarker isSaved={isSaved} isSelected={isSelected} isMuted={!shop.isActive} />
-              {readyCalloutId === shopId && (
-                <Callout tooltip onPress={() => {}}>
-                  <View style={styles.calloutContainer} pointerEvents="none">
-                    <View style={[styles.calloutBubble, isSaved ? styles.calloutBubbleSaved : styles.calloutBubbleUnsaved]}>
-                      <Text style={[styles.calloutText, isSaved ? styles.calloutTextSaved : styles.calloutTextUnsaved]} numberOfLines={3}>{markerName}</Text>
-                    </View>
-                    <View style={[styles.calloutArrow, isSaved ? styles.calloutArrowSaved : styles.calloutArrowUnsaved]} />
-                  </View>
-                </Callout>
-              )}
             </TrackedMarker>
           );
         })}
@@ -902,8 +894,8 @@ export default function StoresScreen() {
                 else delete markerRefs.current[properties.id];
               }}
               coordinate={{ latitude, longitude }}
-              anchor={{ x: 0.5, y: 0.5 }}
-              calloutAnchor={{ x: 0.5, y: 0.15 }}
+              anchor={MARKER_ANCHOR}
+              calloutAnchor={CALLOUT_ANCHOR}
               forceTrack={needsTracking}
               onPress={(e: any) => {
                 e.stopPropagation();
@@ -955,16 +947,6 @@ export default function StoresScreen() {
               }}
             >
               <StoreMarker isSaved={isSaved} isSelected={isSelected} isMuted={mutedUnsavedShops.includes(properties.id)} />
-              {readyCalloutId === properties.id && (
-                <Callout tooltip onPress={() => {}}>
-                  <View style={styles.calloutContainer} pointerEvents="none">
-                    <View style={[styles.calloutBubble, isSaved ? styles.calloutBubbleSaved : styles.calloutBubbleUnsaved]}>
-                      <Text style={[styles.calloutText, isSaved ? styles.calloutTextSaved : styles.calloutTextUnsaved]} numberOfLines={3}>{markerName}</Text>
-                    </View>
-                    <View style={[styles.calloutArrow, isSaved ? styles.calloutArrowSaved : styles.calloutArrowUnsaved]} />
-                  </View>
-                </Callout>
-              )}
             </TrackedMarker>
           );
         })}

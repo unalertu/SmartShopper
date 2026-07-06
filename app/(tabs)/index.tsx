@@ -556,7 +556,7 @@ export default function HomeScreen() {
               {/* Upper Tier: Dynamic Map Preview */}
               <TouchableOpacity activeOpacity={0.8} onPress={() => { hapticImpact(Haptics.ImpactFeedbackStyle.Light); router.navigate('/stores'); }}>
                 <View className="w-full h-48 rounded-t-[36px] overflow-hidden" pointerEvents="none">
-                  {userLocation ? (
+                  {userLocation && typeof userLocation.latitude === 'number' && typeof userLocation.longitude === 'number' && !isNaN(userLocation.latitude) ? (
                     <MapView
                       style={{ width: '100%', height: '100%' }}
                       userInterfaceStyle="light"
@@ -577,7 +577,7 @@ export default function HomeScreen() {
                       showsTraffic={false}
                       loadingEnabled={false}
                     >
-                      {savedShops.map((shop) => (
+                      {savedShops.filter(shop => shop && typeof shop.latitude === 'number' && typeof shop.longitude === 'number' && !isNaN(shop.latitude)).map((shop) => (
                         <Marker
                           key={shop.id}
                           coordinate={{ latitude: shop.latitude, longitude: shop.longitude }}

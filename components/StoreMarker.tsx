@@ -1,7 +1,13 @@
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { ShoppingBasket, BellOff } from 'lucide-react-native';
-import Svg, { Path, Circle as SvgCircle } from 'react-native-svg';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  cancelAnimation,
+} from 'react-native-reanimated';
 
 interface StoreMarkerProps {
   isSaved: boolean;
@@ -10,49 +16,47 @@ interface StoreMarkerProps {
 }
 
 const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelected, isMuted }) => {
-  const scale = useRef(new Animated.Value(0.6)).current;
-  const glowOpacity = useRef(new Animated.Value(isSelected ? 1 : 0)).current;
+  // Shared values live on the UI thread — no JS bridge overhead, auto-cleaned on unmount
+  const scale = useSharedValue(0.6);
+  const glowOpacity = useSharedValue(isSelected ? 1 : 0);
 
-  // Track initial mount to avoid duplicate animations
-  const isMounted = useRef(false);
-
+  // Mount animation: spring in from 0.6 → 0.847
   useEffect(() => {
-    Animated.spring(scale, {
-      toValue: isSelected ? 1 : 0.847,
-      friction: 6,
-      tension: 120,
-      useNativeDriver: true}).start();
-    isMounted.current = true;
+    scale.value = withSpring(isSelected ? 1 : 0.847, { damping: 12, stiffness: 120 });
+    return () => {
+      // Cancel any in-flight animation when the marker unmounts (scrolled off screen)
+      cancelAnimation(scale);
+      cancelAnimation(glowOpacity);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Selection change animation
   useEffect(() => {
-    if (!isMounted.current) return;
-    
-    Animated.parallel([
-      Animated.spring(scale, {
-        toValue: isSelected ? 1 : 0.847,
-        friction: 7,
-        tension: 160,
-        useNativeDriver: true}),
-      Animated.timing(glowOpacity, {
-        toValue: isSelected ? 1 : 0,
-        duration: 300,
-        useNativeDriver: true})
-    ]).start();
-  }, [isSelected]);
+    scale.value = withSpring(isSelected ? 1 : 0.847, { damping: 14, stiffness: 160 });
+    glowOpacity.value = withTiming(isSelected ? 1 : 0, { duration: 300 });
+  }, [isSelected, scale, glowOpacity]);
+
+  const containerStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+  }));
 
   // ── Marker: White capsule with basket icon ──
   // Saved shops have a thin navy ring around them.
   // Muted shops have a gray ring around them, with the standard basket.
   return (
     <View style={styles.wrapper}>
-      <Animated.View style={[styles.container, { transform: [{ scale }] }]}>
+      <Animated.View style={[styles.container, containerStyle]}>
         {/* Selection glow ring */}
-        <Animated.View style={[styles.glowRing, { opacity: glowOpacity }]} />
-        
+        <Animated.View style={[styles.glowRing, glowStyle]} />
+
         {/* Main marker capsule */}
         <View style={[
-          styles.markerCapsule, 
+          styles.markerCapsule,
           isSaved && styles.markerCapsuleSaved
         ]}>
           <ShoppingBasket size={18} color="#0f172a" strokeWidth={2.2} />
@@ -68,7 +72,9 @@ const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelecte
     </View>
   );
 }, (prevProps, nextProps) => {
-  return prevProps.isSaved === nextProps.isSaved && prevProps.isSelected === nextProps.isSelected && prevProps.isMuted === nextProps.isMuted;
+  return prevProps.isSaved === nextProps.isSaved &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.isMuted === nextProps.isMuted;
 });
 
 const styles = StyleSheet.create({
@@ -131,3 +137,4 @@ const styles = StyleSheet.create({
 StoreMarker.displayName = 'StoreMarker';
 
 export default StoreMarker;
+
