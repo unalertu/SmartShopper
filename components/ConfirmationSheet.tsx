@@ -128,7 +128,6 @@ const ConfirmationSheet = memo(React.forwardRef<ConfirmationSheetRef, Confirmati
 
   const modalName = useMemo(() => `confirmation-sheet-${Math.random().toString(36).substr(2, 9)}`, []);
 
-  const snapPoints = useMemo(() => [210], []);
 
   const animationConfigs = useMemo(
     () => ({
@@ -147,8 +146,7 @@ const ConfirmationSheet = memo(React.forwardRef<ConfirmationSheetRef, Confirmati
     <BottomSheetModal
       name={modalName}
       ref={bottomSheetRef}
-      snapPoints={snapPoints}
-      enableDynamicSizing={false}
+      enableDynamicSizing={true}
       enablePanDownToClose
       animateOnMount
       animationConfigs={animationConfigs}

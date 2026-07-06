@@ -190,7 +190,7 @@ export default function StoresScreen() {
   const isAnimatingRef = useRef(false);
   const tracksViewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const calloutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [tracksViewId, setTracksViewId] = useState<string | null>(null);
+  const tracksViewIdRef = useRef<string | null>(null);
   const [readyCalloutId, setReadyCalloutId] = useState<string | null>(null);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteModalData, setDeleteModalData] = useState<any>(null);
@@ -307,7 +307,7 @@ export default function StoresScreen() {
   }));
 
   const [initialRegion, setInitialRegion] = useState<any>(null);
-  const [currentRegion, setCurrentRegion] = useState<any>(null);
+  const currentRegionRef = useRef<any>(null);
 
   // Clustering state
   const superclusterRef = useRef(new Supercluster({
@@ -342,21 +342,27 @@ export default function StoresScreen() {
 
 
 
-  const isShopSaved = useCallback((market: any) => {
-    return savedShops.some(
-      (shop) =>
-        shop.name === market.name &&
-        Math.abs(shop.latitude - market.latitude) < 0.0005 &&
-        Math.abs(shop.longitude - market.longitude) < 0.0005
-    );
+  // O(1) lookup set for saved shop detection — keyed by "name|lat3|lon3"
+  const savedShopKeySet = useMemo(() => {
+    const set = new Set<string>();
+    savedShops.forEach((shop) => {
+      const key = `${shop.name}|${shop.latitude.toFixed(3)}|${shop.longitude.toFixed(3)}`;
+      set.add(key);
+    });
+    return set;
   }, [savedShops]);
+
+  const isShopSaved = useCallback((market: any) => {
+    const key = `${market.name}|${market.latitude.toFixed(3)}|${market.longitude.toFixed(3)}`;
+    return savedShopKeySet.has(key);
+  }, [savedShopKeySet]);
 
   const fetchAbortController = useRef<AbortController | null>(null);
   const fetchedGridCellsRef = useRef<Set<string>>(new Set());
   const pendingGridCellsRef = useRef<Set<string>>(new Set());
   const lastFetchCenterRef = useRef<{latitude: number, longitude: number, latitudeDelta?: number, longitudeDelta?: number} | null>(null);
   const GRID_SIZE = 0.02; // Roughly 2km x 2km grid
-  const MAX_CACHED_MARKETS = 500;
+  const MAX_CACHED_MARKETS = 300;
 
   const fetchMarketsFromOverpass = useCallback(async (region: any) => {
     const isSavedStoresOnly = useSettingsStore.getState().savedStoresOnly;
@@ -461,7 +467,7 @@ export default function StoresScreen() {
       clearTimeout(regionDebounceRef.current);
     }
     regionDebounceRef.current = setTimeout(() => {
-      setCurrentRegion(region);
+      currentRegionRef.current = region;
       if (!isAnimatingRef.current) {
         updateClusters(region);
       }
@@ -478,18 +484,21 @@ export default function StoresScreen() {
     }, 1000);
   }, [updateClusters]);
 
+  // Build Supercluster points from cached markets (dedup + saved filter in single pass)
   const points = useMemo(() => {
     const allPoints: PointFeature<any>[] = [];
     
     if (!savedStoresOnly) {
-      // Add unsaved markets
-      const uniqueMarkets = markets
-        .filter((market, index, self) => 
-          index === self.findIndex((m) => m.latitude === market.latitude && m.longitude === market.longitude)
-        )
-        .filter((market) => !isShopSaved(market));
+      // Deduplicate + saved filter in a single pass (O(n) with Set)
+      const seen = new Set<string>();
+      for (const market of markets) {
+        const coordKey = `${market.latitude}|${market.longitude}`;
+        if (seen.has(coordKey)) continue;
+        seen.add(coordKey);
 
-      uniqueMarkets.forEach(market => {
+        // Skip saved shops (O(1) lookup)
+        if (isShopSaved(market)) continue;
+
         allPoints.push({
           type: 'Feature',
           properties: {
@@ -503,7 +512,7 @@ export default function StoresScreen() {
             coordinates: [market.longitude, market.latitude]
           }
         });
-      });
+      }
     }
 
     return allPoints;
@@ -511,7 +520,7 @@ export default function StoresScreen() {
 
   useEffect(() => {
     superclusterRef.current.load(points);
-    updateClusters(currentRegion);
+    updateClusters(currentRegionRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [points]); // Deliberately omitting currentRegion to prevent reloading the entire KD-tree on every pan
 
@@ -528,8 +537,8 @@ export default function StoresScreen() {
         setSelectedShopToSave({ ...shopToSelect, id: targetShopId, isSaved: true });
         isAnimatingRef.current = true;
         
-        const latDelta = currentRegion?.latitudeDelta || 0.015;
-        const lonDelta = currentRegion?.longitudeDelta || 0.015;
+        const latDelta = currentRegionRef.current?.latitudeDelta || 0.015;
+        const lonDelta = currentRegionRef.current?.longitudeDelta || 0.015;
         const adjustedLatitude = shopToSelect.latitude - (latDelta * 0.25);
         
         mapRef.current.animateToRegion({
@@ -558,7 +567,7 @@ export default function StoresScreen() {
       const markerId = selectedShopToSave.id;
 
       // Enable tracksViewChanges for the selected marker so its callout can render and stay visible
-      setTracksViewId(markerId);
+      tracksViewIdRef.current = markerId;
     } else {
       setReadyCalloutId(null);
       // Hide all callouts when deselected
@@ -607,7 +616,7 @@ export default function StoresScreen() {
       if (status !== 'granted') {
         if (isInitial) {
           setInitialRegion(fallbackRegion);
-          setCurrentRegion(fallbackRegion);
+          currentRegionRef.current = fallbackRegion;
         }
         return;
       }
@@ -632,10 +641,10 @@ export default function StoresScreen() {
 
       if (isInitial) {
         setInitialRegion(newRegion);
-        setCurrentRegion(newRegion);
+        currentRegionRef.current = newRegion;
       } else {
         mapRef.current?.animateToRegion(newRegion, 1000);
-        setCurrentRegion(newRegion);
+        currentRegionRef.current = newRegion;
       }
       updateClusters(newRegion);
 
@@ -650,7 +659,7 @@ export default function StoresScreen() {
       console.warn('Error fetching location', error);
       if (isInitial) {
         setInitialRegion(fallbackRegion);
-        setCurrentRegion(fallbackRegion);
+        currentRegionRef.current = fallbackRegion;
       }
     }
   }, [updateClusters]);
@@ -775,7 +784,7 @@ export default function StoresScreen() {
           const isSelected = selectedShopToSave?.id === shopId;
           let markerName = shop.name || 'Store';
           if (markerName) markerName = markerName.replace(/7[\s-]*eleven/ig, '7\u2011Eleven');
-          const needsTracking = tracksViewId === shopId;
+          const needsTracking = tracksViewIdRef.current === shopId;
           const longitude = shop.longitude;
           const latitude = shop.latitude;
 
@@ -784,6 +793,7 @@ export default function StoresScreen() {
               key={shopId}
               ref={(ref: any) => {
                 if (ref) markerRefs.current[shopId] = ref;
+                else delete markerRefs.current[shopId];
               }}
               coordinate={{ latitude, longitude }}
               anchor={{ x: 0.5, y: 0.5 }}
@@ -804,8 +814,8 @@ export default function StoresScreen() {
 
                 isAnimatingRef.current = true;
                 // Keep the current zoom level if known, otherwise default to 0.01
-                const latDelta = currentRegion?.latitudeDelta || 0.01;
-                const lonDelta = currentRegion?.longitudeDelta || 0.01;
+                const latDelta = currentRegionRef.current?.latitudeDelta || 0.01;
+                const lonDelta = currentRegionRef.current?.longitudeDelta || 0.01;
                 // Offset latitude so the marker isn't hidden under the bottom sheet
                 const adjustedLatitude = latitude - (latDelta * 0.25);
                 
@@ -882,13 +892,14 @@ export default function StoresScreen() {
           const isSelected = selectedShopToSave?.id === properties.id || (isSaved && selectedShopToSave?.id === `saved-${properties.id}`);
           let markerName = properties.name || 'Store';
           if (markerName) markerName = markerName.replace(/7[\s-]*eleven/ig, '7\u2011Eleven');
-          const needsTracking = tracksViewId === properties.id;
+          const needsTracking = tracksViewIdRef.current === properties.id;
 
           return (
             <TrackedMarker
               key={properties.id}
               ref={(ref: any) => {
                 if (ref) markerRefs.current[properties.id] = ref;
+                else delete markerRefs.current[properties.id];
               }}
               coordinate={{ latitude, longitude }}
               anchor={{ x: 0.5, y: 0.5 }}
@@ -919,8 +930,8 @@ export default function StoresScreen() {
 
                 isAnimatingRef.current = true;
                 // Keep the current zoom level if known, otherwise default to 0.01
-                const latDelta = currentRegion?.latitudeDelta || 0.01;
-                const lonDelta = currentRegion?.longitudeDelta || 0.01;
+                const latDelta = currentRegionRef.current?.latitudeDelta || 0.01;
+                const lonDelta = currentRegionRef.current?.longitudeDelta || 0.01;
                 // Offset latitude so the marker isn't hidden under the bottom sheet
                 const adjustedLatitude = latitude - (latDelta * 0.25);
                 

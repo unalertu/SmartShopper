@@ -239,6 +239,11 @@ export const useLocationStore = create<LocationStoreState>()(
     {
       name: "location-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        locations: state.locations,
+        mutedUnsavedShops: state.mutedUnsavedShops,
+        lastBackgroundFetchCoords: state.lastBackgroundFetchCoords,
+      }),
     }
   )
 );

@@ -153,21 +153,47 @@ const THEME_LABELS: Record<ThemeOption, string> = {
 // ─── Pro Status Card Memoized ────────────────────────────────────────────────
 const ProStatusCard = React.memo(({ animatedStyle, isPro }: { animatedStyle: any; isPro: boolean }) => (
   <Animated.View style={animatedStyle}>
-    <View
-      className="bg-white border border-slate-100 rounded-3xl px-4 py-4 flex-row items-center justify-between"
-    >
-      <View className="flex-row items-center gap-3">
-        <Text className="text-[24px] font-semibold text-slate-900 tracking-tight">Plan</Text>
-      </View>
-      <View className="flex-row items-center gap-2">
-        <View className={`${isPro ? 'bg-[#D4AF37]/15' : 'bg-[#0f172a]/10'} px-3 py-1 rounded-full flex-row items-center`}>
-          <Text className={`${isPro ? 'text-[#D4AF37]' : 'text-[#0f172a]'} font-bold text-[14px] uppercase tracking-wider`}>
-            {isPro ? 'Pro' : 'Free'}
-          </Text>
+    {isPro ? (
+      <LinearGradient
+        colors={['#C6A24B', '#B38B22']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          borderRadius: 24,
+          paddingHorizontal: 16,
+          paddingVertical: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}
+      >
+        <View className="flex-row items-center gap-3">
+          <Text className="text-[24px] font-semibold text-white tracking-tight">Plan</Text>
         </View>
-        <ChevronRight size={16} color="#94a3b8" />
+        <View className="flex-row items-center gap-2">
+          <View className="flex-row items-center">
+            <Text className="text-white text-[18px] font-bold tracking-wider" style={{ textShadowColor: 'rgba(0,0,0,0.1)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 1 }}>
+              Pro
+            </Text>
+          </View>
+          <ChevronRight size={16} color="#ffffff" />
+        </View>
+      </LinearGradient>
+    ) : (
+      <View className="bg-white border border-slate-100 rounded-3xl px-4 py-4 flex-row items-center justify-between">
+        <View className="flex-row items-center gap-3">
+          <Text className="text-[24px] font-semibold text-slate-900 tracking-tight">Plan</Text>
+        </View>
+        <View className="flex-row items-center gap-2">
+          <View className="bg-[#0f172a]/10 px-3 py-1 rounded-full flex-row items-center">
+            <Text className="text-[#0f172a] text-[14px] uppercase font-bold tracking-wider">
+              Free
+            </Text>
+          </View>
+          <ChevronRight size={16} color="#94a3b8" />
+        </View>
       </View>
-    </View>
+    )}
   </Animated.View>
 ));
 ProStatusCard.displayName = 'ProStatusCard';
@@ -531,35 +557,17 @@ export default function SettingsScreen() {
           </Animated.View>
 
           {/* ── Premium ── */}
-          <SettingsGroup title="Premium" delay={50}>
-            <SettingsRow
-              icon={<Sparkles size={20} color="#D4AF37" />}
-              label="GeoCart Pro"
-              sublabel={isPro ? undefined : "Unlock all premium features"}
-              onPress={handleProCardPress}
-            />
-            <SettingsRow
-              icon={<RefreshCw size={20} color="#64748b" />}
-              label="Restore Purchases"
-              isLast
-              rightElement={<View />}
-              onPress={async () => {
-                hapticImpact(ImpactFeedbackStyle.Light);
-                try {
-                  const customerInfo = await Purchases.restorePurchases();
-                  const hasPro = !!customerInfo?.entitlements?.active?.['pro'];
-                  setIsPro(hasPro);
-                  if (hasPro) {
-                    Alert.alert('Purchases Restored', 'Your Pro subscription has been successfully restored.');
-                  } else {
-                    Alert.alert('Restore Failed', 'No active Pro subscription was found on this account.');
-                  }
-                } catch (e: any) {
-                  Alert.alert('Error', 'Failed to restore purchases. ' + (e.message || ''));
-                }
-              }}
-            />
-          </SettingsGroup>
+          {!isPro && (
+            <SettingsGroup title="Premium" delay={50}>
+              <SettingsRow
+                icon={<Sparkles size={20} color="#D4AF37" />}
+                label="GeoCart Pro"
+                sublabel="Unlock all premium features"
+                isLast
+                onPress={handleProCardPress}
+              />
+            </SettingsGroup>
+          )}
 
           {/* ── Notifications & Location ── */}
           <SettingsGroup title="Notifications & Location" delay={100}>
@@ -661,8 +669,28 @@ export default function SettingsScreen() {
             <SettingsRow
               icon={<ShareIcon size={20} color="#64748b" />}
               label="Share with Friends"
-              isLast
               onPress={handleShareApp}
+            />
+            <SettingsRow
+              icon={<RefreshCw size={20} color="#64748b" />}
+              label="Restore Purchases"
+              isLast
+              rightElement={<View />}
+              onPress={async () => {
+                hapticImpact(ImpactFeedbackStyle.Light);
+                try {
+                  const customerInfo = await Purchases.restorePurchases();
+                  const hasPro = !!customerInfo?.entitlements?.active?.['pro'];
+                  setIsPro(hasPro);
+                  if (hasPro) {
+                    Alert.alert('Purchases Restored', 'Your Pro subscription has been successfully restored.');
+                  } else {
+                    Alert.alert('Restore Failed', 'No active Pro subscription was found on this account.');
+                  }
+                } catch (e: any) {
+                  Alert.alert('Error', 'Failed to restore purchases. ' + (e.message || ''));
+                }
+              }}
             />
           </SettingsGroup>
 

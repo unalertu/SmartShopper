@@ -353,29 +353,32 @@ export default function ListDetails() {
       >
         <TouchableOpacity 
           onPress={() => router.back()}
-          className="bg-slate-100 p-3 rounded-full"
+          className="bg-slate-100 p-3 rounded-full z-10"
         >
           <ArrowLeft size={20} color="#0f172a" strokeWidth={2.5} />
         </TouchableOpacity>
-        <TouchableOpacity 
-          className="flex-1 flex-row justify-center items-center px-4 gap-1.5"
-          hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-          onPress={() => {
-            hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-            setRenameSheetVisible(true);
-          }}
-        >
-          <Text 
-            className="text-[24px] font-bold text-slate-900 tracking-tight text-center" 
-            numberOfLines={1}
-            adjustsFontSizeToFit
+        <View className="flex-1 flex-row justify-center items-center px-2">
+          <TouchableOpacity 
+            className="flex-row items-center justify-center gap-1.5"
+            hitSlop={{ top: 15, bottom: 15, left: 10, right: 10 }}
+            onPress={() => {
+              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+              setRenameSheetVisible(true);
+            }}
             style={{ flexShrink: 1 }}
           >
-            {list.name}
-          </Text>
-          <Pencil size={16} color="#94a3b8" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleDeleteList} className="bg-slate-100 p-3 rounded-full">
+            <Text 
+              className="text-[24px] font-bold text-slate-900 tracking-tight text-center" 
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={{ flexShrink: 1 }}
+            >
+              {list.name}
+            </Text>
+            <Pencil size={16} color="#94a3b8" />
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity onPress={handleDeleteList} className="bg-slate-100 p-3 rounded-full z-10">
           <Trash2 size={20} color="#f87171" strokeWidth={2.5} />
         </TouchableOpacity>
       </View>

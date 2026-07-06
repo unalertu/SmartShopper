@@ -159,9 +159,9 @@ export default function ProScreen() {
             hapticImpact(Haptics.ImpactFeedbackStyle.Light);
             router.back();
           }}
-          className="h-8 w-8 rounded-full bg-slate-200/80 items-center justify-center"
+          className="h-10 w-10 bg-white items-center justify-center rounded-full shadow-sm"
         >
-          <ChevronLeft size={20} color="#64748b" />
+          <ChevronLeft size={24} color="#0f172a" />
         </TouchableOpacity>
       </View>
 

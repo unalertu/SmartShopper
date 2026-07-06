@@ -16,14 +16,9 @@
         "NSLocationWhenInUseUsageDescription": "SmartShopper needs your location to find nearby stores.",
         "UIBackgroundModes": [
           "location",
-          "fetch",
-          "location",
           "fetch"
         ],
         "LSApplicationQueriesSchemes": [
-          "comgooglemaps",
-          "yandexmaps",
-          "maps",
           "comgooglemaps",
           "yandexmaps",
           "maps"
