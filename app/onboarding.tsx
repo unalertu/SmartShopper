@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, Dimensions, Switch, Image } from 'react-native';
+import { View, Text, TouchableOpacity, Dimensions, Switch, Image, Alert, Linking, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ShoppingCart, MapPin, Bell, Shield, Check, Crown, Settings, SlidersHorizontal, Ruler, Battery, AlertCircle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -10,6 +10,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, interpolate, Ex
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { setupNotifications } from '@/services/notificationService';
 import { Colors } from '@/constants/theme';
+import NotificationPermissionSheet from '@/components/NotificationPermissionSheet';
 
 const { width, height } = Dimensions.get('window');
 const NAVY_COLOR = Colors.surface[900];
@@ -126,6 +127,7 @@ export default function OnboardingScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [locationGranted, setLocationGranted] = useState(false);
   const [notificationGranted, setNotificationGranted] = useState(false);
+  const [showNotificationSheet, setShowNotificationSheet] = useState(false);
 
   // Settings state for screen 5
   const { savedStoresOnly, setSavedStoresOnly, setHasCompletedOnboarding, distanceUnit, setDistanceUnit } = useSettingsStore();
@@ -166,8 +168,18 @@ export default function OnboardingScreen() {
     const current = PAGES[currentIndex];
     
     if (current.type === 'location') {
+      if (locationGranted) {
+        const { status } = await Location.getBackgroundPermissionsAsync();
+        if (status !== 'granted') {
+          try {
+            await Location.requestBackgroundPermissionsAsync();
+          } catch (e) {}
+        }
+        goToNext();
+        return;
+      }
       try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
+        const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
           setLocationGranted(true);
           try {
@@ -175,25 +187,37 @@ export default function OnboardingScreen() {
           } catch (err) {
             console.warn("Background location permission error:", err);
           }
-          setTimeout(() => goToNext(), 800);
-          return;
+          return; // Sayfa otomatik geçmeyecek, butona tekrar basılması beklenecek
+        } else {
+          if (!canAskAgain) {
+            Alert.alert(
+              'Location Access Required',
+              'SmartShopper needs location access to notify you when you\'re near stores. Please enable "Always" in Settings.',
+              [
+                { text: 'Cancel', style: 'cancel', onPress: () => goToNext() },
+                {
+                  text: 'Open Settings',
+                  onPress: () => {
+                    if (Platform.OS === 'ios') Linking.openURL('app-settings:');
+                    else Linking.openSettings();
+                  }
+                }
+              ]
+            );
+            return;
+          }
         }
       } catch (e) {
         console.warn(e);
       }
       goToNext();
     } else if (current.type === 'notification') {
-      try {
-        const { status } = await Notifications.requestPermissionsAsync();
-        if (status === 'granted') {
-          setNotificationGranted(true);
-          setTimeout(() => goToNext(), 800);
-          return;
-        }
-      } catch (e) {
-        console.warn(e);
+      if (notificationGranted) {
+        goToNext();
+        return;
       }
-      goToNext();
+      setShowNotificationSheet(true);
+      return;
     } else if (current.type === 'personalize') {
       finishOnboarding();
     } else {
@@ -277,13 +301,24 @@ export default function OnboardingScreen() {
               <Text style={{ fontSize: 28, fontWeight: '700', color: NAVY_COLOR, textAlign: 'center', letterSpacing: -0.5 }}>Get Reminded at the{'\n'}Right Place</Text>
               <Text style={{ fontSize: 15, color: '#64748b', textAlign: 'center', marginTop: 12, lineHeight: 22 }}>GeoCart reminds you about your shopping list{'\n'}when you're near a store.</Text>
             </View>
-            <View style={{ marginTop: 'auto', backgroundColor: '#f8fafc', padding: 12, borderRadius: 20, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-              <View style={{ width: 36, height: 36, borderRadius: 14, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
-                <Shield size={18} color={NAVY_COLOR} />
+            <View style={{ marginTop: 'auto', gap: 10, marginBottom: 16 }}>
+              <View style={{ backgroundColor: '#eff6ff', padding: 12, borderRadius: 20, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ width: 36, height: 36, borderRadius: 14, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
+                  <AlertCircle size={18} color="#3b82f6" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#1e3a8a' }}>"Always Allow" Required</Text>
+                  <Text style={{ fontSize: 11, color: '#3b82f6', lineHeight: 16, marginTop: 2 }}>Please select "Always Allow" in the upcoming prompts to get reminders.</Text>
+                </View>
               </View>
-              <View style={{ flex: 1, marginLeft: 10 }}>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: NAVY_COLOR }}>Your Location Stays Private</Text>
-                <Text style={{ fontSize: 11, color: '#64748b', lineHeight: 16, marginTop: 2 }}>Used only for nearby store reminders.</Text>
+              <View style={{ backgroundColor: '#f8fafc', padding: 12, borderRadius: 20, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ width: 36, height: 36, borderRadius: 14, borderCurve: 'continuous', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
+                  <Shield size={18} color={NAVY_COLOR} />
+                </View>
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: NAVY_COLOR }}>Your Location Stays Private</Text>
+                  <Text style={{ fontSize: 11, color: '#64748b', lineHeight: 16, marginTop: 2 }}>Used only for nearby store reminders.</Text>
+                </View>
               </View>
             </View>
           </View>
@@ -423,8 +458,8 @@ export default function OnboardingScreen() {
   const currentConfig = PAGES[currentIndex];
   let primaryLabel = 'Next';
   if (currentConfig.type === 'welcome') primaryLabel = 'Get Started';
-  if (currentConfig.type === 'location') primaryLabel = locationGranted ? '✓ Location Enabled' : 'Enable Location';
-  if (currentConfig.type === 'notification') primaryLabel = notificationGranted ? '✓ Notifications Enabled' : 'Enable Notifications';
+  if (currentConfig.type === 'location') primaryLabel = locationGranted ? 'Continue' : 'Enable Location';
+  if (currentConfig.type === 'notification') primaryLabel = notificationGranted ? 'Continue' : 'Enable Notifications';
   if (currentConfig.type === 'personalize') primaryLabel = 'Finish Setup';
 
   return (
@@ -443,7 +478,6 @@ export default function OnboardingScreen() {
       >
         {PAGES.map((p, i) => renderPage(p, i))}
       </Animated.ScrollView>
-
       <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, paddingBottom: 32, backgroundColor: 'white', paddingTop: 20 }}>
         <PageIndicator scrollX={scrollX} pageCount={PAGES.length} />
         <View style={{ alignItems: 'center' }}>
@@ -457,12 +491,18 @@ export default function OnboardingScreen() {
                 borderRadius: 24, 
                 borderCurve: 'continuous'
               }}>
-                <Text style={{ color: '#64748b', fontSize: 15, fontWeight: '700' }}>Back</Text>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: '#64748b' }}>Back</Text>
               </TouchableOpacity>
             )}
           </View>
         </View>
       </View>
+      
+      <NotificationPermissionSheet
+        visible={showNotificationSheet}
+        onDismiss={() => setShowNotificationSheet(false)}
+        onGranted={() => setNotificationGranted(true)}
+      />
     </SafeAreaView>
   );
-}
+};

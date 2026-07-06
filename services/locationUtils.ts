@@ -28,7 +28,7 @@ export const getDistance = (
  */
 export const getCurrentLocation = async (): Promise<Location.LocationObject | null> => {
   try {
-    const { status } = await Location.requestForegroundPermissionsAsync();
+    const { status } = await Location.getForegroundPermissionsAsync();
     if (status !== "granted") return null;
 
     return await Location.getCurrentPositionAsync({
