@@ -45,13 +45,19 @@ const CreateListSheet = memo(({ visible, onClose, onCreateList }: CreateListShee
       setListName('');
       isSheetOpenRef.current = true;
       bottomSheetRef.current?.present();
-      // Auto-focus after a short delay to allow the sheet to open
-      setTimeout(() => inputRef.current?.focus(), 250);
     } else if (isSheetOpenRef.current) {
       Keyboard.dismiss();
       bottomSheetRef.current?.dismiss();
     }
   }, [visible]);
+
+  // Focus right as the sheet begins its opening animation so the keyboard
+  // and sheet animate together instead of the keyboard appearing afterward.
+  const handleSheetAnimate = useCallback((fromIndex: number, toIndex: number) => {
+    if (fromIndex === -1 && toIndex >= 0) {
+      inputRef.current?.focus();
+    }
+  }, []);
 
   const handleDismiss = useCallback(() => {
     isSheetOpenRef.current = false;
@@ -135,6 +141,7 @@ const CreateListSheet = memo(({ visible, onClose, onCreateList }: CreateListShee
       animationConfigs={animationConfigs}
       backdropComponent={renderBackdrop}
       onDismiss={handleDismiss}
+      onAnimate={handleSheetAnimate}
       handleComponent={null}
       backgroundStyle={{ backgroundColor: 'transparent', elevation: 0 }}
       keyboardBehavior="interactive"
