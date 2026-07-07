@@ -1,7 +1,24 @@
-import React, { useEffect, useRef, useState, useCallback, memo, useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, Keyboard, Platform } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolateColor, Easing, withSpring, ReduceMotion } from 'react-native-reanimated';
-import { BottomSheetModal, BottomSheetView, BottomSheetTextInput, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
+import React, { useEffect, useRef, useState, memo } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  Pressable,
+  Keyboard,
+  Platform,
+  KeyboardAvoidingView,
+} from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolateColor,
+  Easing,
+  withSpring,
+  FadeIn,
+  FadeOut,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Colors } from '@/constants/theme';
@@ -14,25 +31,18 @@ interface CreateListSheetProps {
   onCreateList: (name: string) => void;
 }
 
-const CreateListSheet = memo(({ visible, onClose, onCreateList }: CreateListSheetProps) => {
+function CreateListSheet({ visible, onClose, onCreateList }: CreateListSheetProps) {
   const insets = useSafeAreaInsets();
-  const bottomSheetRef = useRef<BottomSheetModal>(null);
-  const inputRef = useRef<any>(null);
-  const isSheetOpenRef = useRef(false);
+  const inputRef = useRef<TextInput>(null);
 
   const [listName, setListName] = useState('');
   const hasText = listName.trim().length > 0;
-
-  // Keep stable refs for callbacks
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
-  const onCreateListRef = useRef(onCreateList);
-  onCreateListRef.current = onCreateList;
 
   const inputFocusAnim = useSharedValue(0);
   const btnActive = useSharedValue(0);
   const btnScale = useSharedValue(1);
 
+  // Animate button color when text changes
   useEffect(() => {
     btnActive.value = withTiming(hasText ? 1 : 0, {
       duration: 180,
@@ -40,41 +50,26 @@ const CreateListSheet = memo(({ visible, onClose, onCreateList }: CreateListShee
     });
   }, [hasText]);
 
+  // Handle visibility and focus
   useEffect(() => {
     if (visible) {
       setListName('');
-      isSheetOpenRef.current = true;
-      bottomSheetRef.current?.present();
-    } else if (isSheetOpenRef.current) {
-      bottomSheetRef.current?.dismiss();
+      // Focus quickly so the keyboard starts appearing while sheet animates
+      setTimeout(() => inputRef.current?.focus(), 80);
+    } else {
+      Keyboard.dismiss();
     }
   }, [visible]);
 
-  // Focus/blur exactly when the sheet's own opening/closing animation starts
-  // (fires for every close path: swipe-down, backdrop tap, or dismiss()) so
-  // the keyboard and sheet always animate together instead of sequentially.
-  const handleSheetAnimate = useCallback((fromIndex: number, toIndex: number) => {
-    if (fromIndex === -1 && toIndex >= 0) {
-      inputRef.current?.focus();
-    } else if (toIndex === -1) {
-      Keyboard.dismiss();
-    }
-  }, []);
-
-  const handleDismiss = useCallback(() => {
-    isSheetOpenRef.current = false;
-    onCloseRef.current();
-  }, []);
-
-  const handleCreate = useCallback(() => {
+  const handleCreate = () => {
     const t = listName.trim();
     if (!t) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    onCloseRef.current();
+    onClose();
     requestAnimationFrame(() => {
-      onCreateListRef.current(t);
+      onCreateList(t);
     });
-  }, [listName]);
+  };
 
   const inputBorder = useAnimatedStyle(() => ({
     borderColor: interpolateColor(
@@ -101,122 +96,115 @@ const CreateListSheet = memo(({ visible, onClose, onCreateList }: CreateListShee
     ),
   }));
 
-  const renderBackdrop = useCallback(
-    (props: any) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={0.35}
-        pressBehavior="close"
-      />
-    ),
-    []
-  );
-
-  const snapPoints = useMemo(() => [250], []);
-
-  const animationConfigs = useMemo(
-    () => ({
-      damping: 32,
-      stiffness: 180,
-      mass: 0.8,
-      overshootClamping: true,
-      restDisplacementThreshold: 0.5,
-      restSpeedThreshold: 0.5,
-      reduceMotion: ReduceMotion.System,
-    }),
-    []
-  );
+  if (!visible) return null;
 
   return (
-    <BottomSheetModal
-      ref={bottomSheetRef}
-      enableDynamicSizing={true}
-      detached={true}
-      bottomInset={Platform.OS === 'ios' ? 24 : 8}
-      style={{ marginHorizontal: 14 }}
-      enablePanDownToClose
-      animateOnMount
-      animationConfigs={animationConfigs}
-      backdropComponent={renderBackdrop}
-      onDismiss={handleDismiss}
-      onAnimate={handleSheetAnimate}
-      handleComponent={null}
-      backgroundStyle={{ backgroundColor: 'transparent', elevation: 0 }}
-      keyboardBehavior="interactive"
-      // "restore" fights our own close: on keyboard hide it re-snaps the
-      // sheet to its open resting height using the keyboard's own hide
-      // animation, racing our dismiss() which is animating it to fully
-      // closed at the same time. "none" lets close() own the position.
-      keyboardBlurBehavior="none"
-    >
-      <BottomSheetView style={{ paddingBottom: 16, backgroundColor: 'transparent' }}>
-        <View style={[styles.sheet, styles.content, { paddingBottom: 24 }]}>
-          <View style={{ alignItems: 'center', width: '100%' }}>
-            <View style={styles.handle} />
+    <View style={[StyleSheet.absoluteFill, { zIndex: 100, elevation: 100 }]} pointerEvents="box-none">
+      {/* Backdrop */}
+      <Animated.View
+        entering={FadeIn.duration(320).easing(Easing.out(Easing.cubic))}
+        exiting={FadeOut.duration(250).easing(Easing.out(Easing.cubic))}
+        style={styles.backdrop}
+      >
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+      </Animated.View>
+
+      {/* Keyboard Avoiding Container */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardContainer}
+        pointerEvents="box-none"
+      >
+        <Animated.View
+          entering={FadeIn.duration(320).easing(Easing.out(Easing.cubic))}
+          exiting={FadeOut.duration(250).easing(Easing.out(Easing.cubic))}
+          style={styles.wrapper}
+        >
+          <View style={[styles.sheet, styles.content, { paddingBottom: 24 }]}>
+            <View style={{ alignItems: 'center', width: '100%' }}>
+              <View style={styles.handle} />
+            </View>
+
+            {/* Header row */}
+            <View style={styles.header}>
+              <Text style={styles.title}>New List</Text>
+            </View>
+
+            {/* Input + Button row */}
+            <View style={styles.actionRow}>
+              <Animated.View style={[styles.inputWrap, inputBorder]}>
+                <TextInput
+                  ref={inputRef}
+                  value={listName}
+                  onChangeText={setListName}
+                  placeholder="List name..."
+                  placeholderTextColor="#cbd5e1"
+                  style={styles.input}
+                  returnKeyType="done"
+                  onSubmitEditing={handleCreate}
+                  autoCorrect={false}
+                  maxLength={40}
+                  selectionColor={Colors.primary[900]}
+                  onFocus={() => {
+                    inputFocusAnim.value = withTiming(1, { duration: 200 });
+                  }}
+                  onBlur={() => {
+                    inputFocusAnim.value = withTiming(0, { duration: 260 });
+                  }}
+                />
+              </Animated.View>
+
+              <AnimatedPressable
+                onPress={handleCreate}
+                disabled={!hasText}
+                onPressIn={() => {
+                  btnScale.value = withSpring(0.92, {
+                    damping: 14,
+                    stiffness: 280,
+                  });
+                }}
+                onPressOut={() => {
+                  btnScale.value = withSpring(1, {
+                    damping: 14,
+                    stiffness: 280,
+                  });
+                }}
+                style={[styles.createBtn, btnBg]}
+              >
+                <Animated.Text style={[styles.createBtnLabel, btnTextStyle]}>
+                  Create
+                </Animated.Text>
+              </AnimatedPressable>
+            </View>
           </View>
-          
-          {/* Header row */}
-          <View style={styles.header}>
-          <Text style={styles.title}>New List</Text>
-        </View>
-
-        {/* Input + Button row */}
-        <View style={styles.actionRow}>
-          <Animated.View style={[styles.inputWrap, inputBorder]}>
-            <BottomSheetTextInput
-              ref={inputRef}
-              value={listName}
-              onChangeText={setListName}
-              placeholder="List name..."
-              placeholderTextColor="#cbd5e1"
-              style={styles.input}
-              returnKeyType="done"
-              onSubmitEditing={handleCreate}
-              autoCorrect={false}
-              maxLength={40}
-              selectionColor={Colors.primary[900]}
-              onFocus={() => {
-                inputFocusAnim.value = withTiming(1, { duration: 200 });
-              }}
-              onBlur={() => {
-                inputFocusAnim.value = withTiming(0, { duration: 260 });
-              }}
-            />
-          </Animated.View>
-
-          <AnimatedPressable
-            onPress={handleCreate}
-            disabled={!hasText}
-            onPressIn={() => {
-              btnScale.value = withSpring(0.92, {
-                damping: 14,
-                stiffness: 280,
-              });
-            }}
-            onPressOut={() => {
-              btnScale.value = withSpring(1, {
-                damping: 14,
-                stiffness: 280,
-              });
-            }}
-            style={[styles.createBtn, btnBg]}
-          >
-            <Animated.Text style={[styles.createBtnLabel, btnTextStyle]}>
-              Create
-            </Animated.Text>
-          </AnimatedPressable>
-        </View>
-        </View>
-      </BottomSheetView>
-    </BottomSheetModal>
+        </Animated.View>
+      </KeyboardAvoidingView>
+    </View>
   );
-});
+}
 
-export default CreateListSheet;
+export default memo(CreateListSheet);
 
+// ── Styles ──
 const styles = StyleSheet.create({
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    zIndex: 1,
+  },
+  keyboardContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    zIndex: 2,
+  },
+  // Reproduces the previous BottomSheetModal's `bottomInset` (24 iOS / 8
+  // Android) + its content area's paddingBottom:16, so the card sits at
+  // the same distance from the screen bottom as before.
+  wrapper: {
+    marginHorizontal: 14,
+    marginBottom: Platform.OS === 'ios' ? 24 : 8,
+    paddingBottom: 16,
+  },
   sheet: {
     backgroundColor: '#ffffff',
     borderRadius: 26,
