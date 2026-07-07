@@ -33,15 +33,23 @@ import { CATEGORIES } from '@/constants/Categories';
 // the screen. Track only long enough for the mount animation, then freeze.
 const MiniMapMarker = React.memo(({ latitude, longitude, instant }: { latitude: number; longitude: number; instant?: boolean }) => {
   const [track, setTrack] = useState(true);
+  // Hidden until first layout — prevents the New Architecture "ghost marker
+  // at the map origin" flash on mount (see TrackedMarker in stores.tsx).
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setTrack(false), 350);
+    const timer = setTimeout(() => {
+      setTrack(false);
+      setIsReady(true);
+    }, 350);
     return () => clearTimeout(timer);
   }, []);
 
   return (
-    <Marker coordinate={{ latitude, longitude }} tracksViewChanges={track}>
-      <StoreMarker isSaved={true} isSelected={false} instant={instant} />
+    <Marker coordinate={{ latitude, longitude }} style={{ opacity: isReady ? 1 : 0 }} tracksViewChanges={track || !isReady}>
+      <View onLayout={() => setIsReady(true)}>
+        <StoreMarker isSaved={true} isSelected={false} instant={instant} />
+      </View>
     </Marker>
   );
 });

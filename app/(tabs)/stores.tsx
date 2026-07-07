@@ -48,10 +48,19 @@ const MAX_CACHED_MARKETS = 300;
 // 2. Uses a simple 300ms timeout to capture the native snapshot, avoiding onLayout state thrashing.
 const TrackedMarker = React.memo(React.forwardRef(({ children, forceTrack, ...props }: any, ref: any) => {
   const [track, setTrack] = useState(true);
+  // Hidden until the child's first Yoga layout completes: on the New
+  // Architecture a freshly mounted marker child can draw at the map view's
+  // origin (top-left "ghost") for a frame before the annotation position is
+  // applied. Revealing only after layout eliminates the phantom marker.
+  const [isReady, setIsReady] = useState(false);
 
-  // Capture snapshot after 300ms to ensure the native view is fully rendered, then freeze.
+  // Capture snapshot after 300ms to ensure the native view is fully rendered,
+  // then freeze. Also force-reveal in case onLayout never fired.
   useEffect(() => {
-    const timer = setTimeout(() => setTrack(false), 300);
+    const timer = setTimeout(() => {
+      setTrack(false);
+      setIsReady(true);
+    }, 300);
     return () => clearTimeout(timer);
   }, []);
 
@@ -73,9 +82,12 @@ const TrackedMarker = React.memo(React.forwardRef(({ children, forceTrack, ...pr
     <Marker
       ref={ref}
       {...props}
-      tracksViewChanges={forceTrack || track}
+      style={[props.style, { opacity: isReady ? 1 : 0 }]}
+      tracksViewChanges={forceTrack || track || !isReady}
     >
-      {children}
+      <View onLayout={() => setIsReady(true)}>
+        {children}
+      </View>
     </Marker>
   );
 }), (prevProps, nextProps) => {
@@ -308,19 +320,39 @@ const MarkerLayer = React.memo(({ mapRef, isAnimatingRef, currentRegionRef, upda
       pendingRegionRef.current = region;
       return;
     }
-    const padding = region.longitudeDelta * 0.5; // Load markers slightly outside the view
+    // Preload markers a full screen beyond the viewport in every direction so
+    // panning doesn't reveal unpopulated map before the post-pan update lands
+    const lngPadding = region.longitudeDelta * 1.0;
+    const latPadding = region.latitudeDelta * 1.0;
     const bbox: [number, number, number, number] = [
-      region.longitude - region.longitudeDelta / 2 - padding,
-      region.latitude - region.latitudeDelta / 2 - padding,
-      region.longitude + region.longitudeDelta / 2 + padding,
-      region.latitude + region.latitudeDelta / 2 + padding,
+      region.longitude - region.longitudeDelta / 2 - lngPadding,
+      region.latitude - region.latitudeDelta / 2 - latPadding,
+      region.longitude + region.longitudeDelta / 2 + lngPadding,
+      region.latitude + region.latitudeDelta / 2 + latPadding,
     ];
 
     const lngDelta = Math.max(region.longitudeDelta, 0.0001);
     const zoom = Math.max(0, Math.round(Math.log(360 / lngDelta) / Math.LN2));
 
     try {
-      const newClusters = superclusterRef.current.getClusters(bbox, zoom);
+      const sc = superclusterRef.current;
+      // Anchor each cluster's React key to its first leaf's market id.
+      // Supercluster regenerates its own cluster ids on every load(), which
+      // previously unmounted + remounted every cluster marker (visible
+      // flicker) whenever new markets arrived. A cluster's first leaf
+      // survives reloads, so unchanged clusters keep their keys and update
+      // count/position in place instead of replaying entrance animations.
+      const newClusters = sc.getClusters(bbox, zoom).map((c: any) => {
+        if (!c.properties?.cluster) return c;
+        let stableKey = `cluster-${c.id}`;
+        try {
+          const leaf = sc.getLeaves(c.id, 1)[0];
+          if (leaf?.properties?.id != null) stableKey = `cluster-${leaf.properties.id}`;
+        } catch {
+          // Tree changed under us — fall back to the volatile id
+        }
+        return { ...c, stableKey };
+      });
       setClusters(newClusters);
     } catch (error) {
       console.log("Supercluster error:", error);
@@ -499,7 +531,7 @@ const MarkerLayer = React.memo(({ mapRef, isAnimatingRef, currentRegionRef, upda
         if (isCluster) {
           return (
             <TrackedMarker
-              key={`cluster-${clusterId}`}
+              key={cluster.stableKey || `cluster-${clusterId}`}
               coordinate={{ latitude, longitude }}
               forceTrack={false}
               onPress={(e: any) => {
