@@ -33,6 +33,16 @@ const CreateListSheet = memo(({ visible, onClose, onCreateList }: CreateListShee
   const btnActive = useSharedValue(0);
   const btnScale = useSharedValue(1);
 
+  // Quick, non-spring close so the sheet disappears immediately (matching
+  // RenameListSheet's exit feel) instead of trailing the keyboard down.
+  const closeAnimationConfigs = useMemo(
+    () => ({
+      duration: 250,
+      easing: Easing.out(Easing.cubic),
+    }),
+    []
+  );
+
   useEffect(() => {
     btnActive.value = withTiming(hasText ? 1 : 0, {
       duration: 180,
@@ -46,7 +56,7 @@ const CreateListSheet = memo(({ visible, onClose, onCreateList }: CreateListShee
       isSheetOpenRef.current = true;
       bottomSheetRef.current?.present();
     } else if (isSheetOpenRef.current) {
-      bottomSheetRef.current?.dismiss();
+      bottomSheetRef.current?.dismiss(closeAnimationConfigs);
     }
   }, [visible]);
 
