@@ -33,16 +33,6 @@ const CreateListSheet = memo(({ visible, onClose, onCreateList }: CreateListShee
   const btnActive = useSharedValue(0);
   const btnScale = useSharedValue(1);
 
-  // Quick, non-spring close so the sheet disappears immediately (matching
-  // RenameListSheet's exit feel) instead of trailing the keyboard down.
-  const closeAnimationConfigs = useMemo(
-    () => ({
-      duration: 250,
-      easing: Easing.out(Easing.cubic),
-    }),
-    []
-  );
-
   useEffect(() => {
     btnActive.value = withTiming(hasText ? 1 : 0, {
       duration: 180,
@@ -56,7 +46,7 @@ const CreateListSheet = memo(({ visible, onClose, onCreateList }: CreateListShee
       isSheetOpenRef.current = true;
       bottomSheetRef.current?.present();
     } else if (isSheetOpenRef.current) {
-      bottomSheetRef.current?.dismiss(closeAnimationConfigs);
+      bottomSheetRef.current?.dismiss();
     }
   }, [visible]);
 
@@ -155,7 +145,11 @@ const CreateListSheet = memo(({ visible, onClose, onCreateList }: CreateListShee
       handleComponent={null}
       backgroundStyle={{ backgroundColor: 'transparent', elevation: 0 }}
       keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore"
+      // "restore" fights our own close: on keyboard hide it re-snaps the
+      // sheet to its open resting height using the keyboard's own hide
+      // animation, racing our dismiss() which is animating it to fully
+      // closed at the same time. "none" lets close() own the position.
+      keyboardBlurBehavior="none"
     >
       <BottomSheetView style={{ paddingBottom: 16, backgroundColor: 'transparent' }}>
         <View style={[styles.sheet, styles.content, { paddingBottom: 24 }]}>
