@@ -28,6 +28,25 @@ import { getSuggestionCards, SuggestionCard } from '@/constants/events';
 import { showPaywall } from "@/services/paywallService";
 import { CATEGORIES } from '@/constants/Categories';
 
+// Mini-map markers previously used the iOS default tracksViewChanges=true,
+// which re-snapshots every custom marker view continuously for the lifetime of
+// the screen. Track only long enough for the mount animation, then freeze.
+const MiniMapMarker = React.memo(({ latitude, longitude }: { latitude: number; longitude: number }) => {
+  const [track, setTrack] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setTrack(false), 350);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <Marker coordinate={{ latitude, longitude }} tracksViewChanges={track}>
+      <StoreMarker isSaved={true} isSelected={false} />
+    </Marker>
+  );
+});
+MiniMapMarker.displayName = 'MiniMapMarker';
+
 const getRelativeDate = (timestamp?: number): string => {
   if (!timestamp) return 'today';
   const date = new Date(timestamp);
@@ -95,8 +114,16 @@ export default function HomeScreen() {
     .sort((a, b) => b.usageCount - a.usageCount)
     .map(t => t.name)
     .slice(0, 4);
-  // Shared Zustand store for saved shops (synced with Stores page)
-  const { locations: savedShops, removeLocation, updateLocation, cachedMarkets, isFetchingMarkets, userLocation, setUserLocation } = useLocationStore();
+  // Shared Zustand store for saved shops (synced with Stores page).
+  // Selector-based subscriptions so this screen doesn't re-render on
+  // unrelated store writes (debug logs/metrics from the background task, etc.)
+  const savedShops = useLocationStore((s) => s.locations);
+  const removeLocation = useLocationStore((s) => s.removeLocation);
+  const updateLocation = useLocationStore((s) => s.updateLocation);
+  const cachedMarkets = useLocationStore((s) => s.cachedMarkets);
+  const isFetchingMarkets = useLocationStore((s) => s.isFetchingMarkets);
+  const userLocation = useLocationStore((s) => s.userLocation);
+  const setUserLocation = useLocationStore((s) => s.setUserLocation);
 
   const checkedShops = useRef(new Set<string>());
 
@@ -174,7 +201,8 @@ export default function HomeScreen() {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
-  const { distanceUnit, isPro } = useSettingsStore();
+  const distanceUnit = useSettingsStore((s) => s.distanceUnit);
+  const isPro = useSettingsStore((s) => s.isPro);
 
   const formatDistance = (meters: number): string => {
     if (distanceUnit === 'imperial') {
@@ -228,11 +256,19 @@ export default function HomeScreen() {
 
           if (fetchedMarkets && fetchedMarkets.length > 0) {
             const prev = useLocationStore.getState().cachedMarkets || [];
-            const combined = [...prev, ...fetchedMarkets];
-            const unique = combined.filter(
-              (market, index, self) => index === self.findIndex((m: any) => m.id === market.id)
-            );
-            useLocationStore.getState().setCachedMarkets(unique);
+            // O(n) dedup via id Set (existing entries win, same as before);
+            // skip the write entirely when nothing new arrived
+            const seenIds = new Set(prev.map((m: any) => m.id));
+            const newOnes: any[] = [];
+            for (const market of fetchedMarkets) {
+              if (!seenIds.has(market.id)) {
+                seenIds.add(market.id);
+                newOnes.push(market);
+              }
+            }
+            if (newOnes.length > 0) {
+              useLocationStore.getState().setCachedMarkets([...prev, ...newOnes]);
+            }
           }
           useLocationStore.getState().setIsFetchingMarkets(false);
         }
@@ -578,12 +614,11 @@ export default function HomeScreen() {
                       loadingEnabled={false}
                     >
                       {savedShops.filter(shop => shop && typeof shop.latitude === 'number' && typeof shop.longitude === 'number' && !isNaN(shop.latitude)).map((shop) => (
-                        <Marker
+                        <MiniMapMarker
                           key={shop.id}
-                          coordinate={{ latitude: shop.latitude, longitude: shop.longitude }}
-                        >
-                          <StoreMarker isSaved={true} isSelected={false} />
-                        </Marker>
+                          latitude={shop.latitude}
+                          longitude={shop.longitude}
+                        />
                       ))}
                     </MapView>
                   ) : (

@@ -296,6 +296,11 @@ export default function TabLayout() {
         }}
     >
       <Tabs.Screen name="index" options={{ title: "Home" }} />
+      {/* Do NOT freezeOnBlur this screen: freezing suspends React before the
+          blur render, which would keep the native map markers mounted (and
+          costing GPU) behind other tabs. Instead, MarkerLayer inside the
+          stores screen unmounts its markers while unfocused and restores them
+          instantly (animation-suppressed) on refocus. */}
       <Tabs.Screen name="stores" options={{ title: "Shops", headerShown: false }} />
       <Tabs.Screen name="lists" options={{ title: "Lists" }} />
       <Tabs.Screen name="settings" options={{ title: "Settings" }} />

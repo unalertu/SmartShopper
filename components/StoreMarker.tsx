@@ -13,11 +13,18 @@ interface StoreMarkerProps {
   isSaved: boolean;
   isSelected: boolean;
   isMuted?: boolean;
+  /**
+   * Mount already settled (skips the entrance spring). Used when markers are
+   * restored after the map tab regains focus, so they reappear exactly as
+   * they looked before — no replayed animations.
+   */
+  instant?: boolean;
 }
 
-const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelected, isMuted }) => {
+const StoreMarker: React.FC<StoreMarkerProps> = React.memo(({ isSaved, isSelected, isMuted, instant }) => {
   // Shared values live on the UI thread — no JS bridge overhead, auto-cleaned on unmount
-  const scale = useSharedValue(0.6);
+  // (initializers run once at mount, so `instant` only affects the entrance)
+  const scale = useSharedValue(instant ? (isSelected ? 1 : 0.847) : 0.6);
   const glowOpacity = useSharedValue(isSelected ? 1 : 0);
 
   // Mount animation: spring in from 0.6 → 0.847

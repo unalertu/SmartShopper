@@ -12,12 +12,19 @@ import Animated, {
 interface MapClusterProps {
   pointCount: number;
   onPress: () => void;
+  /**
+   * Mount already settled (skips the entrance spring/fade). Used when markers
+   * are restored after the map tab regains focus, so they reappear exactly as
+   * they looked before — no replayed animations.
+   */
+  instant?: boolean;
 }
 
-const MapCluster: React.FC<MapClusterProps> = React.memo(({ pointCount, onPress }) => {
+const MapCluster: React.FC<MapClusterProps> = React.memo(({ pointCount, onPress, instant }) => {
   // Shared values — UI thread only, no JS bridge, auto-GC'd on unmount
-  const scale = useSharedValue(0.5);
-  const opacity = useSharedValue(0);
+  // (initializers run once at mount, so `instant` only affects the entrance)
+  const scale = useSharedValue(instant ? 1 : 0.5);
+  const opacity = useSharedValue(instant ? 1 : 0);
 
   useEffect(() => {
     scale.value = withSpring(1, { damping: 14, stiffness: 120 });
