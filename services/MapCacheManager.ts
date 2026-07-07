@@ -15,7 +15,7 @@ interface CacheEntry {
 const MAX_CACHE_SIZE = 12;
 const TTL_MS = 10 * 60 * 1000; // 10 minutes
 
-const DEBUG_MODE = true;
+const DEBUG_MODE = __DEV__;
 const HARD_STORE_LIMIT = 15000;
 
 const BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz";
@@ -74,11 +74,10 @@ class MapCacheManager {
   }
 
   private monitorCache(): void {
+    if (!DEBUG_MODE) return;
     const totalStores = this.getTotalStores();
-    if (DEBUG_MODE) {
-      console.log(`[MapCacheManager] Monitor: ${this.cache.size} regions cached. ` +
-                  `Approx Memory: ${(totalStores * 1).toLocaleString()} KB (${totalStores} stores)`);
-    }
+    console.log(`[MapCacheManager] Monitor: ${this.cache.size} regions cached. ` +
+                `Approx Memory: ${(totalStores * 1).toLocaleString()} KB (${totalStores} stores)`);
   }
 
   /**

@@ -332,6 +332,19 @@ const MarkerLayer = React.memo(({ mapRef, isAnimatingRef, currentRegionRef, upda
     updateClustersRef.current = updateClusters;
   }, [updateClusters, updateClustersRef]);
 
+  // Load points into Supercluster only when their content actually changed.
+  // An identity-only reload regenerates cluster ids, which remounts every
+  // cluster marker (new keys) and replays tracking windows — pure waste when
+  // e.g. muting a shop rebuilt the points array with identical content.
+  const loadedSignatureRef = useRef<string | null>(null);
+  const loadPointsIfChanged = useCallback((pts: PointFeature<any>[]) => {
+    const signature = pts.map((p) => p.properties.id).join(',');
+    if (signature === loadedSignatureRef.current) return false;
+    loadedSignatureRef.current = signature;
+    superclusterRef.current.load(pts);
+    return true;
+  }, []);
+
   // Build Supercluster points from cached markets (dedup + saved filter in single pass)
   const points = useMemo(() => {
     const allPoints: PointFeature<any>[] = [];
@@ -370,9 +383,9 @@ const MarkerLayer = React.memo(({ mapRef, isAnimatingRef, currentRegionRef, upda
   useEffect(() => {
     isFocusedRef.current = isFocused;
     if (!isFocused) return;
-    if (pendingPointsRef.current) {
-      superclusterRef.current.load(pendingPointsRef.current);
-      pendingPointsRef.current = null;
+    const pendingPoints = pendingPointsRef.current;
+    pendingPointsRef.current = null;
+    if (pendingPoints && loadPointsIfChanged(pendingPoints)) {
       pendingRegionRef.current = null;
       updateClusters(currentRegionRef.current);
     } else if (pendingRegionRef.current) {
@@ -390,8 +403,9 @@ const MarkerLayer = React.memo(({ mapRef, isAnimatingRef, currentRegionRef, upda
       pendingPointsRef.current = points;
       return;
     }
-    superclusterRef.current.load(points);
-    updateClusters(currentRegionRef.current);
+    if (loadPointsIfChanged(points)) {
+      updateClusters(currentRegionRef.current);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [points]); // Deliberately omitting currentRegion to prevent reloading the entire KD-tree on every pan
 

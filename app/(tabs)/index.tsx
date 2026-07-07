@@ -17,7 +17,7 @@ import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeOutLeft, LinearTransition, FadeInDown } from 'react-native-reanimated';
 import { useTabBarScrollHandler } from '../../hooks/useTabBarScroll';
 import { useLocationStore, useListsStore, useSettingsStore, useQuickStartStore, useNotificationsStore, useShoppingListStore } from '../../store';
-import { useScrollToTop } from '@react-navigation/native';
+import { useScrollToTop, useIsFocused } from '@react-navigation/native';
 import DelayedRender from '../components/DelayedRender';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import RadarPinIcon from '../../components/RadarPinIcon';
@@ -31,7 +31,7 @@ import { CATEGORIES } from '@/constants/Categories';
 // Mini-map markers previously used the iOS default tracksViewChanges=true,
 // which re-snapshots every custom marker view continuously for the lifetime of
 // the screen. Track only long enough for the mount animation, then freeze.
-const MiniMapMarker = React.memo(({ latitude, longitude }: { latitude: number; longitude: number }) => {
+const MiniMapMarker = React.memo(({ latitude, longitude, instant }: { latitude: number; longitude: number; instant?: boolean }) => {
   const [track, setTrack] = useState(true);
 
   useEffect(() => {
@@ -41,7 +41,7 @@ const MiniMapMarker = React.memo(({ latitude, longitude }: { latitude: number; l
 
   return (
     <Marker coordinate={{ latitude, longitude }} tracksViewChanges={track}>
-      <StoreMarker isSaved={true} isSelected={false} />
+      <StoreMarker isSaved={true} isSelected={false} instant={instant} />
     </Marker>
   );
 });
@@ -68,6 +68,14 @@ export default function HomeScreen() {
   const scrollHandler = useTabBarScrollHandler();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  // Mini-map markers are unmounted while this tab is blurred (their live
+  // shadow-casting views otherwise keep costing GPU behind other tabs) and
+  // restored instantly — animation-suppressed — on refocus.
+  const isFocused = useIsFocused();
+  const wasFocusedRef = useRef(isFocused);
+  const isRestoringMarkers = isFocused && !wasFocusedRef.current;
+  wasFocusedRef.current = isFocused;
   const [nearbyStore, setNearbyStore] = useState<string>('Searching location...');
   const [nearestShopName, setNearestShopName] = useState<string | null>(null);
   const [nearestShopDistance, setNearestShopDistance] = useState<string | null>(null);
@@ -613,11 +621,12 @@ export default function HomeScreen() {
                       showsTraffic={false}
                       loadingEnabled={false}
                     >
-                      {savedShops.filter(shop => shop && typeof shop.latitude === 'number' && typeof shop.longitude === 'number' && !isNaN(shop.latitude)).map((shop) => (
+                      {isFocused && savedShops.filter(shop => shop && typeof shop.latitude === 'number' && typeof shop.longitude === 'number' && !isNaN(shop.latitude)).map((shop) => (
                         <MiniMapMarker
                           key={shop.id}
                           latitude={shop.latitude}
                           longitude={shop.longitude}
+                          instant={isRestoringMarkers}
                         />
                       ))}
                     </MapView>
