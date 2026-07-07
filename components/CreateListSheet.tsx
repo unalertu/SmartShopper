@@ -46,22 +46,23 @@ const CreateListSheet = memo(({ visible, onClose, onCreateList }: CreateListShee
       isSheetOpenRef.current = true;
       bottomSheetRef.current?.present();
     } else if (isSheetOpenRef.current) {
-      Keyboard.dismiss();
       bottomSheetRef.current?.dismiss();
     }
   }, [visible]);
 
-  // Focus right as the sheet begins its opening animation so the keyboard
-  // and sheet animate together instead of the keyboard appearing afterward.
+  // Focus/blur exactly when the sheet's own opening/closing animation starts
+  // (fires for every close path: swipe-down, backdrop tap, or dismiss()) so
+  // the keyboard and sheet always animate together instead of sequentially.
   const handleSheetAnimate = useCallback((fromIndex: number, toIndex: number) => {
     if (fromIndex === -1 && toIndex >= 0) {
       inputRef.current?.focus();
+    } else if (toIndex === -1) {
+      Keyboard.dismiss();
     }
   }, []);
 
   const handleDismiss = useCallback(() => {
     isSheetOpenRef.current = false;
-    Keyboard.dismiss();
     onCloseRef.current();
   }, []);
 
@@ -69,7 +70,6 @@ const CreateListSheet = memo(({ visible, onClose, onCreateList }: CreateListShee
     const t = listName.trim();
     if (!t) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Keyboard.dismiss();
     onCloseRef.current();
     requestAnimationFrame(() => {
       onCreateListRef.current(t);
