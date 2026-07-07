@@ -64,6 +64,14 @@ const MapCluster: React.FC<MapClusterProps> = React.memo(({ pointCount, onPress,
 
 const styles = StyleSheet.create({
   container: {
+    // Fixed footprint (max bubble 65×41 + 7pt glow ring). The native marker
+    // view is positioned by MapKit, but on the New Architecture any Yoga size
+    // change re-applies the React frame at the map origin (top-left) until
+    // the next region change. A constant size means count changes resize only
+    // the inner bubble and never re-layout the marker itself — same guarantee
+    // StoreMarker gets from its fixed 70×70 wrapper.
+    width: 72,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center'},
   outerRing: {
