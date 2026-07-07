@@ -385,6 +385,10 @@ const MarkerLayer = React.memo(({ mapRef, isAnimatingRef, currentRegionRef, upda
       // Deduplicate + saved filter in a single pass (O(n) with Set)
       const seen = new Set<string>();
       for (const market of markets) {
+        // Non-finite coordinates would poison cluster centroids with NaN and
+        // crash MapKit when the marker annotation is inserted — never let
+        // them into the KD-tree.
+        if (!Number.isFinite(market.latitude) || !Number.isFinite(market.longitude)) continue;
         const coordKey = `${market.latitude}|${market.longitude}`;
         if (seen.has(coordKey)) continue;
         seen.add(coordKey);
@@ -485,6 +489,12 @@ const MarkerLayer = React.memo(({ mapRef, isAnimatingRef, currentRegionRef, upda
         const needsTracking = isSelected;
         const longitude = shop.longitude;
         const latitude = shop.latitude;
+
+        // A marker with a non-finite coordinate throws inside MapKit's
+        // addAnnotation (surfaces as -[AIRMap insertReactSubview:atIndex:]).
+        // Persisted saved shops rehydrate unvalidated, so guard like the
+        // home mini-map does.
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
 
         return (
           <TrackedMarker
