@@ -50,3 +50,7 @@ Gemini_Generated_Image_*.png
 # EAS logs
 eas_log*
 
+# Claude Code Agent files
+.claude/
+
+
