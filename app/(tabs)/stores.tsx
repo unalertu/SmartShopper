@@ -105,9 +105,12 @@ TrackedMarker.displayName = 'TrackedMarker';
 
 // Isolated subscriber: isFetchingMarkets toggles twice per Overpass fetch, so
 // only this tiny component re-renders instead of the whole map tree.
+// Gated on savedStoresOnly: discovery is off in that mode, so a fetch that is
+// already in flight elsewhere must not surface a search indicator here.
 const FetchingIndicator = () => {
   const isFetchingMarkets = useLocationStore((s) => s.isFetchingMarkets);
-  return <MapSearchIndicator isVisible={isFetchingMarkets} />;
+  const savedStoresOnly = useSettingsStore((s) => s.savedStoresOnly);
+  return <MapSearchIndicator isVisible={isFetchingMarkets && !savedStoresOnly} />;
 };
 
 

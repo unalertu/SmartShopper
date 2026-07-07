@@ -247,6 +247,13 @@ export default function HomeScreen() {
         const userLon = location.coords.longitude;
         setUserLocation({ latitude: userLat, longitude: userLon });
 
+        // Saved Stores Only disables discovery entirely: no Overpass fetch and
+        // no global fetch-indicator flag (the map's loading pill reads it too).
+        // Read at execution time, same as the map-tab fetch guard.
+        if (useSettingsStore.getState().savedStoresOnly) {
+          return;
+        }
+
         const hasNearbyMarkets = useLocationStore.getState().cachedMarkets.some(
           (m: any) => haversineDistance(userLat, userLon, m.latitude, m.longitude) < 5000
         );
