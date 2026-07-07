@@ -128,7 +128,7 @@ function RenameListSheet({
         <Animated.View 
         entering={FadeIn.duration(320).easing(Easing.out(Easing.cubic))}
         exiting={FadeOut.duration(250).easing(Easing.out(Easing.cubic))}
-          style={[styles.pill, { marginBottom: 8 }]}
+          style={[styles.pill, { marginBottom: 6 }]}
         >
           <DragHandle />
 

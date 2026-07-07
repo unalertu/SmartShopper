@@ -197,13 +197,10 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     zIndex: 2,
   },
-  // Reproduces the previous BottomSheetModal's `bottomInset` (24 iOS / 8
-  // Android) + its content area's paddingBottom:16, so the card sits at
-  // the same distance from the screen bottom as before.
+  // Tight gap to the keyboard/bottom edge, matching RenameListSheet.
   wrapper: {
     marginHorizontal: 14,
-    marginBottom: Platform.OS === 'ios' ? 24 : 8,
-    paddingBottom: 16,
+    marginBottom: 6,
   },
   sheet: {
     backgroundColor: '#ffffff',
