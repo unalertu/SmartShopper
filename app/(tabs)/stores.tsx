@@ -301,6 +301,10 @@ const MarkerLayer = React.memo(({ mapRef, isAnimatingRef, currentRegionRef, upda
     radius: 45,
     maxZoom: 16}));
   const [clusters, setClusters] = useState<any[]>([]);
+  // Monotonic id per cluster recompute: several callers race (region
+  // debounce, points load, focus flush, locate-me) and only the newest may
+  // commit — an older recompute must never overwrite fresher marker state.
+  const clusterGenerationRef = useRef(0);
 
   // O(1) lookup set for saved shop detection — keyed by "name|lat3|lon3"
   const savedShopKeySet = useMemo(() => {
@@ -323,6 +327,7 @@ const MarkerLayer = React.memo(({ mapRef, isAnimatingRef, currentRegionRef, upda
       pendingRegionRef.current = region;
       return;
     }
+    const generation = ++clusterGenerationRef.current;
     // Preload markers a full screen beyond the viewport in every direction so
     // panning doesn't reveal unpopulated map before the post-pan update lands
     const lngPadding = region.longitudeDelta * 1.0;
@@ -346,7 +351,7 @@ const MarkerLayer = React.memo(({ mapRef, isAnimatingRef, currentRegionRef, upda
       // survives reloads, so unchanged clusters keep their keys and update
       // count/position in place instead of replaying entrance animations.
       const newClusters = sc.getClusters(bbox, zoom).map((c: any) => {
-        if (!c.properties?.cluster) return c;
+        if (!c.properties?.cluster) return { ...c, renderKey: String(c.properties?.id) };
         let stableKey = `cluster-${c.id}`;
         try {
           const leaf = sc.getLeaves(c.id, 1)[0];
@@ -354,8 +359,24 @@ const MarkerLayer = React.memo(({ mapRef, isAnimatingRef, currentRegionRef, upda
         } catch {
           // Tree changed under us — fall back to the volatile id
         }
-        return { ...c, stableKey };
+        return { ...c, renderKey: stableKey };
       });
+      // Render in key order, not getClusters() KD-tree traversal order. The
+      // traversal order shuffles with every bbox/zoom, which moved surviving
+      // markers to new sibling positions on each recalc; each move is a
+      // remove+insert on MapView's native children, and AIRMap on iOS tracks
+      // those with insert-by-index / remove-by-value. Rapid reorder batches
+      // through the New-Arch interop queue desync that array and crash in
+      // -[NSArrayM insertObject:atIndex:]. Key order keeps surviving markers
+      // at fixed sibling positions, so only real appears/disappears mutate
+      // the native children.
+      newClusters.sort((a: any, b: any) =>
+        a.renderKey < b.renderKey ? -1 : a.renderKey > b.renderKey ? 1 : 0
+      );
+      if (generation !== clusterGenerationRef.current) {
+        console.log(`[clusters] discarded stale generation ${generation} (latest: ${clusterGenerationRef.current})`);
+        return;
+      }
       setClusters(newClusters);
     } catch (error) {
       console.log("Supercluster error:", error);
@@ -544,7 +565,7 @@ const MarkerLayer = React.memo(({ mapRef, isAnimatingRef, currentRegionRef, upda
         if (isCluster) {
           return (
             <TrackedMarker
-              key={cluster.stableKey || `cluster-${clusterId}`}
+              key={cluster.renderKey || `cluster-${clusterId}`}
               coordinate={{ latitude, longitude }}
               forceTrack={false}
               onPress={(e: any) => {
@@ -589,7 +610,7 @@ const MarkerLayer = React.memo(({ mapRef, isAnimatingRef, currentRegionRef, upda
 
         return (
           <TrackedMarker
-            key={properties.id}
+            key={cluster.renderKey}
             coordinate={{ latitude, longitude }}
             anchor={MARKER_ANCHOR}
             forceTrack={needsTracking}
@@ -1329,16 +1350,22 @@ export default function StoresScreen() {
   }, [fetchMarketsFromOverpass]);
 
   const handleRegionChangeComplete = useCallback((region: any) => {
+    // Publish the latest region synchronously: concurrent recomputes (points
+    // load, focus flush) read this ref and must never cluster against a
+    // region one gesture behind during rapid zoom/pan.
+    currentRegionRef.current = region;
     // Debounce to prevent cluster engine thrashing during animateToRegion
     if (regionDebounceRef.current) {
       clearTimeout(regionDebounceRef.current);
     }
     regionDebounceRef.current = setTimeout(() => {
-      currentRegionRef.current = region;
-      if (!isAnimatingRef.current) {
-        updateClustersRef.current(region);
-      }
       isAnimatingRef.current = false;
+      // Always recluster once the region settles — the 420ms debounce alone
+      // absorbs mid-animation churn. Skipping while isAnimating swallowed the
+      // recalc after programmatic zooms: a tapped cluster never split into
+      // its markers, and zooming out past the stale padded bbox left empty
+      // map until the next manual pan or a fetch happened to land.
+      updateClustersRef.current(region);
     }, isAnimatingRef.current ? 420 : 50);
 
     // Add a 1 second debounce specifically for fetching from Overpass API

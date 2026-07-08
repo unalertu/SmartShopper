@@ -26,6 +26,20 @@ const getRelativeDate = (timestamp?: number): string => {
   return `${Math.floor(days / 30)} months ago`;
 };
 
+/** Formats a timestamp as iOS-style relative time (e.g. "5m ago", "Yesterday", "Jul 5") */
+const formatRelativeTime = (timestamp: number): string => {
+  const diffMs = Date.now() - timestamp;
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days}d ago`;
+  return new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
 /**
  * Returns the icon for a group:
  * - Shopping sessions → always a neutral ShoppingBag
@@ -77,8 +91,7 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
   const router = useRouter();
   const lists = useListsStore((state) => state.lists);
 
-  const dateObj = new Date(group.timestamp);
-  const timeStr = dateObj.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  const timeStr = formatRelativeTime(group.timestamp);
 
   const canNavigate = group.listId != null && lists.some(l => l.id === group.listId);
 
@@ -100,9 +113,9 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
             backgroundColor: '#ffffff',
             borderRadius: 18,
             paddingHorizontal: 14,
-            paddingVertical: 13,
+            paddingVertical: 8,
             flexDirection: 'row',
-            alignItems: 'center',
+            alignItems: 'flex-start',
           }}
         >
           {/* Colored icon */}
@@ -114,7 +127,7 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
               borderRadius: 10,
               alignItems: 'center',
               justifyContent: 'center',
-              marginRight: 12,
+              marginRight: 10,
             }}
           >
             {getGroupIcon(group)}
@@ -124,7 +137,7 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
           <View style={{ flex: 1, marginRight: 8 }}>
             <Text
               style={{
-                fontSize: 15,
+                fontSize: 14,
                 fontWeight: '700',
                 color: '#0f172a',
                 letterSpacing: -0.2,
@@ -136,10 +149,10 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
             </Text>
             <Text
               style={{
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: '500',
                 color: '#64748b',
-                marginTop: 2,
+                marginTop: 1,
               }}
             >
               {group.summaryLines[0]}
@@ -149,9 +162,10 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
           {/* Timestamp */}
           <Text
             style={{
-              fontSize: 11,
-              fontWeight: '500',
-              color: 'rgba(148,163,184,0.5)',
+              fontSize: 12,
+              fontWeight: '400',
+              color: '#94a3b8',
+              marginTop: 2,
               flexShrink: 0,
             }}
           >
@@ -179,7 +193,7 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
           backgroundColor: '#ffffff',
           borderRadius: 18,
           paddingHorizontal: 14,
-          paddingVertical: 12,
+          paddingVertical: 8,
           flexDirection: 'row',
           alignItems: 'flex-start',
         }}
@@ -193,7 +207,7 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
             borderRadius: 8,
             alignItems: 'center',
             justifyContent: 'center',
-            marginRight: 10,
+            marginRight: 8,
             marginTop: 1,
           }}
         >
@@ -204,7 +218,7 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
         <View style={{ flex: 1, marginRight: 8 }}>
           <Text
             style={{
-              fontSize: 15,
+              fontSize: 14,
               fontWeight: '600',
               color: '#1e293b',
               letterSpacing: -0.2,
@@ -216,15 +230,15 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
           </Text>
 
           {/* Summary lines */}
-          <View style={{ marginTop: 3 }}>
+          <View style={{ marginTop: 2 }}>
             {group.summaryLines.map((line, i) => (
               <Text
                 key={i}
                 style={{
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: '500',
                   color: '#94a3b8',
-                  lineHeight: 18,
+                  lineHeight: 16,
                 }}
               >
                 {line}
@@ -236,9 +250,9 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
         {/* Timestamp */}
         <Text
           style={{
-            fontSize: 11,
-            fontWeight: '500',
-            color: 'rgba(148,163,184,0.5)',
+            fontSize: 12,
+            fontWeight: '400',
+            color: '#94a3b8',
             marginTop: 2,
             flexShrink: 0,
           }}
