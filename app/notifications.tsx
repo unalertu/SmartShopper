@@ -297,7 +297,7 @@ export default function NotificationsScreen() {
               </View>
               <Text className="text-[22px] font-bold text-slate-900 tracking-tight mb-2">No notifications yet</Text>
               <Text className="text-[15px] font-medium text-slate-500 text-center px-10 leading-6">
-                We'll notify you when you're near a saved store or when there are updates to your lists.
+                We'll notify you when you're near a saved shop or when there are updates to your lists.
               </Text>
             </View>
 

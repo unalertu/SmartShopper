@@ -814,10 +814,10 @@ const SheetContent = React.memo(({ mapRef, isAnimatingRef, snapSheetToPreview, r
                   if (!canAddLocation(isPro)) {
                     const maxStores = getMaxSavedStores(isPro);
                     Alert.alert(
-                      'Store Limit Reached',
+                      'Shop Limit Reached',
                       isPro
-                        ? `You've reached the maximum of ${maxStores} saved stores.`
-                        : `You've reached the free limit of ${FREE_TIER.maxSavedStores} saved stores. Upgrade to Pro for unlimited saved stores.`,
+                        ? `You've reached the maximum of ${maxStores} saved shops.`
+                        : `You've reached the free limit of ${FREE_TIER.maxSavedStores} saved shops. Upgrade to Pro for unlimited saved shops.`,
                       isPro
                         ? [{ text: 'OK' }]
                         : [
@@ -831,7 +831,7 @@ const SheetContent = React.memo(({ mapRef, isAnimatingRef, snapSheetToPreview, r
                     return;
                   }
                   addLocation({
-                    name: selectedShopToSave.name || 'Unknown Store',
+                    name: selectedShopToSave.name || 'Unknown Shop',
                     address: selectedShopToSave.address || 'Unknown Address',
                     latitude: selectedShopToSave.latitude,
                     longitude: selectedShopToSave.longitude});

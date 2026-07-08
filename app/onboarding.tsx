@@ -365,8 +365,8 @@ export default function OnboardingScreen() {
                   <MapPin size={24} color={NAVY_COLOR} />
                 </View>
                 <View style={{ flex: 1, marginLeft: 14 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: NAVY_COLOR }}>Saved Stores Only</Text>
-                  <Text style={{ fontSize: 12, color: '#64748b', lineHeight: 17, marginTop: 3 }}>Alerts only for saved stores.{'\n'}Stops nearby store discovery.</Text>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: NAVY_COLOR }}>Saved Shops Only</Text>
+                  <Text style={{ fontSize: 12, color: '#64748b', lineHeight: 17, marginTop: 3 }}>Alerts only for saved shops.{'\n'}Stops nearby shop discovery.</Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', backgroundColor: '#e2e8f0', borderRadius: 20, padding: 4 }}>
