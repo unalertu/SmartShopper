@@ -1552,7 +1552,7 @@ export default function StoresScreen() {
           onPress={() => router.push('/notification-preferences')}
           style={styles.floatingSettingsInner}
         >
-          <Settings size={20} color="#475569" strokeWidth={2.5} />
+          <Settings size={20} color="#0f172a" strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
 
