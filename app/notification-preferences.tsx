@@ -18,18 +18,18 @@ import { showPaywall } from "@/services/paywallService";
 
 // ── Per-setting descriptions for enable / disable states ──
 const SETTING_DESCRIPTIONS: Record<string, { enable: React.ReactNode; disable: React.ReactNode }> = {
-  'Saved Stores Only': {
-    enable: "You'll only receive notifications from stores you've saved instead of all nearby stores.\n\nThis reduces battery usage.",
+  'Saved Shops Only': {
+    enable: "You'll only receive notifications from shops you've saved instead of all nearby shops.\n\nThis reduces battery usage.",
     disable: (
       <>
-        You'll receive notifications from all nearby stores instead of only your saved stores.{"\n\n"}
-        <Text style={{ color: '#ef4444' }}>For the best experience, GeoCart should remain available in the background so it can discover nearby stores and send timely alerts.</Text>
+        You'll receive notifications from all nearby shops instead of only your saved shops.{"\n\n"}
+        <Text style={{ color: '#ef4444' }}>For the best experience, GeoCart should remain available in the background so it can discover nearby shops and send timely alerts.</Text>
       </>
     ),
   },
   'Enable Nearby Shops Alerts': {
-    enable: "You'll be notified when a nearby store has items on your shopping list.",
-    disable: "You won't receive reminders when passing stores that carry your list items.",
+    enable: "You'll be notified when a nearby shop has items on your shopping list.",
+    disable: "You won't receive reminders when passing shops that carry your list items.",
   },
   'Notification Haptics': {
     enable: "Your device will vibrate when alerts arrive for a more noticeable experience.",
@@ -226,7 +226,7 @@ export default function NotificationPreferencesScreen() {
           <SettingsRow
             icon={<Menu size={20} color="#64748b" />}
             label="Enable Nearby Shops Alerts"
-            sublabel="Notify for nearby stores"
+            sublabel="Notify for nearby shops"
             rightElement={
               <Switch
                 value={shoppingListReminders}
@@ -239,13 +239,13 @@ export default function NotificationPreferencesScreen() {
           />
           <SettingsRow
             icon={<MapPin size={20} color="#64748b" />}
-            label="Saved Stores Only"
-            sublabel="Only notify for stores you've saved"
+            label="Saved Shops Only"
+            sublabel="Only notify for shops you've saved"
             isLast
             rightElement={
               <Switch
                 value={savedStoresOnly}
-                onValueChange={() => requestToggle('Saved Stores Only', savedStoresOnly, setSavedStoresOnly)}
+                onValueChange={() => requestToggle('Saved Shops Only', savedStoresOnly, setSavedStoresOnly)}
                 trackColor={switchTrackColor}
                 thumbColor="#ffffff"
                 ios_backgroundColor="#E5E7EB"
