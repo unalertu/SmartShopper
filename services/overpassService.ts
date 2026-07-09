@@ -37,7 +37,7 @@ export const fetchMarkets = async (
   way["amenity"="pharmacy"](${south},${west},${north},${east});
   relation["amenity"="pharmacy"](${south},${west},${north},${east});
 );
-out center;`;
+out center 600;`;
 
   console.log(`🔍 Overpass query bbox: S=${south.toFixed(4)} W=${west.toFixed(4)} N=${north.toFixed(4)} E=${east.toFixed(4)}`);
 

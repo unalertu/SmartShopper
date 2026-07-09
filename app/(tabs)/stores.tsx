@@ -45,13 +45,35 @@ const useLocalUIStore = create<LocalUIState>((set) => ({
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const MARKER_ANCHOR = { x: 0.5, y: 0.5 };
-const MAX_CACHED_MARKETS = 300;
+const MAX_CACHED_MARKETS = 500;
 // Beyond this delta the viewport is too wide for a store-level Overpass query;
 // the fetch is skipped and the "zoom in" hint may be shown instead.
 const MAX_FETCH_DELTA = 0.07;
 // In-flight Overpass requests are no longer aborted on pan (their results are
 // always cached), but cap how many can run at once during rapid exploration.
 const MAX_CONCURRENT_FETCHES = 3;
+
+// When the market list exceeds the cap, keep the markets closest to the
+// current viewport center rather than the newest-inserted — trimming by
+// insertion age blanked previously visited areas and could even drop stores
+// inside the viewport the user is looking at after one dense fetch.
+// Preserves the original array order so an unchanged survivor set doesn't
+// shuffle the Supercluster point signature.
+const trimMarketsByDistance = (
+  markets: any[],
+  center: { latitude: number; longitude: number }
+): any[] => {
+  if (markets.length <= MAX_CACHED_MARKETS) return markets;
+  const cosLat = Math.cos((center.latitude * Math.PI) / 180);
+  const distSq = (m: any) => {
+    const dLat = m.latitude - center.latitude;
+    const dLon = (m.longitude - center.longitude) * cosLat;
+    return dLat * dLat + dLon * dLon;
+  };
+  const ranked = [...markets].sort((a, b) => distSq(a) - distSq(b));
+  const keepIds = new Set(ranked.slice(0, MAX_CACHED_MARKETS).map((m) => m.id));
+  return markets.filter((m) => keepIds.has(m.id));
+};
 
 // Bulletproof & 60-FPS TrackedMarker for iOS New Architecture
 // 1. Uses React.memo with a deep equality check to ignore inline object/function prop churn.
@@ -1321,10 +1343,7 @@ export default function StoresScreen() {
       // Nothing new → skip the store write so the cluster tree isn't rebuilt
       if (newOnes.length === 0) return;
 
-      let finalMarkets = [...prev, ...newOnes];
-      if (finalMarkets.length > MAX_CACHED_MARKETS) {
-        finalMarkets = finalMarkets.slice(finalMarkets.length - MAX_CACHED_MARKETS);
-      }
+      const finalMarkets = trimMarketsByDistance([...prev, ...newOnes], region);
       useLocationStore.getState().setCachedMarkets(finalMarkets);
       return;
     }
@@ -1378,10 +1397,7 @@ export default function StoresScreen() {
       // Only write when there is actually something new — a no-op write here
       // previously re-rendered the screen and rebuilt the Supercluster tree
       if (newOnes.length > 0) {
-        let finalMarkets = [...prev, ...newOnes];
-        if (finalMarkets.length > MAX_CACHED_MARKETS) {
-          finalMarkets = finalMarkets.slice(finalMarkets.length - MAX_CACHED_MARKETS);
-        }
+        const finalMarkets = trimMarketsByDistance([...prev, ...newOnes], region);
         useLocationStore.getState().setCachedMarkets(finalMarkets);
       }
     } catch (error: any) {
