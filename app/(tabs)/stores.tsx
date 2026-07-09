@@ -1272,8 +1272,6 @@ export default function StoresScreen() {
   // away (a completed fetch always lands in the region cache), only on
   // unmount or when the concurrency cap is exceeded.
   const inFlightFetchesRef = useRef<Array<{ bbox: StoreBBox; controller: AbortController }>>([]);
-  // Counts active fetches so isFetchingMarkets only clears when the last one settles.
-  const activeFetchCountRef = useRef(0);
 
   // Bridges into the isolated child components — the root communicates with
   // them exclusively through refs and stable callbacks so it never re-renders
@@ -1294,6 +1292,7 @@ export default function StoresScreen() {
       if (regionDebounceRef.current) clearTimeout(regionDebounceRef.current);
       if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
       useLocalUIStore.getState().setZoomHintVisible(false);
+      useLocationStore.getState().setIsFetchingMarkets(false);
     };
   }, []);
 
@@ -1304,6 +1303,19 @@ export default function StoresScreen() {
   const animatedPosition = useSharedValue(SCREEN_HEIGHT);
   const animatedLocateStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: animatedPosition.value - 66 }]}));
+
+  // The loading pill must reflect work relevant to what the user is looking
+  // at NOW. Fetches survive panning away (their results always land in the
+  // region cache) and a struggling mirror rotation can run for a minute+, so
+  // an in-flight fetch for a region the user has left must not keep the
+  // spinner alive. Recomputed on every region settle and fetch start/finish.
+  const updateFetchingIndicator = useCallback(() => {
+    const region = currentRegionRef.current;
+    const relevant = inFlightFetchesRef.current.some((f) =>
+      region ? bboxCoverageRatio(f.bbox, regionToBBox(region)) > 0 : true
+    );
+    useLocationStore.getState().setIsFetchingMarkets(relevant);
+  }, []);
 
   const fetchMarketsFromOverpass = useCallback(async (region: any) => {
     const isSavedStoresOnly = useSettingsStore.getState().savedStoresOnly;
@@ -1375,11 +1387,9 @@ export default function StoresScreen() {
     const controller = new AbortController();
     const inFlightEntry = { bbox: fetchBBox, controller };
     inFlightFetchesRef.current.push(inFlightEntry);
+    updateFetchingIndicator();
 
     try {
-      activeFetchCountRef.current += 1;
-      useLocationStore.getState().setIsFetchingMarkets(true);
-
       const fetchedMarkets = await fetchMarkets(fetchBBox.south, fetchBBox.west, fetchBBox.north, fetchBBox.east, controller.signal);
 
       mapCacheManager.setStoresForRegion(region, fetchedMarkets, fetchBBox);
@@ -1407,12 +1417,9 @@ export default function StoresScreen() {
     } finally {
       const idx = inFlightFetchesRef.current.indexOf(inFlightEntry);
       if (idx !== -1) inFlightFetchesRef.current.splice(idx, 1);
-      activeFetchCountRef.current = Math.max(0, activeFetchCountRef.current - 1);
-      if (activeFetchCountRef.current === 0) {
-        useLocationStore.getState().setIsFetchingMarkets(false);
-      }
+      updateFetchingIndicator();
     }
-  }, []);
+  }, [updateFetchingIndicator]);
 
   // Keep the stable ref in sync with the latest fetchMarketsFromOverpass
   useEffect(() => {
@@ -1424,6 +1431,10 @@ export default function StoresScreen() {
     // load, focus flush) read this ref and must never cluster against a
     // region one gesture behind during rapid zoom/pan.
     currentRegionRef.current = region;
+    // Re-evaluate the loading pill against the new viewport: an in-flight
+    // fetch for an area the user just panned away from should stop showing,
+    // and panning back into it should show it again.
+    updateFetchingIndicator();
     // Debounce to prevent cluster engine thrashing during animateToRegion
     if (regionDebounceRef.current) {
       clearTimeout(regionDebounceRef.current);
@@ -1446,7 +1457,7 @@ export default function StoresScreen() {
     fetchDebounceRef.current = setTimeout(() => {
       fetchMarketsRef.current(region);
     }, 1000);
-  }, []);
+  }, [updateFetchingIndicator]);
 
   const handleLocateMe = useCallback(async (isInitial = false) => {
     if (!isInitial) {

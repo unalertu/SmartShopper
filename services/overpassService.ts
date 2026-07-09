@@ -42,16 +42,25 @@ out center 600;`;
   console.log(`🔍 Overpass query bbox: S=${south.toFixed(4)} W=${west.toFixed(4)} N=${north.toFixed(4)} E=${east.toFixed(4)}`);
 
   let lastError: any = null;
-  const attemptedMirrors = new Set<number>();
 
-  while (attemptedMirrors.size < MIRROR_POOL.length) {
+  // Iterate a bounded, per-call mirror sequence. currentMirrorIndex is shared
+  // module state and concurrent fetches (map fetches are no longer aborted on
+  // pan) rotate it under each other — reading it every iteration made a call
+  // re-attempt mirrors it had already tried, up to 25s per attempt, with no
+  // upper bound while the interleaving persisted.
+  const startIndex = currentMirrorIndex;
+
+  for (let attempt = 0; attempt < MIRROR_POOL.length; attempt++) {
+    const mirrorIndex = (startIndex + attempt) % MIRROR_POOL.length;
+    const isLastMirror = attempt === MIRROR_POOL.length - 1;
+
     // Bail out early if the caller already aborted (e.g. new map pan)
     if (signal?.aborted) {
       const err = new DOMException('The operation was aborted.', 'AbortError');
       throw err;
     }
 
-    const mirror = MIRROR_POOL[currentMirrorIndex];
+    const mirror = MIRROR_POOL[mirrorIndex];
     console.log(`📡 Fetching from Overpass mirror: ${mirror}`);
 
     try {
@@ -83,8 +92,7 @@ out center 600;`;
 
       if (response.status === 429 || response.status === 504 || response.status === 502 || response.status === 403) {
         console.log(`📡 Mirror ${mirror} unavailable (${response.status}). Rotating...`);
-        attemptedMirrors.add(currentMirrorIndex);
-        rotateMirror();
+        currentMirrorIndex = (mirrorIndex + 1) % MIRROR_POOL.length;
         continue;
       }
 
@@ -93,8 +101,7 @@ out center 600;`;
         // Check if the response is HTML (error page) instead of JSON
         if (errText.includes('<html') || errText.includes('<!DOCTYPE') || errText.includes('runtime error')) {
           console.log(`📡 Mirror ${mirror} returned error page. Rotating...`);
-          attemptedMirrors.add(currentMirrorIndex);
-          rotateMirror();
+          currentMirrorIndex = (mirrorIndex + 1) % MIRROR_POOL.length;
           continue;
         }
         throw new Error(`HTTP ${response.status}: ${errText.substring(0, 200)}`);
@@ -106,8 +113,7 @@ out center 600;`;
 
       if (!contentType.includes('json') && (responseText.includes('<html') || responseText.includes('runtime error'))) {
         console.log(`📡 Mirror ${mirror} returned HTML error instead of JSON. Rotating...`);
-        attemptedMirrors.add(currentMirrorIndex);
-        rotateMirror();
+        currentMirrorIndex = (mirrorIndex + 1) % MIRROR_POOL.length;
         continue;
       }
 
@@ -119,15 +125,17 @@ out center 600;`;
       if (data && data.elements && data.elements.length === 0) {
         const timestamp = data?.osm3s?.timestamp_osm_base || '';
         const isValidTimestamp = timestamp.includes('-') && timestamp.length > 10; // e.g. "2026-04-13T12:43:14Z"
-        
-        if (!isValidTimestamp && attemptedMirrors.size < MIRROR_POOL.length - 1) {
+
+        if (!isValidTimestamp && !isLastMirror) {
           console.log(`⚠️ Mirror ${mirror} returned 0 results with suspicious timestamp "${timestamp}". Trying next mirror...`);
-          attemptedMirrors.add(currentMirrorIndex);
-          rotateMirror();
+          currentMirrorIndex = (mirrorIndex + 1) % MIRROR_POOL.length;
           continue;
         }
       }
-      
+
+      // Remember the mirror that answered so the next call starts here
+      currentMirrorIndex = mirrorIndex;
+
       if (data && data.elements) {
         const results = data.elements
           .map((el: any) => ({
@@ -151,14 +159,9 @@ out center 600;`;
       lastError = error;
       const reason = error.name === 'AbortError' ? 'timeout (25s)' : error.message;
       console.log(`🔁 Rotating mirror due to ${reason} on ${mirror}`);
-      attemptedMirrors.add(currentMirrorIndex);
-      rotateMirror();
+      currentMirrorIndex = (mirrorIndex + 1) % MIRROR_POOL.length;
     }
   }
 
   throw lastError || new Error("All Overpass mirrors failed or are rate-limited.");
-};
-
-const rotateMirror = () => {
-  currentMirrorIndex = (currentMirrorIndex + 1) % MIRROR_POOL.length;
 };
