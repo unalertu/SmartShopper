@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,9 +13,13 @@ interface MapSearchIndicatorProps {
    * Driven by the useMapSearch hook's isSearching state.
    */
   isVisible: boolean;
+  /**
+   * Optional text shown in place of the spinner (e.g. "Zoom in to see shops").
+   */
+  hint?: string;
 }
 
-export function MapSearchIndicator({ isVisible }: MapSearchIndicatorProps) {
+export function MapSearchIndicator({ isVisible, hint }: MapSearchIndicatorProps) {
   const insets = useSafeAreaInsets();
   
   // Shared values for react-native-reanimated
@@ -82,8 +86,12 @@ export function MapSearchIndicator({ isVisible }: MapSearchIndicatorProps) {
         animatedStyle,
       ]}
     >
-      <View style={indicatorStyles.pill}>
-        <ActivityIndicator size="small" color="#64748b" />
+      <View style={[indicatorStyles.pill, hint ? indicatorStyles.hintPill : null]}>
+        {hint ? (
+          <Text style={indicatorStyles.hintText}>{hint}</Text>
+        ) : (
+          <ActivityIndicator size="small" color="#64748b" />
+        )}
       </View>
     </Animated.View>
   );
@@ -99,4 +107,11 @@ const indicatorStyles = StyleSheet.create({
     height: 46,
     borderRadius: 23,
     borderWidth: 1,
-    borderColor: 'rgba(241,245,249,0.8)'}});
+    borderColor: 'rgba(241,245,249,0.8)'},
+  hintPill: {
+    width: undefined,
+    paddingHorizontal: 18},
+  hintText: {
+    color: '#64748b',
+    fontSize: 14,
+    fontWeight: '600'}});

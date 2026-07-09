@@ -7,9 +7,41 @@ export interface Region {
   longitudeDelta: number;
 }
 
+export interface StoreBBox {
+  south: number;
+  west: number;
+  north: number;
+  east: number;
+}
+
 interface CacheEntry {
   timestamp: number;
   stores: MarketElement[];
+  /** The bbox the stores were actually fetched for — may be smaller than a later viewport at the same center. */
+  bbox: StoreBBox;
+}
+
+/** Minimum fraction of the requested viewport a cached bbox must cover to count as a hit. */
+export const COVERAGE_HIT_RATIO = 0.9;
+
+export function regionToBBox(region: Region): StoreBBox {
+  return {
+    south: region.latitude - region.latitudeDelta / 2,
+    west: region.longitude - region.longitudeDelta / 2,
+    north: region.latitude + region.latitudeDelta / 2,
+    east: region.longitude + region.longitudeDelta / 2,
+  };
+}
+
+/** Fraction (0..1) of `target`'s area that `cover` overlaps, computed in plain degrees. */
+export function bboxCoverageRatio(cover: StoreBBox, target: StoreBBox): number {
+  const targetArea =
+    Math.max(0, target.north - target.south) * Math.max(0, target.east - target.west);
+  if (targetArea === 0) return 1;
+  const overlapLat = Math.min(cover.north, target.north) - Math.max(cover.south, target.south);
+  const overlapLon = Math.min(cover.east, target.east) - Math.max(cover.west, target.west);
+  if (overlapLat <= 0 || overlapLon <= 0) return 0;
+  return (overlapLat * overlapLon) / targetArea;
 }
 
 const MAX_CACHE_SIZE = 12;
@@ -109,6 +141,20 @@ class MapCacheManager {
       return null;
     }
 
+    // The entry may have been fetched for a much smaller viewport (zoomed in)
+    // than the one now requested at the same center. Treat it as a miss so the
+    // caller refetches the wider bbox — otherwise the outer ring of the
+    // viewport stays empty for the whole TTL. Keep the entry: it remains a
+    // valid hit for zoomed-in visits until it is overwritten or expires.
+    const coverage = bboxCoverageRatio(entry.bbox, regionToBBox(region));
+    if (coverage < COVERAGE_HIT_RATIO) {
+      if (DEBUG_MODE) {
+        console.log(`[MapCacheManager] Cache UNDER-COVERS region ${key} ` +
+                    `(${Math.round(coverage * 100)}% of viewport) — treating as miss`);
+      }
+      return null;
+    }
+
     if (DEBUG_MODE) console.log(`[MapCacheManager] Cache HIT for region: ${key}`);
 
     // Refresh LRU order by deleting and re-inserting
@@ -122,9 +168,9 @@ class MapCacheManager {
    * Stores the fetched data for the region in the cache.
    * Enforces the LRU max regions limit (8-12) and evicts the oldest unused region.
    */
-  setStoresForRegion(region: Region, data: MarketElement[]): void {
+  setStoresForRegion(region: Region, data: MarketElement[], bbox: StoreBBox): void {
     const key = this.getRegionKey(region);
-    
+
     // Remove if exists to update LRU position
     if (this.cache.has(key)) {
       this.cache.delete(key);
@@ -133,7 +179,8 @@ class MapCacheManager {
     // Add new entry
     this.cache.set(key, {
       timestamp: Date.now(),
-      stores: data
+      stores: data,
+      bbox
     });
 
     // Hard safety rule: aggressively evict oldest regions if total stores exceed limit

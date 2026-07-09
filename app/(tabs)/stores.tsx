@@ -13,7 +13,7 @@ import Animated, { useSharedValue, useAnimatedStyle, FadeInDown, FadeOutUp, Fade
 import { Swipeable } from 'react-native-gesture-handler';
 import Supercluster, { PointFeature } from 'supercluster';
 import { fetchMarkets } from '../../services/overpassService';
-import { mapCacheManager } from '../../services';
+import { mapCacheManager, regionToBBox, bboxCoverageRatio, COVERAGE_HIT_RATIO, StoreBBox } from '../../services';
 import { useLocationStore, useSettingsStore } from '../../store';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import * as Haptics from 'expo-haptics';
@@ -30,10 +30,14 @@ import { showPaywall } from "@/services/paywallService";
 interface LocalUIState {
   selectedShopToSave: any | null;
   setSelectedShopToSave: (shop: any | null) => void;
+  isZoomHintVisible: boolean;
+  setZoomHintVisible: (visible: boolean) => void;
 }
 const useLocalUIStore = create<LocalUIState>((set) => ({
   selectedShopToSave: null,
-  setSelectedShopToSave: (shop) => set({ selectedShopToSave: shop })
+  setSelectedShopToSave: (shop) => set({ selectedShopToSave: shop }),
+  isZoomHintVisible: false,
+  setZoomHintVisible: (visible) => set({ isZoomHintVisible: visible })
 }));
 
 
@@ -42,6 +46,12 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const MARKER_ANCHOR = { x: 0.5, y: 0.5 };
 const MAX_CACHED_MARKETS = 300;
+// Beyond this delta the viewport is too wide for a store-level Overpass query;
+// the fetch is skipped and the "zoom in" hint may be shown instead.
+const MAX_FETCH_DELTA = 0.07;
+// In-flight Overpass requests are no longer aborted on pan (their results are
+// always cached), but cap how many can run at once during rapid exploration.
+const MAX_CONCURRENT_FETCHES = 3;
 
 // Bulletproof & 60-FPS TrackedMarker for iOS New Architecture
 // 1. Uses React.memo with a deep equality check to ignore inline object/function prop churn.
@@ -109,8 +119,14 @@ TrackedMarker.displayName = 'TrackedMarker';
 // already in flight elsewhere must not surface a search indicator here.
 const FetchingIndicator = () => {
   const isFetchingMarkets = useLocationStore((s) => s.isFetchingMarkets);
+  const isZoomHintVisible = useLocalUIStore((s) => s.isZoomHintVisible);
   const savedStoresOnly = useSettingsStore((s) => s.savedStoresOnly);
-  return <MapSearchIndicator isVisible={isFetchingMarkets && !savedStoresOnly} />;
+  return (
+    <MapSearchIndicator
+      isVisible={(isFetchingMarkets || isZoomHintVisible) && !savedStoresOnly}
+      hint={!isFetchingMarkets && isZoomHintVisible ? 'Zoom in to see shops' : undefined}
+    />
+  );
 };
 
 
@@ -1230,7 +1246,12 @@ export default function StoresScreen() {
   const fetchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isAnimatingRef = useRef(false);
   const currentRegionRef = useRef<any>(null);
-  const fetchAbortController = useRef<AbortController | null>(null);
+  // In-flight Overpass fetches. Requests are not aborted when the user pans
+  // away (a completed fetch always lands in the region cache), only on
+  // unmount or when the concurrency cap is exceeded.
+  const inFlightFetchesRef = useRef<Array<{ bbox: StoreBBox; controller: AbortController }>>([]);
+  // Counts active fetches so isFetchingMarkets only clears when the last one settles.
+  const activeFetchCountRef = useRef(0);
 
   // Bridges into the isolated child components — the root communicates with
   // them exclusively through refs and stable callbacks so it never re-renders
@@ -1246,9 +1267,11 @@ export default function StoresScreen() {
   // ── Cleanup on unmount: abort in-flight fetches + clear all timers ──
   useEffect(() => {
     return () => {
-      if (fetchAbortController.current) fetchAbortController.current.abort();
+      inFlightFetchesRef.current.forEach((f) => f.controller.abort());
+      inFlightFetchesRef.current = [];
       if (regionDebounceRef.current) clearTimeout(regionDebounceRef.current);
       if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
+      useLocalUIStore.getState().setZoomHintVisible(false);
     };
   }, []);
 
@@ -1264,10 +1287,21 @@ export default function StoresScreen() {
     const isSavedStoresOnly = useSettingsStore.getState().savedStoresOnly;
     if (isSavedStoresOnly) return;
 
-    if (region.latitudeDelta > 0.045 || region.longitudeDelta > 0.045) {
+    const viewportBBox = regionToBBox(region);
+
+    if (region.latitudeDelta > MAX_FETCH_DELTA || region.longitudeDelta > MAX_FETCH_DELTA) {
       console.log("Zoomed out too far, skipping fetch.");
+      // Surface the hint only when the viewport shows no markers at all, so
+      // "not searched here" doesn't silently read as "no shops here".
+      const markets = useLocationStore.getState().cachedMarkets || [];
+      const hasVisibleMarket = markets.some((m: any) =>
+        m.latitude >= viewportBBox.south && m.latitude <= viewportBBox.north &&
+        m.longitude >= viewportBBox.west && m.longitude <= viewportBBox.east
+      );
+      useLocalUIStore.getState().setZoomHintVisible(!hasVisibleMarket);
       return;
     }
+    useLocalUIStore.getState().setZoomHintVisible(false);
 
     const cachedData = mapCacheManager.getStoresForRegion(region);
 
@@ -1295,26 +1329,41 @@ export default function StoresScreen() {
       return;
     }
 
-    if (fetchAbortController.current) {
-      fetchAbortController.current.abort();
+    // A fetch already in flight that covers this viewport will populate it
+    // when it lands — starting another would only duplicate Overpass load.
+    if (inFlightFetchesRef.current.some(
+      (f) => bboxCoverageRatio(f.bbox, viewportBBox) >= COVERAGE_HIT_RATIO
+    )) {
+      return;
     }
+
+    // Cap concurrency: drop the oldest request, not the newest region.
+    while (inFlightFetchesRef.current.length >= MAX_CONCURRENT_FETCHES) {
+      inFlightFetchesRef.current.shift()?.controller.abort();
+    }
+
+    const minDelta = 0.01;
+    const latDelta = Math.max(region.latitudeDelta, minDelta);
+    const lonDelta = Math.max(region.longitudeDelta, minDelta);
+
+    const fetchBBox: StoreBBox = {
+      south: region.latitude - latDelta / 2,
+      west: region.longitude - lonDelta / 2,
+      north: region.latitude + latDelta / 2,
+      east: region.longitude + lonDelta / 2,
+    };
+
     const controller = new AbortController();
-    fetchAbortController.current = controller;
+    const inFlightEntry = { bbox: fetchBBox, controller };
+    inFlightFetchesRef.current.push(inFlightEntry);
 
     try {
+      activeFetchCountRef.current += 1;
       useLocationStore.getState().setIsFetchingMarkets(true);
-      const minDelta = 0.01;
-      const latDelta = Math.max(region.latitudeDelta, minDelta);
-      const lonDelta = Math.max(region.longitudeDelta, minDelta);
 
-      const fetchSouth = region.latitude - latDelta / 2;
-      const fetchWest = region.longitude - lonDelta / 2;
-      const fetchNorth = region.latitude + latDelta / 2;
-      const fetchEast = region.longitude + lonDelta / 2;
+      const fetchedMarkets = await fetchMarkets(fetchBBox.south, fetchBBox.west, fetchBBox.north, fetchBBox.east, controller.signal);
 
-      const fetchedMarkets = await fetchMarkets(fetchSouth, fetchWest, fetchNorth, fetchEast, controller.signal);
-
-      mapCacheManager.setStoresForRegion(region, fetchedMarkets);
+      mapCacheManager.setStoresForRegion(region, fetchedMarkets, fetchBBox);
 
       const prev = useLocationStore.getState().cachedMarkets || [];
       // O(n) dedup via id Set (existing entries win, same as before)
@@ -1340,7 +1389,12 @@ export default function StoresScreen() {
         console.log('Error fetching from Overpass:', error);
       }
     } finally {
-      useLocationStore.getState().setIsFetchingMarkets(false);
+      const idx = inFlightFetchesRef.current.indexOf(inFlightEntry);
+      if (idx !== -1) inFlightFetchesRef.current.splice(idx, 1);
+      activeFetchCountRef.current = Math.max(0, activeFetchCountRef.current - 1);
+      if (activeFetchCountRef.current === 0) {
+        useLocationStore.getState().setIsFetchingMarkets(false);
+      }
     }
   }, []);
 
