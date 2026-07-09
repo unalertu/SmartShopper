@@ -18,7 +18,7 @@ import Animated, { FadeOutLeft, LinearTransition, FadeInDown } from 'react-nativ
 import { useTabBarScrollHandler } from '../../hooks/useTabBarScroll';
 import { useLocationStore, useListsStore, useSettingsStore, useQuickStartStore, useNotificationsStore, useShoppingListStore } from '../../store';
 import { useScrollToTop, useIsFocused } from '@react-navigation/native';
-import DelayedRender from '../components/DelayedRender';
+import DelayedRender from '../../components/DelayedRender';
 import AnimatedScreen from '../../components/AnimatedScreen';
 import RadarPinIcon from '../../components/RadarPinIcon';
 import StoreMarker from '../../components/StoreMarker';

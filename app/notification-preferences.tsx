@@ -272,11 +272,11 @@ export default function NotificationPreferencesScreen() {
         }>
           <SettingsRow
             icon={<Target size={20} color={isPro ? "#D4AF37" : "#cbd5e1"} />}
-            label="Alert Distance"
+            label="Reminder Sensitivity"
             sublabel="How close you are before alerts"
             isProOnly={!isPro}
             isLocked={!isPro}
-            onLockedPress={() => handleProUpsell('Alert Distance')}
+            onLockedPress={() => handleProUpsell('Reminder Sensitivity')}
             onPress={isPro ? () => setAlertDistanceSheetVisible(true) : undefined}
             rightElement={<ChevronRight size={20} color="#cbd5e1" />}
           />

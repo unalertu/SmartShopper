@@ -11,8 +11,8 @@ export default function FadeInDownView({ children, delay = 0, duration = 400, st
   const translateY = useSharedValue(20);
 
   useEffect(() => {
-    opacity.value = withDelay(delay, withSpring(1, { duration, damping: 20, stiffness: 100 }));
-    translateY.value = withDelay(delay, withSpring(0, { duration, damping: 20, stiffness: 100 }));
+    opacity.value = withDelay(delay, withSpring(1, { damping: 20, stiffness: 100 }));
+    translateY.value = withDelay(delay, withSpring(0, { damping: 20, stiffness: 100 }));
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({

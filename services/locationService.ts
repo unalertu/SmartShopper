@@ -21,12 +21,14 @@ const OVERPASS_FETCH_RADIUS = 2500;
 const MIN_NEARBY_CACHE_THRESHOLD = 3;
 
 let speedHistory: { speed: number; timestamp: number }[] = [];
+let lastStabilityFix: { latitude: number; longitude: number; timestamp: number } | null = null;
 const geofenceState: Map<string, 'outside' | 'inside'> = new Map();
 const dwellTimers = new Map<string, number>();
 const exitGraceTimers = new Map<string, number>();
 const notifiedStores = new Map<string, { lat: number; lon: number; timestamp: number }>();
 
 import { getCurrentLocation, getDistance } from "./locationUtils";
+export { getCurrentLocation, getDistance };
 
 export const requestLocationPermissions = async (): Promise<boolean> => {
   const { status: foreground } = await Location.requestForegroundPermissionsAsync();
@@ -125,20 +127,55 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
     return;
   }
 
-  // 4. Moving Average Speed
-  if (speed !== null) {
+  // 4. Moving Average Speed (negative = invalid fix on iOS, skip those)
+  if (speed !== null && speed >= 0) {
     speedHistory.push({ speed, timestamp: now });
     // Keep only last N
     if (speedHistory.length > NOTIFICATION_CONSTANTS.SPEED_WINDOW_SIZE) {
       speedHistory.shift();
     }
-    const avgSpeed = speedHistory.reduce((sum, h) => sum + h.speed, 0) / speedHistory.length;
-    
+  }
+  // Expire stale samples: indoor fixes carry invalid speed, so without this
+  // the user's walking speeds from before entering would pin the average
+  speedHistory = speedHistory.filter(
+    (h) => now - h.timestamp <= NOTIFICATION_CONSTANTS.SPEED_SAMPLE_MAX_AGE_MS
+  );
+
+  let avgSpeed: number | null = null;
+  if (speedHistory.length > 0) {
+    avgSpeed = speedHistory.reduce((sum, h) => sum + h.speed, 0) / speedHistory.length;
+
     if (avgSpeed > NOTIFICATION_CONSTANTS.SPEED_THRESHOLD_MS) {
       addDebugLog(`High avg speed detected: ${avgSpeed.toFixed(2)}m/s. Ignoring.`);
       return;
     }
   }
+
+  // Stop detection: steady pedestrians pass the speed filter above but are
+  // just walking past; only a slowed/stopped user counts as visiting.
+  // Fallback hierarchy: recent valid speed -> displacement between fixes
+  // (works indoors where speed is invalid) -> unknown stays permissive.
+  let isLikelyStopped: boolean;
+  if (avgSpeed !== null) {
+    isLikelyStopped = avgSpeed < NOTIFICATION_CONSTANTS.STOP_SPEED_THRESHOLD_MS;
+  } else if (
+    lastStabilityFix &&
+    now - lastStabilityFix.timestamp <= NOTIFICATION_CONSTANTS.SPEED_SAMPLE_MAX_AGE_MS &&
+    now > lastStabilityFix.timestamp
+  ) {
+    const displacement = getDistance(
+      latitude,
+      longitude,
+      lastStabilityFix.latitude,
+      lastStabilityFix.longitude
+    );
+    const apparentSpeed = displacement / ((now - lastStabilityFix.timestamp) / 1000);
+    isLikelyStopped = apparentSpeed < NOTIFICATION_CONSTANTS.STOP_DISPLACEMENT_SPEED_MS;
+    addDebugLog(`Stop detection via displacement: ${apparentSpeed.toFixed(2)}m/s apparent`);
+  } else {
+    isLikelyStopped = true;
+  }
+  lastStabilityFix = { latitude, longitude, timestamp: now };
 
   // 5. Clean up old notified stores (> 24h)
   for (const [id, data] of notifiedStores) {
@@ -191,9 +228,23 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
     }
   }
 
+  // 8.5 DENSITY-ADAPTIVE RADIUS
+  // Dense areas (many candidates within the alert radius) shrink the
+  // effective radius one step so one busy street can't flood the pipeline.
+  // Uses the already-cached store list — no extra network or GPS.
+  let effectiveAlertDistance = alertDistance;
+  const candidatesInRadius = nearbyStores.filter((s) => s.distance <= alertDistance).length;
+  if (candidatesInRadius > NOTIFICATION_CONSTANTS.DENSITY_STORE_THRESHOLD) {
+    effectiveAlertDistance = Math.max(
+      Math.round(alertDistance * NOTIFICATION_CONSTANTS.DENSITY_SHRINK_RATIO),
+      NOTIFICATION_CONSTANTS.DENSITY_MIN_RADIUS
+    );
+    addDebugLog(`Dense area: ${candidatesInRadius} stores within ${alertDistance}m, effective radius ${effectiveAlertDistance}m`);
+  }
+
   // 9. FILTER INSIDE STORES & MIN EXIT DISTANCE
   const insideStores = nearbyStores.filter(s => {
-    if (s.distance > alertDistance) return false;
+    if (s.distance > effectiveAlertDistance) return false;
     
     const notified = notifiedStores.get(s.id);
     if (notified) {
@@ -246,7 +297,15 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
     }
   }
 
-  // 12. DWELL TIME
+  // 12. DWELL TIME + TWO-ZONE TRIGGER + STOP DETECTION
+  // The alert distance is the awareness zone (arms timers); a notification
+  // only fires from the inner trigger zone, and only once the user has
+  // dwelled AND slowed down — walking past on the same street never fires.
+  const triggerDistance = Math.max(
+    effectiveAlertDistance * NOTIFICATION_CONSTANTS.TRIGGER_ZONE_RATIO,
+    NOTIFICATION_CONSTANTS.TRIGGER_ZONE_MIN_METERS
+  );
+
   const dwelledStores: typeof nearbyStores = [];
   for (const store of insideStores) {
     // We only process unsaved stores in this pipeline
@@ -258,9 +317,16 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
     } else if (dwellTimers.has(store.id)) {
       const entryTime = dwellTimers.get(store.id)!;
       const elapsed = now - entryTime;
-      if (elapsed >= NOTIFICATION_CONSTANTS.DWELL_TIME_MS) {
-        dwelledStores.push(store);
+      if (elapsed < NOTIFICATION_CONSTANTS.DWELL_TIME_MS) continue;
+      if (!isLikelyStopped) {
+        addDebugLog(`Dwell met for ${store.name} but user still moving (${avgSpeed !== null ? `${avgSpeed.toFixed(2)}m/s` : 'displacement'})`);
+        continue;
       }
+      if (store.distance > triggerDistance) {
+        addDebugLog(`Dwell met for ${store.name} but outside trigger zone (${store.distance.toFixed(0)}m > ${triggerDistance.toFixed(0)}m)`);
+        continue;
+      }
+      dwelledStores.push(store);
     }
   }
 
@@ -277,7 +343,7 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
   }
 
   // 13. PICK BEST STORE
-  const bestStore = await notificationEngine.pickBestStore(dwelledStores, unpurchasedItems.length, alertDistance);
+  const bestStore = await notificationEngine.pickBestStore(dwelledStores, effectiveAlertDistance);
   if (!bestStore) {
     void geofenceManager.rebalanceGeofences(latitude, longitude);
     return;
@@ -297,6 +363,7 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
     allowedHoursStart: settings.allowedHoursStart,
     allowedHoursEnd: settings.allowedHoursEnd,
     shoppingListReminders: settings.shoppingListReminders,
+    coords: { latitude, longitude },
   });
 
   if (!decision.allowed) {
@@ -321,7 +388,8 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
     content.title,
     content.body,
     bestStore.id,
-    eventId
+    eventId,
+    { latitude, longitude }
   );
   
   dwellTimers.delete(bestStore.id);
@@ -397,6 +465,7 @@ export const stopBackgroundLocationTracking = async () => {
     
     // Clean up background location memory state
     speedHistory = [];
+    lastStabilityFix = null;
     geofenceState.clear();
     dwellTimers.clear();
     exitGraceTimers.clear();
@@ -429,6 +498,38 @@ export const handleGeofenceEnter = async (storeId: string) => {
     const settings = await getSettingsFromStorage();
     if (!settings.notificationsEnabled || !settings.shoppingListReminders) return;
 
+    // 4.5 Wide-fence enter confirmation. iOS regions can fire spuriously
+    // (Wi-Fi triggers hundreds of meters out); verify against the OS's cached
+    // last-known fix (no GPS engagement). Reject only enters clearly outside
+    // the fence — iOS fires enter once per crossing, so rejecting a legit
+    // boundary crossing would lose the notification permanently. No usable
+    // fix -> fail open.
+    const alertDistance = getAlertDistanceMeters(settings.notificationSensitivity);
+    const fenceRadius = Math.max(alertDistance, NOTIFICATION_CONSTANTS.NATIVE_FENCE_MIN_RADIUS);
+    try {
+      const fix = await Location.getLastKnownPositionAsync({
+        maxAge: NOTIFICATION_CONSTANTS.NATIVE_CONFIRM_MAX_AGE_MS,
+        requiredAccuracy: NOTIFICATION_CONSTANTS.MAX_GPS_ACCURACY,
+      });
+      if (fix) {
+        const dist = getDistance(
+          fix.coords.latitude,
+          fix.coords.longitude,
+          store.latitude,
+          store.longitude
+        );
+        const margin = fix.coords.accuracy ?? 0;
+        if (dist > fenceRadius + margin) {
+          useLocationStore.getState().addDebugLog(
+            `[Geofence] Spurious enter for ${store.name} rejected (${dist.toFixed(0)}m > ${fenceRadius}m + ${margin.toFixed(0)}m accuracy)`
+          );
+          return;
+        }
+      }
+    } catch {
+      // fail open
+    }
+
     // 5. Unpurchased items
     const unpurchasedItems = await geoEngine.getUnpurchasedItems();
     if (unpurchasedItems.length === 0) return;
@@ -447,6 +548,9 @@ export const handleGeofenceEnter = async (storeId: string) => {
       allowedHoursStart: settings.allowedHoursStart,
       allowedHoursEnd: settings.allowedHoursEnd,
       shoppingListReminders: settings.shoppingListReminders,
+      // Native enter events carry no user fix; the store position is within
+      // the fence radius of the user, close enough for trip suppression.
+      coords: { latitude: store.latitude, longitude: store.longitude },
     });
     if (!decision.allowed) return;
 
@@ -458,7 +562,10 @@ export const handleGeofenceEnter = async (storeId: string) => {
       settings.maxAlertsPerDay
     );
     await sendLocalNotification(content.title, content.body, 'geofence-alerts');
-    await notificationAnalytics.recordNotification(content.title, content.body, store.id, eventId);
+    await notificationAnalytics.recordNotification(content.title, content.body, store.id, eventId, {
+      latitude: store.latitude,
+      longitude: store.longitude,
+    });
     
     // Record store visit for stats
     useStatsStore.getState().recordStoreVisit(store.id);

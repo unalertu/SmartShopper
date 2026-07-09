@@ -28,7 +28,9 @@ function buildRegion(location: SavedLocation, alertDistance: number): Location.L
     identifier: location.id,
     latitude: location.latitude,
     longitude: location.longitude,
-    radius: alertDistance,
+    // iOS region monitoring is unreliable below ~150m; register wide and
+    // confirm the user's real distance in handleGeofenceEnter instead.
+    radius: Math.max(alertDistance, NOTIFICATION_CONSTANTS.NATIVE_FENCE_MIN_RADIUS),
     notifyOnEnter: true,
     notifyOnExit: false,
   };

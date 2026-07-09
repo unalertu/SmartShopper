@@ -19,6 +19,7 @@ export const notificationEngine = {
     allowedHoursStart: number;
     allowedHoursEnd: number;
     shoppingListReminders: boolean;
+    coords?: { latitude: number; longitude: number };
   }): Promise<{ allowed: boolean; reason?: string }> => {
     if (!params.shoppingListReminders) {
       return { allowed: false, reason: "location_alerts_disabled" };
@@ -30,6 +31,18 @@ export const notificationEngine = {
     const isGlobalCooling = notificationAnalytics.isGlobalCooldownActive(state);
     if (isGlobalCooling) {
       return { allowed: false, reason: "global_cooldown" };
+    }
+
+    // 1.5 Trip Suppression Check (one walk, one reminder)
+    if (
+      params.coords &&
+      notificationAnalytics.isTripSuppressionActive(
+        state,
+        params.coords.latitude,
+        params.coords.longitude
+      )
+    ) {
+      return { allowed: false, reason: "trip_suppression" };
     }
 
     // 2. Store Cooldown Check
@@ -78,7 +91,6 @@ export const notificationEngine = {
    */
   pickBestStore: async (
     nearbyStores: (SavedLocation & { distance: number })[],
-    unpurchasedItemCount: number,
     alertDistance: number
   ): Promise<(SavedLocation & { distance: number }) | null> => {
     if (nearbyStores.length === 0) return null;
@@ -89,8 +101,6 @@ export const notificationEngine = {
       score += (store as any).isUnsaved ? 0 : 100;
       // Proximity bonus: (1 - distance/alertDistance) * 30
       score += Math.max(0, (1 - store.distance / alertDistance) * 30);
-      // Item count bonus: up to 50 points
-      score += 5 * Math.min(unpurchasedItemCount, 10);
 
       return { ...store, score };
     });

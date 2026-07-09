@@ -13,9 +13,9 @@ interface AlertDistanceSheetProps {
 }
 
 const SENSITIVITY_OPTIONS: { value: NotificationSensitivity; label: string; description: string }[] = [
-  { value: "near", label: "Near (100m)", description: "Notify when you're very close." },
-  { value: "balanced", label: "Balanced (150m)", description: "Recommended for most users." },
-  { value: "far", label: "Far (300m)", description: "Get notified earlier." },
+  { value: "near", label: "Near", description: "Only remind me when I'm very close" },
+  { value: "balanced", label: "Balanced", description: "Recommended" },
+  { value: "far", label: "Early", description: "Give me more time before I arrive" },
 ];
 
 const AlertDistanceSheet = memo(function AlertDistanceSheet({
@@ -76,7 +76,7 @@ const AlertDistanceSheet = memo(function AlertDistanceSheet({
     >
       <BottomSheetView style={[styles.content, { paddingBottom: Math.max(insets.bottom, 16) + 8 }]}>
         <View style={styles.header}>
-          <Text style={styles.title}>Alert Distance</Text>
+          <Text style={styles.title}>Reminder Sensitivity</Text>
           <Text style={styles.description}>How close you need to be to a store before receiving a notification.</Text>
         </View>
 

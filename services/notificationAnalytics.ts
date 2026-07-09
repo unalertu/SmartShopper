@@ -15,6 +15,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NOTIFICATION_CONSTANTS } from "../constants";
 import { useStatsStore } from "../store/useStatsStore";
+import { getDistance } from "./locationUtils";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,6 +32,7 @@ export interface NotificationHistoryEntry {
 export interface NotificationAnalyticsState {
   // Cooldowns
   lastNotificationAt: number | null;
+  lastNotificationCoords: { latitude: number; longitude: number } | null;
   lastStoreNotifications: Record<string, number>;
 
   // Daily counters
@@ -60,6 +62,7 @@ const STORAGE_KEY = "notification-analytics-v1";
 
 const DEFAULT_STATE: NotificationAnalyticsState = {
   lastNotificationAt: null,
+  lastNotificationCoords: null,
   lastStoreNotifications: {},
   dailyCountDate: "",
   dailyLocationCount: 0,
@@ -166,6 +169,32 @@ export const notificationAnalytics = {
     );
   },
 
+  /**
+   * Trip-level cluster suppression: after any location alert, all stores are
+   * suppressed until the user moves TRIP_SUPPRESSION_DISTANCE away from the
+   * alert point or TRIP_SUPPRESSION_MS elapses — one walk, one reminder.
+   */
+  isTripSuppressionActive: (
+    state: NotificationAnalyticsState,
+    latitude: number,
+    longitude: number
+  ): boolean => {
+    if (!state.lastNotificationAt || !state.lastNotificationCoords) return false;
+    if (
+      Date.now() - state.lastNotificationAt >=
+      NOTIFICATION_CONSTANTS.TRIP_SUPPRESSION_MS
+    ) {
+      return false;
+    }
+    const dist = getDistance(
+      latitude,
+      longitude,
+      state.lastNotificationCoords.latitude,
+      state.lastNotificationCoords.longitude
+    );
+    return dist < NOTIFICATION_CONSTANTS.TRIP_SUPPRESSION_DISTANCE;
+  },
+
   isStoreCoolingDown: (
     state: NotificationAnalyticsState,
     storeId: string
@@ -223,7 +252,8 @@ export const notificationAnalytics = {
     title: string,
     body: string,
     storeId: string,
-    eventId: number
+    eventId: number,
+    coords?: { latitude: number; longitude: number }
   ): Promise<void> => {
     const state = await notificationAnalytics.getState();
 
@@ -233,6 +263,7 @@ export const notificationAnalytics = {
     // Update cooldowns
     const now = Date.now();
     state.lastNotificationAt = now;
+    state.lastNotificationCoords = coords ?? null;
     state.lastStoreNotifications[storeId] = now;
 
     // Increment daily counter
