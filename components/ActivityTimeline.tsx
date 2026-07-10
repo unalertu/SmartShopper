@@ -26,18 +26,18 @@ const getRelativeDate = (timestamp?: number): string => {
   return `${Math.floor(days / 30)} months ago`;
 };
 
-/** Formats a timestamp as iOS-style relative time (e.g. "5m ago", "Yesterday", "Jul 5") */
+/** Formats a timestamp as iOS-style relative time (e.g. "5m ago", "yesterday", "jul 5") */
 const formatRelativeTime = (timestamp: number): string => {
   const diffMs = Date.now() - timestamp;
   const minutes = Math.floor(diffMs / 60000);
-  if (minutes < 1) return 'Just now';
+  if (minutes < 1) return 'just now';
   if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
-  if (days === 1) return 'Yesterday';
+  if (days === 1) return 'yesterday';
   if (days < 7) return `${days}d ago`;
-  return new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toLowerCase();
 };
 
 /**
@@ -85,101 +85,66 @@ interface ActivityGroupCardProps {
   group: ActivityGroup;
   index: number;
   baseDelay: number;
+  showTime: boolean;
 }
 
-const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) => {
+// Shared row layout — every activity type (list-level or shopping session)
+// renders through this exact same structure so icon position, text offsets,
+// and card height never drift between types. Only colors/glyphs/line count vary.
+const ROW_STYLE = {
+  backgroundColor: '#ffffff',
+  borderRadius: 18,
+  paddingHorizontal: 14,
+  paddingVertical: 8,
+  flexDirection: 'row' as const,
+  alignItems: 'flex-start' as const,
+};
+
+const ICON_CONTAINER_STYLE = {
+  width: 30,
+  height: 30,
+  borderRadius: 10,
+  alignItems: 'center' as const,
+  justifyContent: 'center' as const,
+  marginRight: 10,
+};
+
+const CONTENT_CONTAINER_STYLE = { flex: 1, marginRight: 8 };
+
+const SUBTITLE_CONTAINER_STYLE = { marginTop: 2 };
+
+const SUBTITLE_TEXT_STYLE = {
+  fontSize: 12,
+  fontWeight: '500' as const,
+  lineHeight: 16,
+};
+
+const TIMESTAMP_STYLE = {
+  fontSize: 12,
+  fontWeight: '400' as const,
+  color: '#94a3b8',
+  marginTop: 2,
+  flexShrink: 0,
+};
+
+const ActivityGroupCard = ({ group, index, baseDelay, showTime }: ActivityGroupCardProps) => {
   const router = useRouter();
   const lists = useListsStore((state) => state.lists);
 
-  const timeStr = formatRelativeTime(group.timestamp);
-
+  const timeStr = showTime ? formatRelativeTime(group.timestamp) : '';
   const canNavigate = group.listId != null && lists.some(l => l.id === group.listId);
 
-  // List-level events — more prominent style with colored icon
-  if (group.isListLevel) {
-    return (
-      <Animated.View
-        entering={getEntering('activity_1', FadeInDown.duration(200).delay(baseDelay + index * 25).springify())}
-      >
-        <TouchableOpacity
-          activeOpacity={canNavigate ? 0.7 : 1}
-          onPress={() => {
-            if (canNavigate) {
-              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-              router.push(`/list/${group.listId}`);
-            }
-          }}
-          style={{
-            backgroundColor: '#ffffff',
-            borderRadius: 18,
-            paddingHorizontal: 14,
-            paddingVertical: 8,
-            flexDirection: 'row',
-            alignItems: 'flex-start',
-          }}
-        >
-          {/* Colored icon */}
-          <View
-            style={{
-              width: 32,
-              height: 32,
-              backgroundColor: getListLevelIconBg(group),
-              borderRadius: 10,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: 10,
-            }}
-          >
-            {getGroupIcon(group)}
-          </View>
+  // Visual distinctions between activity types are limited to color/weight/glyph —
+  // layout (icon size/margins, text spacing, padding, card height) is identical.
+  const iconBg = group.isListLevel ? getListLevelIconBg(group) : 'rgba(219,234,254,0.6)';
+  const titleColor = group.isListLevel ? '#0f172a' : '#1e293b';
+  const titleWeight = group.isListLevel ? ('700' as const) : ('600' as const);
+  const subtitleColor = group.isListLevel ? '#64748b' : '#94a3b8';
+  const subtitleLines = group.isListLevel ? [group.summaryLines[0]] : group.summaryLines;
 
-          {/* Content */}
-          <View style={{ flex: 1, marginRight: 8 }}>
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: '700',
-                color: '#0f172a',
-                letterSpacing: -0.2,
-              }}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {group.listName}
-            </Text>
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: '500',
-                color: '#64748b',
-                marginTop: 1,
-              }}
-            >
-              {group.summaryLines[0]}
-            </Text>
-          </View>
-
-          {/* Timestamp */}
-          <Text
-            style={{
-              fontSize: 12,
-              fontWeight: '400',
-              color: '#94a3b8',
-              marginTop: 2,
-              flexShrink: 0,
-            }}
-          >
-            {timeStr}
-          </Text>
-        </TouchableOpacity>
-      </Animated.View>
-    );
-  }
-
-  // Shopping session card — neutral icon
   return (
     <Animated.View
-      entering={getEntering('activity_2', FadeInDown.duration(200).delay(baseDelay + index * 25).springify())}
+      entering={getEntering('activity_card', FadeInDown.duration(200).delay(baseDelay + index * 25).springify())}
     >
       <TouchableOpacity
         activeOpacity={canNavigate ? 0.7 : 1}
@@ -189,38 +154,20 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
             router.push(`/list/${group.listId}`);
           }
         }}
-        style={{
-          backgroundColor: '#ffffff',
-          borderRadius: 18,
-          paddingHorizontal: 14,
-          paddingVertical: 8,
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-        }}
+        style={ROW_STYLE}
       >
-        {/* Neutral icon */}
-        <View
-          style={{
-            width: 28,
-            height: 28,
-            backgroundColor: 'rgba(219,234,254,0.6)',
-            borderRadius: 8,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginRight: 8,
-            marginTop: 1,
-          }}
-        >
+        {/* Icon */}
+        <View style={{ ...ICON_CONTAINER_STYLE, backgroundColor: iconBg }}>
           {getGroupIcon(group)}
         </View>
 
         {/* Content */}
-        <View style={{ flex: 1, marginRight: 8 }}>
+        <View style={CONTENT_CONTAINER_STYLE}>
           <Text
             style={{
               fontSize: 14,
-              fontWeight: '600',
-              color: '#1e293b',
+              fontWeight: titleWeight,
+              color: titleColor,
               letterSpacing: -0.2,
             }}
             numberOfLines={1}
@@ -229,18 +176,9 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
             {group.listName}
           </Text>
 
-          {/* Summary lines */}
-          <View style={{ marginTop: 2 }}>
-            {group.summaryLines.map((line, i) => (
-              <Text
-                key={i}
-                style={{
-                  fontSize: 12,
-                  fontWeight: '500',
-                  color: '#94a3b8',
-                  lineHeight: 16,
-                }}
-              >
+          <View style={SUBTITLE_CONTAINER_STYLE}>
+            {subtitleLines.map((line, i) => (
+              <Text key={i} style={{ ...SUBTITLE_TEXT_STYLE, color: subtitleColor }}>
                 {line}
               </Text>
             ))}
@@ -248,17 +186,7 @@ const ActivityGroupCard = ({ group, index, baseDelay }: ActivityGroupCardProps) 
         </View>
 
         {/* Timestamp */}
-        <Text
-          style={{
-            fontSize: 12,
-            fontWeight: '400',
-            color: '#94a3b8',
-            marginTop: 2,
-            flexShrink: 0,
-          }}
-        >
-          {timeStr}
-        </Text>
+        {showTime && <Text style={TIMESTAMP_STYLE}>{timeStr}</Text>}
       </TouchableOpacity>
     </Animated.View>
   );
@@ -364,6 +292,7 @@ export default function ActivityTimeline() {
                       group={group}
                       index={cardIndex + 1}
                       baseDelay={225}
+                      showTime={dateGroup.title === 'today' || dateGroup.title === 'yesterday'}
                     />
                   );
                 })}

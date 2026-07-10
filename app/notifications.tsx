@@ -28,7 +28,7 @@ import Animated, {
   FadeOut,
 } from 'react-native-reanimated';
 import { Swipeable } from 'react-native-gesture-handler';
-import { useNotificationsStore, AppNotification } from '../store';
+import { useNotificationsStore, useListsStore, AppNotification } from '../store';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -207,10 +207,20 @@ export default function NotificationsScreen() {
     markAllAsRead();
   }, [markAllAsRead]);
 
-  const handleTapNotification = useCallback((id: string) => {
+  const handleTapNotification = useCallback((notification: AppNotification) => {
     hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-    markAsRead(id);
-  }, [markAsRead]);
+    markAsRead(notification.id);
+
+    // List reminders open their shopping list — unless it has been deleted
+    if (notification.listId != null) {
+      const listExists = useListsStore
+        .getState()
+        .lists.some((l) => l.id === notification.listId);
+      if (listExists) {
+        router.push(`/list/${notification.listId}`);
+      }
+    }
+  }, [markAsRead, router]);
 
   const renderRightActions = (id: string) => (
     <View style={{ width: 88, height: '100%', zIndex: -1, elevation: -1 }}>
@@ -372,7 +382,7 @@ export default function NotificationsScreen() {
                   >
                     <NotificationRow
                       notification={item}
-                      onPress={() => handleTapNotification(item.id)}
+                      onPress={() => handleTapNotification(item)}
                       isLast={index === today.length - 1}
                     />
                   </Swipeable>
@@ -422,7 +432,7 @@ export default function NotificationsScreen() {
                   >
                     <NotificationRow
                       notification={item}
-                      onPress={() => handleTapNotification(item.id)}
+                      onPress={() => handleTapNotification(item)}
                       isLast={index === earlier.length - 1}
                     />
                   </Swipeable>

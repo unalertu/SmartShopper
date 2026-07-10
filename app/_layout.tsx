@@ -3,8 +3,9 @@ import "../global.css";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import * as SplashScreen from "expo-splash-screen";
+import * as Notifications from "expo-notifications";
 import "react-native-reanimated";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
@@ -18,6 +19,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { setupNotifications } from "@/services/notificationService";
 import LaunchScreen from "@/components/LaunchScreen";
 import { useSettingsStore } from "@/store/useSettingsStore";
+import { useListsStore } from "@/store/useListsStore";
 import { useShoppingListStore } from "@/store/useShoppingListStore";
 import { useNotificationsStore } from "@/store/useNotificationsStore";
 import { notificationEngine } from "@/services/notificationEngine";
@@ -76,6 +78,77 @@ export default function RootLayout() {
       }, 100);
     }
   }, [_hasHydrated]);
+
+  // ─── Notification deep linking ───
+  // A tapped location notification opens its shopping list. Works from all
+  // app states: the response listener covers foreground/background, and
+  // getLastNotificationResponseAsync covers cold start from a killed app.
+  // Navigation is deferred until the navigator has mounted (first render
+  // after hydration) because effects here run even while we return null.
+  const pendingNotificationListIdRef = useRef<number | null>(null);
+  const navigatorReadyRef = useRef(false);
+
+  const flushNotificationDeepLink = useCallback(() => {
+    const listId = pendingNotificationListIdRef.current;
+    if (listId === null || !navigatorReadyRef.current) return;
+
+    const openList = () => {
+      pendingNotificationListIdRef.current = null;
+      // Never hijack onboarding, and never open a list that no longer exists
+      if (!useSettingsStore.getState().hasCompletedOnboarding) return;
+      if (!useListsStore.getState().lists.some((l) => l.id === listId)) return;
+      router.push(`/list/${listId}`);
+    };
+
+    // On cold start the lists store may still be rehydrating
+    if (useListsStore.persist.hasHydrated()) {
+      openList();
+    } else {
+      const unsub = useListsStore.persist.onFinishHydration(() => {
+        unsub();
+        openList();
+      });
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (_hasHydrated) {
+      navigatorReadyRef.current = true;
+      flushNotificationDeepLink();
+    }
+  }, [_hasHydrated, flushNotificationDeepLink]);
+
+  useEffect(() => {
+    const handledResponses = new Set<string>();
+
+    const handleResponse = (response: Notifications.NotificationResponse) => {
+      // The cold-start response can also be delivered to the listener; dedupe
+      const key = `${response.notification.request.identifier}:${response.actionIdentifier}`;
+      if (handledResponses.has(key)) return;
+      handledResponses.add(key);
+
+      const data = response.notification.request.content.data as
+        | Record<string, unknown>
+        | null
+        | undefined;
+      const listId = Number(data?.listId);
+      if (!Number.isFinite(listId)) return;
+
+      pendingNotificationListIdRef.current = listId;
+      flushNotificationDeepLink();
+    };
+
+    // Killed state: the notification tap that launched this app instance
+    Notifications.getLastNotificationResponseAsync()
+      .then((response) => {
+        if (response) handleResponse(response);
+      })
+      .catch(() => {});
+
+    // Foreground / background taps
+    const subscription = Notifications.addNotificationResponseReceivedListener(handleResponse);
+    return () => subscription.remove();
+  }, [flushNotificationDeepLink]);
 
   // Foreground sync for geofences
   useEffect(() => {

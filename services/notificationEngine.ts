@@ -123,10 +123,11 @@ export const notificationEngine = {
     const names = unpurchasedItems.slice(0, maxShow).map((i) => i.name);
     const remaining = unpurchasedItems.length - maxShow;
 
-    let body = `Dont forget: ${names.join(", ")}`;
+    let body = `🛒 ${names.join(", ")}`;
     if (remaining > 0) {
-      body += ` (+${remaining} more)`;
+      body += ` +${remaining} more`;
     }
+    body += unpurchasedItems.length === 1 ? " is on your list" : " are on your list";
 
     if (!isPro && typeof maxAlertsPerDay === 'number') {
       const state = await notificationAnalytics.getState();

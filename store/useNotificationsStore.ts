@@ -7,6 +7,8 @@ export interface AppNotification {
   title: string;
   body: string;
   storeId?: string;
+  // Shopping list the notification was about; drives in-app deep linking
+  listId?: number;
   timestamp: number;
   read: boolean;
 }

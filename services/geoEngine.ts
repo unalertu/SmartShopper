@@ -57,7 +57,16 @@ export const geoEngine = {
     return false;
   },
 
-  getUnpurchasedItems: async (): Promise<{ name: string }[]> => {
+  /**
+   * The "active" shopping list: the most recently updated list that still
+   * has unpurchased items, together with those items. Used by location
+   * notifications for both the body text and the deep-link payload.
+   */
+  getActiveShoppingList: async (): Promise<{
+    listId: number;
+    listName: string;
+    items: { name: string }[];
+  } | null> => {
     try {
       const listsData = await AsyncStorage.getItem("lists-storage");
       const itemsData = await AsyncStorage.getItem("shopping-list-storage");
@@ -84,7 +93,7 @@ export const geoEngine = {
         const validLists = lists.filter((list: any) => unpurchasedItemsByList[list.id]?.length > 0);
 
         if (validLists.length === 0) {
-          return [];
+          return null;
         }
 
         // Sort lists by:
@@ -101,13 +110,22 @@ export const geoEngine = {
           return bCount - aCount;
         });
 
-        const bestListId = validLists[0].id;
-        return unpurchasedItemsByList[bestListId].map((item) => ({ name: item.name }));
+        const bestList = validLists[0];
+        return {
+          listId: bestList.id,
+          listName: bestList.name,
+          items: unpurchasedItemsByList[bestList.id].map((item) => ({ name: item.name })),
+        };
       }
     } catch (e) {
-      console.error("geoEngine getUnpurchasedItems error", e);
+      console.error("geoEngine getActiveShoppingList error", e);
     }
-    return [];
+    return null;
+  },
+
+  getUnpurchasedItems: async (): Promise<{ name: string }[]> => {
+    const activeList = await geoEngine.getActiveShoppingList();
+    return activeList?.items ?? [];
   },
 
   getUnpurchasedItemCount: async (): Promise<number> => {

@@ -32,12 +32,16 @@ interface LocalUIState {
   setSelectedShopToSave: (shop: any | null) => void;
   isZoomHintVisible: boolean;
   setZoomHintVisible: (visible: boolean) => void;
+  isTooFarHintVisible: boolean;
+  setTooFarHintVisible: (visible: boolean) => void;
 }
 const useLocalUIStore = create<LocalUIState>((set) => ({
   selectedShopToSave: null,
   setSelectedShopToSave: (shop) => set({ selectedShopToSave: shop }),
   isZoomHintVisible: false,
-  setZoomHintVisible: (visible) => set({ isZoomHintVisible: visible })
+  setZoomHintVisible: (visible) => set({ isZoomHintVisible: visible }),
+  isTooFarHintVisible: false,
+  setTooFarHintVisible: (visible) => set({ isTooFarHintVisible: visible })
 }));
 
 
@@ -49,6 +53,13 @@ const MAX_CACHED_MARKETS = 500;
 // Beyond this delta the viewport is too wide for a store-level Overpass query;
 // the fetch is skipped and the "zoom in" hint may be shown instead.
 const MAX_FETCH_DELTA = 0.07;
+// Discovery is anchored to where the user actually is: viewports centered
+// farther than this from their location are intentionally not fetched, and
+// the pill shows a "too far" hint instead of the spinner. Same length as the
+// zoom gate above (MAX_FETCH_DELTA ≈ 7.8 km of latitude), so panning more
+// than one max-zoom viewport away from yourself ends discovery; panning back
+// in range resumes normal fetching.
+const MAX_FETCH_DISTANCE_M = MAX_FETCH_DELTA * 111_320; // ≈ 7.8 km
 // In-flight Overpass requests are no longer aborted on pan (their results are
 // always cached), but cap how many can run at once during rapid exploration.
 const MAX_CONCURRENT_FETCHES = 3;
@@ -153,14 +164,23 @@ const FetchingIndicator = () => {
   const isFetchingMarkets = useLocationStore((s) => s.isFetchingMarkets);
   const isOffline = useLocationStore((s) => s.isOffline);
   const isZoomHintVisible = useLocalUIStore((s) => s.isZoomHintVisible);
+  const isTooFarHintVisible = useLocalUIStore((s) => s.isTooFarHintVisible);
   const savedStoresOnly = useSettingsStore((s) => s.savedStoresOnly);
   // Offline wins over the spinner: retry probes fail within milliseconds
   // while offline, and flipping pill states every probe would flicker.
+  // "Too far" wins over the spinner: no fetch runs for this viewport, so a
+  // spinner from a leftover in-flight fetch would promise data that never
+  // comes — the hint explains the intentional skip instead.
+  const hint = isTooFarHintVisible
+    ? 'Too far away — move closer to load shops'
+    : !isFetchingMarkets && isZoomHintVisible
+      ? 'Zoom in to see shops'
+      : undefined;
   return (
     <MapSearchIndicator
-      isVisible={(isFetchingMarkets || isZoomHintVisible || isOffline) && !savedStoresOnly}
+      isVisible={(isFetchingMarkets || isZoomHintVisible || isTooFarHintVisible || isOffline) && !savedStoresOnly}
       offline={isOffline}
-      hint={!isFetchingMarkets && !isOffline && isZoomHintVisible ? 'Zoom in to see shops' : undefined}
+      hint={!isOffline ? hint : undefined}
     />
   );
 };
@@ -1329,6 +1349,7 @@ export default function StoresScreen() {
       if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
       if (fetchRetryTimerRef.current) clearTimeout(fetchRetryTimerRef.current);
       useLocalUIStore.getState().setZoomHintVisible(false);
+      useLocalUIStore.getState().setTooFarHintVisible(false);
       useLocationStore.getState().setIsFetchingMarkets(false);
     };
   }, []);
@@ -1404,9 +1425,29 @@ export default function StoresScreen() {
         m.longitude >= viewportBBox.west && m.longitude <= viewportBBox.east
       );
       useLocalUIStore.getState().setZoomHintVisible(!hasVisibleMarket);
+      useLocalUIStore.getState().setTooFarHintVisible(false);
       return;
     }
     useLocalUIStore.getState().setZoomHintVisible(false);
+
+    // Viewport centered beyond the pan range: skip the fetch entirely and let
+    // the pill explain why nothing loads. Checked after the zoom gate, so at
+    // this point the viewport is at most ~MAX_FETCH_DELTA wide and being out
+    // of range means the user's own position is off-screen — the hint can't
+    // contradict a visible current location. Shown whenever out of range,
+    // even over cached shops (new areas there won't populate). Fails open
+    // when the location is unknown (permission denied): distance can't be
+    // judged, fetch normally.
+    const userLoc = useLocationStore.getState().userLocation;
+    if (
+      userLoc &&
+      haversineDistance(region.latitude, region.longitude, userLoc.latitude, userLoc.longitude) > MAX_FETCH_DISTANCE_M
+    ) {
+      console.log("Viewport too far from user location, skipping fetch.");
+      useLocalUIStore.getState().setTooFarHintVisible(true);
+      return;
+    }
+    useLocalUIStore.getState().setTooFarHintVisible(false);
 
     const cachedData = opts?.bypassCache ? null : mapCacheManager.getStoresForRegion(region);
 

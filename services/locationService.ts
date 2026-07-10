@@ -181,12 +181,13 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
     }
   }
 
-  // 6. Unpurchased Items (Single read)
-  const unpurchasedItems = await geoEngine.getUnpurchasedItems();
-  if (unpurchasedItems.length === 0) {
+  // 6. Active List + Unpurchased Items (Single read)
+  const activeList = await geoEngine.getActiveShoppingList();
+  if (!activeList || activeList.items.length === 0) {
     addDebugLog("No active lists. Skipping Overpass fetch and geofencing.");
     return;
   }
+  const unpurchasedItems = activeList.items;
 
   // 7. FIND NEARBY STORES (Exclude saved)
   let nearbyStores = await geoEngine.getNearbyStores(latitude, longitude, settings.savedStoresOnly, SEARCH_RADIUS, true);
@@ -384,14 +385,19 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
     settings.isPro,
     settings.maxAlertsPerDay
   );
-  await sendLocalNotification(content.title, content.body, "geofence-alerts");
+  await sendLocalNotification(content.title, content.body, "geofence-alerts", {
+    type: "location-alert",
+    listId: activeList.listId,
+    storeId: bestStore.id,
+  });
 
   await notificationAnalytics.recordNotification(
     content.title,
     content.body,
     bestStore.id,
     eventId,
-    { latitude, longitude }
+    { latitude, longitude },
+    activeList.listId
   );
   
   dwellTimers.delete(bestStore.id);
@@ -532,9 +538,10 @@ export const handleGeofenceEnter = async (storeId: string) => {
       // fail open
     }
 
-    // 5. Unpurchased items
-    const unpurchasedItems = await geoEngine.getUnpurchasedItems();
-    if (unpurchasedItems.length === 0) return;
+    // 5. Active list + unpurchased items
+    const activeList = await geoEngine.getActiveShoppingList();
+    if (!activeList || activeList.items.length === 0) return;
+    const unpurchasedItems = activeList.items;
 
     // 6. Should Send?
     const eventId = Date.now();
@@ -563,11 +570,19 @@ export const handleGeofenceEnter = async (storeId: string) => {
       settings.isPro,
       settings.maxAlertsPerDay
     );
-    await sendLocalNotification(content.title, content.body, 'geofence-alerts');
-    await notificationAnalytics.recordNotification(content.title, content.body, store.id, eventId, {
-      latitude: store.latitude,
-      longitude: store.longitude,
+    await sendLocalNotification(content.title, content.body, 'geofence-alerts', {
+      type: 'location-alert',
+      listId: activeList.listId,
+      storeId: store.id,
     });
+    await notificationAnalytics.recordNotification(
+      content.title,
+      content.body,
+      store.id,
+      eventId,
+      { latitude: store.latitude, longitude: store.longitude },
+      activeList.listId
+    );
     
     // Record store visit for stats
     useStatsStore.getState().recordStoreVisit(store.id);

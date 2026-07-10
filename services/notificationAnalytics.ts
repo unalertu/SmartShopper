@@ -25,6 +25,8 @@ export interface NotificationHistoryEntry {
   title: string;
   body: string;
   storeId?: string;
+  // Shopping list the notification was about; drives in-app deep linking
+  listId?: number;
   timestamp: number;
   read: boolean;
 }
@@ -60,7 +62,9 @@ export interface NotificationAnalyticsState {
 
 const STORAGE_KEY = "notification-analytics-v1";
 
-const DEFAULT_STATE: NotificationAnalyticsState = {
+// Factory, not a constant: state consumers mutate nested arrays/objects in
+// place, so a shared default object would silently accumulate their changes.
+const createDefaultState = (): NotificationAnalyticsState => ({
   lastNotificationAt: null,
   lastNotificationCoords: null,
   lastStoreNotifications: {},
@@ -74,7 +78,7 @@ const DEFAULT_STATE: NotificationAnalyticsState = {
   emptyListReminderScheduledAt: null,
   notificationHistory: [],
   hasSentWelcome: false,
-};
+});
 
 const generateId = () =>
   `notif_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -94,12 +98,12 @@ export const notificationAnalytics = {
       const raw = await AsyncStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        return { ...DEFAULT_STATE, ...parsed };
+        return { ...createDefaultState(), ...parsed };
       }
     } catch (e) {
       console.error("notificationAnalytics getState error:", e);
     }
-    return { ...DEFAULT_STATE };
+    return createDefaultState();
   },
 
   saveState: async (state: NotificationAnalyticsState): Promise<void> => {
@@ -253,7 +257,8 @@ export const notificationAnalytics = {
     body: string,
     storeId: string,
     eventId: number,
-    coords?: { latitude: number; longitude: number }
+    coords?: { latitude: number; longitude: number },
+    listId?: number
   ): Promise<void> => {
     const state = await notificationAnalytics.getState();
 
@@ -287,6 +292,7 @@ export const notificationAnalytics = {
       title,
       body,
       storeId,
+      ...(listId !== undefined && { listId }),
       timestamp: now,
       read: false,
     };

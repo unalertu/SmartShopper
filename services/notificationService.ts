@@ -57,7 +57,8 @@ export const setupNotifications = async (): Promise<boolean> => {
 export const sendLocalNotification = async (
   title: string,
   body: string,
-  channelId: string = "geofence-alerts"
+  channelId: string = "geofence-alerts",
+  data?: Record<string, unknown>
 ): Promise<void> => {
   const { soundEnabled } = useSettingsStore.getState();
 
@@ -66,6 +67,7 @@ export const sendLocalNotification = async (
       title,
       body,
       sound: soundEnabled ? "default" : undefined,
+      ...(data && { data }),
       ...(Platform.OS === "android" && {
         channelId,
       }),
