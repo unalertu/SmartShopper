@@ -521,7 +521,7 @@ export default function ListDetails() {
             <View className="mx-6 bg-white rounded-[24px] border border-slate-100 px-5 py-2">
               <View className="py-6 px-4 items-center justify-center">
                 <ShoppingBag size={48} color="#94a3b8" strokeWidth={1.5} />
-                <Text className="text-slate-500 font-semibold text-[15px] mt-3 text-center">No items yet.{'\n'}Tap the button below to add.</Text>
+                <Text className="text-slate-500 font-semibold text-[15px] mt-3 text-center">No items yet.</Text>
               </View>
             </View>
           )}
