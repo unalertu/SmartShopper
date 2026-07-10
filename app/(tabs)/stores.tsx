@@ -34,6 +34,8 @@ interface LocalUIState {
   setZoomHintVisible: (visible: boolean) => void;
   isTooFarHintVisible: boolean;
   setTooFarHintVisible: (visible: boolean) => void;
+  isManualAddMode: boolean;
+  setManualAddMode: (active: boolean) => void;
 }
 const useLocalUIStore = create<LocalUIState>((set) => ({
   selectedShopToSave: null,
@@ -41,7 +43,9 @@ const useLocalUIStore = create<LocalUIState>((set) => ({
   isZoomHintVisible: false,
   setZoomHintVisible: (visible) => set({ isZoomHintVisible: visible }),
   isTooFarHintVisible: false,
-  setTooFarHintVisible: (visible) => set({ isTooFarHintVisible: visible })
+  setTooFarHintVisible: (visible) => set({ isTooFarHintVisible: visible }),
+  isManualAddMode: false,
+  setManualAddMode: (active) => set({ isManualAddMode: active })
 }));
 
 
@@ -186,6 +190,29 @@ const FetchingIndicator = () => {
 };
 
 
+
+// Isolated subscriber for manual-add mode, mirroring FetchingIndicator:
+// toggling the mode re-renders only this pill, never the map tree or root.
+const ManualAddHint = () => {
+  const insets = useSafeAreaInsets();
+  const isManualAddMode = useLocalUIStore((s) => s.isManualAddMode);
+  if (!isManualAddMode) return null;
+  return (
+    <View style={[styles.manualAddHint, { top: Math.max(20, insets.top) + 56 }]}>
+      <Text style={styles.manualAddHintText}>Tap the map to place your shop</Text>
+      <TouchableOpacity
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        activeOpacity={0.7}
+        onPress={() => {
+          hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+          useLocalUIStore.getState().setManualAddMode(false);
+        }}
+      >
+        <Text style={styles.manualAddHintCancel}>Cancel</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 // Helper: show directions action sheet for a shop
 function openDirectionsSheet(latitude: number, longitude: number) {
@@ -741,10 +768,11 @@ interface SheetContentProps {
   isAnimatingRef: React.MutableRefObject<boolean>;
   snapSheetToPreview: () => void;
   resetSheetForSelection: () => void;
+  collapseSheet: () => void;
   closeSwipeablesRef: React.MutableRefObject<(exceptId?: string) => void>;
 }
 
-const SheetContent = React.memo(({ mapRef, isAnimatingRef, snapSheetToPreview, resetSheetForSelection, closeSwipeablesRef }: SheetContentProps) => {
+const SheetContent = React.memo(({ mapRef, isAnimatingRef, snapSheetToPreview, resetSheetForSelection, collapseSheet, closeSwipeablesRef }: SheetContentProps) => {
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteModalData, setDeleteModalData] = useState<any>(null);
@@ -1079,9 +1107,41 @@ const SheetContent = React.memo(({ mapRef, isAnimatingRef, snapSheetToPreview, r
           style={{ marginTop: 0, marginBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
         >
           <Text style={{ fontSize: 28, fontWeight: '600', letterSpacing: -0.6, color: '#0f172a' }}>Saved Shops</Text>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: '#64748b', letterSpacing: -0.1 }}>
-            {activeSavedShops.length === 0 ? '' : `${activeSavedShops.length} ${activeSavedShops.length === 1 ? 'shop' : 'shops'}`}
-          </Text>
+          <TouchableOpacity
+            style={styles.addManualBtn}
+            activeOpacity={0.8}
+            onPress={() => {
+              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+              if (useLocalUIStore.getState().isManualAddMode) {
+                useLocalUIStore.getState().setManualAddMode(false);
+                return;
+              }
+              if (!canAddLocation(isPro)) {
+                const maxStores = getMaxSavedStores(isPro);
+                Alert.alert(
+                  'Shop Limit Reached',
+                  isPro
+                    ? `You've reached the maximum of ${maxStores} saved shops.`
+                    : `You've reached the free limit of ${FREE_TIER.maxSavedStores} saved shops. Upgrade to Pro for unlimited saved shops.`,
+                  isPro
+                    ? [{ text: 'OK' }]
+                    : [
+                        { text: 'OK', style: 'cancel' },
+                        {
+                          text: 'Upgrade to Pro',
+                          onPress: () => showPaywall(),
+                        },
+                      ]
+                );
+                return;
+              }
+              setSelectedShopToSave(null);
+              useLocalUIStore.getState().setManualAddMode(true);
+              collapseSheet();
+            }}
+          >
+            <Plus size={18} color="#fff" strokeWidth={2.5} />
+          </TouchableOpacity>
         </Animated.View>
       </Animated.View>
       {/* Empty state */}
@@ -1259,6 +1319,18 @@ const SheetContent = React.memo(({ mapRef, isAnimatingRef, snapSheetToPreview, r
           <>
             {activeSavedShops.map((loc, index) => renderShopCard(loc, index, 'active'))}
 
+            {/* Subtle count under the list — replaces the header count */}
+            {activeSavedShops.length >= 3 && (
+              <Animated.View
+                layout={LinearTransition.springify()}
+                style={{ alignItems: 'center', marginTop: 4, marginBottom: 6 }}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '500', color: '#BDBDBD' }}>
+                  {activeSavedShops.length} shops
+                </Text>
+              </Animated.View>
+            )}
+
             {allMutedShops.length > 0 && (
               <Animated.View
                 layout={LinearTransition.springify()}
@@ -1350,6 +1422,7 @@ export default function StoresScreen() {
       if (fetchRetryTimerRef.current) clearTimeout(fetchRetryTimerRef.current);
       useLocalUIStore.getState().setZoomHintVisible(false);
       useLocalUIStore.getState().setTooFarHintVisible(false);
+      useLocalUIStore.getState().setManualAddMode(false);
       useLocationStore.getState().setIsFetchingMarkets(false);
     };
   }, []);
@@ -1701,11 +1774,45 @@ export default function StoresScreen() {
     bottomSheetRef.current?.snapToIndex(1);
   }, []);
 
+  const collapseSheet = useCallback(() => {
+    // Drop to the lowest snap point so the map is unobstructed for pin placement
+    bottomSheetRef.current?.snapToIndex(0);
+  }, []);
+
+  // Manual add: the tapped coordinate becomes the shop location. The address
+  // geocodes in the background while the name prompt is up, so Save never
+  // waits on the network.
+  const handleManualAddAtCoordinate = useCallback((latitude: number, longitude: number) => {
+    useLocalUIStore.getState().setManualAddMode(false);
+    hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
+    const addressPromise = reverseGeocodeAddress(latitude, longitude);
+    Alert.prompt(
+      'Add Shop',
+      'Enter a name for this shop',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Save',
+          onPress: async (name?: string) => {
+            const address = await addressPromise;
+            useLocationStore.getState().addLocation({
+              name: name?.trim() || 'My Shop',
+              address: address || 'Unknown Address',
+              latitude,
+              longitude});
+          },
+        },
+      ],
+      'plain-text'
+    );
+  }, []);
+
   return (
     <AnimatedScreen>
     <View style={styles.container}>
       <StatusBar style="dark" />
       <FetchingIndicator />
+      <ManualAddHint />
 
       {/* Full Screen Background Map
        * ── iOS Stability & Performance Optimizations ──
@@ -1751,6 +1858,11 @@ export default function StoresScreen() {
           Keyboard.dismiss();
           closeSwipeablesRef.current();
           if (e.nativeEvent.action !== 'marker-press') {
+            if (useLocalUIStore.getState().isManualAddMode && e.nativeEvent.coordinate) {
+              const { latitude, longitude } = e.nativeEvent.coordinate;
+              handleManualAddAtCoordinate(latitude, longitude);
+              return;
+            }
             useLocalUIStore.getState().setSelectedShopToSave(null);
           }
         }}
@@ -1850,6 +1962,7 @@ export default function StoresScreen() {
             isAnimatingRef={isAnimatingRef}
             snapSheetToPreview={snapSheetToPreview}
             resetSheetForSelection={resetSheetForSelection}
+            collapseSheet={collapseSheet}
             closeSwipeablesRef={closeSwipeablesRef}
           />
         </BottomSheetScrollView>
@@ -1892,6 +2005,34 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center'},
+
+  /* ── Manual add ────────────────────────── */
+  addManualBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#0f172a',
+    alignItems: 'center',
+    justifyContent: 'center'},
+  manualAddHint: {
+    position: 'absolute',
+    alignSelf: 'center',
+    zIndex: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#0f172a',
+    borderRadius: 999,
+    paddingVertical: 10,
+    paddingHorizontal: 16},
+  manualAddHintText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600'},
+  manualAddHintCancel: {
+    color: '#94a3b8',
+    fontSize: 14,
+    fontWeight: '600'},
 
   /* ── Map marker ────────────────────────── */
   markerPill: {
