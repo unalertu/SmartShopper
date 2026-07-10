@@ -310,15 +310,15 @@ export default function HomeScreen() {
         useLocationStore.getState().setIsFetchingMarkets(false);
         if (error?.name === 'AbortError' || error?.message?.includes('AbortError')) {
           console.log('Nearby store fetch timed out (expected in slow network/large area).');
+        } else if (error?.name === 'TimeoutError') {
+          // Expected on slow networks / overloaded mirrors: keep whatever is
+          // cached, leave the ambiguous offline state unchanged, and let the
+          // retry below re-probe. Not an app error — don't log it as one.
+          console.log('Nearby store fetch: all Overpass mirrors timed out — will retry.');
         } else {
           console.error('Error fetching nearby store:', error);
-          // Distinguish "your connection is down" from "the fetch failed";
-          // ambiguous timeouts leave the offline state unchanged.
-          if (isOfflineError(error)) {
-            useLocationStore.getState().setIsOffline(true);
-          } else if (error?.name !== 'TimeoutError') {
-            useLocationStore.getState().setIsOffline(false);
-          }
+          // Distinguish "your connection is down" from "the fetch failed"
+          useLocationStore.getState().setIsOffline(isOfflineError(error));
         }
         if (!cancelled) {
           retryTimer = setTimeout(attempt, retryDelay);

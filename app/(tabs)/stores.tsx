@@ -1498,7 +1498,13 @@ export default function StoresScreen() {
       // too, get swallowed here, and permanently kill the retry chain —
       // discovery then stayed dead after reconnect until an app reload.
       if (!controller.signal.aborted) {
-        console.log('Error fetching from Overpass:', error);
+        if (error.name === 'TimeoutError') {
+          // Expected on slow networks / overloaded mirrors — cached markers
+          // keep rendering and the retry below re-probes. Not an app error.
+          console.log('Overpass mirrors timed out — retrying with backoff.');
+        } else {
+          console.log('Error fetching from Overpass:', error);
+        }
         // Offline is a distinct UI state ("No connection" pill) so the user
         // reads it as their network, not the app. A definite server failure
         // clears it (the network works); timeouts are ambiguous — hung
