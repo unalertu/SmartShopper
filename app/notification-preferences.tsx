@@ -4,7 +4,7 @@ import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { LinearTransition, FadeIn, FadeOut } from 'react-native-reanimated';
-import { MapPin, Menu, Vibrate, ChevronLeft, Lock, Clock, Calendar, SlidersHorizontal, BellDot, ChevronRight, Target, Battery } from 'lucide-react-native';
+import { MapPin, Menu, Vibrate, ChevronLeft, Lock, Clock, Calendar, SlidersHorizontal, Bell, BellDot, ChevronRight, Target, Battery } from 'lucide-react-native';
 import { useSettingsStore } from '../store';
 import { hapticImpact } from '../services/haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
@@ -30,6 +30,10 @@ const SETTING_DESCRIPTIONS: Record<string, { enable: React.ReactNode; disable: R
   'Enable Nearby Shops Alerts': {
     enable: "You'll be notified when a nearby shop has items on your shopping list.",
     disable: "You won't receive reminders when passing shops that carry your list items.",
+  },
+  'Remind Without a List': {
+    enable: "You'll still be reminded near shops even when you don't have an active shopping list.",
+    disable: "You'll only be reminded when a nearby shop has items on your shopping list.",
   },
   'Notification Haptics': {
     enable: "Your device will vibrate when alerts arrive for a more noticeable experience.",
@@ -138,9 +142,11 @@ export default function NotificationPreferencesScreen() {
     isPro,
     savedStoresOnly,
     shoppingListReminders,
+    remindWithoutList,
     notificationSensitivity,
     setSavedStoresOnly,
     setShoppingListReminders,
+    setRemindWithoutList,
     setNotificationSensitivity
   } = useSettingsStore();
 
@@ -231,6 +237,20 @@ export default function NotificationPreferencesScreen() {
               <Switch
                 value={shoppingListReminders}
                 onValueChange={() => requestToggle('Enable Nearby Shops Alerts', shoppingListReminders, setShoppingListReminders)}
+                trackColor={switchTrackColor}
+                thumbColor="#ffffff"
+                ios_backgroundColor="#E5E7EB"
+              />
+            }
+          />
+          <SettingsRow
+            icon={<Bell size={20} color="#64748b" />}
+            label="Remind Without a List"
+            sublabel="Alert near shops even with no list"
+            rightElement={
+              <Switch
+                value={remindWithoutList}
+                onValueChange={() => requestToggle('Remind Without a List', remindWithoutList, setRemindWithoutList)}
                 trackColor={switchTrackColor}
                 thumbColor="#ffffff"
                 ios_backgroundColor="#E5E7EB"

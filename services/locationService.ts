@@ -68,6 +68,7 @@ export const getSettingsFromStorage = async () => {
         allowedHoursEnd: typeof state.allowedHoursEnd === 'number' ? state.allowedHoursEnd : 22,
         snoozeUntil: typeof state.snoozeUntil === 'number' ? state.snoozeUntil : null,
         shoppingListReminders: state.shoppingListReminders !== false,
+        remindWithoutList: state.remindWithoutList === true,
         notificationSensitivity: (state.notificationSensitivity || 'balanced') as NotificationSensitivity,
         maxAlertsPerDay: state.maxAlertsPerDay ?? 5,
         maxNotificationsPerStorePerDay: getMaxNotificationsPerStorePerDay(isPro),
@@ -86,6 +87,7 @@ export const getSettingsFromStorage = async () => {
     allowedHoursEnd: 22,
     snoozeUntil: null as number | null,
     shoppingListReminders: true,
+    remindWithoutList: false,
     notificationSensitivity: 'balanced' as NotificationSensitivity,
     maxAlertsPerDay: 5 as number | 'unlimited',
     maxNotificationsPerStorePerDay: getMaxNotificationsPerStorePerDay(false),
@@ -183,11 +185,11 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
 
   // 6. Active List + Unpurchased Items (Single read)
   const activeList = await geoEngine.getActiveShoppingList();
-  if (!activeList || activeList.items.length === 0) {
+  if ((!activeList || activeList.items.length === 0) && !settings.remindWithoutList) {
     addDebugLog("No active lists. Skipping Overpass fetch and geofencing.");
     return;
   }
-  const unpurchasedItems = activeList.items;
+  const unpurchasedItems = activeList?.items ?? [];
 
   // 7. FIND NEARBY STORES (Exclude saved)
   let nearbyStores = await geoEngine.getNearbyStores(latitude, longitude, settings.savedStoresOnly, SEARCH_RADIUS, true);
@@ -387,7 +389,7 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
   );
   await sendLocalNotification(content.title, content.body, "geofence-alerts", {
     type: "location-alert",
-    listId: activeList.listId,
+    listId: activeList?.listId,
     storeId: bestStore.id,
   });
 
@@ -397,7 +399,7 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
     bestStore.id,
     eventId,
     { latitude, longitude },
-    activeList.listId
+    activeList?.listId
   );
   
   dwellTimers.delete(bestStore.id);
@@ -498,13 +500,15 @@ export const handleGeofenceEnter = async (storeId: string) => {
     // 2. Is Active?
     if (!store.isActive) return;
 
-    // 3. Has Active List?
-    const hasActiveList = await geoEngine.hasActiveShoppingList();
-    if (!hasActiveList) return;
-
-    // 4. Settings
+    // 3. Settings
     const settings = await getSettingsFromStorage();
     if (!settings.notificationsEnabled || !settings.shoppingListReminders) return;
+
+    // 4. Has Active List? (skipped when Remind Without a List is on)
+    if (!settings.remindWithoutList) {
+      const hasActiveList = await geoEngine.hasActiveShoppingList();
+      if (!hasActiveList) return;
+    }
 
     // 4.5 Wide-fence enter confirmation. iOS regions can fire spuriously
     // (Wi-Fi triggers hundreds of meters out); verify against the OS's cached
@@ -540,8 +544,8 @@ export const handleGeofenceEnter = async (storeId: string) => {
 
     // 5. Active list + unpurchased items
     const activeList = await geoEngine.getActiveShoppingList();
-    if (!activeList || activeList.items.length === 0) return;
-    const unpurchasedItems = activeList.items;
+    if ((!activeList || activeList.items.length === 0) && !settings.remindWithoutList) return;
+    const unpurchasedItems = activeList?.items ?? [];
 
     // 6. Should Send?
     const eventId = Date.now();
@@ -572,7 +576,7 @@ export const handleGeofenceEnter = async (storeId: string) => {
     );
     await sendLocalNotification(content.title, content.body, 'geofence-alerts', {
       type: 'location-alert',
-      listId: activeList.listId,
+      listId: activeList?.listId,
       storeId: store.id,
     });
     await notificationAnalytics.recordNotification(
@@ -581,7 +585,7 @@ export const handleGeofenceEnter = async (storeId: string) => {
       store.id,
       eventId,
       { latitude: store.latitude, longitude: store.longitude },
-      activeList.listId
+      activeList?.listId
     );
     
     // Record store visit for stats

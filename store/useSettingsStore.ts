@@ -38,6 +38,8 @@ interface SettingsState {
   // ── Notification Preferences ──
   savedStoresOnly: boolean;
   shoppingListReminders: boolean;
+  // Nearby-shop alerts fire even when there is no active shopping list
+  remindWithoutList: boolean;
 
   // Pause alerts until this epoch ms; null when not paused. Free feature.
   snoozeUntil: number | null;
@@ -74,6 +76,7 @@ interface SettingsState {
 
   setSavedStoresOnly: (enabled: boolean) => void;
   setShoppingListReminders: (enabled: boolean) => void;
+  setRemindWithoutList: (enabled: boolean) => void;
   setSnoozeUntil: (until: number | null) => void;
   setNotificationSensitivity: (sensitivity: NotificationSensitivity) => void;
   setMaxAlertsPerDay: (maxAlerts: MaxAlertsPerDay) => void;
@@ -100,6 +103,7 @@ const DEFAULT_SETTINGS = {
 
   savedStoresOnly: false,
   shoppingListReminders: true,
+  remindWithoutList: false,
   snoozeUntil: null as number | null,
   notificationSensitivity: "balanced" as const,
   maxAlertsPerDay: 5 as MaxAlertsPerDay,
@@ -130,6 +134,7 @@ export const useSettingsStore = create<SettingsState>()(
 
       setSavedStoresOnly: (enabled: boolean) => set({ savedStoresOnly: enabled }),
       setShoppingListReminders: (enabled: boolean) => set({ shoppingListReminders: enabled }),
+      setRemindWithoutList: (enabled: boolean) => set({ remindWithoutList: enabled }),
       setSnoozeUntil: (until: number | null) => set({ snoozeUntil: until }),
       setNotificationSensitivity: (sensitivity: NotificationSensitivity) => {
         set({ notificationSensitivity: sensitivity });

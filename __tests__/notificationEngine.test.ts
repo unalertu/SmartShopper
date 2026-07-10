@@ -46,6 +46,12 @@ describe('notificationEngine.buildNotificationContent', () => {
     expect(content.body).toBe('🛒 Milk is on your list');
   });
 
+  it('uses the no-list nudge when there are no items (Remind Without a List)', async () => {
+    const content = await notificationEngine.buildNotificationContent('Walmart', [], true);
+    expect(content.title).toBe("You're near Walmart");
+    expect(content.body).toBe("🛒 Need anything? Start a list while you're here");
+  });
+
   it('truncates long lists with +X more', async () => {
     const items = ['Milk', 'Eggs', 'Bread', 'Butter', 'Cheese'].map((name) => ({ name }));
     const content = await notificationEngine.buildNotificationContent('Walmart', items, true);

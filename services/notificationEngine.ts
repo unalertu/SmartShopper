@@ -119,15 +119,21 @@ export const notificationEngine = {
     isPro: boolean = true,
     maxAlertsPerDay: number | "unlimited" = "unlimited"
   ): Promise<{ title: string; body: string }> => {
-    const maxShow = 3;
-    const names = unpurchasedItems.slice(0, maxShow).map((i) => i.name);
-    const remaining = unpurchasedItems.length - maxShow;
+    let body: string;
+    if (unpurchasedItems.length === 0) {
+      // Remind Without a List: no active list, generic nudge instead
+      body = "🛒 Need anything? Start a list while you're here";
+    } else {
+      const maxShow = 3;
+      const names = unpurchasedItems.slice(0, maxShow).map((i) => i.name);
+      const remaining = unpurchasedItems.length - maxShow;
 
-    let body = `🛒 ${names.join(", ")}`;
-    if (remaining > 0) {
-      body += ` +${remaining} more`;
+      body = `🛒 ${names.join(", ")}`;
+      if (remaining > 0) {
+        body += ` +${remaining} more`;
+      }
+      body += unpurchasedItems.length === 1 ? " is on your list" : " are on your list";
     }
-    body += unpurchasedItems.length === 1 ? " is on your list" : " are on your list";
 
     if (!isPro && typeof maxAlertsPerDay === 'number') {
       const state = await notificationAnalytics.getState();
