@@ -12,7 +12,7 @@ import { hapticImpact, hapticNotification, hapticSelection } from '../../service
 import ProgressiveBlur from '../../components/ProgressiveBlur';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
-import { fetchMarkets } from '../../services/overpassService';
+import { fetchMarkets, isOfflineError } from '../../services/overpassService';
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeOutLeft, LinearTransition, FadeInDown } from 'react-native-reanimated';
 import { useTabBarScrollHandler } from '../../hooks/useTabBarScroll';
@@ -138,6 +138,7 @@ export default function HomeScreen() {
   const updateLocation = useLocationStore((s) => s.updateLocation);
   const cachedMarkets = useLocationStore((s) => s.cachedMarkets);
   const isFetchingMarkets = useLocationStore((s) => s.isFetchingMarkets);
+  const isOffline = useLocationStore((s) => s.isOffline);
   const userLocation = useLocationStore((s) => s.userLocation);
   const setUserLocation = useLocationStore((s) => s.setUserLocation);
 
@@ -235,7 +236,16 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
-    (async () => {
+    // A single "Network request failed" must not disable nearby-store
+    // discovery for the rest of the app session: failed attempts are
+    // retried with capped backoff until one succeeds or becomes a no-op
+    // (markets cached by another path, permission denied, setting off).
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let retryDelay = 15_000;
+    const RETRY_MAX_MS = 60_000;
+
+    const attempt = async () => {
       try {
         const { status } = await Location.getForegroundPermissionsAsync();
         if (status !== 'granted') {
@@ -294,6 +304,7 @@ export default function HomeScreen() {
             }
           }
           useLocationStore.getState().setIsFetchingMarkets(false);
+          useLocationStore.getState().setIsOffline(false);
         }
       } catch (error: any) {
         useLocationStore.getState().setIsFetchingMarkets(false);
@@ -301,9 +312,26 @@ export default function HomeScreen() {
           console.log('Nearby store fetch timed out (expected in slow network/large area).');
         } else {
           console.error('Error fetching nearby store:', error);
+          // Distinguish "your connection is down" from "the fetch failed";
+          // ambiguous timeouts leave the offline state unchanged.
+          if (isOfflineError(error)) {
+            useLocationStore.getState().setIsOffline(true);
+          } else if (error?.name !== 'TimeoutError') {
+            useLocationStore.getState().setIsOffline(false);
+          }
+        }
+        if (!cancelled) {
+          retryTimer = setTimeout(attempt, retryDelay);
+          retryDelay = Math.min(retryDelay * 2, RETRY_MAX_MS);
         }
       }
-    })();
+    };
+
+    attempt();
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -331,18 +359,19 @@ export default function HomeScreen() {
         setNearestShopDistance(formatDistance(minDist));
         setIsNearStore(true);
       } else {
-        setNearbyStore(isFetchingMarkets ? 'Searching nearby...' : 'No stores nearby');
+        // Offline reads as a connection problem, not "this area has no shops"
+        setNearbyStore(isOffline ? 'No connection' : isFetchingMarkets ? 'Searching nearby...' : 'No stores nearby');
         setNearestShopName(null);
         setNearestShopDistance(null);
         setIsNearStore(false);
       }
     } else {
-      setNearbyStore(isFetchingMarkets ? 'Searching nearby...' : 'No stores nearby');
+      setNearbyStore(isOffline ? 'No connection' : isFetchingMarkets ? 'Searching nearby...' : 'No stores nearby');
       setNearestShopName(null);
       setNearestShopDistance(null);
       setIsNearStore(false);
     }
-  }, [cachedMarkets, userLocation, isFetchingMarkets, distanceUnit]);
+  }, [cachedMarkets, userLocation, isFetchingMarkets, isOffline, distanceUnit]);
 
   const { lists: shoppingLists, addList, removeList, canCreateList } = useListsStore();
 

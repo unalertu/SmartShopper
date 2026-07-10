@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Keyboard, Linking, ActionSheetIOS } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Keyboard, Linking, ActionSheetIOS, AppState } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Store, Plus, Trash2, Navigation2, MoreHorizontal, BellOff, Settings } from 'lucide-react-native';
@@ -12,7 +12,7 @@ import BottomSheet, { BottomSheetScrollView, TouchableOpacity as BottomSheetTouc
 import Animated, { useSharedValue, useAnimatedStyle, FadeInDown, FadeOutUp, FadeOutLeft, LinearTransition } from 'react-native-reanimated';
 import { Swipeable } from 'react-native-gesture-handler';
 import Supercluster, { PointFeature } from 'supercluster';
-import { fetchMarkets } from '../../services/overpassService';
+import { fetchMarkets, isOfflineError } from '../../services/overpassService';
 import { mapCacheManager, regionToBBox, bboxCoverageRatio, COVERAGE_HIT_RATIO, StoreBBox } from '../../services';
 import { useLocationStore, useSettingsStore } from '../../store';
 import AnimatedScreen from '../../components/AnimatedScreen';
@@ -52,6 +52,16 @@ const MAX_FETCH_DELTA = 0.07;
 // In-flight Overpass requests are no longer aborted on pan (their results are
 // always cached), but cap how many can run at once during rapid exploration.
 const MAX_CONCURRENT_FETCHES = 3;
+// A legitimate fetch settles within ~75s (3 mirrors x 25s timeout). Anything
+// older is a leaked entry (e.g. an abort that was never honored) — purge it so
+// the in-flight coverage check can never suppress a viewport forever.
+const STALE_FETCH_MS = 90_000;
+// After a failed fetch, retry the current viewport automatically so temporary
+// network failures self-heal without requiring a pan. Backoff doubles up to
+// the cap while failures continue; any success resets it. The cap stays low
+// (probes cost nothing while offline) so reconnecting is noticed quickly.
+const FETCH_RETRY_BASE_MS = 15_000;
+const FETCH_RETRY_MAX_MS = 60_000;
 
 // When the market list exceeds the cap, keep the markets closest to the
 // current viewport center rather than the newest-inserted — trimming by
@@ -141,12 +151,16 @@ TrackedMarker.displayName = 'TrackedMarker';
 // already in flight elsewhere must not surface a search indicator here.
 const FetchingIndicator = () => {
   const isFetchingMarkets = useLocationStore((s) => s.isFetchingMarkets);
+  const isOffline = useLocationStore((s) => s.isOffline);
   const isZoomHintVisible = useLocalUIStore((s) => s.isZoomHintVisible);
   const savedStoresOnly = useSettingsStore((s) => s.savedStoresOnly);
+  // Offline wins over the spinner: retry probes fail within milliseconds
+  // while offline, and flipping pill states every probe would flicker.
   return (
     <MapSearchIndicator
-      isVisible={(isFetchingMarkets || isZoomHintVisible) && !savedStoresOnly}
-      hint={!isFetchingMarkets && isZoomHintVisible ? 'Zoom in to see shops' : undefined}
+      isVisible={(isFetchingMarkets || isZoomHintVisible || isOffline) && !savedStoresOnly}
+      offline={isOffline}
+      hint={!isFetchingMarkets && !isOffline && isZoomHintVisible ? 'Zoom in to see shops' : undefined}
     />
   );
 };
@@ -1270,8 +1284,11 @@ export default function StoresScreen() {
   const currentRegionRef = useRef<any>(null);
   // In-flight Overpass fetches. Requests are not aborted when the user pans
   // away (a completed fetch always lands in the region cache), only on
-  // unmount or when the concurrency cap is exceeded.
-  const inFlightFetchesRef = useRef<Array<{ bbox: StoreBBox; controller: AbortController }>>([]);
+  // unmount, when the concurrency cap is exceeded, or when stale-purged.
+  const inFlightFetchesRef = useRef<Array<{ bbox: StoreBBox; controller: AbortController; startedAt: number }>>([]);
+  // Failure-recovery retry state (see FETCH_RETRY_BASE_MS)
+  const fetchRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fetchRetryDelayRef = useRef(FETCH_RETRY_BASE_MS);
 
   // Bridges into the isolated child components — the root communicates with
   // them exclusively through refs and stable callbacks so it never re-renders
@@ -1280,9 +1297,28 @@ export default function StoresScreen() {
   const closeSwipeablesRef = useRef<(exceptId?: string) => void>(() => {});
 
   // Stable ref for fetchMarketsFromOverpass so memoized callbacks always call the latest version
-  const fetchMarketsRef = useRef<(region: any) => void>(() => {});
+  const fetchMarketsRef = useRef<(region: any, opts?: { bypassCache?: boolean }) => void>(() => {});
 
   const [initialRegion, setInitialRegion] = useState<any>(null);
+
+  // ── Reconnect probe: toggling connectivity usually happens outside the
+  // app (Settings / Control Center), so returning to the foreground is the
+  // natural moment the network is back. If we're in the offline state, probe
+  // the current viewport immediately instead of waiting out the backoff.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') return;
+      if (!useLocationStore.getState().isOffline) return;
+      if (fetchRetryTimerRef.current) {
+        clearTimeout(fetchRetryTimerRef.current);
+        fetchRetryTimerRef.current = null;
+      }
+      fetchRetryDelayRef.current = FETCH_RETRY_BASE_MS;
+      const region = currentRegionRef.current;
+      if (region) fetchMarketsRef.current(region, { bypassCache: true });
+    });
+    return () => sub.remove();
+  }, []);
 
   // ── Cleanup on unmount: abort in-flight fetches + clear all timers ──
   useEffect(() => {
@@ -1291,6 +1327,7 @@ export default function StoresScreen() {
       inFlightFetchesRef.current = [];
       if (regionDebounceRef.current) clearTimeout(regionDebounceRef.current);
       if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
+      if (fetchRetryTimerRef.current) clearTimeout(fetchRetryTimerRef.current);
       useLocalUIStore.getState().setZoomHintVisible(false);
       useLocationStore.getState().setIsFetchingMarkets(false);
     };
@@ -1309,15 +1346,49 @@ export default function StoresScreen() {
   // region cache) and a struggling mirror rotation can run for a minute+, so
   // an in-flight fetch for a region the user has left must not keep the
   // spinner alive. Recomputed on every region settle and fetch start/finish.
+  // Abort and drop in-flight entries that should have settled long ago.
+  // A leaked entry would otherwise suppress fetches for its bbox forever
+  // (the coverage check below) and pin the loading pill.
+  const purgeStaleFetches = useCallback(() => {
+    const now = Date.now();
+    const hasStale = inFlightFetchesRef.current.some((f) => now - f.startedAt > STALE_FETCH_MS);
+    if (!hasStale) return;
+    inFlightFetchesRef.current = inFlightFetchesRef.current.filter((f) => {
+      if (now - f.startedAt > STALE_FETCH_MS) {
+        console.log('Purging stale in-flight Overpass fetch');
+        f.controller.abort();
+        return false;
+      }
+      return true;
+    });
+  }, []);
+
   const updateFetchingIndicator = useCallback(() => {
+    purgeStaleFetches();
     const region = currentRegionRef.current;
     const relevant = inFlightFetchesRef.current.some((f) =>
       region ? bboxCoverageRatio(f.bbox, regionToBBox(region)) > 0 : true
     );
     useLocationStore.getState().setIsFetchingMarkets(relevant);
+  }, [purgeStaleFetches]);
+
+  // Schedule a re-attempt of the current viewport (see FETCH_RETRY_BASE_MS).
+  // Keeps an already-pending retry instead of resetting it, so concurrent
+  // failures don't double-bump the backoff.
+  const scheduleFetchRetry = useCallback(() => {
+    if (fetchRetryTimerRef.current) return;
+    const delay = fetchRetryDelayRef.current;
+    fetchRetryDelayRef.current = Math.min(delay * 2, FETCH_RETRY_MAX_MS);
+    fetchRetryTimerRef.current = setTimeout(() => {
+      fetchRetryTimerRef.current = null;
+      const current = currentRegionRef.current;
+      // Bypass the region cache: the retry must actually touch the network,
+      // both to recover data and to clear the offline state on reconnect.
+      if (current) fetchMarketsRef.current(current, { bypassCache: true });
+    }, delay);
   }, []);
 
-  const fetchMarketsFromOverpass = useCallback(async (region: any) => {
+  const fetchMarketsFromOverpass = useCallback(async (region: any, opts?: { bypassCache?: boolean }) => {
     const isSavedStoresOnly = useSettingsStore.getState().savedStoresOnly;
     if (isSavedStoresOnly) return;
 
@@ -1337,10 +1408,15 @@ export default function StoresScreen() {
     }
     useLocalUIStore.getState().setZoomHintVisible(false);
 
-    const cachedData = mapCacheManager.getStoresForRegion(region);
+    const cachedData = opts?.bypassCache ? null : mapCacheManager.getStoresForRegion(region);
 
     if (cachedData) {
       console.log("Cache hit for region:", mapCacheManager.getRegionKey(region));
+
+      // Cached data renders fine while offline, but no fetch runs here to
+      // probe the network — keep the retry chain alive so the "No connection"
+      // state can clear itself once connectivity returns.
+      if (useLocationStore.getState().isOffline) scheduleFetchRetry();
 
       const prev = useLocationStore.getState().cachedMarkets || [];
       // O(n) dedup via id Set (existing entries win, same as before)
@@ -1362,6 +1438,8 @@ export default function StoresScreen() {
 
     // A fetch already in flight that covers this viewport will populate it
     // when it lands — starting another would only duplicate Overpass load.
+    // Stale-purge first so a leaked entry can't block this viewport forever.
+    purgeStaleFetches();
     if (inFlightFetchesRef.current.some(
       (f) => bboxCoverageRatio(f.bbox, viewportBBox) >= COVERAGE_HIT_RATIO
     )) {
@@ -1385,7 +1463,7 @@ export default function StoresScreen() {
     };
 
     const controller = new AbortController();
-    const inFlightEntry = { bbox: fetchBBox, controller };
+    const inFlightEntry = { bbox: fetchBBox, controller, startedAt: Date.now() };
     inFlightFetchesRef.current.push(inFlightEntry);
     updateFetchingIndicator();
 
@@ -1410,16 +1488,39 @@ export default function StoresScreen() {
         const finalMarkets = trimMarketsByDistance([...prev, ...newOnes], region);
         useLocationStore.getState().setCachedMarkets(finalMarkets);
       }
+      // Network is healthy again — restore the fast retry cadence
+      fetchRetryDelayRef.current = FETCH_RETRY_BASE_MS;
+      useLocationStore.getState().setIsOffline(false);
     } catch (error: any) {
-      if (error.name !== 'AbortError' && !error.message?.includes('AbortError')) {
+      // Only a caller-initiated cancellation (unmount, concurrency cap,
+      // stale purge) is a non-event. Judge by our own controller, not the
+      // error name: an all-mirrors timeout used to surface as an AbortError
+      // too, get swallowed here, and permanently kill the retry chain —
+      // discovery then stayed dead after reconnect until an app reload.
+      if (!controller.signal.aborted) {
         console.log('Error fetching from Overpass:', error);
+        // Offline is a distinct UI state ("No connection" pill) so the user
+        // reads it as their network, not the app. A definite server failure
+        // clears it (the network works); timeouts are ambiguous — hung
+        // connections happen both offline and on overloaded mirrors — so
+        // they leave the current state alone instead of flickering the pill.
+        if (isOfflineError(error)) {
+          useLocationStore.getState().setIsOffline(true);
+        } else if (error.name !== 'TimeoutError') {
+          useLocationStore.getState().setIsOffline(false);
+        }
+        // Self-heal: nothing re-triggers a fetch while the user sits on the
+        // same viewport, so a temporary network failure would leave the map
+        // empty until the next pan. Retry the *current* region with capped
+        // backoff; the cache / in-flight checks make a landed success a no-op.
+        scheduleFetchRetry();
       }
     } finally {
       const idx = inFlightFetchesRef.current.indexOf(inFlightEntry);
       if (idx !== -1) inFlightFetchesRef.current.splice(idx, 1);
       updateFetchingIndicator();
     }
-  }, [updateFetchingIndicator]);
+  }, [updateFetchingIndicator, scheduleFetchRetry]);
 
   // Keep the stable ref in sync with the latest fetchMarketsFromOverpass
   useEffect(() => {

@@ -13,6 +13,14 @@ const MIRROR_POOL = [
 
 let currentMirrorIndex = 0;
 
+/**
+ * React Native's fetch rejects with this TypeError when the device has no
+ * connectivity (DNS/socket failure), as opposed to HTTP errors or timeouts.
+ * Lets the UI show "no connection" instead of a generic retry state.
+ */
+export const isOfflineError = (error: any): boolean =>
+  typeof error?.message === 'string' && error.message.includes('Network request failed');
+
 export interface MarketElement {
   id: string;
   name: string;
@@ -54,9 +62,12 @@ out center 600;`;
     const mirrorIndex = (startIndex + attempt) % MIRROR_POOL.length;
     const isLastMirror = attempt === MIRROR_POOL.length - 1;
 
-    // Bail out early if the caller already aborted (e.g. new map pan)
+    // Bail out early if the caller already aborted (e.g. new map pan).
+    // Hermes has no DOMException global; a named Error keeps callers'
+    // `error.name === 'AbortError'` checks working.
     if (signal?.aborted) {
-      const err = new DOMException('The operation was aborted.', 'AbortError');
+      const err = new Error('The operation was aborted.');
+      err.name = 'AbortError';
       throw err;
     }
 
@@ -121,13 +132,17 @@ out center 600;`;
       console.log(`✅ Overpass returned ${data?.elements?.length ?? 0} elements from ${mirror}`);
 
       // Detect stale/broken mirrors: valid JSON but suspiciously empty results
-      // AND the timestamp looks invalid (not a proper ISO date)
+      // AND the timestamp looks invalid (not a proper ISO date). Never accept
+      // such a result, even from the last mirror — callers cache empties as
+      // "no stores here" for the whole region TTL, so a broken mirror must
+      // surface as a failure, not as a silent dead zone.
       if (data && data.elements && data.elements.length === 0) {
         const timestamp = data?.osm3s?.timestamp_osm_base || '';
         const isValidTimestamp = timestamp.includes('-') && timestamp.length > 10; // e.g. "2026-04-13T12:43:14Z"
 
-        if (!isValidTimestamp && !isLastMirror) {
-          console.log(`⚠️ Mirror ${mirror} returned 0 results with suspicious timestamp "${timestamp}". Trying next mirror...`);
+        if (!isValidTimestamp) {
+          console.log(`⚠️ Mirror ${mirror} returned 0 results with suspicious timestamp "${timestamp}". ${isLastMirror ? 'Treating as failure.' : 'Trying next mirror...'}`);
+          lastError = new Error(`Mirror returned empty result with invalid timestamp "${timestamp}"`);
           currentMirrorIndex = (mirrorIndex + 1) % MIRROR_POOL.length;
           continue;
         }
@@ -163,5 +178,17 @@ out center 600;`;
     }
   }
 
+  // The internal 25s watchdog aborts hung requests, so an exhausted rotation
+  // can end with an AbortError even though the caller never cancelled. Never
+  // surface that as an AbortError: callers rightly treat aborts as "the
+  // caller cancelled" and skip their failure recovery, which would kill
+  // retry chains on offline modes where connections hang instead of failing.
+  if (lastError?.name === 'AbortError' && !signal?.aborted) {
+    // Named so callers can treat it as ambiguous (offline OR server
+    // overload) — it should neither set nor clear the offline UI state.
+    const err = new Error('All Overpass mirrors timed out.');
+    err.name = 'TimeoutError';
+    throw err;
+  }
   throw lastError || new Error("All Overpass mirrors failed or are rate-limited.");
 };

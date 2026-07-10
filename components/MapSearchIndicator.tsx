@@ -6,6 +6,7 @@ import Animated, {
   withTiming,
   Easing} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { WifiOff } from 'lucide-react-native';
 
 interface MapSearchIndicatorProps {
   /**
@@ -17,9 +18,15 @@ interface MapSearchIndicatorProps {
    * Optional text shown in place of the spinner (e.g. "Zoom in to see shops").
    */
   hint?: string;
+  /**
+   * Device has no connectivity: shows a "No connection" state instead of the
+   * spinner so the failure reads as a network problem, not an app problem.
+   * Takes precedence over the spinner and hint.
+   */
+  offline?: boolean;
 }
 
-export function MapSearchIndicator({ isVisible, hint }: MapSearchIndicatorProps) {
+export function MapSearchIndicator({ isVisible, hint, offline }: MapSearchIndicatorProps) {
   const insets = useSafeAreaInsets();
   
   // Shared values for react-native-reanimated
@@ -86,8 +93,13 @@ export function MapSearchIndicator({ isVisible, hint }: MapSearchIndicatorProps)
         animatedStyle,
       ]}
     >
-      <View style={[indicatorStyles.pill, hint ? indicatorStyles.hintPill : null]}>
-        {hint ? (
+      <View style={[indicatorStyles.pill, (offline || hint) ? indicatorStyles.hintPill : null]}>
+        {offline ? (
+          <>
+            <WifiOff size={15} color="#64748b" strokeWidth={2.2} />
+            <Text style={[indicatorStyles.hintText, indicatorStyles.offlineText]}>No connection</Text>
+          </>
+        ) : hint ? (
           <Text style={indicatorStyles.hintText}>{hint}</Text>
         ) : (
           <ActivityIndicator size="small" color="#64748b" />
@@ -114,4 +126,6 @@ const indicatorStyles = StyleSheet.create({
   hintText: {
     color: '#64748b',
     fontSize: 14,
-    fontWeight: '600'}});
+    fontWeight: '600'},
+  offlineText: {
+    marginLeft: 7}});

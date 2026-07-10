@@ -1,6 +1,7 @@
 export { Colors, Spacing, BorderRadius, FontSize } from "./theme";
 export { CATEGORIES, UNITS, getCategoryIcon, getCategoryLabel } from "./Categories";
-export { FREE_TIER, PRO_TIER, getTierConfig, getMaxSavedStores, getMaxLocationNotificationsPerDay, getMaxLists, getMaxItemsPerList, getAlertDistanceMeters, getMaxNotificationsPerStorePerDay } from "./tierConfig";
+export { FREE_TIER, PRO_TIER, getTierConfig, getMaxSavedStores, getMaxLocationNotificationsPerDay, getMaxLists, getMaxItemsPerList, getAlertDistanceMeters, getMaxNotificationsPerStorePerDay, resolveNotificationSchedule, DEFAULT_ACTIVE_HOURS, ALL_DAYS } from "./tierConfig";
+export type { EffectiveSchedule } from "./tierConfig";
 
 export const NOTIFICATION_CONSTANTS = {
   // Cooldowns
@@ -11,15 +12,20 @@ export const NOTIFICATION_CONSTANTS = {
   // Speed
   SPEED_THRESHOLD_MS: 6.94,
   SPEED_WINDOW_SIZE: 3,
-  // Stop detection: avg speed below this counts as stopped/browsing
+  // Stop detection: avg speed above this counts as actively moving and
+  // resets the stationarity anchor
   STOP_SPEED_THRESHOLD_MS: 1.0,
   // Motion evidence older than this is discarded (indoor fixes report
   // invalid speed, so stale walking samples must not pin the average)
   SPEED_SAMPLE_MAX_AGE_MS: 90_000,
-  // Displacement fallback when no valid speed: apparent speed between
-  // fixes below this counts as stopped (higher than the speed threshold
-  // to absorb indoor GPS jitter)
-  STOP_DISPLACEMENT_SPEED_MS: 0.8,
+  // Stop confirmation: the user counts as stopped only after holding
+  // position within the anchor radius for this long. Fails closed —
+  // walking past never accrues stop time, unknown motion is not a stop.
+  STOP_CONFIRM_MS: 60_000,
+  // Anchor radius absorbs GPS jitter while stationary (expanded to the
+  // fix accuracy when worse); a pedestrian covers more than this between
+  // background fixes, so real walking always resets the anchor
+  STOP_ANCHOR_RADIUS_M: 60,
   // Two-zone trigger: notification fires only inside the inner ring
   TRIGGER_ZONE_RATIO: 0.6,
   TRIGGER_ZONE_MIN_METERS: 60,

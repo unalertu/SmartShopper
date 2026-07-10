@@ -10,7 +10,7 @@ import { geoEngine } from "./geoEngine";
 import { notificationAnalytics } from "./notificationAnalytics";
 import { sendLocalNotification } from "./notificationService";
 import { useSettingsStore, NotificationSensitivity } from "../store/useSettingsStore";
-import { NOTIFICATION_CONSTANTS, getAlertDistanceMeters, getMaxNotificationsPerStorePerDay } from "../constants";
+import { NOTIFICATION_CONSTANTS, getAlertDistanceMeters, getMaxNotificationsPerStorePerDay, resolveNotificationSchedule } from "../constants";
 import { useStatsStore } from "../store/useStatsStore";
 import { useLocationStore } from "../store/useLocationStore";
 import { fetchMarkets } from "./overpassService";
@@ -21,7 +21,7 @@ const OVERPASS_FETCH_RADIUS = 2500;
 const MIN_NEARBY_CACHE_THRESHOLD = 3;
 
 let speedHistory: { speed: number; timestamp: number }[] = [];
-let lastStabilityFix: { latitude: number; longitude: number; timestamp: number } | null = null;
+let stopAnchor: { latitude: number; longitude: number; since: number } | null = null;
 const geofenceState: Map<string, 'outside' | 'inside'> = new Map();
 const dwellTimers = new Map<string, number>();
 const exitGraceTimers = new Map<string, number>();
@@ -53,22 +53,24 @@ export const getSettingsFromStorage = async () => {
     if (data) {
       const parsed = JSON.parse(data);
       const state = parsed?.state || {};
+      const isPro = state.isPro === true;
       return {
-        isPro: state.isPro === true,
+        isPro,
         notificationsEnabled: state.notificationsEnabled !== false, // default true if not set
-        backgroundNotifications: state.backgroundNotifications !== false,
         savedStoresOnly: state.savedStoresOnly === true,
-        nightNotificationsEnabled: false, // Could be added to store later
-        mutedDays: Array.isArray(state.mutedDays) ? state.mutedDays : [],
-        scheduleEnabled: state.scheduleEnabled === true,
+        // Pre-v3 storage has the old two flags instead of smartScheduleEnabled
+        // (background task can run before rehydration persists the migration)
+        smartScheduleEnabled: typeof state.smartScheduleEnabled === 'boolean'
+          ? state.smartScheduleEnabled
+          : state.scheduleEnabled === true || state.quietHoursEnabled === true,
         allowedDays: Array.isArray(state.allowedDays) ? state.allowedDays : [0, 1, 2, 3, 4, 5, 6],
-        quietHoursEnabled: state.quietHoursEnabled === true,
         allowedHoursStart: typeof state.allowedHoursStart === 'number' ? state.allowedHoursStart : 8,
         allowedHoursEnd: typeof state.allowedHoursEnd === 'number' ? state.allowedHoursEnd : 22,
+        snoozeUntil: typeof state.snoozeUntil === 'number' ? state.snoozeUntil : null,
         shoppingListReminders: state.shoppingListReminders !== false,
         notificationSensitivity: (state.notificationSensitivity || 'balanced') as NotificationSensitivity,
         maxAlertsPerDay: state.maxAlertsPerDay ?? 5,
-        maxNotificationsPerStorePerDay: getMaxNotificationsPerStorePerDay(state.isPro === true),
+        maxNotificationsPerStorePerDay: getMaxNotificationsPerStorePerDay(isPro),
       };
     }
   } catch (e) {
@@ -77,15 +79,12 @@ export const getSettingsFromStorage = async () => {
   return {
     isPro: false,
     notificationsEnabled: true,
-    backgroundNotifications: true,
     savedStoresOnly: false,
-    nightNotificationsEnabled: false,
-    mutedDays: [],
-    scheduleEnabled: false,
+    smartScheduleEnabled: false,
     allowedDays: [0, 1, 2, 3, 4, 5, 6],
-    quietHoursEnabled: false,
     allowedHoursStart: 8,
     allowedHoursEnd: 22,
+    snoozeUntil: null as number | null,
     shoppingListReminders: true,
     notificationSensitivity: 'balanced' as NotificationSensitivity,
     maxAlertsPerDay: 5 as number | 'unlimited',
@@ -105,7 +104,7 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
 
   // 1. Settings Guard
   const settings = await getSettingsFromStorage();
-  if (!settings.notificationsEnabled || !settings.backgroundNotifications || !settings.shoppingListReminders) {
+  if (!settings.notificationsEnabled || !settings.shoppingListReminders) {
     addDebugLog("Notifications or location-based alerts disabled in settings");
     return;
   }
@@ -144,38 +143,36 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
   let avgSpeed: number | null = null;
   if (speedHistory.length > 0) {
     avgSpeed = speedHistory.reduce((sum, h) => sum + h.speed, 0) / speedHistory.length;
-
-    if (avgSpeed > NOTIFICATION_CONSTANTS.SPEED_THRESHOLD_MS) {
-      addDebugLog(`High avg speed detected: ${avgSpeed.toFixed(2)}m/s. Ignoring.`);
-      return;
-    }
   }
 
-  // Stop detection: steady pedestrians pass the speed filter above but are
-  // just walking past; only a slowed/stopped user counts as visiting.
-  // Fallback hierarchy: recent valid speed -> displacement between fixes
-  // (works indoors where speed is invalid) -> unknown stays permissive.
-  let isLikelyStopped: boolean;
-  if (avgSpeed !== null) {
-    isLikelyStopped = avgSpeed < NOTIFICATION_CONSTANTS.STOP_SPEED_THRESHOLD_MS;
-  } else if (
-    lastStabilityFix &&
-    now - lastStabilityFix.timestamp <= NOTIFICATION_CONSTANTS.SPEED_SAMPLE_MAX_AGE_MS &&
-    now > lastStabilityFix.timestamp
+  // Stop confirmation via stationarity anchor: the anchor pins the first
+  // fix of a potential stop; later fixes within the anchor radius accrue
+  // stop time, and any real movement (by position or by a valid speed
+  // reading) resets it. This fails closed: urban fixes often carry no
+  // valid speed and arrive minutes apart (distanceInterval-paced on iOS),
+  // so a per-fix speed check has no evidence exactly when the user is
+  // walking past — proximity alone must never count as a stop.
+  const isMovingBySpeed =
+    avgSpeed !== null && avgSpeed > NOTIFICATION_CONSTANTS.STOP_SPEED_THRESHOLD_MS;
+  const anchorRadius = Math.max(NOTIFICATION_CONSTANTS.STOP_ANCHOR_RADIUS_M, accuracy ?? 0);
+  if (
+    !stopAnchor ||
+    isMovingBySpeed ||
+    getDistance(latitude, longitude, stopAnchor.latitude, stopAnchor.longitude) > anchorRadius
   ) {
-    const displacement = getDistance(
-      latitude,
-      longitude,
-      lastStabilityFix.latitude,
-      lastStabilityFix.longitude
-    );
-    const apparentSpeed = displacement / ((now - lastStabilityFix.timestamp) / 1000);
-    isLikelyStopped = apparentSpeed < NOTIFICATION_CONSTANTS.STOP_DISPLACEMENT_SPEED_MS;
-    addDebugLog(`Stop detection via displacement: ${apparentSpeed.toFixed(2)}m/s apparent`);
-  } else {
-    isLikelyStopped = true;
+    stopAnchor = { latitude, longitude, since: now };
   }
-  lastStabilityFix = { latitude, longitude, timestamp: now };
+  const stoppedForMs = now - stopAnchor.since;
+  const isConfirmedStopped = stoppedForMs >= NOTIFICATION_CONSTANTS.STOP_CONFIRM_MS;
+  addDebugLog(
+    `Stationary for ${(stoppedForMs / 1000).toFixed(0)}s` +
+    (isMovingBySpeed ? ` (moving: ${avgSpeed!.toFixed(2)}m/s)` : '')
+  );
+
+  if (avgSpeed !== null && avgSpeed > NOTIFICATION_CONSTANTS.SPEED_THRESHOLD_MS) {
+    addDebugLog(`High avg speed detected: ${avgSpeed.toFixed(2)}m/s. Ignoring.`);
+    return;
+  }
 
   // 5. Clean up old notified stores (> 24h)
   for (const [id, data] of notifiedStores) {
@@ -235,9 +232,13 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
   let effectiveAlertDistance = alertDistance;
   const candidatesInRadius = nearbyStores.filter((s) => s.distance <= alertDistance).length;
   if (candidatesInRadius > NOTIFICATION_CONSTANTS.DENSITY_STORE_THRESHOLD) {
-    effectiveAlertDistance = Math.max(
-      Math.round(alertDistance * NOTIFICATION_CONSTANTS.DENSITY_SHRINK_RATIO),
-      NOTIFICATION_CONSTANTS.DENSITY_MIN_RADIUS
+    // Never expand: the 100m floor exceeds the "near" radius (75m)
+    effectiveAlertDistance = Math.min(
+      alertDistance,
+      Math.max(
+        Math.round(alertDistance * NOTIFICATION_CONSTANTS.DENSITY_SHRINK_RATIO),
+        NOTIFICATION_CONSTANTS.DENSITY_MIN_RADIUS
+      )
     );
     addDebugLog(`Dense area: ${candidatesInRadius} stores within ${alertDistance}m, effective radius ${effectiveAlertDistance}m`);
   }
@@ -297,10 +298,11 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
     }
   }
 
-  // 12. DWELL TIME + TWO-ZONE TRIGGER + STOP DETECTION
+  // 12. DWELL TIME + TWO-ZONE TRIGGER + STOP CONFIRMATION
   // The alert distance is the awareness zone (arms timers); a notification
   // only fires from the inner trigger zone, and only once the user has
-  // dwelled AND slowed down — walking past on the same street never fires.
+  // dwelled AND held position long enough to count as a confirmed stop —
+  // walking past on the same street never fires.
   const triggerDistance = Math.max(
     effectiveAlertDistance * NOTIFICATION_CONSTANTS.TRIGGER_ZONE_RATIO,
     NOTIFICATION_CONSTANTS.TRIGGER_ZONE_MIN_METERS
@@ -318,8 +320,8 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
       const entryTime = dwellTimers.get(store.id)!;
       const elapsed = now - entryTime;
       if (elapsed < NOTIFICATION_CONSTANTS.DWELL_TIME_MS) continue;
-      if (!isLikelyStopped) {
-        addDebugLog(`Dwell met for ${store.name} but user still moving (${avgSpeed !== null ? `${avgSpeed.toFixed(2)}m/s` : 'displacement'})`);
+      if (!isConfirmedStopped) {
+        addDebugLog(`Dwell met for ${store.name} but stop not confirmed (${(stoppedForMs / 1000).toFixed(0)}s stationary)`);
         continue;
       }
       if (store.distance > triggerDistance) {
@@ -351,17 +353,17 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
 
   // 14. SHOULD SEND
   const eventId = dwellTimers.get(bestStore.id) || now;
+  const schedule = resolveNotificationSchedule(settings);
   const decision = await notificationEngine.shouldSendLocationNotification({
     storeId: bestStore.id,
     eventId,
     isPro: settings.isPro,
     maxAlertsPerDay: settings.maxAlertsPerDay,
     maxNotificationsPerStorePerDay: settings.maxNotificationsPerStorePerDay,
-    scheduleEnabled: settings.scheduleEnabled,
-    allowedDays: settings.allowedDays,
-    quietHoursEnabled: settings.quietHoursEnabled,
-    allowedHoursStart: settings.allowedHoursStart,
-    allowedHoursEnd: settings.allowedHoursEnd,
+    allowedDays: schedule.allowedDays,
+    allowedHoursStart: schedule.startHour,
+    allowedHoursEnd: schedule.endHour,
+    snoozeUntil: settings.snoozeUntil,
     shoppingListReminders: settings.shoppingListReminders,
     coords: { latitude, longitude },
   });
@@ -465,7 +467,7 @@ export const stopBackgroundLocationTracking = async () => {
     
     // Clean up background location memory state
     speedHistory = [];
-    lastStabilityFix = null;
+    stopAnchor = null;
     geofenceState.clear();
     dwellTimers.clear();
     exitGraceTimers.clear();
@@ -536,17 +538,17 @@ export const handleGeofenceEnter = async (storeId: string) => {
 
     // 6. Should Send?
     const eventId = Date.now();
+    const schedule = resolveNotificationSchedule(settings);
     const decision = await notificationEngine.shouldSendLocationNotification({
       storeId: store.id,
       eventId,
       isPro: settings.isPro,
       maxAlertsPerDay: settings.maxAlertsPerDay,
       maxNotificationsPerStorePerDay: settings.maxNotificationsPerStorePerDay,
-      scheduleEnabled: settings.scheduleEnabled,
-      allowedDays: settings.allowedDays,
-      quietHoursEnabled: settings.quietHoursEnabled,
-      allowedHoursStart: settings.allowedHoursStart,
-      allowedHoursEnd: settings.allowedHoursEnd,
+      allowedDays: schedule.allowedDays,
+      allowedHoursStart: schedule.startHour,
+      allowedHoursEnd: schedule.endHour,
+      snoozeUntil: settings.snoozeUntil,
       shoppingListReminders: settings.shoppingListReminders,
       // Native enter events carry no user fix; the store position is within
       // the fence radius of the user, close enough for trip suppression.

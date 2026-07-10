@@ -42,14 +42,60 @@ export const PRO_TIER = {
 } as const;
 
 /**
+ * Built-in active window applied to every user by default: alerts are only
+ * delivered 08:00–22:00. Night-time silence is core trust behavior, never a
+ * paid feature. Pro's Smart Schedule replaces this window with custom values.
+ */
+export const DEFAULT_ACTIVE_HOURS = { start: 8, end: 22 } as const;
+export const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
+
+export interface EffectiveSchedule {
+  allowedDays: number[];
+  startHour: number;
+  endHour: number;
+}
+
+/**
+ * Resolves the schedule the notification engine should enforce.
+ * Free users (and Pro users without Smart Schedule) get the built-in window.
+ */
+export const resolveNotificationSchedule = (params: {
+  isPro: boolean;
+  smartScheduleEnabled: boolean;
+  allowedDays: number[];
+  allowedHoursStart: number;
+  allowedHoursEnd: number;
+}): EffectiveSchedule => {
+  if (params.isPro && params.smartScheduleEnabled) {
+    return {
+      allowedDays: params.allowedDays,
+      startHour: params.allowedHoursStart,
+      endHour: params.allowedHoursEnd,
+    };
+  }
+  return {
+    allowedDays: ALL_DAYS,
+    startHour: DEFAULT_ACTIVE_HOURS.start,
+    endHour: DEFAULT_ACTIVE_HOURS.end,
+  };
+};
+
+/**
  * Maps a NotificationSensitivity value to its corresponding distance in meters.
  * This is the single source of truth for all notification distance calculations.
+ *
+ * These are awareness radii; the notification itself fires from the inner
+ * trigger zone, max(TRIGGER_ZONE_RATIO * radius, TRIGGER_ZONE_MIN_METERS):
+ *   near 75     -> trigger 60m  (at the door; 60m is the practical iOS floor
+ *                                since fixes up to 80m accuracy are accepted)
+ *   balanced 120 -> trigger 72m (arriving on the same block)
+ *   far 250     -> trigger 150m (early warning, ~2 min walking lead)
  */
 export const getAlertDistanceMeters = (sensitivity: NotificationSensitivity): number => {
   switch (sensitivity) {
-    case 'near': return 100;
-    case 'balanced': return 150;
-    case 'far': return 300;
+    case 'near': return 75;
+    case 'balanced': return 120;
+    case 'far': return 250;
   }
 };
 

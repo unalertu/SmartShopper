@@ -13,16 +13,21 @@ export const notificationEngine = {
     isPro: boolean;
     maxAlertsPerDay: number | "unlimited";
     maxNotificationsPerStorePerDay: number | "unlimited";
-    scheduleEnabled: boolean;
+    // Effective schedule, already resolved via resolveNotificationSchedule
     allowedDays: number[];
-    quietHoursEnabled: boolean;
     allowedHoursStart: number;
     allowedHoursEnd: number;
+    snoozeUntil: number | null;
     shoppingListReminders: boolean;
     coords?: { latitude: number; longitude: number };
   }): Promise<{ allowed: boolean; reason?: string }> => {
     if (!params.shoppingListReminders) {
       return { allowed: false, reason: "location_alerts_disabled" };
+    }
+
+    // 0. Snooze Check (user-initiated pause, free feature)
+    if (params.snoozeUntil !== null && Date.now() < params.snoozeUntil) {
+      return { allowed: false, reason: "snoozed" };
     }
 
     const state = await notificationAnalytics.getState();
@@ -53,9 +58,7 @@ export const notificationEngine = {
 
     // 3. Schedule Check (Days and Hours)
     if (!notificationEngine.isScheduleAllowed({
-      scheduleEnabled: params.scheduleEnabled,
       allowedDays: params.allowedDays,
-      quietHoursEnabled: params.quietHoursEnabled,
       allowedHoursStart: params.allowedHoursStart,
       allowedHoursEnd: params.allowedHoursEnd,
     })) {
@@ -141,39 +144,34 @@ export const notificationEngine = {
 
 
 
+  // Enforces the effective schedule (see resolveNotificationSchedule):
+  // free users always run the built-in window, Pro's Smart Schedule
+  // supplies custom values.
   isScheduleAllowed: (params: {
-    scheduleEnabled: boolean;
     allowedDays: number[];
-    quietHoursEnabled: boolean;
     allowedHoursStart: number;
     allowedHoursEnd: number;
   }): boolean => {
-    // Check Allowed Days
-    if (params.scheduleEnabled) {
-      const currentDay = new Date().getDay();
-      if (!params.allowedDays.includes(currentDay)) {
-        return false; // Day is not allowed
-      }
+    const currentDay = new Date().getDay();
+    if (!params.allowedDays.includes(currentDay)) {
+      return false; // Day is not allowed
     }
 
-    // Check Quiet Hours
-    if (params.quietHoursEnabled) {
-      const hour = new Date().getHours();
-      
-      // 24-hour schedule (always allowed on allowed days)
-      if (params.allowedHoursStart === params.allowedHoursEnd) {
-        return true;
-      }
+    const hour = new Date().getHours();
 
-      if (params.allowedHoursStart < params.allowedHoursEnd) {
-        // Standard schedule (e.g. 8 AM to 10 PM)
-        if (!(hour >= params.allowedHoursStart && hour < params.allowedHoursEnd)) return false;
-      } else {
-        // Overnight schedule (e.g. 10 PM to 8 AM)
-        if (!(hour >= params.allowedHoursStart || hour < params.allowedHoursEnd)) return false;
-      }
+    // Equal start/end means a 24-hour window (always allowed on allowed days)
+    if (params.allowedHoursStart === params.allowedHoursEnd) {
+      return true;
     }
-    
+
+    if (params.allowedHoursStart < params.allowedHoursEnd) {
+      // Standard window (e.g. 8 AM to 10 PM)
+      if (!(hour >= params.allowedHoursStart && hour < params.allowedHoursEnd)) return false;
+    } else {
+      // Overnight window (e.g. 10 PM to 8 AM)
+      if (!(hour >= params.allowedHoursStart || hour < params.allowedHoursEnd)) return false;
+    }
+
     return true;
   },
 

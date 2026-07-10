@@ -104,8 +104,7 @@ export default function RootLayout() {
 
         // 1. Initial check on startup
         const customerInfo = await Purchases.getCustomerInfo();
-        // Force Pro plan
-        const hasPro = true; // !!customerInfo?.entitlements?.active?.['pro'];
+        const hasPro = !!customerInfo?.entitlements?.active?.['pro'];
         if (isMounted) {
           useSettingsStore.getState().setIsPro(hasPro);
         }
@@ -118,8 +117,7 @@ export default function RootLayout() {
 
     // 2. Add listener for background changes / future purchases
     const listener = (customerInfo: any) => {
-      // Force Pro plan
-      const hasPro = true; // !!customerInfo?.entitlements?.active?.['pro'];
+      const hasPro = !!customerInfo?.entitlements?.active?.['pro'];
       useSettingsStore.getState().setIsPro(hasPro);
     };
     Purchases.addCustomerInfoUpdateListener(listener);

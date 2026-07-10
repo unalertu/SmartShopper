@@ -54,6 +54,12 @@ interface LocationStoreState {
   isFetchingMarkets: boolean;
   fetchingRegionCenter: { latitude: number, longitude: number } | null;
   setIsFetchingMarkets: (isFetching: boolean, center?: { latitude: number, longitude: number } | null) => void;
+
+  // Last store fetch failed at the connectivity level (device offline),
+  // as opposed to a server/HTTP failure. Drives the "No connection" UI.
+  // Not persisted — connectivity state is meaningless across launches.
+  isOffline: boolean;
+  setIsOffline: (offline: boolean) => void;
   
   userLocation: { latitude: number, longitude: number } | null;
   setUserLocation: (location: { latitude: number, longitude: number } | null) => void;
@@ -87,6 +93,7 @@ export const useLocationStore = create<LocationStoreState>()(
       cachedMarkets: [],
       isFetchingMarkets: false,
       fetchingRegionCenter: null,
+      isOffline: false,
       userLocation: null,
       lastBackgroundFetchCoords: null,
       
@@ -125,10 +132,13 @@ export const useLocationStore = create<LocationStoreState>()(
 
         return { cachedMarkets: updatedMarkets };
       }),
-      setIsFetchingMarkets: (isFetching, center = null) => set({ 
+      setIsFetchingMarkets: (isFetching, center = null) => set({
         isFetchingMarkets: isFetching,
         fetchingRegionCenter: isFetching ? center : null
       }),
+      setIsOffline: (offline) => set((state) =>
+        state.isOffline === offline ? state : { isOffline: offline }
+      ),
       setUserLocation: (location) => set({ userLocation: location }),
       setLastBackgroundFetchCoords: (coords) => set({ lastBackgroundFetchCoords: coords }),
 

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getAlertDistanceMeters } from "../constants";
+import { getAlertDistanceMeters, ALL_DAYS, DEFAULT_ACTIVE_HOURS } from "../constants";
 import * as Localization from 'expo-localization';
 
 export type DistanceUnit = "metric" | "imperial";
@@ -34,13 +34,13 @@ interface SettingsState {
   notificationsEnabled: boolean;
   soundEnabled: boolean;
   hapticEnabled: boolean;
-  
+
   // ── Notification Preferences ──
   savedStoresOnly: boolean;
   shoppingListReminders: boolean;
-  backgroundNotifications: boolean;
-  lowPowerMode: boolean;
-  autoOpenNearbyList: boolean;
+
+  // Pause alerts until this epoch ms; null when not paused. Free feature.
+  snoozeUntil: number | null;
 
   // ── Location ──
   locationEnabled: boolean;
@@ -51,21 +51,19 @@ interface SettingsState {
   theme: ThemeOption;
 
   // ── Smart Features ──
-  smartSuggestionsEnabled: boolean;
   autoDeletePurchased: boolean;
 
   // ── Subscription ──
   isPro: boolean;
-  
+
   notificationSensitivity: NotificationSensitivity;
   maxAlertsPerDay: MaxAlertsPerDay;
 
-  // ── Notification Schedule ──
-  scheduleEnabled: boolean;
+  // ── Smart Schedule (Pro) ──
+  // When enabled, replaces the built-in active window (08–22, every day)
+  // with the custom days + time window below.
+  smartScheduleEnabled: boolean;
   allowedDays: number[];
-  
-  // ── Quiet Hours ──
-  quietHoursEnabled: boolean;
   allowedHoursStart: number;
   allowedHoursEnd: number;
 
@@ -73,17 +71,14 @@ interface SettingsState {
   setNotificationsEnabled: (enabled: boolean) => void;
   setSoundEnabled: (enabled: boolean) => void;
   setHapticEnabled: (enabled: boolean) => void;
-  
+
   setSavedStoresOnly: (enabled: boolean) => void;
   setShoppingListReminders: (enabled: boolean) => void;
-  setBackgroundNotifications: (enabled: boolean) => void;
-  setLowPowerMode: (enabled: boolean) => void;
-  setAutoOpenNearbyList: (enabled: boolean) => void;
+  setSnoozeUntil: (until: number | null) => void;
   setNotificationSensitivity: (sensitivity: NotificationSensitivity) => void;
   setMaxAlertsPerDay: (maxAlerts: MaxAlertsPerDay) => void;
-  setScheduleEnabled: (enabled: boolean) => void;
+  setSmartScheduleEnabled: (enabled: boolean) => void;
   setAllowedDays: (days: number[]) => void;
-  setQuietHoursEnabled: (enabled: boolean) => void;
   setAllowedHoursStart: (hour: number) => void;
   setAllowedHoursEnd: (hour: number) => void;
 
@@ -91,7 +86,6 @@ interface SettingsState {
 
   setDistanceUnit: (unit: DistanceUnit) => void;
   setTheme: (theme: ThemeOption) => void;
-  setSmartSuggestionsEnabled: (enabled: boolean) => void;
   setAutoDeletePurchased: (enabled: boolean) => void;
   setIsPro: (enabled: boolean) => void;
   resetSettings: () => void;
@@ -103,25 +97,21 @@ const DEFAULT_SETTINGS = {
   notificationsEnabled: false,
   soundEnabled: true,
   hapticEnabled: true,
-  
+
   savedStoresOnly: false,
   shoppingListReminders: true,
-  backgroundNotifications: true,
-  lowPowerMode: false,
-  autoOpenNearbyList: false,
+  snoozeUntil: null as number | null,
   notificationSensitivity: "balanced" as const,
   maxAlertsPerDay: 5 as MaxAlertsPerDay,
-  scheduleEnabled: false,
-  allowedDays: [0, 1, 2, 3, 4, 5, 6], // All days allowed by default
-  quietHoursEnabled: false,
-  allowedHoursStart: 8, // 8 AM
-  allowedHoursEnd: 22, // 10 PM
+  smartScheduleEnabled: false,
+  allowedDays: ALL_DAYS,
+  allowedHoursStart: DEFAULT_ACTIVE_HOURS.start,
+  allowedHoursEnd: DEFAULT_ACTIVE_HOURS.end,
 
   locationEnabled: false,
 
   distanceUnit: getDefaultDistanceUnit(),
   theme: "system" as ThemeOption,
-  smartSuggestionsEnabled: true,
   autoDeletePurchased: false,
   isPro: false,
 };
@@ -137,12 +127,10 @@ export const useSettingsStore = create<SettingsState>()(
         set({ notificationsEnabled: enabled }),
       setSoundEnabled: (enabled: boolean) => set({ soundEnabled: enabled }),
       setHapticEnabled: (enabled: boolean) => set({ hapticEnabled: enabled }),
-      
+
       setSavedStoresOnly: (enabled: boolean) => set({ savedStoresOnly: enabled }),
       setShoppingListReminders: (enabled: boolean) => set({ shoppingListReminders: enabled }),
-      setBackgroundNotifications: (enabled: boolean) => set({ backgroundNotifications: enabled }),
-      setLowPowerMode: (enabled: boolean) => set({ lowPowerMode: enabled }),
-      setAutoOpenNearbyList: (enabled: boolean) => set({ autoOpenNearbyList: enabled }),
+      setSnoozeUntil: (until: number | null) => set({ snoozeUntil: until }),
       setNotificationSensitivity: (sensitivity: NotificationSensitivity) => {
         set({ notificationSensitivity: sensitivity });
         try {
@@ -153,9 +141,8 @@ export const useSettingsStore = create<SettingsState>()(
         }
       },
       setMaxAlertsPerDay: (maxAlerts: MaxAlertsPerDay) => set({ maxAlertsPerDay: maxAlerts }),
-      setScheduleEnabled: (enabled: boolean) => set({ scheduleEnabled: enabled }),
+      setSmartScheduleEnabled: (enabled: boolean) => set({ smartScheduleEnabled: enabled }),
       setAllowedDays: (days: number[]) => set({ allowedDays: days }),
-      setQuietHoursEnabled: (enabled: boolean) => set({ quietHoursEnabled: enabled }),
       setAllowedHoursStart: (hour: number) => set({ allowedHoursStart: hour }),
       setAllowedHoursEnd: (hour: number) => set({ allowedHoursEnd: hour }),
 
@@ -163,8 +150,6 @@ export const useSettingsStore = create<SettingsState>()(
 
       setDistanceUnit: (unit: DistanceUnit) => set({ distanceUnit: unit }),
       setTheme: (theme: ThemeOption) => set({ theme }),
-      setSmartSuggestionsEnabled: (enabled: boolean) =>
-        set({ smartSuggestionsEnabled: enabled }),
       setAutoDeletePurchased: (enabled: boolean) =>
         set({ autoDeletePurchased: enabled }),
       setIsPro: (enabled: boolean) => set((state: SettingsState) => {
@@ -181,14 +166,13 @@ export const useSettingsStore = create<SettingsState>()(
             isPro: false,
             notificationSensitivity: DEFAULT_SETTINGS.notificationSensitivity,
             maxAlertsPerDay: 5,
-            scheduleEnabled: DEFAULT_SETTINGS.scheduleEnabled,
+            smartScheduleEnabled: DEFAULT_SETTINGS.smartScheduleEnabled,
             allowedDays: DEFAULT_SETTINGS.allowedDays,
-            quietHoursEnabled: DEFAULT_SETTINGS.quietHoursEnabled,
             allowedHoursStart: DEFAULT_SETTINGS.allowedHoursStart,
             allowedHoursEnd: DEFAULT_SETTINGS.allowedHoursEnd,
           };
         }
-        
+
         if (!state.isPro && enabled) {
           // Grant unlimited alerts when upgrading to Pro
           return {
@@ -199,24 +183,38 @@ export const useSettingsStore = create<SettingsState>()(
 
         return { isPro: enabled };
       }),
-      resetSettings: () => set((state: SettingsState) => ({ 
-        ...DEFAULT_SETTINGS, 
+      resetSettings: () => set((state: SettingsState) => ({
+        ...DEFAULT_SETTINGS,
         isPro: state.isPro,
-        maxAlertsPerDay: state.isPro ? "unlimited" : 5 
+        maxAlertsPerDay: state.isPro ? "unlimited" : 5
       })),
     }),
     {
       name: "settings-storage",
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => AsyncStorage),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
       },
-      merge: (persistedState: any, currentState: any) => ({
-        ...currentState,
-        ...persistedState,
-        isPro: true,
-      }),
+      migrate: (persistedState: any, version: number) => {
+        if (version < 3 && persistedState && typeof persistedState === 'object') {
+          // v2 -> v3: the separate Allowed Hours (quietHoursEnabled) and
+          // Notification Schedule (scheduleEnabled) settings merged into
+          // one Smart Schedule flag; dead settings dropped.
+          persistedState.smartScheduleEnabled =
+            persistedState.quietHoursEnabled === true || persistedState.scheduleEnabled === true;
+          delete persistedState.quietHoursEnabled;
+          delete persistedState.scheduleEnabled;
+          delete persistedState.lowPowerMode;
+          delete persistedState.autoOpenNearbyList;
+          delete persistedState.smartSuggestionsEnabled;
+          delete persistedState.backgroundNotifications;
+          // isPro was forced true by a dev override in earlier builds; drop
+          // the persisted value so entitlements (RevenueCat) decide it.
+          delete persistedState.isPro;
+        }
+        return persistedState;
+      },
     }
   )
 );
