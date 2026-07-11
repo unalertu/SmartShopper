@@ -598,14 +598,16 @@ export const handleGeofenceEnter = async (storeId: string) => {
       if (!hasActiveList) return;
     }
 
-    // 4.5 Wide-fence enter confirmation. iOS regions can fire spuriously
-    // (Wi-Fi triggers hundreds of meters out); verify against the OS's cached
-    // last-known fix (no GPS engagement). Reject only enters clearly outside
-    // the fence — iOS fires enter once per crossing, so rejecting a legit
-    // boundary crossing would lose the notification permanently. No usable
-    // fix -> fail open.
+    // 4.5 Wide-fence enter confirmation. The native fence is registered at
+    // >=NATIVE_FENCE_MIN_RADIUS (iOS regions are unreliable below ~150m),
+    // which is wider than the user's chosen alert distance — so an enter
+    // event alone doesn't mean "genuinely close". Verify against the OS's
+    // cached last-known fix (no GPS engagement) and only notify when the
+    // user is within their alert distance (+ fix accuracy). iOS fires enter
+    // once per crossing, so a rejected enter is a lost notification — the
+    // accuracy margin keeps borderline fixes on the notify side, and no
+    // usable fix -> fail open.
     const alertDistance = getAlertDistanceMeters(settings.notificationSensitivity);
-    const fenceRadius = Math.max(alertDistance, NOTIFICATION_CONSTANTS.NATIVE_FENCE_MIN_RADIUS);
     try {
       const fix = await Location.getLastKnownPositionAsync({
         maxAge: NOTIFICATION_CONSTANTS.NATIVE_CONFIRM_MAX_AGE_MS,
@@ -619,9 +621,9 @@ export const handleGeofenceEnter = async (storeId: string) => {
           store.longitude
         );
         const margin = fix.coords.accuracy ?? 0;
-        if (dist > fenceRadius + margin) {
+        if (dist > alertDistance + margin) {
           useDebugStore.getState().addDebugLog(
-            `[Geofence] Spurious enter for ${store.name} rejected (${dist.toFixed(0)}m > ${fenceRadius}m + ${margin.toFixed(0)}m accuracy)`
+            `[Geofence] Enter for ${store.name} outside alert distance (${dist.toFixed(0)}m > ${alertDistance}m + ${margin.toFixed(0)}m accuracy)`
           );
           return;
         }

@@ -27,15 +27,15 @@ export const NOTIFICATION_CONSTANTS = {
   // background fixes, so real walking always resets the anchor
   STOP_ANCHOR_RADIUS_M: 60,
   // Two-zone trigger: notification fires only inside the inner ring
-  TRIGGER_ZONE_RATIO: 0.55,
+  TRIGGER_ZONE_RATIO: 0.50,
   TRIGGER_ZONE_MIN_METERS: 45,
   // Trip suppression: after any alert, suppress all stores until the user
   // moves this far from the alert point or this much time passes
   TRIP_SUPPRESSION_DISTANCE: 300,
   TRIP_SUPPRESSION_MS: 30 * 60 * 1000,
   // Density adaptation: shrink the effective radius in dense areas
-  DENSITY_STORE_THRESHOLD: 6,
-  DENSITY_SHRINK_RATIO: 2 / 3,
+  DENSITY_STORE_THRESHOLD: 4,
+  DENSITY_SHRINK_RATIO: 1 / 2,
   DENSITY_MIN_RADIUS: 100,
   // Native fences: register at least this wide (iOS regions are unreliable
   // below ~150m), then confirm the real distance on enter
