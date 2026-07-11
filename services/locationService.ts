@@ -235,7 +235,7 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
   let effectiveAlertDistance = alertDistance;
   const candidatesInRadius = nearbyStores.filter((s) => s.distance <= alertDistance).length;
   if (candidatesInRadius > NOTIFICATION_CONSTANTS.DENSITY_STORE_THRESHOLD) {
-    // Never expand: the 100m floor exceeds the "near" radius (75m)
+    // Never expand: the 100m floor exceeds the "near" radius (50m)
     effectiveAlertDistance = Math.min(
       alertDistance,
       Math.max(

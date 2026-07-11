@@ -61,6 +61,16 @@ export default function RootLayout() {
     }
   }, [savedStoresOnly, _hasHydrated]);
 
+  // "Mute until I reopen the app" ends here, at the first cold start after
+  // it was set — not on backgrounding/foregrounding, which doesn't restart
+  // the JS runtime and would otherwise leave the mute in place indefinitely.
+  useEffect(() => {
+    if (_hasHydrated && useSettingsStore.getState().snoozeUntilRelaunch) {
+      useSettingsStore.getState().setSnoozeUntil(null);
+      useSettingsStore.getState().setSnoozeUntilRelaunch(false);
+    }
+  }, [_hasHydrated]);
+
   useEffect(() => {
     if (_hasHydrated) {
       // Check if we need to show onboarding and redirect immediately

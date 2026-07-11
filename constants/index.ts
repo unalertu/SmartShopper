@@ -27,8 +27,8 @@ export const NOTIFICATION_CONSTANTS = {
   // background fixes, so real walking always resets the anchor
   STOP_ANCHOR_RADIUS_M: 60,
   // Two-zone trigger: notification fires only inside the inner ring
-  TRIGGER_ZONE_RATIO: 0.6,
-  TRIGGER_ZONE_MIN_METERS: 60,
+  TRIGGER_ZONE_RATIO: 0.55,
+  TRIGGER_ZONE_MIN_METERS: 45,
   // Trip suppression: after any alert, suppress all stores until the user
   // moves this far from the alert point or this much time passes
   TRIP_SUPPRESSION_DISTANCE: 300,

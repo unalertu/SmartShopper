@@ -906,7 +906,8 @@ export default function HomeScreen() {
                       router.push('/stores');
                     }
                   }}
-                  className="bg-violet-50 border border-violet-100 rounded-[20px] px-4 py-4 flex-row items-center gap-3 w-full"
+                  className="bg-violet-50 border border-violet-100/70 rounded-[22px] px-4 py-3.5 flex-row items-center gap-3 w-full"
+                  style={{ shadowColor: '#8b5cf6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 2 }}
                 >
                   <View className="w-9 h-9 rounded-full bg-violet-100 items-center justify-center">
                     <Store size={18} color="#8b5cf6" strokeWidth={2.5} />
@@ -934,7 +935,8 @@ export default function HomeScreen() {
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => handleCreateSuggestedList("Forgotten Items")}
-                className="bg-amber-50 border border-amber-100 rounded-[20px] px-4 py-4 flex-row items-center gap-3 w-full"
+                className="bg-amber-50 border border-amber-100/70 rounded-[22px] px-4 py-3.5 flex-row items-center gap-3 w-full"
+                style={{ shadowColor: '#d97706', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 2 }}
               >
                 <View className="w-9 h-9 rounded-full bg-amber-100 items-center justify-center">
                   <Lightbulb size={18} color="#d97706" strokeWidth={2.5} />
@@ -952,7 +954,8 @@ export default function HomeScreen() {
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => handleCreateSuggestedList("Most Purchased")}
-                className="bg-emerald-50 border border-emerald-100 rounded-[20px] px-4 py-4 flex-row items-center gap-3 w-full"
+                className="bg-emerald-50 border border-emerald-100/70 rounded-[22px] px-4 py-3.5 flex-row items-center gap-3 w-full"
+                style={{ shadowColor: '#10b981', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 2 }}
               >
                 <View className="w-9 h-9 rounded-full bg-emerald-100 items-center justify-center">
                   <ShoppingBag size={18} color="#10b981" strokeWidth={2.5} />
@@ -972,7 +975,8 @@ export default function HomeScreen() {
                   key={index}
                   activeOpacity={0.7}
                   onPress={() => handleCreateSuggestedList(card.name)}
-                  className="bg-rose-50 border border-rose-100 rounded-[20px] px-4 py-4 flex-row items-center gap-3 w-full"
+                  className="bg-rose-50 border border-rose-100/70 rounded-[22px] px-4 py-3.5 flex-row items-center gap-3 w-full"
+                  style={{ shadowColor: '#e11d48', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 2 }}
                 >
                   <View className="w-9 h-9 rounded-full bg-rose-100 items-center justify-center">
                     <card.icon size={18} color="#e11d48" strokeWidth={2.5} />

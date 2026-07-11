@@ -43,6 +43,9 @@ interface SettingsState {
 
   // Pause alerts until this epoch ms; null when not paused. Free feature.
   snoozeUntil: number | null;
+  // True when the current snooze should end at the next cold start rather
+  // than at snoozeUntil itself (the "until I reopen the app" mute option).
+  snoozeUntilRelaunch: boolean;
 
   // ── Location ──
   locationEnabled: boolean;
@@ -78,6 +81,7 @@ interface SettingsState {
   setShoppingListReminders: (enabled: boolean) => void;
   setRemindWithoutList: (enabled: boolean) => void;
   setSnoozeUntil: (until: number | null) => void;
+  setSnoozeUntilRelaunch: (relaunch: boolean) => void;
   setNotificationSensitivity: (sensitivity: NotificationSensitivity) => void;
   setMaxAlertsPerDay: (maxAlerts: MaxAlertsPerDay) => void;
   setSmartScheduleEnabled: (enabled: boolean) => void;
@@ -105,6 +109,7 @@ const DEFAULT_SETTINGS = {
   shoppingListReminders: true,
   remindWithoutList: false,
   snoozeUntil: null as number | null,
+  snoozeUntilRelaunch: false,
   notificationSensitivity: "balanced" as const,
   maxAlertsPerDay: 5 as MaxAlertsPerDay,
   smartScheduleEnabled: false,
@@ -136,6 +141,7 @@ export const useSettingsStore = create<SettingsState>()(
       setShoppingListReminders: (enabled: boolean) => set({ shoppingListReminders: enabled }),
       setRemindWithoutList: (enabled: boolean) => set({ remindWithoutList: enabled }),
       setSnoozeUntil: (until: number | null) => set({ snoozeUntil: until }),
+      setSnoozeUntilRelaunch: (relaunch: boolean) => set({ snoozeUntilRelaunch: relaunch }),
       setNotificationSensitivity: (sensitivity: NotificationSensitivity) => {
         set({ notificationSensitivity: sensitivity });
         try {

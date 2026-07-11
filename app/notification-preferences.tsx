@@ -14,6 +14,7 @@ import NotificationScheduleSheet from '../components/NotificationScheduleSheet';
 import QuietHoursSheet from '../components/QuietHoursSheet';
 import AlertDistanceSheet from '../components/AlertDistanceSheet';
 import MaxAlertsPerDaySheet from '../components/MaxAlertsPerDaySheet';
+import NearbyAlertsMuteSheet, { getNearbyAlertsStatusText } from '../components/NearbyAlertsMuteSheet';
 import { showPaywall } from "@/services/paywallService";
 
 // ── Per-setting descriptions for enable / disable states ──
@@ -26,10 +27,6 @@ const SETTING_DESCRIPTIONS: Record<string, { enable: React.ReactNode; disable: R
         <Text style={{ color: '#ef4444' }}>For the best experience, GeoCart should remain available in the background so it can discover nearby shops and send timely alerts.</Text>
       </>
     ),
-  },
-  'Enable Nearby Shops Alerts': {
-    enable: "You'll be notified when a nearby shop has items on your shopping list.",
-    disable: "You won't receive reminders when passing shops that carry your list items.",
   },
   'Remind Without a List': {
     enable: "You'll still be reminded near shops even when you don't have an active shopping list.",
@@ -144,10 +141,14 @@ export default function NotificationPreferencesScreen() {
     shoppingListReminders,
     remindWithoutList,
     notificationSensitivity,
+    snoozeUntil,
+    snoozeUntilRelaunch,
     setSavedStoresOnly,
     setShoppingListReminders,
     setRemindWithoutList,
-    setNotificationSensitivity
+    setNotificationSensitivity,
+    setSnoozeUntil,
+    setSnoozeUntilRelaunch,
   } = useSettingsStore();
 
   // ── Confirmation Sheet state ──
@@ -169,6 +170,9 @@ export default function NotificationPreferencesScreen() {
 
   // ── Max Alerts Sheet state ──
   const [maxAlertsSheetVisible, setMaxAlertsSheetVisible] = useState(false);
+
+  // ── Nearby Alerts Mute Sheet state ──
+  const [muteSheetVisible, setMuteSheetVisible] = useState(false);
 
   const showComingSoon = useCallback((title: string, description: string) => {
     hapticImpact(ImpactFeedbackStyle.Light);
@@ -204,6 +208,23 @@ export default function NotificationPreferencesScreen() {
     setSheetData(null);
   }, []);
 
+  const requestTurnOffNearbyAlerts = useCallback(() => {
+    setSheetData({
+      settingName: 'Nearby Shop Alerts',
+      title: 'Turn Off Nearby Shop Alerts?',
+      confirmLabel: 'Turn Off',
+      isEnabling: false,
+      isDestructive: true,
+      description: "You won't be notified about nearby shops until you turn this back on. Unlike a mute, this stays off even after you reopen the app.",
+      onConfirm: () => {
+        setShoppingListReminders(false);
+        setSnoozeUntil(null);
+        setSnoozeUntilRelaunch(false);
+      },
+    });
+    setSheetVisible(true);
+  }, [setShoppingListReminders, setSnoozeUntil, setSnoozeUntilRelaunch]);
+
   const handleProUpsell = (featureName: string) => {
     hapticImpact(ImpactFeedbackStyle.Light);
     showPaywall();
@@ -231,17 +252,13 @@ export default function NotificationPreferencesScreen() {
         <SettingsGroup title="Notification Settings">
           <SettingsRow
             icon={<Menu size={20} color="#64748b" />}
-            label="Enable Nearby Shops Alerts"
-            sublabel="Notify for nearby shops"
-            rightElement={
-              <Switch
-                value={shoppingListReminders}
-                onValueChange={() => requestToggle('Enable Nearby Shops Alerts', shoppingListReminders, setShoppingListReminders)}
-                trackColor={switchTrackColor}
-                thumbColor="#ffffff"
-                ios_backgroundColor="#E5E7EB"
-              />
-            }
+            label="Nearby Shop Alerts"
+            sublabel={getNearbyAlertsStatusText(shoppingListReminders, snoozeUntil, snoozeUntilRelaunch).short}
+            onPress={() => {
+              hapticImpact(ImpactFeedbackStyle.Light);
+              setMuteSheetVisible(true);
+            }}
+            rightElement={<ChevronRight size={20} color="#cbd5e1" />}
           />
           <SettingsRow
             icon={<Bell size={20} color="#64748b" />}
@@ -378,6 +395,13 @@ export default function NotificationPreferencesScreen() {
       <MaxAlertsPerDaySheet
         visible={maxAlertsSheetVisible}
         onDismiss={() => setMaxAlertsSheetVisible(false)}
+      />
+
+      {/* Nearby Alerts Mute Sheet */}
+      <NearbyAlertsMuteSheet
+        visible={muteSheetVisible}
+        onDismiss={() => setMuteSheetVisible(false)}
+        onRequestTurnOff={requestTurnOffNearbyAlerts}
       />
     </View>
   );

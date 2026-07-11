@@ -86,16 +86,16 @@ export const resolveNotificationSchedule = (params: {
  *
  * These are awareness radii; the notification itself fires from the inner
  * trigger zone, max(TRIGGER_ZONE_RATIO * radius, TRIGGER_ZONE_MIN_METERS):
- *   near 75     -> trigger 60m  (at the door; 60m is the practical iOS floor
- *                                since fixes up to 80m accuracy are accepted)
- *   balanced 120 -> trigger 72m (arriving on the same block)
- *   far 250     -> trigger 150m (early warning, ~2 min walking lead)
+ *   near 50      -> trigger 45m  (at the door; 45m is the practical iOS floor
+ *                                 for accepted fixes, see MAX_GPS_ACCURACY)
+ *   balanced 100 -> trigger 55m  (arriving on the same block)
+ *   far 200      -> trigger 110m (early warning, still well inside a block)
  */
 export const getAlertDistanceMeters = (sensitivity: NotificationSensitivity): number => {
   switch (sensitivity) {
-    case 'near': return 75;
-    case 'balanced': return 120;
-    case 'far': return 250;
+    case 'near': return 50;
+    case 'balanced': return 100;
+    case 'far': return 200;
   }
 };
 
