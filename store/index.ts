@@ -4,6 +4,7 @@ export { useListsStore } from "./useListsStore";
 export { useSettingsStore } from "./useSettingsStore";
 export { useQuickStartStore } from "./useQuickStartStore";
 export { useNotificationsStore } from "./useNotificationsStore";
+export { useDebugStore } from "./useDebugStore";
 
 export type { ShoppingItem } from "./useShoppingListStore";
 export type { SavedLocation } from "./useLocationStore";

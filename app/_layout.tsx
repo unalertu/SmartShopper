@@ -23,7 +23,7 @@ import { useListsStore } from "@/store/useListsStore";
 import { useShoppingListStore } from "@/store/useShoppingListStore";
 import { useNotificationsStore } from "@/store/useNotificationsStore";
 import { notificationEngine } from "@/services/notificationEngine";
-import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from "@/services/locationService";
+import { startBackgroundLocationTracking } from "@/services/locationService";
 import { geofenceManager } from "@/services/geofenceManager";
 import { getAlertDistanceMeters } from "@/constants";
 
@@ -49,16 +49,48 @@ export default function RootLayout() {
   const _hasHydrated = useSettingsStore((state) => state._hasHydrated);
   const savedStoresOnly = useSettingsStore((state) => state.savedStoresOnly);
 
-  // Dynamically start/stop background location tracking based on savedStoresOnly setting
+  // Keep the background location session in sync with app state: it should
+  // only run while a location notification is possible (see
+  // startBackgroundLocationTracking, which stops itself when not). Re-synced
+  // on the savedStoresOnly toggle, on notification-setting changes, and on
+  // list/item changes (debounced — completing a list stops tracking,
+  // creating one starts it).
   useEffect(() => {
     if (!_hasHydrated) return;
-    if (savedStoresOnly) {
-      void stopBackgroundLocationTracking();
-      void geofenceManager.syncSavedStores(getAlertDistanceMeters(useSettingsStore.getState().notificationSensitivity));
-    } else {
-      void startBackgroundLocationTracking();
-      void geofenceManager.syncSavedStores(getAlertDistanceMeters(useSettingsStore.getState().notificationSensitivity));
-    }
+    void startBackgroundLocationTracking();
+    void geofenceManager.syncSavedStores(getAlertDistanceMeters(useSettingsStore.getState().notificationSensitivity));
+
+    let syncTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleTrackingSync = () => {
+      if (syncTimer) clearTimeout(syncTimer);
+      syncTimer = setTimeout(() => {
+        syncTimer = null;
+        void startBackgroundLocationTracking();
+      }, 2500);
+    };
+
+    const unsubItems = useShoppingListStore.subscribe((state, prev) => {
+      if (state.items !== prev.items) scheduleTrackingSync();
+    });
+    const unsubLists = useListsStore.subscribe((state, prev) => {
+      if (state.lists !== prev.lists) scheduleTrackingSync();
+    });
+    const unsubSettings = useSettingsStore.subscribe((state, prev) => {
+      if (
+        state.notificationsEnabled !== prev.notificationsEnabled ||
+        state.shoppingListReminders !== prev.shoppingListReminders ||
+        state.remindWithoutList !== prev.remindWithoutList
+      ) {
+        scheduleTrackingSync();
+      }
+    });
+
+    return () => {
+      if (syncTimer) clearTimeout(syncTimer);
+      unsubItems();
+      unsubLists();
+      unsubSettings();
+    };
   }, [savedStoresOnly, _hasHydrated]);
 
   // "Mute until I reopen the app" ends here, at the first cold start after
@@ -160,11 +192,15 @@ export default function RootLayout() {
     return () => subscription.remove();
   }, [flushNotificationDeepLink]);
 
-  // Foreground sync for geofences
+  // Foreground sync for geofences and the background location session.
+  // restart:true clears a possible iOS auto-pause (pausesUpdatesAutomatically)
+  // that JS can't detect — a paused session reports "started" but delivers
+  // no fixes until restarted.
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextState) => {
       if (nextState === "active") {
         void geofenceManager.syncSavedStores(getAlertDistanceMeters(useSettingsStore.getState().notificationSensitivity));
+        void startBackgroundLocationTracking({ restart: true });
       }
     });
     return () => subscription.remove();

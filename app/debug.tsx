@@ -5,7 +5,7 @@ import * as Location from 'expo-location';
 import { geoEngine } from '../services/geoEngine';
 import { processLocationUpdate } from '../services/locationService';
 import { ChevronLeft, RefreshCw, Play, Trash2, Copy, Navigation, Gauge, Database } from 'lucide-react-native';
-import { useSettingsStore, useLocationStore, useShoppingListStore } from '../store';
+import { useSettingsStore, useLocationStore, useShoppingListStore, useDebugStore } from '../store';
 
 export default function DebugScreen() {
   const router = useRouter();
@@ -18,14 +18,12 @@ export default function DebugScreen() {
   const [hasActiveListLocal, setHasActiveListLocal] = useState<boolean>(false);
 
   const { savedStoresOnly } = useSettingsStore();
-  const { 
-    debugMetrics, 
-    debugLogs, 
-    clearDebugLogs, 
-    cachedMarkets, 
+  const {
+    cachedMarkets,
     setCachedMarkets,
     lastBackgroundFetchCoords
   } = useLocationStore();
+  const { debugMetrics, debugLogs, clearDebugLogs } = useDebugStore();
 
   const fetchDebugData = async () => {
     try {

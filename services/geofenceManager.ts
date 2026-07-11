@@ -44,8 +44,8 @@ function setsEqual(a: Set<string>, b: Set<string>): boolean {
 
 function log(msg: string) {
   try {
-    const { useLocationStore } = require('../store/useLocationStore');
-    useLocationStore.getState().addDebugLog(`[Geofence] ${msg}`);
+    const { useDebugStore } = require('../store/useDebugStore');
+    useDebugStore.getState().addDebugLog(`[Geofence] ${msg}`);
   } catch {
     // Store might not be ready during very early boot
   }

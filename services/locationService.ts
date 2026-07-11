@@ -13,6 +13,7 @@ import { useSettingsStore, NotificationSensitivity } from "../store/useSettingsS
 import { NOTIFICATION_CONSTANTS, getAlertDistanceMeters, getMaxNotificationsPerStorePerDay, resolveNotificationSchedule } from "../constants";
 import { useStatsStore } from "../store/useStatsStore";
 import { useLocationStore } from "../store/useLocationStore";
+import { useDebugStore } from "../store/useDebugStore";
 import { fetchMarkets } from "./overpassService";
 import { notificationEngine } from "./notificationEngine";
 
@@ -97,7 +98,7 @@ export const getSettingsFromStorage = async () => {
 import { geofenceManager } from "./geofenceManager";
 
 export const processLocationUpdate = async (location: Location.LocationObject) => {
-  const { addDebugLog, incrementDebugMetric, setDebugMetric } = useLocationStore.getState();
+  const { addDebugLog, incrementDebugMetric, setDebugMetric } = useDebugStore.getState();
   incrementDebugMetric("backgroundExecutions");
   addDebugLog("Background task started");
 
@@ -173,6 +174,48 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
 
   if (avgSpeed !== null && avgSpeed > NOTIFICATION_CONSTANTS.SPEED_THRESHOLD_MS) {
     addDebugLog(`High avg speed detected: ${avgSpeed.toFixed(2)}m/s. Ignoring.`);
+    return;
+  }
+
+  // 4.3 CHEAP LOCAL GATES (no I/O beyond the settings read above).
+  // Snooze and the schedule window would block the notification at the very
+  // end anyway; checking them here makes suppressed wake-ups (e.g. every
+  // fix during quiet hours) nearly free — no cache scans, no network.
+  // Placed after the accuracy/age/speed checks so the rebalance below only
+  // ever sees validated, non-driving fixes — the same fixes that reached
+  // the original late-stage rebalance call sites. Fence freshness is
+  // decoupled from notification eligibility: rebalanceGeofences is a no-op
+  // for <=20 saved stores and throttled to 1km of movement, so the nearest-20
+  // native fence set stays current even across suppressed windows.
+  if (settings.snoozeUntil !== null && now < settings.snoozeUntil) {
+    addDebugLog("Snoozed. Skipping pipeline.");
+    void geofenceManager.rebalanceGeofences(latitude, longitude);
+    return;
+  }
+  const earlySchedule = resolveNotificationSchedule(settings);
+  if (!notificationEngine.isScheduleAllowed({
+    allowedDays: earlySchedule.allowedDays,
+    allowedHoursStart: earlySchedule.startHour,
+    allowedHoursEnd: earlySchedule.endHour,
+  })) {
+    addDebugLog("Outside allowed schedule. Skipping pipeline.");
+    void geofenceManager.rebalanceGeofences(latitude, longitude);
+    return;
+  }
+
+  // 4.5 GLOBAL SUPPRESSION (one storage read, before store scans / network).
+  // Global cooldown and trip suppression would block the send at step 14;
+  // checking them here skips the whole pipeline while they're active.
+  // Per-store cooldowns, daily caps and dedup stay in shouldSend below.
+  const analyticsState = await notificationAnalytics.getState();
+  if (notificationAnalytics.isGlobalCooldownActive(analyticsState)) {
+    addDebugLog("Global cooldown active. Skipping pipeline.");
+    void geofenceManager.rebalanceGeofences(latitude, longitude);
+    return;
+  }
+  if (notificationAnalytics.isTripSuppressionActive(analyticsState, latitude, longitude)) {
+    addDebugLog("Trip suppression active. Skipping pipeline.");
+    void geofenceManager.rebalanceGeofences(latitude, longitude);
     return;
   }
 
@@ -426,33 +469,73 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
   await processLocationUpdate(locations[0]);
 });
 
-export const startBackgroundLocationTracking = async () => {
+/**
+ * Reason the continuous background session should not run right now.
+ * The session is the battery cost; it should only exist while a location
+ * notification is actually possible. Saved-store native geofences are
+ * independent of this and keep working while the session is off.
+ */
+const getTrackingBlockReason = async (
+  settings: Awaited<ReturnType<typeof getSettingsFromStorage>>
+): Promise<string | null> => {
+  if (settings.savedStoresOnly) return "Saved Stores Only enabled";
+  if (!settings.notificationsEnabled) return "notifications disabled";
+  if (!settings.shoppingListReminders) return "location alerts disabled";
+  if (!settings.remindWithoutList && !(await geoEngine.hasActiveShoppingList())) {
+    return "no active shopping list";
+  }
+  return null;
+};
+
+/**
+ * Syncs the continuous background location session with current app state:
+ * starts it when a notification is possible, stops it when not. Safe to call
+ * often (launch, foreground, settings/list changes) — it no-ops when the
+ * session is already in the right state.
+ *
+ * `restart` forces a stop/start cycle of an already-running session. Used on
+ * app foreground as the safety net for pausesUpdatesAutomatically: a session
+ * iOS has auto-paused looks "started" to JS but delivers nothing until
+ * restarted.
+ */
+export const startBackgroundLocationTracking = async (options?: { restart?: boolean }) => {
   try {
     const settings = await getSettingsFromStorage();
     const hasStarted = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
-    
-    if (settings.savedStoresOnly) {
+
+    const blockReason = await getTrackingBlockReason(settings);
+    if (blockReason) {
       if (hasStarted) {
-        await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
-        useLocationStore.getState().addDebugLog("[Location] Background tracking stopped (Saved Stores Only enabled)");
-      } else {
-        useLocationStore.getState().addDebugLog("[Location] Background tracking skipped (Saved Stores Only already enabled)");
+        await stopBackgroundLocationTracking();
+        useDebugStore.getState().addDebugLog(`[Location] Background tracking stopped (${blockReason})`);
       }
       return;
     }
 
-    if (!hasStarted) {
-      const { status } = await Location.getBackgroundPermissionsAsync();
-      if (status === "granted") {
-        await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
-          accuracy: Location.Accuracy.Balanced,
-          timeInterval: 60000,
-          distanceInterval: 300,
-          showsBackgroundLocationIndicator: true,
-        });
-        useLocationStore.getState().addDebugLog("[Location] Background tracking started");
-      }
+    if (hasStarted && !options?.restart) return;
+
+    const { status } = await Location.getBackgroundPermissionsAsync();
+    if (status !== "granted") return;
+
+    if (hasStarted) {
+      // Restart cycle: clears a possible iOS auto-pause without touching
+      // the in-memory dwell/anchor state.
+      await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
     }
+    await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
+      accuracy: Location.Accuracy.Balanced,
+      timeInterval: 60000,
+      distanceInterval: 300,
+      showsBackgroundLocationIndicator: true,
+      // Let iOS power down positioning while the user is stationary.
+      // Auto-pause doesn't resume on its own; the foreground restart above
+      // and saved-store geofence enters are the recovery paths.
+      pausesUpdatesAutomatically: true,
+      activityType: Location.ActivityType.Fitness,
+    });
+    useDebugStore.getState().addDebugLog(
+      `[Location] Background tracking ${hasStarted ? "restarted" : "started"}`
+    );
   } catch (e) {
     console.warn("Failed to start background tracking (possibly denied mode fallback):", e);
   }
@@ -467,9 +550,9 @@ export const stopBackgroundLocationTracking = async () => {
       // Verify that it actually stopped
       const isStillRunning = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
       if (!isStillRunning) {
-        useLocationStore.getState().addDebugLog("[Location] Background tracking successfully stopped");
+        useDebugStore.getState().addDebugLog("[Location] Background tracking successfully stopped");
       } else {
-        useLocationStore.getState().addDebugLog("[Location] WARNING: Background tracking is still active after stop request");
+        useDebugStore.getState().addDebugLog("[Location] WARNING: Background tracking is still active after stop request");
       }
     }
     
@@ -504,6 +587,11 @@ export const handleGeofenceEnter = async (storeId: string) => {
     const settings = await getSettingsFromStorage();
     if (!settings.notificationsEnabled || !settings.shoppingListReminders) return;
 
+    // 3.5 Session recovery: an enter event proves the user is moving, which
+    // is when an auto-paused session (pausesUpdatesAutomatically) must come
+    // back. No-ops or stops itself when tracking shouldn't run at all.
+    void startBackgroundLocationTracking({ restart: true });
+
     // 4. Has Active List? (skipped when Remind Without a List is on)
     if (!settings.remindWithoutList) {
       const hasActiveList = await geoEngine.hasActiveShoppingList();
@@ -532,7 +620,7 @@ export const handleGeofenceEnter = async (storeId: string) => {
         );
         const margin = fix.coords.accuracy ?? 0;
         if (dist > fenceRadius + margin) {
-          useLocationStore.getState().addDebugLog(
+          useDebugStore.getState().addDebugLog(
             `[Geofence] Spurious enter for ${store.name} rejected (${dist.toFixed(0)}m > ${fenceRadius}m + ${margin.toFixed(0)}m accuracy)`
           );
           return;

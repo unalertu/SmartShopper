@@ -2,45 +2,72 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { SavedLocation } from "../store/useLocationStore";
 import type { ShoppingItem } from "../store/useShoppingListStore";
 import { getDistance } from "./locationUtils";
+import { NOTIFICATION_CONSTANTS } from "../constants";
+
+// Single read+parse of the persisted location store, shared by the getters
+// below so one background wake-up doesn't parse the same blob three times.
+const readLocationStorageState = async (): Promise<any | null> => {
+  try {
+    const data = await AsyncStorage.getItem("location-storage");
+    if (data) {
+      return JSON.parse(data)?.state ?? null;
+    }
+  } catch (e) {
+    console.error("geoEngine readLocationStorageState error", e);
+  }
+  return null;
+};
+
+// Union of the in-memory working set and the durable disk cache. Memory is
+// the map's viewport-trimmed subset (and holds fetches whose merge-write
+// hasn't landed yet); disk is the merged superset that survives headless
+// relaunches. Neither alone is complete, so the pipeline reads both.
+// Disk entries past their TTL are dropped on read — the durable cache is
+// only rewritten on fetches, which may be rare. NOT part of location-storage;
+// see MARKET_CACHE_STORAGE_KEY in useLocationStore.
+const readCachedMarkets = async (): Promise<any[]> => {
+  try {
+    // Lazy require: useLocationStore -> geofenceManager -> geoEngine would
+    // otherwise form an import cycle.
+    const { useLocationStore, MARKET_CACHE_STORAGE_KEY } = require("../store/useLocationStore");
+    const inMemory: any[] = useLocationStore.getState().cachedMarkets ?? [];
+
+    let onDisk: any[] = [];
+    const data = await AsyncStorage.getItem(MARKET_CACHE_STORAGE_KEY);
+    if (data) {
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed)) {
+        const now = Date.now();
+        onDisk = parsed.filter((m: any) => {
+          if (!m.lastSeenAt) return true;
+          return now - m.lastSeenAt < NOTIFICATION_CONSTANTS.CACHE_TTL_MS;
+        });
+      }
+    }
+
+    if (onDisk.length === 0) return inMemory;
+    if (inMemory.length === 0) return onDisk;
+    const inMemoryIds = new Set(inMemory.map((m: any) => m.id));
+    return [...inMemory, ...onDisk.filter((m: any) => !inMemoryIds.has(m.id))];
+  } catch (e) {
+    console.error("geoEngine readCachedMarkets error", e);
+  }
+  return [];
+};
 
 export const geoEngine = {
   getLocations: async (): Promise<SavedLocation[]> => {
-    try {
-      const data = await AsyncStorage.getItem("location-storage");
-      if (data) {
-        const parsed = JSON.parse(data);
-        return parsed?.state?.locations || [];
-      }
-    } catch (e) {
-      console.error("geoEngine getLocations error", e);
-    }
-    return [];
+    const state = await readLocationStorageState();
+    return state?.locations || [];
   },
 
   getCachedMarkets: async (): Promise<any[]> => {
-    try {
-      const data = await AsyncStorage.getItem("location-storage");
-      if (data) {
-        const parsed = JSON.parse(data);
-        return parsed?.state?.cachedMarkets || [];
-      }
-    } catch (e) {
-      console.error("geoEngine getCachedMarkets error", e);
-    }
-    return [];
+    return readCachedMarkets();
   },
 
   getMutedUnsavedShops: async (): Promise<string[]> => {
-    try {
-      const data = await AsyncStorage.getItem("location-storage");
-      if (data) {
-        const parsed = JSON.parse(data);
-        return parsed?.state?.mutedUnsavedShops || [];
-      }
-    } catch (e) {
-      console.error("geoEngine getMutedUnsavedShops error", e);
-    }
-    return [];
+    const state = await readLocationStorageState();
+    return state?.mutedUnsavedShops || [];
   },
 
   hasUnpurchasedItems: async (): Promise<boolean> => {
@@ -165,16 +192,17 @@ export const geoEngine = {
     excludeSaved?: boolean
   ): Promise<(SavedLocation & { distance: number })[]> => {
     let allCandidates: SavedLocation[] = [];
+    const storageState = await readLocationStorageState();
 
     if (!excludeSaved) {
-      const locations = await geoEngine.getLocations();
+      const locations: SavedLocation[] = storageState?.locations || [];
       const activeLocations = locations.filter((loc: SavedLocation) => loc.isActive);
       allCandidates = [...activeLocations];
     }
 
     if (!savedStoresOnly) {
-      const cachedMarkets = await geoEngine.getCachedMarkets();
-      const mutedUnsavedShops = await geoEngine.getMutedUnsavedShops();
+      const cachedMarkets = await readCachedMarkets();
+      const mutedUnsavedShops: string[] = storageState?.mutedUnsavedShops || [];
 
       const activeUnsaved = cachedMarkets
         .filter((market: any) => !mutedUnsavedShops.includes(market.id))

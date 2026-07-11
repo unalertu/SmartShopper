@@ -57,6 +57,10 @@ export const NOTIFICATION_CONSTANTS = {
   // Cache
   MAX_CACHED_MARKETS: 5000,
   CACHE_TTL_MS: 30 * 24 * 60 * 60 * 1000,
+  // In-memory working set cap: the map builds its cluster tree from the
+  // in-memory list, so it must stay an order of magnitude smaller than the
+  // durable MAX_CACHED_MARKETS disk cache
+  MARKET_WORKING_SET_CAP: 500,
   // History
   MAX_NOTIFICATION_HISTORY: 30,
 } as const;

@@ -23,7 +23,7 @@ import StoreMarker from '../../components/StoreMarker';
 import { MapSearchIndicator } from '../../components/MapSearchIndicator';
 import { create } from 'zustand';
 import { Alert } from 'react-native';
-import { FREE_TIER, getMaxSavedStores } from '@/constants';
+import { FREE_TIER, getMaxSavedStores, NOTIFICATION_CONSTANTS } from '@/constants';
 import ConfirmationSheet from '../../components/ConfirmationSheet';
 import { showPaywall } from "@/services/paywallService";
 
@@ -53,7 +53,7 @@ const useLocalUIStore = create<LocalUIState>((set) => ({
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const MARKER_ANCHOR = { x: 0.5, y: 0.5 };
-const MAX_CACHED_MARKETS = 500;
+const MAX_CACHED_MARKETS = NOTIFICATION_CONSTANTS.MARKET_WORKING_SET_CAP;
 // Beyond this delta the viewport is too wide for a store-level Overpass query;
 // the fetch is skipped and the "zoom in" hint may be shown instead.
 const MAX_FETCH_DELTA = 0.07;
