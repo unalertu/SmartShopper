@@ -396,7 +396,9 @@ export default function SettingsScreen() {
     try {
       await Share.share({
         message:
-          '📱 Check out GeoCart — a smart shopping list app that reminds you near stores!\nhttps://geocart.app'});
+          '🛒 Smarter grocery shopping starts with GeoCart.\n\n' +
+          "Create your shopping list and get reminded automatically when you're near your favorite grocery stores.\n\n" +
+          'Download on the App Store:\nhttps://apps.apple.com/app/id6787523009'});
     } catch {
       // User cancelled or share failed
     }
@@ -404,22 +406,50 @@ export default function SettingsScreen() {
 
   const handleSendFeedback = useCallback(() => {
     hapticImpact(ImpactFeedbackStyle.Light);
-    Linking.openURL('mailto:feedback@geocart.app?subject=GeoCart%20Feedback');
+    Linking.openURL('mailto:geocartsupport@gmail.com?subject=GeoCart%20Feedback');
   }, []);
 
-  const handleRateApp = useCallback(() => {
+  const isRequestingReviewRef = useRef(false);
+
+  const handleRateApp = useCallback(async () => {
+    if (isRequestingReviewRef.current) return;
+    isRequestingReviewRef.current = true;
     hapticImpact(ImpactFeedbackStyle.Light);
-    // Placeholder App Store URL
-    const storeUrl =
-      Platform.OS === 'ios'
-        ? 'https://apps.apple.com/app/geocart/id0000000000'
-        : 'https://play.google.com/store/apps/details?id=com.geocart.app';
-    Linking.openURL(storeUrl);
+    try {
+      try {
+        // Skip entirely when the native module is absent (dev clients built
+        // before expo-store-review was added) — requiring it would throw
+        // during module init, which Metro reports as fatal in dev even
+        // inside try/catch. Fall through to the store URL instead.
+        const hasNativeModule =
+          (globalThis as any).expo?.modules?.ExpoStoreReview != null;
+        if (hasNativeModule) {
+          const StoreReview =
+            require('expo-store-review') as typeof import('expo-store-review');
+          if (await StoreReview.isAvailableAsync()) {
+            await StoreReview.requestReview();
+            return;
+          }
+        }
+      } catch (error) {
+        if (__DEV__) console.warn('[RateApp] in-app review failed:', error);
+      }
+      // Fallback: in-app review unavailable or failed
+      const storeUrl =
+        Platform.OS === 'ios'
+          ? 'https://apps.apple.com/app/id6787523009?action=write-review'
+          : 'https://play.google.com/store/apps/details?id=com.geocart.app';
+      await Linking.openURL(storeUrl);
+    } catch (error) {
+      if (__DEV__) console.warn('[RateApp] store page open failed:', error);
+    } finally {
+      isRequestingReviewRef.current = false;
+    }
   }, []);
 
   const handleHelpCenter = useCallback(() => {
     hapticImpact(ImpactFeedbackStyle.Light);
-    Linking.openURL('https://geocart.app/help');
+    Linking.openURL('mailto:geocartsupport@gmail.com?subject=GeoCart%20Help');
   }, []);
 
   const handleOpenSourceLicenses = useCallback(() => {
