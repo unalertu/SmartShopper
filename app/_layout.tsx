@@ -18,6 +18,7 @@ enableFreeze(false);
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { setupNotifications } from "@/services/notificationService";
 import LaunchScreen from "@/components/LaunchScreen";
+import InAppNotificationBanner from "@/components/InAppNotificationBanner";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { useListsStore } from "@/store/useListsStore";
 import { useShoppingListStore } from "@/store/useShoppingListStore";
@@ -26,6 +27,7 @@ import { notificationEngine } from "@/services/notificationEngine";
 import { startBackgroundLocationTracking } from "@/services/locationService";
 import { geofenceManager } from "@/services/geofenceManager";
 import { getAlertDistanceMeters } from "@/constants";
+import { openNotificationList } from "@/utils/notificationDeepLink";
 
 // Prevent splash screen auto-hide
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -133,24 +135,10 @@ export default function RootLayout() {
   const flushNotificationDeepLink = useCallback(() => {
     const listId = pendingNotificationListIdRef.current;
     if (listId === null || !navigatorReadyRef.current) return;
-
-    const openList = () => {
-      pendingNotificationListIdRef.current = null;
-      // Never hijack onboarding, and never open a list that no longer exists
-      if (!useSettingsStore.getState().hasCompletedOnboarding) return;
-      if (!useListsStore.getState().lists.some((l) => l.id === listId)) return;
-      router.push(`/list/${listId}`);
-    };
-
-    // On cold start the lists store may still be rehydrating
-    if (useListsStore.persist.hasHydrated()) {
-      openList();
-    } else {
-      const unsub = useListsStore.persist.onFinishHydration(() => {
-        unsub();
-        openList();
-      });
-    }
+    pendingNotificationListIdRef.current = null;
+    // Shared with the in-app banner tap; handles hydration wait,
+    // onboarding guard, and deleted-list guard
+    openNotificationList(router, listId);
   }, [router]);
 
   useEffect(() => {
@@ -391,6 +379,8 @@ export default function RootLayout() {
             />
           </Stack>
           <StatusBar style="dark" />
+          {/* Foreground presentation of notifications; OS banner is suppressed while active */}
+          <InAppNotificationBanner />
         </ThemeProvider>
       </BottomSheetModalProvider>
 

@@ -4,7 +4,7 @@
  */
 
 import * as Notifications from "expo-notifications";
-import { Platform } from "react-native";
+import { AppState, Platform } from "react-native";
 import { useSettingsStore } from "../store/useSettingsStore";
 
 export const setupNotifications = async (): Promise<boolean> => {
@@ -12,6 +12,22 @@ export const setupNotifications = async (): Promise<boolean> => {
   Notifications.setNotificationHandler({
     handleNotification: async () => {
       const { soundEnabled } = useSettingsStore.getState();
+
+      // While the app is in the foreground the OS banner is suppressed:
+      // InAppNotificationBanner (fed by addNotificationReceivedListener)
+      // presents the same payload in-app instead, so showing both would
+      // duplicate the alert. Background/killed delivery is unchanged.
+      const isForeground = AppState.currentState === "active";
+      if (isForeground) {
+        return {
+          shouldShowAlert: false,
+          shouldPlaySound: false,
+          shouldSetBadge: true,
+          shouldShowBanner: false,
+          shouldShowList: false,
+        };
+      }
+
       return {
         shouldShowAlert: true,
         shouldPlaySound: soundEnabled,
