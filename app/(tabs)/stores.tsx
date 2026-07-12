@@ -1354,6 +1354,30 @@ const SheetContent = React.memo(({ mapRef, isAnimatingRef, snapSheetToPreview, r
         </View>
       )}
 
+      {/* OpenStreetMap attribution (required by ODbL for store data) */}
+      <View style={{ alignItems: 'center', marginTop: 16 }}>
+        <TouchableOpacity
+          onPress={() => {
+            Alert.alert(
+              'Store Data',
+              'Store locations are provided by OpenStreetMap.\n\n© OpenStreetMap contributors, available under the Open Database License.',
+              [
+                {
+                  text: 'View on openstreetmap.org',
+                  onPress: () => Linking.openURL('https://www.openstreetmap.org/copyright/en'),
+                },
+                { text: 'OK', style: 'cancel' },
+              ]
+            );
+          }}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={{ paddingVertical: 4, paddingHorizontal: 8 }}
+        >
+          <Text style={{ fontSize: 12, fontWeight: '500', color: '#BDBDBD' }}>Data © OpenStreetMap</Text>
+        </TouchableOpacity>
+      </View>
+
       <ConfirmationSheet
         visible={deleteModalVisible}
         data={deleteModalData}
