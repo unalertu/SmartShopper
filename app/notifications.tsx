@@ -164,24 +164,7 @@ export default function NotificationsScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      syncFromAnalytics().then(() => {
-        const { notifications } = useNotificationsStore.getState();
-        if (!notifications.find(n => n.id === 'mock_reminder')) {
-          useNotificationsStore.setState({
-            notifications: [
-              {
-                id: 'mock_reminder',
-                type: 'reminder',
-                title: 'Ready for your next trip?',
-                body: 'Start a new list before you head to the store.',
-                timestamp: Date.now() + 1000,
-                read: false,
-              },
-              ...notifications
-            ]
-          });
-        }
-      });
+      syncFromAnalytics().catch(console.error);
     }, [syncFromAnalytics])
   );
 

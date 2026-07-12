@@ -444,7 +444,9 @@ export const processLocationUpdate = async (location: Location.LocationObject) =
     { latitude, longitude },
     activeList?.listId
   );
-  
+  // Push the inactivity re-engagement nudge a full window forward
+  notificationEngine.syncInactivityReminder().catch(console.error);
+
   dwellTimers.delete(bestStore.id);
   notifiedStores.set(bestStore.id, { lat: latitude, lon: longitude, timestamp: now });
 
@@ -677,7 +679,10 @@ export const handleGeofenceEnter = async (storeId: string) => {
       { latitude: store.latitude, longitude: store.longitude },
       activeList?.listId
     );
-    
+    // Push the inactivity re-engagement nudge a full window forward
+    notificationEngine.syncInactivityReminder().catch(console.error);
+
+
     // Record store visit for stats
     useStatsStore.getState().recordStoreVisit(store.id);
   } catch (e) {

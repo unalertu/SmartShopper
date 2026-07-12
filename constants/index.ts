@@ -45,6 +45,10 @@ export const NOTIFICATION_CONSTANTS = {
   // Quiet hours
   QUIET_HOURS_START: 22,
   QUIET_HOURS_END: 8,
+  // Re-engagement: nudge after this long without any delivered notification,
+  // fired at INACTIVITY_REMINDER_HOUR so it lands inside the 08-22 window
+  INACTIVITY_REMINDER_MS: 4 * 24 * 60 * 60 * 1000,
+  INACTIVITY_REMINDER_HOUR: 18,
   // Geofence
   MAX_NATIVE_GEOFENCES: 20,
   // GPS

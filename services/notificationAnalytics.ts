@@ -53,6 +53,10 @@ export interface NotificationAnalyticsState {
   emptyListReminderId: string | null;
   emptyListReminderScheduledAt: number | null;
 
+  // Inactivity Re-engagement Reminder
+  inactivityReminderId: string | null;
+  inactivityReminderScheduledAt: number | null;
+
   // History & Flags
   notificationHistory: NotificationHistoryEntry[];
   hasSentWelcome: boolean;
@@ -76,6 +80,8 @@ const createDefaultState = (): NotificationAnalyticsState => ({
   unfinishedReminderScheduledAt: null,
   emptyListReminderId: null,
   emptyListReminderScheduledAt: null,
+  inactivityReminderId: null,
+  inactivityReminderScheduledAt: null,
   notificationHistory: [],
   hasSentWelcome: false,
 });
@@ -141,6 +147,20 @@ export const notificationAnalytics = {
     const state = await notificationAnalytics.getState();
     state.emptyListReminderId = null;
     state.emptyListReminderScheduledAt = null;
+    await notificationAnalytics.saveState(state);
+  },
+
+  setInactivityReminder: async (id: string, scheduledAt: number): Promise<void> => {
+    const state = await notificationAnalytics.getState();
+    state.inactivityReminderId = id;
+    state.inactivityReminderScheduledAt = scheduledAt;
+    await notificationAnalytics.saveState(state);
+  },
+
+  clearInactivityReminder: async (): Promise<void> => {
+    const state = await notificationAnalytics.getState();
+    state.inactivityReminderId = null;
+    state.inactivityReminderScheduledAt = null;
     await notificationAnalytics.saveState(state);
   },
 

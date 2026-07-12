@@ -120,7 +120,7 @@ export default function ListDetails() {
   const list = useListsStore((state) => state.lists.find((l) => l.id === listId));
   const removeList = useListsStore((state) => state.removeList);
   const renameList = useListsStore((state) => state.renameList);
-  
+
   const allItems = useShoppingListStore((state) => state.items);
   const items = useMemo(() => allItems.filter(item => item.listId === listId), [allItems, listId]);
   
@@ -530,18 +530,20 @@ export default function ListDetails() {
       </ScrollView>
 
       {/* 5. The Bottom Floating Button */}
-      <View 
+      <View
         className="absolute left-6 right-6 z-40"
-        style={{ bottom: insets.bottom > 0 ? insets.bottom + 24 : 40 }}
+        style={{ bottom: insets.bottom > 0 ? insets.bottom + 6 : 24 }}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => {
             hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
             addBottomSheetRef.current?.present();
           }}
-          className="bg-slate-900 py-[18px] rounded-full flex-row justify-center items-center shadow-lg"
-          
+          activeOpacity={0.85}
+          className="bg-slate-900 py-[17px] rounded-full flex-row justify-center items-center gap-2"
+          style={{ shadowColor: '#0f172a', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.26, shadowRadius: 16, elevation: 8 }}
         >
+          <Plus size={20} color="#ffffff" strokeWidth={2.75} />
           <Text className="text-white font-extrabold text-[17px] tracking-wide">Add New Item</Text>
         </TouchableOpacity>
       </View>
@@ -550,8 +552,8 @@ export default function ListDetails() {
       <Animated.View 
         className="absolute left-6 right-6 z-50 flex-row items-center justify-between bg-slate-800 rounded-2xl px-5 py-3.5 shadow-2xl"
         pointerEvents={deletedItem ? "auto" : "none"}
-        style={{ 
-          bottom: insets.bottom > 0 ? insets.bottom + 92 : 108,
+        style={{
+          bottom: insets.bottom > 0 ? insets.bottom + 74 : 92,
           opacity: toastOpacity,
           transform: [
             { translateY: toastOpacity.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }

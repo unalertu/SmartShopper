@@ -4,14 +4,15 @@ import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { LinearTransition, FadeIn, FadeOut } from 'react-native-reanimated';
-import { MapPin, Menu, Vibrate, ChevronLeft, Lock, Clock, Calendar, SlidersHorizontal, Bell, BellDot, ChevronRight, Target, Battery } from 'lucide-react-native';
+import { MapPin, Menu, Vibrate, ChevronLeft, Lock, Clock, Calendar, SlidersHorizontal, Bell, BellDot, ChevronRight, Target, Battery, Navigation } from 'lucide-react-native';
 import { useSettingsStore } from '../store';
 import { hapticImpact } from '../services/haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
 import ConfirmationSheet, { ConfirmationSheetData } from '../components/ConfirmationSheet';
 import ComingSoonSheet from '../components/ComingSoonSheet';
 import NotificationScheduleSheet from '../components/NotificationScheduleSheet';
-import QuietHoursSheet from '../components/QuietHoursSheet';
+import QuietHoursSheet, { formatHour } from '../components/QuietHoursSheet';
+import { DEFAULT_ACTIVE_HOURS } from '../constants';
 import AlertDistanceSheet from '../components/AlertDistanceSheet';
 import MaxAlertsPerDaySheet from '../components/MaxAlertsPerDaySheet';
 import NearbyAlertsMuteSheet, { getNearbyAlertsStatusText } from '../components/NearbyAlertsMuteSheet';
@@ -293,12 +294,22 @@ export default function NotificationPreferencesScreen() {
             <Animated.View
               entering={FadeIn.duration(200)}
               exiting={FadeOut.duration(200)}
-              className="px-4 pb-4 pt-1 flex-row items-center gap-2"
+              className="px-4 pb-4 pt-1 gap-2"
             >
-              <View className="bg-emerald-100/50 p-1.5 rounded-full">
-                <Battery size={14} color="#059669" />
+              <View className="flex-row items-center gap-2">
+                <View className="bg-emerald-100/50 p-1.5 rounded-full">
+                  <Battery size={14} color="#059669" />
+                </View>
+                <Text className="text-[13px] text-slate-500 font-medium">Reduces battery usage</Text>
               </View>
-              <Text className="text-[13px] text-slate-500 font-medium">Reduces battery usage</Text>
+              <View className="flex-row items-center gap-2">
+                <View className="bg-sky-100/50 p-1.5 rounded-full">
+                  <Navigation size={14} color="#0284c7" />
+                </View>
+                <Text className="text-[13px] text-slate-500 font-medium flex-shrink">
+                  Location icon won't appear{'\n'}in the Dynamic Island
+                </Text>
+              </View>
             </Animated.View>
           )}
         </SettingsGroup>
@@ -320,7 +331,9 @@ export default function NotificationPreferencesScreen() {
           <SettingsRow
             icon={<Clock size={20} color={isPro ? "#D4AF37" : "#cbd5e1"} />}
             label="Allowed Hours"
-            sublabel="Only receive notifications during set hours"
+            sublabel={isPro
+              ? "Only receive notifications during set hours"
+              : `${formatHour(DEFAULT_ACTIVE_HOURS.start)} – ${formatHour(DEFAULT_ACTIVE_HOURS.end)} · Upgrade to customize`}
             isProOnly={!isPro}
             isLocked={!isPro}
             onLockedPress={() => handleProUpsell('Allowed Hours')}
@@ -340,7 +353,9 @@ export default function NotificationPreferencesScreen() {
           <SettingsRow
             icon={<Calendar size={20} color={isPro ? "#D4AF37" : "#cbd5e1"} />}
             label="Notification Schedule"
-            sublabel="Set specific days for notifications"
+            sublabel={isPro
+              ? "Set specific days for notifications"
+              : "Every day · Upgrade to customize"}
             isLast
             isProOnly={!isPro}
             isLocked={!isPro}

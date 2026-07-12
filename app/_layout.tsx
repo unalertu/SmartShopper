@@ -27,6 +27,7 @@ import { notificationEngine } from "@/services/notificationEngine";
 import { startBackgroundLocationTracking } from "@/services/locationService";
 import { geofenceManager } from "@/services/geofenceManager";
 import { getAlertDistanceMeters } from "@/constants";
+import { hasProEntitlement } from "@/services/paywallService";
 import { openNotificationList } from "@/utils/notificationDeepLink";
 
 // Prevent splash screen auto-hide
@@ -189,6 +190,7 @@ export default function RootLayout() {
       if (nextState === "active") {
         void geofenceManager.syncSavedStores(getAlertDistanceMeters(useSettingsStore.getState().notificationSensitivity));
         void startBackgroundLocationTracking({ restart: true });
+        notificationEngine.syncInactivityReminder().catch(console.error);
       }
     });
     return () => subscription.remove();
@@ -211,7 +213,7 @@ export default function RootLayout() {
 
         // 1. Initial check on startup
         const customerInfo = await Purchases.getCustomerInfo();
-        const hasPro = !!customerInfo?.entitlements?.active?.['pro'];
+        const hasPro = hasProEntitlement(customerInfo);
         if (isMounted) {
           useSettingsStore.getState().setIsPro(hasPro);
         }
@@ -224,7 +226,7 @@ export default function RootLayout() {
 
     // 2. Add listener for background changes / future purchases
     const listener = (customerInfo: any) => {
-      const hasPro = !!customerInfo?.entitlements?.active?.['pro'];
+      const hasPro = hasProEntitlement(customerInfo);
       useSettingsStore.getState().setIsPro(hasPro);
     };
     Purchases.addCustomerInfoUpdateListener(listener);
@@ -277,7 +279,11 @@ export default function RootLayout() {
     try {
       // Sync notifications from analytics to Zustand
       await useNotificationsStore.getState().syncFromAnalytics();
-      
+
+      // Keep the inactivity re-engagement nudge anchored to the latest state
+      notificationEngine.syncInactivityReminder().catch(console.error);
+
+
       // Sync saved store native geofences first
       await geofenceManager.syncSavedStores(getAlertDistanceMeters(useSettingsStore.getState().notificationSensitivity));
 

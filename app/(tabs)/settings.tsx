@@ -67,7 +67,7 @@ import { hapticImpact, hapticNotification } from '../../services/haptics';
 import * as Haptics from 'expo-haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
 import { NotificationFeedbackType } from 'expo-haptics';
-import { showPaywall } from "@/services/paywallService";
+import { showPaywall, hasProEntitlement } from "@/services/paywallService";
 
 // ─── Reusable Components ──────────────────────────────────────────────────────
 
@@ -680,7 +680,7 @@ export default function SettingsScreen() {
                 hapticImpact(ImpactFeedbackStyle.Light);
                 try {
                   const customerInfo = await Purchases.restorePurchases();
-                  const hasPro = !!customerInfo?.entitlements?.active?.['pro'];
+                  const hasPro = hasProEntitlement(customerInfo);
                   setIsPro(hasPro);
                   if (hasPro) {
                     Alert.alert('Purchases Restored', 'Your Pro subscription has been successfully restored.');

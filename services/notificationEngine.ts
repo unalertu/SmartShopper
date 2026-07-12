@@ -1,6 +1,8 @@
 import { notificationAnalytics } from "./notificationAnalytics";
 import { SavedLocation } from "../store/useLocationStore";
 import { useShoppingListStore } from "../store/useShoppingListStore";
+import { useSettingsStore } from "../store/useSettingsStore";
+import { NOTIFICATION_CONSTANTS } from "../constants";
 import * as Notifications from "expo-notifications";
 
 export const notificationEngine = {
@@ -253,6 +255,90 @@ export const notificationEngine = {
       });
       await notificationAnalytics.setUnfinishedReminder(newId, triggerDate.getTime());
     }
+  },
+
+  /**
+   * Inactivity re-engagement nudge: fires when the user has received no
+   * location notification for INACTIVITY_REMINDER_MS. Resynced on launch,
+   * on foreground, and after every recorded notification — no background
+   * timer involved, just one pending local notification pushed forward.
+   * While the app stays closed the pending request fires exactly once;
+   * it is only rescheduled on the next app open.
+   */
+  syncInactivityReminder: async (): Promise<void> => {
+    const { notificationsEnabled, shoppingListReminders } = useSettingsStore.getState();
+    const state = await notificationAnalytics.getState();
+    const {
+      inactivityReminderId,
+      inactivityReminderScheduledAt,
+      lastNotificationAt,
+      emptyListReminderScheduledAt,
+    } = state;
+
+    const cancelExisting = async () => {
+      if (inactivityReminderId) {
+        await Notifications.cancelScheduledNotificationAsync(inactivityReminderId);
+        await notificationAnalytics.clearInactivityReminder();
+      }
+    };
+
+    if (!notificationsEnabled || !shoppingListReminders) {
+      await cancelExisting();
+      return;
+    }
+
+    const hasPendingFuture =
+      inactivityReminderId !== null &&
+      inactivityReminderScheduledAt !== null &&
+      inactivityReminderScheduledAt > Date.now();
+
+    // Without a last-notification anchor the target would drift forward on
+    // every sync, so an already-pending reminder is left untouched.
+    if (lastNotificationAt === null && hasPendingFuture) {
+      return;
+    }
+
+    const base = lastNotificationAt ?? Date.now();
+    const target = new Date(base + NOTIFICATION_CONSTANTS.INACTIVITY_REMINDER_MS);
+    target.setHours(NOTIFICATION_CONSTANTS.INACTIVITY_REMINDER_HOUR, 0, 0, 0);
+    if (target.getTime() <= Date.now()) {
+      // The window already lapsed while the app was closed (the pending
+      // request fired then); count a fresh window from now.
+      target.setTime(Date.now() + NOTIFICATION_CONSTANTS.INACTIVITY_REMINDER_MS);
+      target.setHours(NOTIFICATION_CONSTANTS.INACTIVITY_REMINDER_HOUR, 0, 0, 0);
+    }
+
+    // The empty-list reminder carries the same copy; when it is already
+    // pending within a day of this target the user should not get both.
+    if (
+      emptyListReminderScheduledAt !== null &&
+      emptyListReminderScheduledAt > Date.now() &&
+      Math.abs(emptyListReminderScheduledAt - target.getTime()) < 24 * 60 * 60 * 1000
+    ) {
+      await cancelExisting();
+      return;
+    }
+
+    if (hasPendingFuture && inactivityReminderScheduledAt === target.getTime()) {
+      return;
+    }
+
+    if (inactivityReminderId) {
+      await Notifications.cancelScheduledNotificationAsync(inactivityReminderId);
+    }
+    const newId = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Ready for your next trip?",
+        body: "Start a new list before you head to the store.",
+        sound: "default" as const,
+      },
+      trigger: {
+        date: target,
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        channelId: "geofence-alerts",
+      },
+    });
+    await notificationAnalytics.setInactivityReminder(newId, target.getTime());
   },
 
   syncEmptyListReminder: async (): Promise<void> => {

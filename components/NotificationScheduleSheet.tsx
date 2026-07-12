@@ -28,10 +28,10 @@ const NotificationScheduleSheet = memo(function NotificationScheduleSheet({
   const insets = useSafeAreaInsets();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const isSheetOpenRef = useRef(false);
-  const { 
-    scheduleEnabled, 
-    setScheduleEnabled,
-    allowedDays, 
+  const {
+    smartScheduleEnabled,
+    setSmartScheduleEnabled,
+    allowedDays,
     setAllowedDays
   } = useSettingsStore();
 
@@ -68,8 +68,8 @@ const NotificationScheduleSheet = memo(function NotificationScheduleSheet({
 
   const toggleSchedule = useCallback(() => {
     hapticImpact(ImpactFeedbackStyle.Light);
-    setScheduleEnabled(!scheduleEnabled);
-  }, [scheduleEnabled, setScheduleEnabled]);
+    setSmartScheduleEnabled(!smartScheduleEnabled);
+  }, [smartScheduleEnabled, setSmartScheduleEnabled]);
 
   const renderBackdrop = useCallback(
     (props: any) => (
@@ -108,7 +108,7 @@ const NotificationScheduleSheet = memo(function NotificationScheduleSheet({
             <View style={styles.row}>
               <Text style={styles.rowLabel}>Enable Custom Schedule</Text>
               <Switch
-                value={scheduleEnabled}
+                value={smartScheduleEnabled}
                 onValueChange={toggleSchedule}
                 trackColor={switchTrackColor}
                 thumbColor="#ffffff"
@@ -117,7 +117,7 @@ const NotificationScheduleSheet = memo(function NotificationScheduleSheet({
             </View>
           </View>
 
-          {scheduleEnabled && (
+          {smartScheduleEnabled && (
             <>
               <Text style={styles.sectionTitle}>Allowed Days</Text>
               <View style={styles.card}>

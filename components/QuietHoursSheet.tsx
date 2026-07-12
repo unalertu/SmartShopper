@@ -12,7 +12,7 @@ interface QuietHoursSheetProps {
   onDismiss: () => void;
 }
 
-function formatHour(hour: number) {
+export function formatHour(hour: number) {
   const ampm = hour >= 12 ? 'PM' : 'AM';
   const h = hour % 12 || 12;
   return `${h}:00 ${ampm}`;
@@ -25,9 +25,9 @@ const QuietHoursSheet = memo(function QuietHoursSheet({
   const insets = useSafeAreaInsets();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const isSheetOpenRef = useRef(false);
-  const { 
-    quietHoursEnabled, 
-    setQuietHoursEnabled,
+  const {
+    smartScheduleEnabled,
+    setSmartScheduleEnabled,
     allowedHoursStart,
     setAllowedHoursStart,
     allowedHoursEnd,
@@ -55,8 +55,8 @@ const QuietHoursSheet = memo(function QuietHoursSheet({
 
   const toggleQuietHours = useCallback(() => {
     hapticImpact(ImpactFeedbackStyle.Light);
-    setQuietHoursEnabled(!quietHoursEnabled);
-  }, [quietHoursEnabled, setQuietHoursEnabled]);
+    setSmartScheduleEnabled(!smartScheduleEnabled);
+  }, [smartScheduleEnabled, setSmartScheduleEnabled]);
 
   const renderBackdrop = useCallback(
     (props: any) => (
@@ -95,7 +95,7 @@ const QuietHoursSheet = memo(function QuietHoursSheet({
             <View style={styles.row}>
               <Text style={styles.rowLabel}>Enable Allowed Hours</Text>
               <Switch
-                value={quietHoursEnabled}
+                value={smartScheduleEnabled}
                 onValueChange={toggleQuietHours}
                 trackColor={switchTrackColor}
                 thumbColor="#ffffff"
@@ -104,7 +104,7 @@ const QuietHoursSheet = memo(function QuietHoursSheet({
             </View>
           </View>
 
-          {quietHoursEnabled && (
+          {smartScheduleEnabled && (
             <>
               <Text style={styles.sectionTitle}>Time Window</Text>
               <View style={styles.card}>
