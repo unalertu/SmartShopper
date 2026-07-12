@@ -424,7 +424,7 @@ export default function SettingsScreen() {
 
   const handleOpenSourceLicenses = useCallback(() => {
     hapticImpact(ImpactFeedbackStyle.Light);
-    Linking.openURL('https://geocart.app/licenses');
+    Linking.openURL('https://geocart.unlertu.workers.dev/licenses');
   }, []);
 
   const toggleWithHaptic = useCallback(
@@ -701,7 +701,7 @@ export default function SettingsScreen() {
               label="Privacy Policy"
               onPress={() => {
                 hapticImpact(ImpactFeedbackStyle.Light);
-                Linking.openURL('https://geocart.app/privacy');
+                Linking.openURL('https://geocart.unlertu.workers.dev/privacy');
               }}
             />
             <SettingsRow
@@ -709,7 +709,7 @@ export default function SettingsScreen() {
               label="Terms of Service"
               onPress={() => {
                 hapticImpact(ImpactFeedbackStyle.Light);
-                Linking.openURL('https://geocart.app/terms');
+                Linking.openURL('https://geocart.unlertu.workers.dev/terms');
               }}
             />
             <SettingsRow

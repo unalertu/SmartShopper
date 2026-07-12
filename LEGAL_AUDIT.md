@@ -197,3 +197,15 @@ Apple, the Apple logo, and App Store are trademarks of Apple Inc.
 
 ### ❌ Missing in-app disclosures
 - OSM attribution; paywall legal links; corrected onboarding privacy claim; optional "What data leaves my device?" row in Settings linking to /privacy#third-parties
+
+---
+
+## Addendum — Full open-source license audit (July 12, 2026)
+
+The `/licenses` page (`website-legal/app/licenses/page.tsx`) was regenerated from a **scan of the actual shipped bundle** rather than the hand-written summary: JS module graph extracted from the `expo export --source-maps` bundle (135 packages ship, out of 804 lockfile "production" entries — the rest is Expo build tooling that is not distributed), iOS natives from `Podfile.lock` + CocoaPods acknowledgements, and bundled assets from the export output. Canonical Markdown version: `website-legal/LICENSES.md`.
+
+Shipped license mix: MIT ×126, ISC ×6, BSD-3 ×2, BSD-2 ×1 (JS); natives add Apache-2.0 (Folly, fast_float, Material Design Icons font), BSL-1.0 (Boost), BSD (libwebp, libavif, dav1d, glog, double-conversion). **No copyleft is distributed.**
+
+Code fix applied: `app/(tabs)/stores.tsx` imported the `@expo/vector-icons` root, which bundled **all 19 icon fonts** (incl. Font Awesome under SIL OFL / CC BY and Entypo under CC BY-SA). Changed to the `@expo/vector-icons/MaterialCommunityIcons` subpath import — re-export verified only `MaterialCommunityIcons.ttf` (Apache-2.0, Pictogrammers) now ships, cutting ~4 MB and the OFL/CC-BY attribution burden.
+
+Note: `tailwind.config.js` references Inter font families, but no Inter font files are bundled or loaded (silent fallback to system font) — either bundle Inter (then add its SIL OFL 1.1 notice to /licenses) or remove the references.
