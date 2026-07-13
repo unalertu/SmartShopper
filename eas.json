@@ -28,6 +28,13 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "ascApiKeyPath": "/Users/ertugrulmac/.appstoreconnect/private_keys/AuthKey_4C4Q8GF33P.p8",
+        "ascApiKeyId": "4C4Q8GF33P",
+        "ascApiKeyIssuerId": "50c88dc1-ecf9-41e7-82fc-30ea29558d75",
+        "ascAppId": "6787523009"
+      }
+    }
   }
 }
