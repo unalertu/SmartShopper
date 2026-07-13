@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Keyboard, Linking, ActionSheetIOS, AppState } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Keyboard, Linking, ActionSheetIOS, AppState, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Store, Plus, Trash2, Navigation2, MoreHorizontal, BellOff, Settings } from 'lucide-react-native';
@@ -1416,6 +1416,10 @@ export default function StoresScreen() {
   const fetchMarketsRef = useRef<(region: any, opts?: { bypassCache?: boolean }) => void>(() => {});
 
   const [initialRegion, setInitialRegion] = useState<any>(null);
+  // True once we've established (permission denied, no usable last-known fix)
+  // that we have nothing to center the map on — distinct from simply still
+  // loading, so the blank placeholder doesn't sit forever with no explanation.
+  const [locationUnavailable, setLocationUnavailable] = useState(false);
 
   // ── Reconnect probe: toggling connectivity usually happens outside the
   // app (Settings / Control Center), so returning to the foreground is the
@@ -1704,23 +1708,45 @@ export default function StoresScreen() {
     }, 1000);
   }, [updateFetchingIndicator]);
 
+  // Last-known fix we can trust, for when a live GPS read isn't available:
+  // the most recent background-fetch coordinate, else the first active saved
+  // store. Both are real, persisted positions tied to this user — never a
+  // hardcoded city. Deliberately NOT written to `userLocation`: that field
+  // drives live proximity checks elsewhere that fail open when null, and a
+  // stale fix could wrongly suppress those.
+  const getLastKnownRegion = useCallback(() => {
+    const state = useLocationStore.getState();
+    const coords = state.lastBackgroundFetchCoords
+      ?? state.locations.find((l) => l.isActive)
+      ?? null;
+    if (!coords || typeof coords.latitude !== 'number' || typeof coords.longitude !== 'number') {
+      return null;
+    }
+    return {
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      latitudeDelta: 0.015,
+      longitudeDelta: 0.015,
+    };
+  }, []);
+
   const handleLocateMe = useCallback(async (isInitial = false) => {
     if (!isInitial) {
       hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    const fallbackRegion = {
-      latitude: 41.0082,
-      longitude: 28.9784,
-      latitudeDelta: 0.015,
-      longitudeDelta: 0.015};
-
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         if (isInitial) {
-          setInitialRegion(fallbackRegion);
-          currentRegionRef.current = fallbackRegion;
+          const lastKnown = getLastKnownRegion();
+          if (lastKnown) {
+            setInitialRegion(lastKnown);
+            currentRegionRef.current = lastKnown;
+            setLocationUnavailable(false);
+          } else {
+            setLocationUnavailable(true);
+          }
         }
         return;
       }
@@ -1732,6 +1758,7 @@ export default function StoresScreen() {
       const actualLatitude = location.coords.latitude;
       const actualLongitude = location.coords.longitude;
 
+      setLocationUnavailable(false);
       useLocationStore.getState().setUserLocation({ latitude: actualLatitude, longitude: actualLongitude });
 
       // Calculate adjusted latitude to shift visual center above bottom sheet
@@ -1762,11 +1789,32 @@ export default function StoresScreen() {
     } catch (error) {
       console.warn('Error fetching location', error);
       if (isInitial) {
-        setInitialRegion(fallbackRegion);
-        currentRegionRef.current = fallbackRegion;
+        const lastKnown = getLastKnownRegion();
+        if (lastKnown) {
+          setInitialRegion(lastKnown);
+          currentRegionRef.current = lastKnown;
+          setLocationUnavailable(false);
+        } else {
+          setLocationUnavailable(true);
+        }
       }
     }
-  }, []);
+  }, [getLastKnownRegion]);
+
+  // Empty-state CTA: re-request permission (shows the native prompt if the
+  // user hasn't been asked, or if already denied, iOS silently returns
+  // 'denied' again — so route that case to Settings instead of a dead end).
+  const handleEnableLocationPress = useCallback(async () => {
+    hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status === 'granted') {
+      handleLocateMe(true);
+    } else if (Platform.OS === 'ios') {
+      Linking.openURL('app-settings:');
+    } else {
+      Linking.openSettings();
+    }
+  }, [handleLocateMe]);
 
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout>;
@@ -1899,6 +1947,23 @@ export default function StoresScreen() {
           onShopSelected={snapSheetToPreview}
         />
       </MapView>
+      ) : locationUnavailable ? (
+        <View style={[StyleSheet.absoluteFillObject, styles.locationEmptyState]}>
+          <View style={styles.emptyIcon}>
+            <MaterialCommunityIcons name="map-marker-off-outline" size={26} color="#64748b" />
+          </View>
+          <Text style={styles.emptyTitle}>Location unavailable</Text>
+          <Text style={[styles.emptySub, { maxWidth: 260 }]}>
+            Enable location access to see the map and nearby stores.
+          </Text>
+          <TouchableOpacity
+            style={styles.locationEmptyButton}
+            onPress={handleEnableLocationPress}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.locationEmptyButtonText}>Enable Location</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#f8fafc' }]} />
       )}
@@ -2098,6 +2163,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
     lineHeight: 20},
+  locationEmptyState: {
+    backgroundColor: '#f8fafc',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32},
+  locationEmptyButton: {
+    backgroundColor: '#0f172a',
+    paddingHorizontal: 24,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20},
+  locationEmptyButtonText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '600'},
 
   /* ── Saved shop card extras ────────────── */
   shopIcon: {

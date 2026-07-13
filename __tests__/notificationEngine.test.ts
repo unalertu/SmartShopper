@@ -82,3 +82,75 @@ describe('notificationEngine.buildNotificationContent', () => {
     expect(content.body).not.toContain('limit');
   });
 });
+
+describe('notificationEngine.shouldSendLocationNotification daily rollover', () => {
+  const todayKey = (() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  })();
+
+  // Equal start/end hour = 24h window; all days allowed — deterministic
+  // regardless of when the test runs.
+  const baseParams = {
+    storeId: 'store1',
+    eventId: 123,
+    isPro: false,
+    maxAlertsPerDay: 5 as const,
+    maxNotificationsPerStorePerDay: 2 as const,
+    allowedDays: [0, 1, 2, 3, 4, 5, 6],
+    allowedHoursStart: 0,
+    allowedHoursEnd: 0,
+    snoozeUntil: null,
+    shoppingListReminders: true,
+  };
+
+  const cappedState = (dailyCountDate: string) => ({
+    lastNotificationAt: null,
+    lastNotificationCoords: null,
+    lastStoreNotifications: {},
+    dailyCountDate,
+    dailyLocationCount: 5,
+    dailyStoreCounts: { store1: 2 },
+    sentFingerprints: ['location:store1:123'],
+    notificationHistory: [],
+    hasSentWelcome: false,
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('allows sending when the cap was reached on a PREVIOUS day (counters roll over)', async () => {
+    jest
+      .spyOn(notificationAnalytics, 'getState')
+      .mockResolvedValue(cappedState('2000-01-01') as any);
+    const saveSpy = jest
+      .spyOn(notificationAnalytics, 'saveState')
+      .mockResolvedValue();
+
+    const decision = await notificationEngine.shouldSendLocationNotification(baseParams);
+
+    expect(decision).toEqual({ allowed: true });
+    // The rollover must be persisted so later readers see fresh counters
+    expect(saveSpy).toHaveBeenCalled();
+    const savedState = saveSpy.mock.calls[0][0];
+    expect(savedState.dailyCountDate).toBe(todayKey);
+    expect(savedState.dailyLocationCount).toBe(0);
+    expect(savedState.dailyStoreCounts).toEqual({});
+    expect(savedState.sentFingerprints).toEqual([]);
+  });
+
+  it('still blocks when the cap was reached TODAY', async () => {
+    jest
+      .spyOn(notificationAnalytics, 'getState')
+      .mockResolvedValue(cappedState(todayKey) as any);
+    const saveSpy = jest
+      .spyOn(notificationAnalytics, 'saveState')
+      .mockResolvedValue();
+
+    const decision = await notificationEngine.shouldSendLocationNotification(baseParams);
+
+    expect(decision).toEqual({ allowed: false, reason: 'daily_limit_reached' });
+    expect(saveSpy).not.toHaveBeenCalled();
+  });
+});

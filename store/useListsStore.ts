@@ -35,11 +35,7 @@ interface ListsStoreState {
 export const useListsStore = create<ListsStoreState>()(
   persist(
     (set, get) => ({
-      lists: [
-        { id: 1, name: "Ahmet için alınacaklar", count: 4, createdAt: Date.now(), updatedAt: Date.now() }, 
-        { id: 2, name: "Kendi ihtiyaçlarım", count: 12, createdAt: Date.now() - 86400000, updatedAt: Date.now() - 86400000 }, 
-        { id: 3, name: "Buse'ye alınacaklar", count: 2, createdAt: Date.now() - 172800000, updatedAt: Date.now() - 172800000 }
-      ],
+      lists: [],
       addList: (name) => {
         const newId = Date.now();
         set((state) => ({

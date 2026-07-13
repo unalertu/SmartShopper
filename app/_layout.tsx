@@ -282,6 +282,15 @@ export default function RootLayout() {
     }
 
     try {
+      // Mirror the real OS notification permission into the store, same as
+      // the Settings tab's foreground sync. Onboarding builds before this fix
+      // left the persisted default (false) in place after a grant, which the
+      // background pipeline honors — silently disabling all location alerts
+      // until the Settings tab was opened. Runs before the reminder/tracking
+      // syncs below so they read the corrected flag.
+      const { status: notifPermission } = await Notifications.getPermissionsAsync();
+      useSettingsStore.getState().setNotificationsEnabled(notifPermission === 'granted');
+
       // Sync notifications from analytics to Zustand
       await useNotificationsStore.getState().syncFromAnalytics();
 

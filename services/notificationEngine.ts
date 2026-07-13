@@ -34,6 +34,17 @@ export const notificationEngine = {
 
     const state = await notificationAnalytics.getState();
 
+    // 0.5 Day rollover BEFORE any limit check. The reset used to live only
+    // in recordNotification (the write path), so a user who hit a daily cap
+    // stayed capped forever: every later day read yesterday's count, blocked
+    // the send, and the reset never ran. Persist the rollover so later
+    // readers in the same pipeline (e.g. buildNotificationContent) see it.
+    const prevCountDate = state.dailyCountDate;
+    notificationAnalytics.resetDailyCountersIfNeeded(state);
+    if (state.dailyCountDate !== prevCountDate) {
+      await notificationAnalytics.saveState(state);
+    }
+
     // 1. Global Cooldown Check
     const isGlobalCooling = notificationAnalytics.isGlobalCooldownActive(state);
     if (isGlobalCooling) {
