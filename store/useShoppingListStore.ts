@@ -5,6 +5,8 @@ import { useListsStore } from "./useListsStore";
 import { getMaxItemsPerList } from '@/constants/tierConfig';
 import { useActivityStore } from "./useActivityStore";
 import { useStatsStore } from "./useStatsStore";
+import { useReviewStore } from "./useReviewStore";
+import { maybeRequestReview } from "@/services/reviewService";
 
 export interface ShoppingItem {
   id: string;
@@ -108,7 +110,13 @@ export const useShoppingListStore = create<ShoppingListState>()(
         }),
 
 
-      togglePurchased: (id) =>
+      togglePurchased: (id) => {
+        // A transition to "purchased" is a successful, positive interaction —
+        // capture it before the set so we can feed the smart review prompt.
+        const toggledItem = get().items.find((i) => i.id === id);
+        const wasUnpurchased = toggledItem?.isPurchased === false;
+        const toggledListId = toggledItem?.listId;
+
         set((state) => {
           const targetItem = state.items.find(i => i.id === id);
           if (targetItem) {
@@ -138,7 +146,24 @@ export const useShoppingListStore = create<ShoppingListState>()(
               item.id === id ? { ...item, isPurchased: !item.isPurchased } : item
             ),
           };
-        }),
+        });
+
+        if (wasUnpurchased) {
+          // Marking an item purchased is a positive engagement signal.
+          useReviewStore.getState().recordPositiveAction('item_purchased');
+          // If that was the last open item, the whole list is now complete —
+          // an even stronger positive signal, counted on top.
+          if (toggledListId != null && get().getUnpurchasedCount(toggledListId) === 0) {
+            useReviewStore.getState().recordPositiveAction('list_completed');
+          }
+          // Defer so the checkbox tap/animation settles before any native
+          // review dialog can appear. Self-throttles via the 90-day / 3-lifetime
+          // gates, so it's safe to call on every purchase.
+          setTimeout(() => {
+            void maybeRequestReview();
+          }, 1200);
+        }
+      },
 
       updateItem: (id, updates) =>
         set((state) => {

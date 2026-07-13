@@ -5,6 +5,8 @@ import { getMaxSavedStores, FREE_TIER, PRO_TIER } from "../constants/tierConfig"
 import { geofenceManager } from "../services/geofenceManager";
 import { NOTIFICATION_CONSTANTS, getAlertDistanceMeters } from "../constants";
 import { useSettingsStore } from "./useSettingsStore";
+import { useReviewStore } from "./useReviewStore";
+import { maybeRequestReview } from "../services/reviewService";
 
 export interface SavedLocation {
   id: string;
@@ -188,6 +190,15 @@ export const useLocationStore = create<LocationStoreState>()(
           const sensitivity = useSettingsStore.getState().notificationSensitivity;
           const alertDistance = getAlertDistanceMeters(sensitivity);
           void geofenceManager.registerSavedStore(newLoc, alertDistance);
+
+          // Saving a store is a positive engagement signal. Defer the review
+          // check so the save UI settles first; it self-throttles via the
+          // 90-day / 3-lifetime gates.
+          useReviewStore.getState().recordPositiveAction('store_saved');
+          setTimeout(() => {
+            void maybeRequestReview();
+          }, 1200);
+
           return {
             locations: [newLoc, ...state.locations],
           };

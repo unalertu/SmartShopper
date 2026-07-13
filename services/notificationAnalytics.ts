@@ -15,6 +15,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NOTIFICATION_CONSTANTS } from "../constants";
 import { useStatsStore } from "../store/useStatsStore";
+import { useReviewStore } from "../store/useReviewStore";
 import { getDistance } from "./locationUtils";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -301,6 +302,12 @@ export const notificationAnalytics = {
     // Increment lifetime counter for stats UI and start a session
     useStatsStore.getState().incrementRemindersSent();
     useStatsStore.getState().startShoppingSession();
+
+    // A nearby reminder is a positive engagement signal for the smart review
+    // prompt. Only bump the score here — this runs in the background where a
+    // review dialog can't be shown; the ask is triggered from foreground
+    // interactions (purchases, saved stores) instead.
+    useReviewStore.getState().recordPositiveAction("nearby_reminder");
 
     // Add fingerprint
     notificationAnalytics.addFingerprint(state, storeId, eventId);

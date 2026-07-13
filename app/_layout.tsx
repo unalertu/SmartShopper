@@ -19,6 +19,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { setupNotifications } from "@/services/notificationService";
 import LaunchScreen from "@/components/LaunchScreen";
 import InAppNotificationBanner from "@/components/InAppNotificationBanner";
+import ReviewPromptModal from "@/components/ReviewPromptModal";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { useListsStore } from "@/store/useListsStore";
 import { useShoppingListStore } from "@/store/useShoppingListStore";
@@ -29,6 +30,7 @@ import { geofenceManager } from "@/services/geofenceManager";
 import { getAlertDistanceMeters } from "@/constants";
 import { hasProEntitlement } from "@/services/paywallService";
 import { openNotificationList } from "@/utils/notificationDeepLink";
+import { useReviewStore } from "@/store/useReviewStore";
 
 // Prevent splash screen auto-hide
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -269,6 +271,9 @@ export default function RootLayout() {
   const handleLaunchFinish = useCallback(async () => {
     setShowLaunchScreen(false);
 
+    // Count this cold start as an engagement signal for the smart review prompt.
+    useReviewStore.getState().recordAppLaunch();
+
     // If onboarding is going to be shown, we just stop here
     // as we don't need to sync locations/notifications yet.
     const hasCompletedOnboarding = useSettingsStore.getState().hasCompletedOnboarding;
@@ -387,6 +392,8 @@ export default function RootLayout() {
           <StatusBar style="dark" />
           {/* Foreground presentation of notifications; OS banner is suppressed while active */}
           <InAppNotificationBanner />
+          {/* Custom pre-prompt shown before the native review dialog */}
+          <ReviewPromptModal />
         </ThemeProvider>
       </BottomSheetModalProvider>
 
