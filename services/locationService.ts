@@ -55,6 +55,12 @@ export const getSettingsFromStorage = async () => {
       const parsed = JSON.parse(data);
       const state = parsed?.state || {};
       const isPro = state.isPro === true;
+      // A Free user must never carry the Pro-only "unlimited" daily cap. It can
+      // survive on-disk (e.g. the v2->v3 migration dropped isPro but not this
+      // value) and would otherwise let the headless task fire unlimited alerts
+      // before any in-app setIsPro reconciliation runs. Force the Free default.
+      const rawMaxAlerts = state.maxAlertsPerDay ?? 5;
+      const maxAlertsPerDay = (!isPro && rawMaxAlerts === 'unlimited') ? 5 : rawMaxAlerts;
       return {
         isPro,
         notificationsEnabled: state.notificationsEnabled !== false, // default true if not set
@@ -71,7 +77,7 @@ export const getSettingsFromStorage = async () => {
         shoppingListReminders: state.shoppingListReminders !== false,
         remindWithoutList: state.remindWithoutList === true,
         notificationSensitivity: (state.notificationSensitivity || 'balanced') as NotificationSensitivity,
-        maxAlertsPerDay: state.maxAlertsPerDay ?? 5,
+        maxAlertsPerDay,
         maxNotificationsPerStorePerDay: getMaxNotificationsPerStorePerDay(isPro),
       };
     }

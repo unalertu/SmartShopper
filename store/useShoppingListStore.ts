@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useListsStore } from "./useListsStore";
+import { useSettingsStore } from "./useSettingsStore";
 import { getMaxItemsPerList } from '@/constants/tierConfig';
 import { useActivityStore } from "./useActivityStore";
 import { useStatsStore } from "./useStatsStore";
@@ -53,6 +54,16 @@ export const useShoppingListStore = create<ShoppingListState>()(
 
       addItem: (listId, item) =>
         set((state) => {
+          // Authoritative tier gate: interactive callers show their own upsell
+          // before calling this, but bulk paths (templates, suggestion lists,
+          // "Most Purchased" / "Forgotten Items") add in a loop with no check.
+          // Enforcing here keeps the per-list cap from being bypassed. restoreItem
+          // (undo) intentionally skips this so a delete can always be reverted.
+          const isPro = useSettingsStore.getState().isPro;
+          const currentCount = state.items.filter((i) => i.listId === listId).length;
+          if (currentCount >= getMaxItemsPerList(isPro)) {
+            return state;
+          }
           const newItem = {
             ...item,
             id: generateId(),

@@ -192,6 +192,15 @@ export const useSettingsStore = create<SettingsState>()(
           };
         }
 
+        // Landing on Free (no true->false transition, so the downgrade branch
+        // above didn't run): defensively drop any stale "unlimited" cap. This
+        // catches the v2->v3 migration path, where isPro was deleted but the
+        // Pro-only "unlimited" maxAlertsPerDay survived — otherwise a Free user
+        // keeps unlimited daily alerts, honored by the background task.
+        if (!enabled && state.maxAlertsPerDay === "unlimited") {
+          return { isPro: false, maxAlertsPerDay: 5 };
+        }
+
         return { isPro: enabled };
       }),
       resetSettings: () => set((state: SettingsState) => ({

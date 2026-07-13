@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -36,6 +36,9 @@ import {
 import * as Haptics from 'expo-haptics';
 import { hapticImpact } from '../services/haptics';
 import { useStatsStore } from '../store/useStatsStore';
+import { useSettingsStore } from '../store/useSettingsStore';
+import { showPaywall } from '../services/paywallService';
+import Purchases, { CustomerInfo, PurchasesEntitlementInfo } from 'react-native-purchases';
 
 // ─── Feature Row (compact) ─────────────────────────────────────────────────────
 
@@ -91,6 +94,78 @@ function ManagementRow({
   );
 }
 
+// ─── Subscription details from RevenueCat ───────────────────────────────────────
+
+type ProBillingDetails = {
+  planLabel: string;
+  memberSince: string | null;
+  nextBillingLabel: string;
+  // null → no renewal date to show (lifetime purchase or data unavailable)
+  nextBillingDate: string | null;
+};
+
+const formatBillingDate = (millis: number | null | undefined): string | null => {
+  if (millis == null) return null;
+  const date = new Date(millis);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+// The RN SDK's EntitlementInfo has no billing-interval field, so infer it from
+// the length of the current period (purchase → expiration), falling back to the
+// product identifier when the span is inconclusive.
+const derivePlanLabel = (ent: PurchasesEntitlementInfo): string => {
+  if (ent.expirationDateMillis == null) return 'Lifetime Access';
+
+  const spanDays =
+    ent.latestPurchaseDateMillis != null
+      ? (ent.expirationDateMillis - ent.latestPurchaseDateMillis) / (1000 * 60 * 60 * 24)
+      : null;
+
+  let interval: 'year' | 'month' | 'week' | null = null;
+  if (spanDays != null) {
+    if (spanDays > 250) interval = 'year';
+    else if (spanDays > 20) interval = 'month';
+    else if (spanDays > 3) interval = 'week';
+  }
+  if (interval == null) {
+    const pid = ent.productIdentifier.toLowerCase();
+    if (pid.includes('year') || pid.includes('annual')) interval = 'year';
+    else if (pid.includes('month')) interval = 'month';
+    else if (pid.includes('week')) interval = 'week';
+  }
+
+  const planName =
+    interval === 'year' ? 'Yearly Plan'
+    : interval === 'month' ? 'Monthly Plan'
+    : interval === 'week' ? 'Weekly Plan'
+    : 'Pro Subscription';
+
+  // Cancelled-but-still-active: no renewal cadence to advertise.
+  if (!ent.willRenew) return planName;
+
+  const cadence =
+    interval === 'year' ? ' • Renews annually'
+    : interval === 'month' ? ' • Renews monthly'
+    : interval === 'week' ? ' • Renews weekly'
+    : ' • Auto-renews';
+  return `${planName}${cadence}`;
+};
+
+const parseProBillingDetails = (info: CustomerInfo): ProBillingDetails | null => {
+  const active = info.entitlements.active;
+  const ent = active['pro'] ?? Object.values(active)[0];
+  if (!ent) return null;
+
+  const isLifetime = ent.expirationDateMillis == null;
+  return {
+    planLabel: derivePlanLabel(ent),
+    memberSince: formatBillingDate(ent.originalPurchaseDateMillis),
+    nextBillingLabel: ent.willRenew ? 'Next Billing' : 'Expires',
+    nextBillingDate: isLifetime ? null : formatBillingDate(ent.expirationDateMillis),
+  };
+};
+
 // ─── Main Screen ───────────────────────────────────────────────────────────────
 
 export default function ProScreen() {
@@ -100,9 +175,43 @@ export default function ProScreen() {
   const { lifetimeRemindersSent, lifetimeTripsAssisted, lifetimeStoresVisited } = useStatsStore();
   const estimatedTimeSavedHours = (lifetimeTripsAssisted * 0.5).toFixed(1).replace('.0', '');
 
-  // Mock data for new features
-  const nextBillingDate = 'Oct 24, 2026';
-  const memberSinceDate = 'Oct 24, 2023';
+  // This screen doubles as the Pro management view (entitled users) and the
+  // paywall fallback (showPaywall pushes here in Expo Go / on RevenueCat
+  // errors). Only entitled users may see the "Pro Active" status + billing
+  // management; everyone else gets an upgrade CTA instead of being told,
+  // incorrectly, that they already own Pro.
+  const isPro = useSettingsStore((s) => s.isPro);
+
+  const handleUpgrade = () => {
+    hapticImpact(Haptics.ImpactFeedbackStyle.Medium);
+    showPaywall();
+  };
+
+  // Real subscription details, resolved from RevenueCat. Null until loaded or
+  // when unavailable — the UI falls back to placeholders in that case.
+  const [billing, setBilling] = useState<ProBillingDetails | null>(null);
+
+  useEffect(() => {
+    if (!isPro) {
+      setBilling(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        // getCustomerInfo() returns the last cached CustomerInfo when the
+        // device is offline, so this still resolves without a connection.
+        const info = await Purchases.getCustomerInfo();
+        if (!cancelled) setBilling(parseProBillingDetails(info));
+      } catch {
+        // Not configured / no cache / native module missing → placeholders.
+        if (!cancelled) setBilling(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isPro]);
 
   const features = [
     { icon: <List size={16} color="#D4AF37" />, title: 'Unlimited Shopping Lists' },
@@ -195,41 +304,53 @@ export default function ProScreen() {
             end={{ x: 1, y: 1 }}
             style={{ borderRadius: 32, padding: 20 }}
           >
-            <View className="flex-row items-center mb-4" style={{ paddingHorizontal: 6 }}>
-              <View className="flex-1">
-                <View className="flex-row items-center gap-2 mb-1.5">
-                  <Text className="text-white font-bold text-[18px]">Pro Active</Text>
+            {isPro ? (
+              <>
+                <View className="flex-row items-center mb-4" style={{ paddingHorizontal: 6 }}>
+                  <View className="flex-1">
+                    <View className="flex-row items-center gap-2 mb-1.5">
+                      <Text className="text-white font-bold text-[18px]">Pro Active</Text>
+                    </View>
+                    <Text className="text-white/70 text-[14px]">
+                      All premium features unlocked
+                    </Text>
+                  </View>
                 </View>
-                <Text className="text-white/70 text-[14px]">
-                  All premium features unlocked
-                </Text>
-              </View>
-            </View>
 
-            <View className="bg-white/10 rounded-2xl p-3.5 flex-col gap-2" style={{ marginHorizontal: 6 }}>
-              <View className="flex-row items-center">
-                <CalendarDays size={18} color="rgba(255,255,255,0.9)" />
-                <Text className="text-white/90 text-[15px] font-medium ml-2.5 flex-1">
-                  Yearly Plan • Renews annually
+                <View className="bg-white/10 rounded-2xl p-3.5 flex-col gap-2" style={{ marginHorizontal: 6 }}>
+                  <View className="flex-row items-center">
+                    <CalendarDays size={18} color="rgba(255,255,255,0.9)" />
+                    <Text className="text-white/90 text-[15px] font-medium ml-2.5 flex-1">
+                      {billing?.planLabel ?? 'Pro Subscription'}
+                    </Text>
+                  </View>
+                  {billing?.nextBillingDate && (
+                    <View className="flex-row items-center">
+                      <Clock size={18} color="rgba(255,255,255,0.9)" />
+                      <Text className="text-white/90 text-[15px] font-medium ml-2.5">
+                        {billing.nextBillingLabel}: {billing.nextBillingDate}
+                      </Text>
+                    </View>
+                  )}
+                  <View className="flex-row items-center">
+                    <Award size={18} color="rgba(255,255,255,0.9)" />
+                    <Text className="text-white/90 text-[15px] font-medium ml-2.5">
+                      Member Since: {billing?.memberSince ?? '—'}
+                    </Text>
+                  </View>
+                </View>
+              </>
+            ) : (
+              <View style={{ paddingHorizontal: 6, paddingVertical: 2 }}>
+                <View className="flex-row items-center gap-2 mb-1.5">
+                  <Crown size={20} color="#ffffff" />
+                  <Text className="text-white font-bold text-[18px]">Unlock GeoCart Pro</Text>
+                </View>
+                <Text className="text-white/80 text-[14px] leading-5">
+                  Unlimited lists, stores, and alerts plus advanced notification controls.
                 </Text>
               </View>
-              {nextBillingDate && (
-                <View className="flex-row items-center">
-                  <Clock size={18} color="rgba(255,255,255,0.9)" />
-                  <Text className="text-white/90 text-[15px] font-medium ml-2.5">
-                    Next Billing: {nextBillingDate}
-                  </Text>
-                </View>
-              )}
-              {memberSinceDate && (
-                <View className="flex-row items-center">
-                  <Award size={18} color="rgba(255,255,255,0.9)" />
-                  <Text className="text-white/90 text-[15px] font-medium ml-2.5">
-                    Member Since: {memberSinceDate}
-                  </Text>
-                </View>
-              )}
-            </View>
+            )}
           </LinearGradient>
         </Animated.View>
 
@@ -304,44 +425,64 @@ export default function ProScreen() {
           </>
         )}
 
-        {/* Manage Subscription */}
-        <Animated.View
-          entering={FadeInDown.duration(500).delay(500).springify()}
-          className="mb-2"
-        >
-          <Text className="text-[13px] font-semibold text-slate-400 tracking-wider ml-2 mb-2">
-            Manage
-          </Text>
-        </Animated.View>
+        {/* Manage Subscription — entitled users only */}
+        {isPro ? (
+          <>
+            <Animated.View
+              entering={FadeInDown.duration(500).delay(500).springify()}
+              className="mb-2"
+            >
+              <Text className="text-[13px] font-semibold text-slate-400 tracking-wider ml-2 mb-2">
+                Manage
+              </Text>
+            </Animated.View>
 
-        <Animated.View
-          entering={FadeInDown.duration(500).delay(550).springify()}
-          className="bg-white border border-slate-100 rounded-3xl mb-8 px-4 py-2"
-        >
-          <ManagementRow
-            icon={<CreditCard size={20} color="#64748b" />}
-            label="Manage Subscription"
-            sublabel="Change plan or payment method"
-            onPress={handleManageSubscription}
-          />
-          <ManagementRow
-            icon={<ExternalLink size={20} color="#64748b" />}
-            label="View Receipt"
-            sublabel="View your purchase history"
-            onPress={() => {
-              hapticImpact(Haptics.ImpactFeedbackStyle.Light);
-              handleManageSubscription();
-            }}
-          />
-          <ManagementRow
-            icon={<AlertCircle size={20} color="#ef4444" />}
-            label="Cancel Subscription"
-            sublabel="Your benefits last until the billing period ends"
-            isLast
-            destructive
-            onPress={handleCancelSubscription}
-          />
-        </Animated.View>
+            <Animated.View
+              entering={FadeInDown.duration(500).delay(550).springify()}
+              className="bg-white border border-slate-100 rounded-3xl mb-8 px-4 py-2"
+            >
+              <ManagementRow
+                icon={<CreditCard size={20} color="#64748b" />}
+                label="Manage Subscription"
+                sublabel="Change plan or payment method"
+                onPress={handleManageSubscription}
+              />
+              <ManagementRow
+                icon={<ExternalLink size={20} color="#64748b" />}
+                label="View Receipt"
+                sublabel="View your purchase history"
+                onPress={() => {
+                  hapticImpact(Haptics.ImpactFeedbackStyle.Light);
+                  handleManageSubscription();
+                }}
+              />
+              <ManagementRow
+                icon={<AlertCircle size={20} color="#ef4444" />}
+                label="Cancel Subscription"
+                sublabel="Your benefits last until the billing period ends"
+                isLast
+                destructive
+                onPress={handleCancelSubscription}
+              />
+            </Animated.View>
+          </>
+        ) : (
+          <Animated.View
+            entering={FadeInDown.duration(500).delay(500).springify()}
+            className="mb-8"
+          >
+            <TouchableOpacity activeOpacity={0.85} onPress={handleUpgrade}>
+              <LinearGradient
+                colors={['#C6A24B', '#B38B22']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{ borderRadius: 24, paddingVertical: 18, alignItems: 'center' }}
+              >
+                <Text className="text-white font-bold text-[16px]">Upgrade to Pro</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
 
         {/* Footer */}
         <Animated.View
