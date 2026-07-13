@@ -203,8 +203,8 @@ export default function RootLayout() {
     let isMounted = true;
     const setupPurchases = async () => {
       try {
-        Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
-        const appleKey = 'test_ekQnmmklJNsRbinvPyXIYfVBPBJ'; // Sizin verdiğiniz test anahtarı
+        Purchases.setLogLevel(__DEV__ ? Purchases.LOG_LEVEL.DEBUG : Purchases.LOG_LEVEL.INFO);
+        const appleKey = 'appl_LmhVbwAnBMGxuwtnbqOFpAUDJoH'; // Production App Store key
         const googleKey = 'test_ekQnmmklJNsRbinvPyXIYfVBPBJ'; // Android için de şimdilik aynısını koyduk
         
         if (Platform.OS === 'ios') {
